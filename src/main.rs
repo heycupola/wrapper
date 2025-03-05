@@ -1,4 +1,6 @@
-use crossterm::event::{self, DisableMouseCapture, Event, KeyCode, KeyEventKind};
+use crossterm::event::{
+    self, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers,
+};
 use crossterm::terminal::{disable_raw_mode, LeaveAlternateScreen};
 use ratatui::crossterm::event::EnableMouseCapture;
 use ratatui::crossterm::execute;
@@ -7,7 +9,7 @@ use ratatui::prelude::{Backend, CrosstermBackend};
 use ratatui::Terminal;
 use std::error::Error;
 use std::io;
-use wrapper_sh::app::{App, CurrentScreen, CurrentlyEditing};
+use wrapper_sh::app::{App, PositionOnChat, Screen};
 use wrapper_sh::ui::ui;
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -29,11 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     )?;
     terminal.show_cursor()?;
 
-    if let Ok(do_print) = res {
-        if do_print {
-            app.print_json()?;
-        }
-    } else if let Err(err) = res {
+    if let Err(err) = res {
         println!("{err:?}");
     }
 
@@ -48,75 +46,125 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             if key.kind == event::KeyEventKind::Release {
                 continue;
             }
+
             match app.current_screen {
-                CurrentScreen::Main => match key.code {
-                    KeyCode::Char('e') => {
-                        app.current_screen = CurrentScreen::Editing;
-                        app.currently_editing = Some(CurrentlyEditing::Key);
-                    }
-                    KeyCode::Char('q') => {
-                        app.current_screen = CurrentScreen::Exiting;
-                    }
-                    _ => {}
-                },
-                CurrentScreen::Exiting => match key.code {
-                    KeyCode::Char('y') => {
+                Screen::Chat => handle_chat_keys(key, app),
+                Screen::Account => handle_account_keys(key, app),
+                Screen::Exit => {
+                    if handle_exit_keys(key) {
                         return Ok(true);
                     }
-                    KeyCode::Char('n') | KeyCode::Char('q') => {
-                        return Ok(false);
-                    }
-                    _ => {}
-                },
-                CurrentScreen::Editing if key.kind == KeyEventKind::Press => match key.code {
-                    KeyCode::Enter => {
-                        if let Some(editing) = &app.currently_editing {
-                            match editing {
-                                CurrentlyEditing::Key => {
-                                    app.currently_editing = Some(CurrentlyEditing::Value)
-                                }
-                                CurrentlyEditing::Value => {
-                                    app.save_key_value();
-                                    app.current_screen = CurrentScreen::Main;
-                                }
-                            }
-                        }
-                    }
-                    KeyCode::Backspace => {
-                        if let Some(editing) = &app.currently_editing {
-                            match editing {
-                                CurrentlyEditing::Key => {
-                                    app.key_input.pop();
-                                }
-                                CurrentlyEditing::Value => {
-                                    app.value_input.pop();
-                                }
-                            }
-                        }
-                    }
-                    KeyCode::Esc => {
-                        app.current_screen = CurrentScreen::Main;
-                        app.currently_editing = None;
-                    }
-                    KeyCode::Tab => {
-                        app.toggle_editing();
-                    }
-                    KeyCode::Char(value) => {
-                        if let Some(editing) = &app.currently_editing {
-                            match editing {
-                                CurrentlyEditing::Key => {
-                                    app.key_input.push(value);
-                                }
-                                CurrentlyEditing::Value => {
-                                    app.value_input.push(value);
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
-                },
-                CurrentScreen::Editing => {}
+                }
             }
         }
+    }
+}
+
+fn handle_chat_keys(key: KeyEvent, app: &mut App) {
+    match app.position_on_chat {
+        Some(PositionOnChat::ChatBox) => {
+            if key.modifiers == KeyModifiers::CONTROL {
+                match key.code {
+                    KeyCode::Up => app.change_chat_position(PositionOnChat::Messages),
+                    KeyCode::Left => app.change_chat_position(PositionOnChat::ChatHistory),
+                    KeyCode::Char(c) => match c {
+                        'q' => app.cancel_prompting(),
+                        'a' => app.switch_screen(Screen::Account),
+                        'n' => app.clear_chat(),
+                        _ => {}
+                    },
+                    _ => {}
+                }
+            } else {
+                match key.code {
+                    KeyCode::Enter => {
+                        if !app.input.is_empty() {
+                            app.prompt();
+                        }
+                    }
+                    KeyCode::Char(c) => {
+                        app.input.push(c);
+                    }
+                    KeyCode::Backspace => {
+                        app.input.pop();
+                    }
+                    KeyCode::Tab => {
+                        // Cycle through available models
+                        app.cycle_model();
+                    }
+                    _ => {}
+                }
+            }
+        }
+        Some(PositionOnChat::Messages) => {
+            if key.modifiers == KeyModifiers::CONTROL {
+                match key.code {
+                    KeyCode::Down => app.change_chat_position(PositionOnChat::ChatBox),
+                    KeyCode::Left => app.change_chat_position(PositionOnChat::ChatHistory),
+                    _ => {}
+                }
+            } else {
+                match key.code {
+                    KeyCode::Up => app.navigate_chat("up"),
+                    KeyCode::Down => app.navigate_chat("down"),
+                    _ => {}
+                }
+            }
+        }
+        Some(PositionOnChat::ChatHistory) => {
+            if key.modifiers == KeyModifiers::CONTROL {
+                match key.code {
+                    KeyCode::Right => {
+                        if app.messages.is_empty() {
+                            app.change_chat_position(PositionOnChat::ChatBox);
+                        } else {
+                            app.change_chat_position(PositionOnChat::Messages);
+                        }
+                    }
+                    _ => {}
+                }
+            } else {
+                match key.code {
+                    KeyCode::Up => app.navigate_chat("up"),
+                    KeyCode::Down => app.navigate_chat("down"),
+                    KeyCode::Enter => app.select_chat(),
+                    _ => {}
+                }
+            }
+        }
+        None => {
+            // If no position is set, default to ChatBox
+            app.change_chat_position(PositionOnChat::ChatBox);
+        }
+    }
+}
+
+fn handle_account_keys(key: KeyEvent, app: &mut App) {
+    match key.code {
+        KeyCode::Char('l') => {
+            if !app.user.is_logged_in {
+                app.login();
+            }
+        }
+        KeyCode::Char('o') => {
+            if app.user.is_logged_in {
+                app.logout();
+            }
+        }
+        KeyCode::Char('c') => {
+            app.switch_screen(Screen::Chat);
+        }
+        KeyCode::Char('q') => {
+            app.switch_screen(Screen::Exit);
+        }
+        _ => {}
+    }
+}
+
+fn handle_exit_keys(key: KeyEvent) -> bool {
+    match key.code {
+        KeyCode::Char('y') => true,
+        KeyCode::Char('n') | KeyCode::Char('q') => false,
+        _ => false,
     }
 }
