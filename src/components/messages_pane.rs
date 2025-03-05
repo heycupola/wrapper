@@ -2,7 +2,7 @@ use ratatui::{
     layout::Rect,
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap},
+    widgets::{Block, Borders, Paragraph, Wrap},
     Frame,
 };
 
@@ -49,34 +49,10 @@ impl<'a> MessagesPane<'a> {
             .borders(Borders::ALL)
             .border_style(Style::default().fg(border_color));
 
-        let inner_area = messages_block.inner(area);
-        let max_visible_messages = inner_area.height as usize;
-
-        let scroll_position = if self.messages.len() <= max_visible_messages {
-            // If all messages fit, no need to scroll
-            0
-        } else if self.message_scroll >= self.messages.len() - 1 {
-            // If at the last message, always show the last page of messages
-            // This ensures the latest message is visible and sticks to the bottom
-            self.messages.len().saturating_sub(max_visible_messages)
-        } else if self.message_scroll < max_visible_messages / 2 {
-            // If near the beginning, show from the start
-            0
-        } else {
-            // For messages in the middle, center the selected message
-            // But ensure we don't go beyond the last page
-            let centered_position = self.message_scroll.saturating_sub(max_visible_messages / 2);
-            let max_scroll = self.messages.len().saturating_sub(max_visible_messages);
-
-            centered_position.min(max_scroll)
-        };
-
         let messages_text = self
             .messages
             .iter()
             .enumerate()
-            .skip(scroll_position)
-            .take(max_visible_messages)
             .map(|(i, message)| {
                 // Create a modern message bubble style
                 let (bg_color, fg_color, prefix, name_style) = if message.is_user {
@@ -134,25 +110,5 @@ impl<'a> MessagesPane<'a> {
             .wrap(Wrap { trim: true });
 
         frame.render_widget(messages_paragraph, area);
-
-        // Only render scrollbar if there are more messages than can fit in the view
-        if self.messages.len() > max_visible_messages {
-            let scrollbar_state =
-                ScrollbarState::new(self.messages.len()).position(scroll_position);
-
-            let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
-                .style(Style::default().fg(self.theme.muted))
-                .thumb_style(Style::default().fg(if self.is_focused {
-                    self.theme.primary
-                } else {
-                    self.theme.muted_foreground
-                }));
-
-            frame.render_stateful_widget(
-                scrollbar,
-                Rect::new(area.right() - 1, area.y + 1, 1, area.height - 2),
-                &mut scrollbar_state.clone(),
-            );
-        }
     }
 }

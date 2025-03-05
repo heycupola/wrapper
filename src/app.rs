@@ -33,6 +33,8 @@ pub struct App {
     pub user: User,
     pub message_scroll: usize,
     pub history_scroll: usize,
+    pub reason: bool,
+    pub search: bool,
 }
 
 impl Default for App {
@@ -63,6 +65,8 @@ impl Default for App {
             },
             message_scroll: 0,
             history_scroll: 0,
+            reason: false,
+            search: false,
         }
     }
 }
@@ -100,7 +104,7 @@ impl App {
 
         // Set prompting to false when done
         self.is_prompting = false;
-        
+
         // Auto-scroll to the latest message
         if !self.messages.is_empty() {
             self.message_scroll = self.messages.len() - 1;

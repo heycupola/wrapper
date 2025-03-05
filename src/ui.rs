@@ -1,17 +1,20 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, Borders, Clear, Paragraph, Wrap},
     Frame,
 };
 
-use crate::app::{App, PositionOnChat, Screen};
 use crate::components::{
-    chat_box::ChatBox, chat_history_pane::ChatHistoryPane, messages_pane::MessagesPane,
-    models_box::ModelsBox,
+    chat_box::ChatBox, chat_history_pane::ChatHistoryPane, constraints_box::ConstraintsBox,
+    messages_pane::MessagesPane,
 };
 use crate::util::theme::{current_theme, Theme};
+use crate::{
+    app::{App, PositionOnChat, Screen},
+    components::constraints_box,
+};
 
 pub fn ui(frame: &mut Frame, app: &App) {
     // Get the current theme
@@ -41,10 +44,6 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme) {
         ])
         .split(frame.area());
 
-    // ModelsBox component
-    let models_box = ModelsBox::new(&app.available_models, &app.model, theme);
-    models_box.render(frame, main_chunks[0]);
-
     // Split content horizontally for chat history and messages/input
     let content_chunks = Layout::default()
         .direction(Direction::Horizontal)
@@ -54,6 +53,11 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme) {
         ])
         .split(main_chunks[1]);
 
+    let left_side_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(1), Constraint::Length(5)])
+        .split(content_chunks[0]);
+
     // ChatHistoryPane component
     let chat_history_pane = ChatHistoryPane::new(
         &app.chat_history,
@@ -62,7 +66,11 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme) {
         theme,
     );
 
-    chat_history_pane.render(frame, content_chunks[0]);
+    chat_history_pane.render(frame, left_side_chunks[0]);
+
+    // ModelsBox component
+    let constraints_box = ConstraintsBox::new(&app.model, theme, app.reason, app.search);
+    constraints_box.render(frame, left_side_chunks[1]);
 
     // Split right side vertically for messages and input
     let right_chunks = Layout::default()
@@ -102,7 +110,7 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme) {
     let footer = Paragraph::new(Text::styled(
         footer_text,
         Style::default().fg(theme.muted_foreground),
-    ))
+    )).alignment(Alignment::Center)
     .block(
         Block::default()
             .borders(Borders::ALL)
