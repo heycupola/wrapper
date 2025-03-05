@@ -6,7 +6,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::components::{chat_history_pane, models_box::ModelsBox};
+use crate::components::{chat_history_pane, messages_pane::MessagesPane, models_box::ModelsBox};
 use crate::{
     app::{App, Message, PositionOnChat, Screen},
     components::chat_history_pane::ChatHistoryPane,
@@ -26,7 +26,7 @@ fn draw_chat_screen(frame: &mut Frame, app: &App) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3), // Models
-            Constraint::Min(1),    // Content -> History + Messages + ChatBox
+            Constraint::Min(1),    // Content -> History + Messages + Input
             Constraint::Length(3), // Footer
         ])
         .split(frame.area());
@@ -62,47 +62,14 @@ fn draw_chat_screen(frame: &mut Frame, app: &App) {
         ])
         .split(content_chunks[1]);
 
-    // Draw messages
-    let messages_block = Block::default()
-        .title("Messages")
-        .borders(Borders::ALL)
-        .style(match app.position_on_chat {
-            Some(PositionOnChat::Messages) => Style::default().fg(Color::Yellow),
-            _ => Style::default(),
-        });
+    // MessagesPane component
+    let messages_pane = MessagesPane::new(
+        &app.messages,
+        app.message_scroll,
+        matches!(app.position_on_chat, Some(PositionOnChat::Messages)),
+    );
 
-    let messages_text = app
-        .messages
-        .iter()
-        .enumerate()
-        .map(|(i, message)| {
-            let style = if i == app.message_scroll {
-                if message.is_user {
-                    Style::default().fg(Color::Green).bg(Color::DarkGray)
-                } else {
-                    Style::default().fg(Color::Cyan).bg(Color::DarkGray)
-                }
-            } else {
-                if message.is_user {
-                    Style::default().fg(Color::Green)
-                } else {
-                    Style::default().fg(Color::Cyan)
-                }
-            };
-
-            if message.is_user {
-                Line::from(Span::styled(format!("You: {}", message.content), style))
-            } else {
-                Line::from(Span::styled(format!("AI: {}", message.content), style))
-            }
-        })
-        .collect::<Vec<Line>>();
-
-    let messages_paragraph = Paragraph::new(messages_text)
-        .block(messages_block)
-        .wrap(Wrap { trim: true });
-
-    frame.render_widget(messages_paragraph, right_chunks[0]);
+    messages_pane.render(frame, right_chunks[0]);
 
     // Draw input
     let input_block =
