@@ -7,7 +7,7 @@ use ratatui::{
 };
 
 use crate::app::Message;
-use crate::theme::Theme;
+use crate::util::theme::Theme;
 
 pub struct MessagesPane<'a> {
     pub messages: &'a Vec<Message>,
@@ -18,8 +18,8 @@ pub struct MessagesPane<'a> {
 
 impl<'a> MessagesPane<'a> {
     pub fn new(
-        messages: &'a Vec<Message>, 
-        message_scroll: usize, 
+        messages: &'a Vec<Message>,
+        message_scroll: usize,
         is_focused: bool,
         theme: &'a Theme,
     ) -> Self {
@@ -39,12 +39,13 @@ impl<'a> MessagesPane<'a> {
         };
 
         let messages_block = Block::default()
-            .title(
-                Line::from(vec![
-                    Span::styled("  ", Style::default().bg(self.theme.primary)),
-                    Span::styled(" Messages ", Style::default().fg(self.theme.primary_foreground)),
-                ])
-            )
+            .title(Line::from(vec![
+                Span::styled("  ", Style::default().bg(self.theme.primary)),
+                Span::styled(
+                    " Messages ",
+                    Style::default().fg(self.theme.primary_foreground),
+                ),
+            ]))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(border_color));
 
@@ -83,21 +84,29 @@ impl<'a> MessagesPane<'a> {
                         self.theme.accent,
                         self.theme.accent_foreground,
                         "You",
-                        Style::default().fg(self.theme.primary).add_modifier(Modifier::BOLD),
+                        Style::default()
+                            .fg(self.theme.primary)
+                            .add_modifier(Modifier::BOLD),
                     )
                 } else {
                     (
                         self.theme.muted,
                         self.theme.foreground,
                         "AI",
-                        Style::default().fg(self.theme.success).add_modifier(Modifier::BOLD),
+                        Style::default()
+                            .fg(self.theme.success)
+                            .add_modifier(Modifier::BOLD),
                     )
                 };
 
                 // Highlight the selected message
                 let (bg, fg) = if i == self.message_scroll {
                     (
-                        if message.is_user { self.theme.primary } else { self.theme.success },
+                        if message.is_user {
+                            self.theme.primary
+                        } else {
+                            self.theme.success
+                        },
                         self.theme.selection_foreground,
                     )
                 } else {
@@ -105,13 +114,16 @@ impl<'a> MessagesPane<'a> {
                 };
 
                 // Create a modern message bubble with sender name
-                let mut spans = vec![
+                let spans = vec![
                     Span::styled(format!("{}: ", prefix), name_style),
                     Span::styled(message.content.clone(), Style::default().fg(fg)),
                 ];
 
-                Line::from(spans)
-                    .style(Style::default().bg(if i == self.message_scroll { bg } else { self.theme.background }))
+                Line::from(spans).style(Style::default().bg(if i == self.message_scroll {
+                    bg
+                } else {
+                    self.theme.background
+                }))
             })
             .collect::<Vec<Line>>();
 
@@ -130,15 +142,11 @@ impl<'a> MessagesPane<'a> {
 
             let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
                 .style(Style::default().fg(self.theme.muted))
-                .thumb_style(
-                    Style::default().fg(
-                        if self.is_focused {
-                            self.theme.primary
-                        } else {
-                            self.theme.muted_foreground
-                        }
-                    )
-                );
+                .thumb_style(Style::default().fg(if self.is_focused {
+                    self.theme.primary
+                } else {
+                    self.theme.muted_foreground
+                }));
 
             frame.render_stateful_widget(
                 scrollbar,

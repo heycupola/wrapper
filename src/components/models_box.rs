@@ -6,7 +6,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::theme::Theme;
+use crate::util::theme::Theme;
 
 pub struct ModelsBox<'a> {
     pub available_models: &'a [String],
@@ -53,7 +53,7 @@ impl<'a> ModelsBox<'a> {
                 } else {
                     (Style::default().fg(self.theme.muted_foreground), "○ ")
                 };
-                
+
                 Line::from(vec![
                     Span::styled(format!("{}", prefix), style),
                     Span::styled(format!("{}", model), style),
@@ -64,23 +64,19 @@ impl<'a> ModelsBox<'a> {
         // Create layout for header with app title and tabs
         let header_layout = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([
-                Constraint::Percentage(30),
-                Constraint::Percentage(70),
-            ])
+            .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
             .split(area);
 
         // Render app title
-        let title = Paragraph::new(
-            Line::from(vec![
-                Span::styled("  ", Style::default().bg(self.theme.primary)),
-                Span::styled(" LLM Chat ", 
-                    Style::default()
-                        .fg(self.theme.primary)
-                        .add_modifier(Modifier::BOLD)
-                ),
-            ])
-        )
+        let title = Paragraph::new(Line::from(vec![
+            Span::styled("  ", Style::default().bg(self.theme.primary)),
+            Span::styled(
+                " LLM Chat ",
+                Style::default()
+                    .fg(self.theme.primary)
+                    .add_modifier(Modifier::BOLD),
+            ),
+        ]))
         .block(Block::default());
 
         // Render tabs
@@ -90,7 +86,7 @@ impl<'a> ModelsBox<'a> {
             .highlight_style(
                 Style::default()
                     .fg(self.theme.primary)
-                    .add_modifier(Modifier::BOLD)
+                    .add_modifier(Modifier::BOLD),
             )
             .select(self.selected_index);
 

@@ -6,7 +6,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::theme::Theme;
+use crate::util::theme::Theme;
 
 pub struct ChatHistoryPane<'a> {
     pub chat_history: &'a Vec<String>,
@@ -17,8 +17,8 @@ pub struct ChatHistoryPane<'a> {
 
 impl<'a> ChatHistoryPane<'a> {
     pub fn new(
-        chat_history: &'a Vec<String>, 
-        history_scroll: usize, 
+        chat_history: &'a Vec<String>,
+        history_scroll: usize,
         is_focused: bool,
         theme: &'a Theme,
     ) -> Self {
@@ -38,12 +38,13 @@ impl<'a> ChatHistoryPane<'a> {
         };
 
         let chat_history_block = Block::default()
-            .title(
-                Line::from(vec![
-                    Span::styled("  ", Style::default().bg(self.theme.primary)),
-                    Span::styled(" Chat History ", Style::default().fg(self.theme.primary_foreground)),
-                ])
-            )
+            .title(Line::from(vec![
+                Span::styled("  ", Style::default().bg(self.theme.primary)),
+                Span::styled(
+                    " Chat History ",
+                    Style::default().fg(self.theme.primary_foreground),
+                ),
+            ]))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(border_color));
 
@@ -79,7 +80,7 @@ impl<'a> ChatHistoryPane<'a> {
                 Style::default()
                     .bg(self.theme.selection)
                     .fg(self.theme.selection_foreground)
-                    .add_modifier(Modifier::BOLD)
+                    .add_modifier(Modifier::BOLD),
             );
 
         frame.render_widget(chat_history_list, area);

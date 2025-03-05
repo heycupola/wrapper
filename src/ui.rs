@@ -11,18 +11,18 @@ use crate::components::{
     chat_box::ChatBox, chat_history_pane::ChatHistoryPane, messages_pane::MessagesPane,
     models_box::ModelsBox,
 };
-use crate::theme::{current_theme, Theme};
+use crate::util::theme::{current_theme, Theme};
 
 pub fn ui(frame: &mut Frame, app: &App) {
     // Get the current theme
     let theme = current_theme();
-    
+
     // Set the background color for the entire frame
     frame.render_widget(
         Block::default().style(Style::default().bg(theme.background)),
         frame.area(),
     );
-    
+
     match app.current_screen {
         Screen::Chat => draw_chat_screen(frame, app, &theme),
         Screen::Account => draw_account_screen(frame, app, &theme),
@@ -100,13 +100,13 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme) {
     };
 
     let footer = Paragraph::new(Text::styled(
-        footer_text, 
-        Style::default().fg(theme.muted_foreground)
+        footer_text,
+        Style::default().fg(theme.muted_foreground),
     ))
     .block(
         Block::default()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(theme.border))
+            .border_style(Style::default().fg(theme.border)),
     );
 
     frame.render_widget(footer, main_chunks[2]);
@@ -129,28 +129,25 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme) {
         .border_style(Style::default().fg(theme.border))
         .style(Style::default().bg(theme.background));
 
-    let title = Paragraph::new(
-        Line::from(vec![
-            Span::styled("  ", Style::default().bg(theme.primary)),
-            Span::styled(" Account Information ", 
-                Style::default()
-                    .fg(theme.primary)
-                    .add_modifier(Modifier::BOLD)
-            ),
-        ])
-    )
+    let title = Paragraph::new(Line::from(vec![
+        Span::styled("  ", Style::default().bg(theme.primary)),
+        Span::styled(
+            " Account Information ",
+            Style::default()
+                .fg(theme.primary)
+                .add_modifier(Modifier::BOLD),
+        ),
+    ]))
     .block(title_block);
 
     frame.render_widget(title, chunks[0]);
 
     // Draw account information
     let account_block = Block::default()
-        .title(
-            Line::from(vec![
-                Span::styled("  ", Style::default().bg(theme.primary)),
-                Span::styled(" Account ", Style::default().fg(theme.primary_foreground)),
-            ])
-        )
+        .title(Line::from(vec![
+            Span::styled("  ", Style::default().bg(theme.primary)),
+            Span::styled(" Account ", Style::default().fg(theme.primary_foreground)),
+        ]))
         .borders(Borders::ALL)
         .border_style(Style::default().fg(theme.border));
 
@@ -199,7 +196,7 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme) {
     .block(
         Block::default()
             .borders(Borders::ALL)
-            .border_style(Style::default().fg(theme.border))
+            .border_style(Style::default().fg(theme.border)),
     );
 
     frame.render_widget(footer, chunks[2]);
@@ -207,7 +204,7 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme) {
 
 fn draw_exit_screen(frame: &mut Frame, app: &App, theme: &Theme) {
     frame.render_widget(Clear, frame.area());
-    
+
     // Set background
     frame.render_widget(
         Block::default().style(Style::default().bg(theme.background)),
@@ -215,16 +212,15 @@ fn draw_exit_screen(frame: &mut Frame, app: &App, theme: &Theme) {
     );
 
     let popup_block = Block::default()
-        .title(
-            Line::from(vec![
-                Span::styled("  ", Style::default().bg(theme.destructive)),
-                Span::styled(" Exit ", 
-                    Style::default()
-                        .fg(theme.destructive)
-                        .add_modifier(Modifier::BOLD)
-                ),
-            ])
-        )
+        .title(Line::from(vec![
+            Span::styled("  ", Style::default().bg(theme.destructive)),
+            Span::styled(
+                " Exit ",
+                Style::default()
+                    .fg(theme.destructive)
+                    .add_modifier(Modifier::BOLD),
+            ),
+        ]))
         .borders(Borders::ALL)
         .border_style(Style::default().fg(theme.destructive))
         .style(Style::default().bg(theme.muted));

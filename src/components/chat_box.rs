@@ -6,7 +6,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::theme::Theme;
+use crate::util::theme::Theme;
 
 pub struct ChatBox<'a> {
     pub input: &'a String,
@@ -16,7 +16,11 @@ pub struct ChatBox<'a> {
 
 impl<'a> ChatBox<'a> {
     pub fn new(input: &'a String, is_focused: bool, theme: &'a Theme) -> Self {
-        Self { input, is_focused, theme }
+        Self {
+            input,
+            is_focused,
+            theme,
+        }
     }
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
@@ -27,12 +31,13 @@ impl<'a> ChatBox<'a> {
         };
 
         let input_block = Block::default()
-            .title(
-                Line::from(vec![
-                    Span::styled("  ", Style::default().bg(self.theme.primary)),
-                    Span::styled(" Input ", Style::default().fg(self.theme.primary_foreground)),
-                ])
-            )
+            .title(Line::from(vec![
+                Span::styled("  ", Style::default().bg(self.theme.primary)),
+                Span::styled(
+                    " Input ",
+                    Style::default().fg(self.theme.primary_foreground),
+                ),
+            ]))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(border_color));
 
