@@ -6,7 +6,9 @@ use ratatui::{
     Frame,
 };
 
-use crate::components::{chat_history_pane, messages_pane::MessagesPane, models_box::ModelsBox};
+use crate::components::{
+    chat_box::ChatBox, chat_history_pane, messages_pane::MessagesPane, models_box::ModelsBox,
+};
 use crate::{
     app::{App, Message, PositionOnChat, Screen},
     components::chat_history_pane::ChatHistoryPane,
@@ -71,21 +73,13 @@ fn draw_chat_screen(frame: &mut Frame, app: &App) {
 
     messages_pane.render(frame, right_chunks[0]);
 
-    // Draw input
-    let input_block =
-        Block::default()
-            .title("Input")
-            .borders(Borders::ALL)
-            .style(match app.position_on_chat {
-                Some(PositionOnChat::ChatBox) => Style::default().fg(Color::Yellow),
-                _ => Style::default(),
-            });
+    // ChatBox component
+    let chat_box = ChatBox::new(
+        &app.input,
+        matches!(app.position_on_chat, Some(PositionOnChat::ChatBox)),
+    );
 
-    let input_text = Paragraph::new(app.input.as_str())
-        .block(input_block)
-        .wrap(Wrap { trim: true });
-
-    frame.render_widget(input_text, right_chunks[1]);
+    chat_box.render(frame, right_chunks[1]);
 
     // Draw footer with help text
     let footer_text = if app.is_prompting {
