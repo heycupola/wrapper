@@ -100,6 +100,11 @@ impl App {
 
         // Set prompting to false when done
         self.is_prompting = false;
+        
+        // Auto-scroll to the latest message
+        if !self.messages.is_empty() {
+            self.message_scroll = self.messages.len() - 1;
+        }
     }
 
     pub fn cancel_prompting(&mut self) {
@@ -173,6 +178,23 @@ impl App {
                     }
                 }
             }
+            "bottom" => {
+                if let Some(pos) = &self.position_on_chat {
+                    match pos {
+                        PositionOnChat::ChatBox => {}
+                        PositionOnChat::Messages => {
+                            if !self.messages.is_empty() {
+                                self.message_scroll = self.messages.len() - 1;
+                            }
+                        }
+                        PositionOnChat::ChatHistory => {
+                            if !self.chat_history.is_empty() {
+                                self.history_scroll = self.chat_history.len() - 1;
+                            }
+                        }
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -217,8 +239,10 @@ impl App {
                 is_user: false,
             });
 
-            // Reset message scroll
-            self.message_scroll = 0;
+            // Auto-scroll to the latest message
+            if !self.messages.is_empty() {
+                self.message_scroll = self.messages.len() - 1;
+            }
         }
     }
 

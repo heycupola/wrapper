@@ -1,5 +1,5 @@
 use crossterm::event::{
-    self, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers,
+    self, DisableMouseCapture, Event, KeyCode, KeyEvent, KeyModifiers,
 };
 use crossterm::terminal::{disable_raw_mode, LeaveAlternateScreen};
 use ratatui::crossterm::event::EnableMouseCapture;
@@ -21,6 +21,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut app = App::new();
+    
+    // Ensure we start at the bottom of the messages if there are any
+    if !app.messages.is_empty() {
+        app.navigate_chat("bottom");
+    }
+    
     let res = run_app(&mut terminal, &mut app);
 
     disable_raw_mode()?;
@@ -42,19 +48,29 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
     loop {
         terminal.draw(|f| ui(f, app))?;
 
-        if let Event::Key(key) = event::read()? {
-            if key.kind == event::KeyEventKind::Release {
-                continue;
-            }
-
-            match app.current_screen {
-                Screen::Chat => handle_chat_keys(key, app),
-                Screen::Account => handle_account_keys(key, app),
-                Screen::Exit => {
-                    if handle_exit_keys(key) {
-                        return Ok(true);
+        if let Ok(event) = event::read() {
+            match event {
+                Event::Key(key) => {
+                    if key.kind == event::KeyEventKind::Release {
+                        continue;
                     }
-                }
+
+                    match app.current_screen {
+                        Screen::Chat => handle_chat_keys(key, app),
+                        Screen::Account => handle_account_keys(key, app),
+                        Screen::Exit => {
+                            if handle_exit_keys(key) {
+                                return Ok(true);
+                            }
+                        }
+                    }
+                },
+                Event::Mouse(mouse_event) => {
+                    if matches!(app.current_screen, Screen::Chat) {
+                        handle_mouse_events(mouse_event, app);
+                    }
+                },
+                _ => {}
             }
         }
     }
@@ -166,5 +182,23 @@ fn handle_exit_keys(key: KeyEvent) -> bool {
         KeyCode::Char('y') => true,
         KeyCode::Char('n') | KeyCode::Char('q') => false,
         _ => false,
+    }
+}
+
+fn handle_mouse_events(mouse_event: event::MouseEvent, app: &mut App) {
+    use crossterm::event::MouseEventKind;
+
+    match mouse_event.kind {
+        MouseEventKind::ScrollUp => {
+            if matches!(app.position_on_chat, Some(PositionOnChat::Messages)) {
+                app.navigate_chat("up");
+            }
+        },
+        MouseEventKind::ScrollDown => {
+            if matches!(app.position_on_chat, Some(PositionOnChat::Messages)) {
+                app.navigate_chat("down");
+            }
+        },
+        _ => {}
     }
 }
