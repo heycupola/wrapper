@@ -3,4 +3,5 @@
 - [ ] add navbar
 - [x] refactor constraints box
 - [x] add mode to app
-- [ ] alter keybindings
+- [x] alter keybindings
+- [] update footer

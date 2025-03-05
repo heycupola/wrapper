@@ -6,15 +6,12 @@ use ratatui::{
     Frame,
 };
 
+use crate::app::{App, PositionOnChat, Screen};
 use crate::components::{
     chat_box::ChatBox, chat_history_pane::ChatHistoryPane, constraints_box::ConstraintsBox,
     messages_pane::MessagesPane,
 };
 use crate::util::theme::{current_theme, Theme};
-use crate::{
-    app::{App, PositionOnChat, Screen},
-    components::constraints_box,
-};
 
 pub fn ui(frame: &mut Frame, app: &App) {
     // Get the current theme
@@ -110,7 +107,8 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme) {
     let footer = Paragraph::new(Text::styled(
         footer_text,
         Style::default().fg(theme.muted_foreground),
-    )).alignment(Alignment::Center)
+    ))
+    .alignment(Alignment::Center)
     .block(
         Block::default()
             .borders(Borders::ALL)
