@@ -9,12 +9,11 @@ use ratatui::{
 pub struct ModelsBox<'a> {
     pub available_models: &'a [String],
     pub current_model: &'a str,
-    pub is_focused: bool,
     pub selected_index: usize,
 }
 
 impl<'a> ModelsBox<'a> {
-    pub fn new(available_models: &'a [String], current_model: &'a str, is_focused: bool) -> Self {
+    pub fn new(available_models: &'a [String], current_model: &'a str) -> Self {
         let selected_index = available_models
             .iter()
             .position(|m| m == current_model)
@@ -23,7 +22,6 @@ impl<'a> ModelsBox<'a> {
         Self {
             available_models,
             current_model,
-            is_focused,
             selected_index,
         }
     }
@@ -31,11 +29,7 @@ impl<'a> ModelsBox<'a> {
     pub fn render(&self, frame: &mut Frame, area: Rect) {
         let title_block = Block::default()
             .borders(Borders::ALL)
-            .style(if self.is_focused {
-                Style::default().fg(Color::Yellow)
-            } else {
-                Style::default()
-            });
+            .style(Style::default());
 
         let models_text = self
             .available_models

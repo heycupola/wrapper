@@ -6,8 +6,11 @@ use ratatui::{
     Frame,
 };
 
-use crate::app::{App, Message, PositionOnChat, Screen};
-use crate::components::models_box::ModelsBox;
+use crate::components::{chat_history_pane, models_box::ModelsBox};
+use crate::{
+    app::{App, Message, PositionOnChat, Screen},
+    components::chat_history_pane::ChatHistoryPane,
+};
 
 pub fn ui(frame: &mut Frame, app: &App) {
     match app.current_screen {
@@ -22,18 +25,14 @@ fn draw_chat_screen(frame: &mut Frame, app: &App) {
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3), // Title
-            Constraint::Min(1),    // Content
+            Constraint::Length(3), // Models
+            Constraint::Min(1),    // Content -> History + Messages + ChatBox
             Constraint::Length(3), // Footer
         ])
         .split(frame.area());
 
-    // Draw title using the ModelsBox component
-    let models_box = ModelsBox::new(
-        &app.available_models,
-        &app.model,
-        matches!(app.position_on_chat, Some(PositionOnChat::ChatHistory)),
-    );
+    // ModelsBox component
+    let models_box = ModelsBox::new(&app.available_models, &app.model);
     models_box.render(frame, main_chunks[0]);
 
     // Split content horizontally for chat history and messages/input
@@ -45,33 +44,14 @@ fn draw_chat_screen(frame: &mut Frame, app: &App) {
         ])
         .split(main_chunks[1]);
 
-    // Draw chat history
-    let chat_history_block = Block::default()
-        .title("Chat History (Enter to select)")
-        .borders(Borders::ALL)
-        .style(match app.position_on_chat {
-            Some(PositionOnChat::ChatHistory) => Style::default().fg(Color::Yellow),
-            _ => Style::default(),
-        });
+    // ChatHistoryPane component
+    let chat_history_pane = ChatHistoryPane::new(
+        &app.chat_history,
+        app.history_scroll,
+        matches!(app.position_on_chat, Some(PositionOnChat::ChatHistory)),
+    );
 
-    let chat_history_items: Vec<ListItem> = app
-        .chat_history
-        .iter()
-        .enumerate()
-        .map(|(i, chat)| {
-            let style = if i == app.history_scroll {
-                Style::default().fg(Color::Yellow).bg(Color::DarkGray)
-            } else {
-                Style::default().fg(Color::White)
-            };
-
-            ListItem::new(Line::from(Span::styled(chat, style)))
-        })
-        .collect();
-
-    let chat_history_list = List::new(chat_history_items).block(chat_history_block);
-
-    frame.render_widget(chat_history_list, content_chunks[0]);
+    chat_history_pane.render(frame, content_chunks[0]);
 
     // Split right side vertically for messages and input
     let right_chunks = Layout::default()
