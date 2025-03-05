@@ -1,37 +1,52 @@
 use ratatui::{
     layout::Rect,
-    style::{Color, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap},
     Frame,
 };
 
 use crate::app::Message;
+use crate::theme::Theme;
 
 pub struct MessagesPane<'a> {
     pub messages: &'a Vec<Message>,
     pub message_scroll: usize,
     pub is_focused: bool,
+    pub theme: &'a Theme,
 }
 
 impl<'a> MessagesPane<'a> {
-    pub fn new(messages: &'a Vec<Message>, message_scroll: usize, is_focused: bool) -> Self {
+    pub fn new(
+        messages: &'a Vec<Message>, 
+        message_scroll: usize, 
+        is_focused: bool,
+        theme: &'a Theme,
+    ) -> Self {
         Self {
             messages,
             message_scroll,
             is_focused,
+            theme,
         }
     }
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
+        let border_color = if self.is_focused {
+            self.theme.focus
+        } else {
+            self.theme.border
+        };
+
         let messages_block = Block::default()
-            .title("Messages")
+            .title(
+                Line::from(vec![
+                    Span::styled("  ", Style::default().bg(self.theme.primary)),
+                    Span::styled(" Messages ", Style::default().fg(self.theme.primary_foreground)),
+                ])
+            )
             .borders(Borders::ALL)
-            .style(if self.is_focused {
-                Style::default().fg(Color::Yellow)
-            } else {
-                Style::default()
-            });
+            .border_style(Style::default().fg(border_color));
 
         let inner_area = messages_block.inner(area);
         let max_visible_messages = inner_area.height as usize;
@@ -62,31 +77,48 @@ impl<'a> MessagesPane<'a> {
             .skip(scroll_position)
             .take(max_visible_messages)
             .map(|(i, message)| {
-                let style = if i == self.message_scroll {
-                    if message.is_user {
-                        Style::default().fg(Color::Green).bg(Color::DarkGray)
-                    } else {
-                        Style::default().fg(Color::Cyan).bg(Color::DarkGray)
-                    }
+                // Create a modern message bubble style
+                let (bg_color, fg_color, prefix, name_style) = if message.is_user {
+                    (
+                        self.theme.accent,
+                        self.theme.accent_foreground,
+                        "You",
+                        Style::default().fg(self.theme.primary).add_modifier(Modifier::BOLD),
+                    )
                 } else {
-                    if message.is_user {
-                        Style::default().fg(Color::Green)
-                    } else {
-                        Style::default().fg(Color::Cyan)
-                    }
+                    (
+                        self.theme.muted,
+                        self.theme.foreground,
+                        "AI",
+                        Style::default().fg(self.theme.success).add_modifier(Modifier::BOLD),
+                    )
                 };
 
-                if message.is_user {
-                    Line::from(Span::styled(format!("You: {}", message.content), style))
+                // Highlight the selected message
+                let (bg, fg) = if i == self.message_scroll {
+                    (
+                        if message.is_user { self.theme.primary } else { self.theme.success },
+                        self.theme.selection_foreground,
+                    )
                 } else {
-                    Line::from(Span::styled(format!("AI: {}", message.content), style))
-                }
+                    (bg_color, fg_color)
+                };
+
+                // Create a modern message bubble with sender name
+                let mut spans = vec![
+                    Span::styled(format!("{}: ", prefix), name_style),
+                    Span::styled(message.content.clone(), Style::default().fg(fg)),
+                ];
+
+                Line::from(spans)
+                    .style(Style::default().bg(if i == self.message_scroll { bg } else { self.theme.background }))
             })
             .collect::<Vec<Line>>();
 
         // Create paragraph with appropriate alignment
         let messages_paragraph = Paragraph::new(messages_text)
             .block(messages_block)
+            .style(Style::default().bg(self.theme.background))
             .wrap(Wrap { trim: true });
 
         frame.render_widget(messages_paragraph, area);
@@ -97,12 +129,16 @@ impl<'a> MessagesPane<'a> {
                 ScrollbarState::new(self.messages.len()).position(scroll_position);
 
             let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
-                .style(Style::default().fg(Color::White))
-                .thumb_style(if self.is_focused {
-                    Style::default().fg(Color::Yellow)
-                } else {
-                    Style::default().fg(Color::DarkGray)
-                });
+                .style(Style::default().fg(self.theme.muted))
+                .thumb_style(
+                    Style::default().fg(
+                        if self.is_focused {
+                            self.theme.primary
+                        } else {
+                            self.theme.muted_foreground
+                        }
+                    )
+                );
 
             frame.render_stateful_widget(
                 scrollbar,

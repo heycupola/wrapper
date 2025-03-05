@@ -1,5 +1,6 @@
 pub mod app;
 pub mod ui;
+pub mod theme;
 
 pub mod components {
     pub mod chat_box;

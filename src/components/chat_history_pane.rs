@@ -1,35 +1,51 @@
 use ratatui::{
     layout::Rect,
-    style::{Color, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, List, ListItem},
     Frame,
 };
 
+use crate::theme::Theme;
+
 pub struct ChatHistoryPane<'a> {
     pub chat_history: &'a Vec<String>,
     pub history_scroll: usize,
     pub is_focused: bool,
+    pub theme: &'a Theme,
 }
 
 impl<'a> ChatHistoryPane<'a> {
-    pub fn new(chat_history: &'a Vec<String>, history_scroll: usize, is_focused: bool) -> Self {
+    pub fn new(
+        chat_history: &'a Vec<String>, 
+        history_scroll: usize, 
+        is_focused: bool,
+        theme: &'a Theme,
+    ) -> Self {
         Self {
             chat_history,
             history_scroll,
             is_focused,
+            theme,
         }
     }
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
+        let border_color = if self.is_focused {
+            self.theme.focus
+        } else {
+            self.theme.border
+        };
+
         let chat_history_block = Block::default()
-            .title("Chat History (Enter to select)")
+            .title(
+                Line::from(vec![
+                    Span::styled("  ", Style::default().bg(self.theme.primary)),
+                    Span::styled(" Chat History ", Style::default().fg(self.theme.primary_foreground)),
+                ])
+            )
             .borders(Borders::ALL)
-            .style(if self.is_focused {
-                Style::default().fg(Color::Yellow)
-            } else {
-                Style::default()
-            });
+            .border_style(Style::default().fg(border_color));
 
         let chat_history_items: Vec<ListItem> = self
             .chat_history
@@ -37,16 +53,34 @@ impl<'a> ChatHistoryPane<'a> {
             .enumerate()
             .map(|(i, chat)| {
                 let style = if i == self.history_scroll {
-                    Style::default().fg(Color::Yellow).bg(Color::DarkGray)
+                    Style::default()
+                        .fg(self.theme.selection_foreground)
+                        .bg(self.theme.selection)
+                        .add_modifier(Modifier::BOLD)
                 } else {
-                    Style::default().fg(Color::White)
+                    Style::default().fg(self.theme.foreground)
                 };
 
-                ListItem::new(Line::from(Span::styled(chat, style)))
+                // Create a more visually appealing list item with a bullet point
+                let content = if i == self.history_scroll {
+                    format!(" ● {}", chat)
+                } else {
+                    format!(" ○ {}", chat)
+                };
+
+                ListItem::new(Line::from(Span::styled(content, style)))
+                    .style(Style::default().bg(self.theme.background))
             })
             .collect();
 
-        let chat_history_list = List::new(chat_history_items).block(chat_history_block);
+        let chat_history_list = List::new(chat_history_items)
+            .block(chat_history_block)
+            .highlight_style(
+                Style::default()
+                    .bg(self.theme.selection)
+                    .fg(self.theme.selection_foreground)
+                    .add_modifier(Modifier::BOLD)
+            );
 
         frame.render_widget(chat_history_list, area);
     }
