@@ -6,12 +6,15 @@ use ratatui::{
     Frame,
 };
 
-use crate::app::{App, PositionOnChat, Screen};
 use crate::components::{
     chat_box::ChatBox, chat_history_pane::ChatHistoryPane, constraints_box::ConstraintsBox,
     messages_pane::MessagesPane,
 };
 use crate::util::theme::{current_theme, Theme};
+use crate::{
+    app::{App, PositionOnChat, Screen},
+    components::footer::Footer,
+};
 
 pub fn ui(frame: &mut Frame, app: &App) {
     // Get the current theme
@@ -89,33 +92,20 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme) {
     messages_pane.render(frame, right_chunks[0]);
 
     // ChatBox component
-    let chat_box = ChatBox::new(
+    let mut chat_box = ChatBox::new(
         &app.input,
         matches!(app.position_on_chat, Some(PositionOnChat::ChatBox)),
         theme,
     );
 
+    chat_box.cursor_position = app.cursor_position;
+
     chat_box.render(frame, right_chunks[1]);
 
-    // Draw footer with help text
-    let footer_text = if app.is_prompting {
-        "Ctrl+Q: Cancel | Ctrl+Arrow Keys: Navigate"
-    } else {
-        "Enter: Send | Tab: Change Model | Alt+1-5: Quick Model Select | Ctrl+N: New Chat | Ctrl+Arrow Keys: Navigate | Up/Down: Scroll | Ctrl+A: Account | Esc: Exit"
-    };
+    // Footer component
+    let footer = Footer::new(&app.current_screen, theme, &app.position_on_chat, None);
 
-    let footer = Paragraph::new(Text::styled(
-        footer_text,
-        Style::default().fg(theme.muted_foreground),
-    ))
-    .alignment(Alignment::Center)
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(theme.border)),
-    );
-
-    frame.render_widget(footer, main_chunks[2]);
+    footer.render(frame, main_chunks[2]);
 }
 
 fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme) {
@@ -194,18 +184,15 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme) {
 
     frame.render_widget(account_paragraph, chunks[1]);
 
-    // Draw footer
-    let footer = Paragraph::new(Text::styled(
-        "c: Chat | q: Exit",
-        Style::default().fg(theme.muted_foreground),
-    ))
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(theme.border)),
+    // Footer component
+    let footer = Footer::new(
+        &app.current_screen,
+        theme,
+        &app.position_on_chat,
+        Some(app.user.is_logged_in),
     );
 
-    frame.render_widget(footer, chunks[2]);
+    footer.render(frame, chunks[2]);
 }
 
 fn draw_exit_screen(frame: &mut Frame, app: &App, theme: &Theme) {

@@ -35,6 +35,7 @@ pub struct App {
     pub history_scroll: usize,
     pub reason: bool,
     pub search: bool,
+    pub cursor_position: usize,
 }
 
 impl Default for App {
@@ -67,6 +68,7 @@ impl Default for App {
             history_scroll: 0,
             reason: false,
             search: false,
+            cursor_position: 0,
         }
     }
 }
@@ -77,7 +79,8 @@ impl App {
     }
 
     pub fn prompt(&mut self) {
-        if self.input.is_empty() {
+        // Check if input is empty or contains only whitespace
+        if self.input.trim().is_empty() {
             return;
         }
 
@@ -89,6 +92,9 @@ impl App {
 
         // Clear input
         self.input.clear();
+
+        // Reset cursor position
+        self.cursor_position = 0;
 
         // Set prompting to true
         self.is_prompting = true;
@@ -220,6 +226,7 @@ impl App {
 
         self.messages.clear();
         self.input.clear();
+        self.cursor_position = 0;
         self.message_scroll = 0;
     }
 
@@ -253,6 +260,49 @@ impl App {
     pub fn load_model(&mut self, index: usize) {
         if index < self.available_models.len() {
             self.model = self.available_models[index].clone();
+        }
+    }
+
+    pub fn move_cursor_left(&mut self) {
+        if self.cursor_position > 0 {
+            self.cursor_position -= 1;
+        }
+    }
+
+    pub fn move_cursor_right(&mut self) {
+        if self.cursor_position < self.input.len() {
+            self.cursor_position += 1;
+        }
+    }
+
+    pub fn cursor_to_start(&mut self) {
+        self.cursor_position = 0;
+    }
+
+    pub fn cursor_to_end(&mut self) {
+        self.cursor_position = self.input.len();
+    }
+
+    pub fn insert_char(&mut self, c: char) {
+        // Prevent adding whitespace character if input is empty
+        if self.input.is_empty() && c.is_whitespace() {
+            return;
+        }
+
+        self.input.insert(self.cursor_position, c);
+        self.cursor_position += 1;
+    }
+
+    pub fn delete_char(&mut self) {
+        if self.cursor_position > 0 {
+            self.input.remove(self.cursor_position - 1);
+            self.cursor_position -= 1;
+        }
+    }
+
+    pub fn delete_char_forward(&mut self) {
+        if self.cursor_position < self.input.len() {
+            self.input.remove(self.cursor_position);
         }
     }
 }

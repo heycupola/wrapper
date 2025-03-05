@@ -94,15 +94,30 @@ fn handle_chat_keys(key: KeyEvent, app: &mut App) {
     match app.position_on_chat {
         Some(PositionOnChat::ChatBox) => match key.code {
             KeyCode::Enter => {
-                if !app.input.is_empty() {
+                if matches!(app.position_on_chat, Some(PositionOnChat::ChatBox)) {
                     app.prompt();
                 }
             }
             KeyCode::Char(c) => {
-                app.input.push(c);
+                app.insert_char(c);
             }
             KeyCode::Backspace => {
-                app.input.pop();
+                app.delete_char();
+            }
+            KeyCode::Delete => {
+                app.delete_char_forward();
+            }
+            KeyCode::Left => {
+                app.move_cursor_left();
+            }
+            KeyCode::Right => {
+                app.move_cursor_right();
+            }
+            KeyCode::Home => {
+                app.cursor_to_start();
+            }
+            KeyCode::End => {
+                app.cursor_to_end();
             }
             KeyCode::Tab => {
                 app.cycle_model();
