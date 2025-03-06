@@ -84,6 +84,8 @@ fn handle_chat_keys(key: KeyEvent, app: &mut App) {
                 'q' => app.cancel_prompting(),
                 'a' => app.switch_screen(Screen::Account),
                 'n' => app.clear_chat(),
+                'r' => app.toggle_reason(),
+                'w' => app.toggle_search_on_web(),
                 _ => {}
             },
             _ => {}

@@ -12,16 +12,21 @@ pub struct ConstraintsBox<'a> {
     pub current_model: &'a str,
     pub theme: &'a Theme,
     pub reason: bool,
-    pub search: bool,
+    pub search_on_web: bool,
 }
 
 impl<'a> ConstraintsBox<'a> {
-    pub fn new(current_model: &'a str, theme: &'a Theme, reason: bool, search: bool) -> Self {
+    pub fn new(
+        current_model: &'a str,
+        theme: &'a Theme,
+        reason: bool,
+        search_on_web: bool,
+    ) -> Self {
         Self {
             current_model,
             theme,
             reason,
-            search,
+            search_on_web,
         }
     }
 
@@ -30,7 +35,7 @@ impl<'a> ConstraintsBox<'a> {
         let main_block = Block::default()
             .title(
                 Line::from(vec![Span::styled(
-                    " Model ",
+                    " constraints ",
                     Style::default().fg(self.theme.primary_foreground),
                 )])
                 .alignment(Alignment::Center),
@@ -53,22 +58,17 @@ impl<'a> ConstraintsBox<'a> {
             .split(inner_area);
 
         // Mode section - using a placeholder for now
-        let mode_name = if self.reason && self.search {
-            "Search + Reason"
+        let mode_name = if self.reason && self.search_on_web {
+            "search on web + reason"
         } else if self.reason {
-            "Reason"
-        } else if self.search {
-            "Search"
+            "reason"
+        } else if self.search_on_web {
+            "search on web"
         } else {
             "No Mode"
         };
 
-        let mode_text = Span::styled(
-            mode_name,
-            Style::default()
-                .fg(self.theme.muted_foreground)
-                .add_modifier(Modifier::BOLD),
-        );
+        let mode_text = Span::styled(mode_name, Style::default().fg(self.theme.muted_foreground));
 
         let mode_paragraph = Paragraph::new(mode_text)
             .alignment(Alignment::Center)
@@ -83,9 +83,7 @@ impl<'a> ConstraintsBox<'a> {
         // Model section
         let model_text = Span::styled(
             self.current_model,
-            Style::default()
-                .fg(self.theme.muted_foreground)
-                .add_modifier(Modifier::BOLD),
+            Style::default().fg(self.theme.muted_foreground),
         );
 
         let model_paragraph = Paragraph::new(model_text)

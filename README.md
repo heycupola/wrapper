@@ -12,3 +12,5 @@
 - [ ] refactor account page
 - [ ] refactor exit page
 - [ ] create custom components for account and exit pages
+- [x] add constraint keybindings to the footer
+- [x] add search on web and reason keybindings event handlers

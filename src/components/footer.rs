@@ -32,7 +32,7 @@ impl<'a> Footer<'a> {
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
         let footer_text = match self.current_screen {
-            Screen::Chat => "ctrl+n: new chat | ctrl+l: messages | ctrl+h: history | ctrl+c: chat",
+            Screen::Chat => "ctrl+n: new chat | ctrl+l: messages | ctrl+h: history | ctrl+c: chat | ctrl+r: reason | ctrl+w: search on web",
             Screen::Account => {
                 if self.is_logged_in.unwrap_or(false) {
                     "o: logout | q: exit"

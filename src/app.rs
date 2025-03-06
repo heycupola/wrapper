@@ -34,7 +34,7 @@ pub struct App {
     pub message_scroll: usize,
     pub history_scroll: usize,
     pub reason: bool,
-    pub search: bool,
+    pub search_on_web: bool,
     pub cursor_position: usize,
 }
 
@@ -67,7 +67,7 @@ impl Default for App {
             message_scroll: 0,
             history_scroll: 0,
             reason: false,
-            search: false,
+            search_on_web: false,
             cursor_position: 0,
         }
     }
@@ -304,5 +304,13 @@ impl App {
         if self.cursor_position < self.input.len() {
             self.input.remove(self.cursor_position);
         }
+    }
+
+    pub fn toggle_reason(&mut self) {
+        self.reason = !self.reason;
+    }
+
+    pub fn toggle_search_on_web(&mut self) {
+        self.search_on_web = !self.search_on_web;
     }
 }

@@ -76,7 +76,7 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
     chat_history_pane.render(frame, left_side_chunks[0]);
 
     // ModelsBox component
-    let constraints_box = ConstraintsBox::new(&app.model, theme, app.reason, app.search);
+    let constraints_box = ConstraintsBox::new(&app.model, theme, app.reason, app.search_on_web);
     constraints_box.render(frame, left_side_chunks[1]);
 
     // Split right side vertically for messages and input
