@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, Borders, Clear, Paragraph, Wrap},
@@ -8,7 +8,7 @@ use ratatui::{
 
 use crate::components::{
     chat_box::ChatBox, chat_history_pane::ChatHistoryPane, constraints_box::ConstraintsBox,
-    messages_pane::MessagesPane,
+    messages_pane::MessagesPane, navbar::Navbar,
 };
 use crate::util::theme::{current_theme, Theme};
 use crate::{
@@ -26,23 +26,30 @@ pub fn ui(frame: &mut Frame, app: &App) {
         frame.area(),
     );
 
+    // Create a centered area with padding on all sides
+    let centered_area = centered_rect(70, 90, frame.area());
+
     match app.current_screen {
-        Screen::Chat => draw_chat_screen(frame, app, &theme),
-        Screen::Account => draw_account_screen(frame, app, &theme),
-        Screen::Exit => draw_exit_screen(frame, app, &theme),
+        Screen::Chat => draw_chat_screen(frame, app, &theme, centered_area),
+        Screen::Account => draw_account_screen(frame, app, &theme, centered_area),
+        Screen::Exit => draw_exit_screen(frame, app, &theme, centered_area),
     }
 }
 
-fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme) {
-    // Create main layout with title and content
+fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
+    // Create main layout with navbar, title and content
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3), // Models
+            Constraint::Length(3), // Navbar
             Constraint::Min(1),    // Content -> History + Messages + Input
             Constraint::Length(3), // Footer
         ])
-        .split(frame.area());
+        .split(area);
+
+    // Render the navbar
+    let navbar = Navbar::new(&app.current_screen, theme, "Wrapper");
+    navbar.render(frame, main_chunks[0]);
 
     // Split content horizontally for chat history and messages/input
     let content_chunks = Layout::default()
@@ -108,16 +115,21 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme) {
     footer.render(frame, main_chunks[2]);
 }
 
-fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme) {
+fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
     // Create main layout
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
+            Constraint::Length(3), // Navbar
             Constraint::Length(3), // Title
             Constraint::Min(1),    // Content
             Constraint::Length(3), // Footer
         ])
-        .split(frame.area());
+        .split(area);
+
+    // Render the navbar
+    let navbar = Navbar::new(&app.current_screen, theme, "Wrapper");
+    navbar.render(frame, chunks[0]);
 
     // Draw title
     let title_block = Block::default()
@@ -136,7 +148,7 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme) {
     ]))
     .block(title_block);
 
-    frame.render_widget(title, chunks[0]);
+    frame.render_widget(title, chunks[1]);
 
     // Draw account information
     let account_block = Block::default()
@@ -182,7 +194,7 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme) {
         .style(Style::default().bg(theme.background))
         .wrap(Wrap { trim: true });
 
-    frame.render_widget(account_paragraph, chunks[1]);
+    frame.render_widget(account_paragraph, chunks[2]);
 
     // Footer component
     let footer = Footer::new(
@@ -192,17 +204,31 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme) {
         Some(app.user.is_logged_in),
     );
 
-    footer.render(frame, chunks[2]);
+    footer.render(frame, chunks[3]);
 }
 
-fn draw_exit_screen(frame: &mut Frame, app: &App, theme: &Theme) {
-    frame.render_widget(Clear, frame.area());
-
+fn draw_exit_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
     // Set background
     frame.render_widget(
         Block::default().style(Style::default().bg(theme.background)),
         frame.area(),
     );
+
+    // Create main layout with navbar
+    let main_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(3), // Navbar
+            Constraint::Min(1),    // Exit popup content
+        ])
+        .split(area);
+
+    // Render the navbar
+    let navbar = Navbar::new(&app.current_screen, theme, "Wrapper");
+    navbar.render(frame, main_chunks[0]);
+
+    // Clear the area for the popup
+    frame.render_widget(Clear, main_chunks[1]);
 
     let popup_block = Block::default()
         .title(Line::from(vec![
@@ -227,7 +253,7 @@ fn draw_exit_screen(frame: &mut Frame, app: &App, theme: &Theme) {
         .block(popup_block)
         .wrap(Wrap { trim: false });
 
-    let area = centered_rect(60, 25, frame.area());
+    let area = centered_rect(60, 25, main_chunks[1]);
     frame.render_widget(exit_paragraph, area);
 }
 

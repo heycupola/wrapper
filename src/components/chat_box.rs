@@ -1,4 +1,5 @@
 use ratatui::{
+    layout::Alignment,
     layout::Rect,
     style::{Color, Style},
     text::{Line, Span},
@@ -33,13 +34,16 @@ impl<'a> ChatBox<'a> {
         };
 
         let input_block = Block::default()
-            .title(Line::from(vec![
-                Span::styled("  ", Style::default().bg(self.theme.primary)),
-                Span::styled(
-                    " Input ",
-                    Style::default().fg(self.theme.primary_foreground),
-                ),
-            ]))
+            .title(
+                Line::from(vec![
+                    Span::styled("  ", Style::default().bg(self.theme.primary)),
+                    Span::styled(
+                        " Input ",
+                        Style::default().fg(self.theme.primary_foreground),
+                    ),
+                ])
+                .alignment(Alignment::Center),
+            )
             .borders(Borders::ALL)
             .border_style(Style::default().fg(border_color));
 
@@ -106,7 +110,7 @@ impl<'a> ChatBox<'a> {
 
             // Add the "press enter to prompt" hint at the end
             spans.push(Span::styled(
-                " press enter to prompt",
+                " ⏎",
                 Style::default().fg(self.theme.muted_foreground),
             ));
 

@@ -1,10 +1,10 @@
 ## wrapper.sh
 
-- [ ] add navbar
+- [x] add navbar
+- [x] add customized footer component
 - [x] refactor constraints box
 - [x] add mode to app
 - [x] alter keybindings
-- [ ] update footer (Logo + Chat and Account tabs)
 - [ ] add cancel prompt text while prompting
 - [ ] add view mode to the chatbox
 - [ ] add view mode to the messages

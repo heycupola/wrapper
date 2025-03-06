@@ -7,6 +7,7 @@ pub mod components {
     pub mod constraints_box;
     pub mod footer;
     pub mod messages_pane;
+    pub mod navbar;
 }
 
 pub mod util {

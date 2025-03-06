@@ -1,4 +1,5 @@
 use ratatui::{
+    layout::Alignment,
     layout::Rect,
     style::{Modifier, Style},
     text::{Line, Span},
@@ -38,13 +39,16 @@ impl<'a> ChatHistoryPane<'a> {
         };
 
         let chat_history_block = Block::default()
-            .title(Line::from(vec![
-                Span::styled("  ", Style::default().bg(self.theme.primary)),
-                Span::styled(
-                    " Chat History ",
-                    Style::default().fg(self.theme.primary_foreground),
-                ),
-            ]))
+            .title(
+                Line::from(vec![
+                    Span::styled("  ", Style::default().bg(self.theme.primary)),
+                    Span::styled(
+                        " Chat History ",
+                        Style::default().fg(self.theme.primary_foreground),
+                    ),
+                ])
+                .alignment(Alignment::Center),
+            )
             .borders(Borders::ALL)
             .border_style(Style::default().fg(border_color));
 
