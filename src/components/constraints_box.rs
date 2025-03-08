@@ -1,6 +1,6 @@
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
+    style::Style,
     symbols,
     text::{Line, Span},
     widgets::{Block, Borders, Padding, Paragraph},
@@ -33,13 +33,6 @@ impl<'a> ConstraintsBox<'a> {
     pub fn render(&self, frame: &mut Frame, area: Rect) {
         // Create the main block with title "Constraints"
         let main_block = Block::default()
-            .title(
-                Line::from(vec![Span::styled(
-                    " constraints ",
-                    Style::default().fg(self.theme.primary_foreground),
-                )])
-                .alignment(Alignment::Center),
-            )
             .borders(Borders::ALL)
             .border_style(Style::default().fg(self.theme.border))
             .padding(Padding::new(1, 1, 0, 0));
@@ -65,7 +58,7 @@ impl<'a> ConstraintsBox<'a> {
         } else if self.search_on_web {
             "search on web"
         } else {
-            "No Mode"
+            "no mode"
         };
 
         let mode_text = Span::styled(mode_name, Style::default().fg(self.theme.muted_foreground));

@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span, Text},
     widgets::{Block, Borders, Clear, Paragraph, Wrap},
@@ -121,80 +121,115 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3), // Navbar
-            Constraint::Length(3), // Title
             Constraint::Min(1),    // Content
             Constraint::Length(3), // Footer
         ])
         .split(area);
 
+    let content_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(33),
+            Constraint::Percentage(33),
+            Constraint::Percentage(33),
+        ])
+        .split(chunks[1]);
+
+    // headings: account, quota, plan
+
+    let content_block = |title: &str| {
+        Block::default()
+            .title(Line::from(vec![
+                Span::styled("  ", Style::default().bg(theme.primary)),
+                Span::styled(
+                    format!(" {} ", title),
+                    Style::default().fg(theme.primary_foreground),
+                ),
+            ]))
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(theme.border))
+    };
+
+    let account_text = vec![
+        Line::from(Span::styled(
+            format!("Email: {}", app.user.email),
+            Style::default().fg(theme.foreground),
+        )),
+        Line::from(Span::styled(
+            format!("Remaining Messages: {}", app.user.remaining_messages),
+            Style::default().fg(theme.foreground),
+        )),
+        Line::from(""),
+        Line::from(Span::styled(
+            "Press 'o' to log out",
+            Style::default().fg(theme.warning),
+        )),
+    ];
+
+    let quota_text = vec![Line::from(Span::styled(
+        format!("Remaining Quota: {}", "31"),
+        Style::default().fg(theme.foreground),
+    ))];
+
+    let plan_text = vec![Line::from(Span::styled(
+        format!("Current plan: {}", "Free af"),
+        Style::default().fg(theme.foreground),
+    ))];
+
+    frame.render_widget(
+        Paragraph::new(account_text)
+            .block(content_block("account"))
+            .style(Style::default().bg(theme.background))
+            .wrap(Wrap { trim: true }),
+        content_layout[0],
+    );
+
+    frame.render_widget(
+        Paragraph::new(quota_text)
+            .block(content_block("quota"))
+            .style(Style::default().bg(theme.background))
+            .wrap(Wrap { trim: true }),
+        content_layout[1],
+    );
+
+    frame.render_widget(
+        Paragraph::new(plan_text)
+            .block(content_block("plan"))
+            .style(Style::default().bg(theme.background))
+            .wrap(Wrap { trim: true }),
+        content_layout[2],
+    );
+
     // Render the navbar
     let navbar = Navbar::new(&app.current_screen, theme, "Wrapper");
     navbar.render(frame, chunks[0]);
 
-    // Draw title
-    let title_block = Block::default()
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(theme.border))
-        .style(Style::default().bg(theme.background));
+    // TODO: we're gonna render here after figuring out the desing of the account page with
+    // authenticated account
+    // login box
+    // let login_box = centered_rect(40, 40, chunks[1]);
 
-    let title = Paragraph::new(Line::from(vec![
-        Span::styled("  ", Style::default().bg(theme.primary)),
-        Span::styled(
-            " Account Information ",
-            Style::default()
-                .fg(theme.primary)
-                .add_modifier(Modifier::BOLD),
-        ),
-    ]))
-    .block(title_block);
+    // let login_box_block = Block::default()
+    //     .borders(Borders::ALL)
+    //     .border_style(Style::new().fg(theme.border));
 
-    frame.render_widget(title, chunks[1]);
+    // let login_box_heading = Line::from(vec![
+    //     Span::styled("log in to ", Style::default().add_modifier(Modifier::BOLD)),
+    //     Span::styled(
+    //         "wrapper.sh",
+    //         Style::default()
+    //             .fg(theme.primary)
+    //             .add_modifier(Modifier::BOLD),
+    //     ),
+    // ]);
 
-    // Draw account information
-    let account_block = Block::default()
-        .title(Line::from(vec![
-            Span::styled("  ", Style::default().bg(theme.primary)),
-            Span::styled(" Account ", Style::default().fg(theme.primary_foreground)),
-        ]))
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(theme.border));
+    // let login_hero_paragraph = Paragraph::new(login_box_heading)
+    //     .alignment(Alignment::Center)
+    //     .block(login_box_block)
+    //     .style(Style::default().bg(theme.background))
+    //     .wrap(Wrap { trim: true });
 
-    let account_text = if app.user.is_logged_in {
-        vec![
-            Line::from(Span::styled(
-                format!("Email: {}", app.user.email),
-                Style::default().fg(theme.foreground),
-            )),
-            Line::from(Span::styled(
-                format!("Remaining Messages: {}", app.user.remaining_messages),
-                Style::default().fg(theme.foreground),
-            )),
-            Line::from(""),
-            Line::from(Span::styled(
-                "Press 'o' to log out",
-                Style::default().fg(theme.warning),
-            )),
-        ]
-    } else {
-        vec![
-            Line::from(Span::styled(
-                "You are not logged in",
-                Style::default().fg(theme.destructive),
-            )),
-            Line::from(""),
-            Line::from(Span::styled(
-                "Press 'l' to log in",
-                Style::default().fg(theme.primary),
-            )),
-        ]
-    };
-
-    let account_paragraph = Paragraph::new(account_text)
-        .block(account_block)
-        .style(Style::default().bg(theme.background))
-        .wrap(Wrap { trim: true });
-
-    frame.render_widget(account_paragraph, chunks[2]);
+    // frame.render_widget(login_hero_paragraph, login_box);
 
     // Footer component
     let footer = Footer::new(
@@ -204,7 +239,7 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
         Some(app.user.is_logged_in),
     );
 
-    footer.render(frame, chunks[3]);
+    footer.render(frame, chunks[2]);
 }
 
 fn draw_exit_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
