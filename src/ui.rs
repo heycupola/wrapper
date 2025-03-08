@@ -2,18 +2,21 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Clear, Padding, Paragraph, Wrap},
+    widgets::{Block, Borders, Clear, Paragraph, Wrap},
     Frame,
 };
 
-use crate::components::{
-    chat_box::ChatBox, chat_history_pane::ChatHistoryPane, constraints_box::ConstraintsBox,
-    messages_pane::MessagesPane, navbar::Navbar,
-};
 use crate::util::theme::{current_theme, Theme};
 use crate::{
     app::{App, PositionOnChat, Screen},
     components::footer::Footer,
+};
+use crate::{
+    components::{
+        chat_box::ChatBox, chat_history_pane::ChatHistoryPane, constraints_box::ConstraintsBox,
+        messages_pane::MessagesPane, navbar::Navbar,
+    },
+    util::renderer::render_content_block,
 };
 
 pub fn ui(frame: &mut Frame, app: &App) {
@@ -22,7 +25,14 @@ pub fn ui(frame: &mut Frame, app: &App) {
 
     // Set the background color for the entire frame
     frame.render_widget(
-        Block::default().style(Style::default().bg(theme.background)),
+        render_content_block(
+            &theme,
+            &false,
+            None,
+            None,
+            Some(Style::default().bg(theme.background)),
+            None,
+        ),
         frame.area(),
     );
 
@@ -32,7 +42,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
     match app.current_screen {
         Screen::Chat => draw_chat_screen(frame, app, &theme, centered_area),
         Screen::Account => draw_account_screen(frame, app, &theme, centered_area),
-        Screen::Exit => draw_exit_screen(frame, app, &theme, centered_area),
+        Screen::Exit => draw_exit_screen(frame, &theme, centered_area),
     }
 }
 
@@ -146,26 +156,6 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
         .split(content_layout[1]);
 
     // headings: account, quota, plan
-
-    let content_block = |border: bool, title: Option<&str>, padding: Option<u16>| {
-        let mut block = Block::default()
-            .borders(if border { Borders::ALL } else { Borders::NONE })
-            .border_style(Style::default().fg(theme.border))
-            .padding(Padding::uniform(padding.unwrap_or(0)));
-
-        if let Some(t) = title {
-            block = block.title(Line::from(vec![
-                Span::styled("  ", Style::default().bg(theme.primary)),
-                Span::styled(
-                    format!(" {} ", t),
-                    Style::default().fg(theme.primary_foreground),
-                ),
-            ]));
-        }
-
-        return block;
-    };
-
     let account_text = vec![
         Line::from(Span::styled(
             format!("Email: {}", app.user.email),
@@ -194,7 +184,14 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
 
     frame.render_widget(
         Paragraph::new(account_text)
-            .block(content_block(true, Some("account"), None))
+            .block(render_content_block(
+                theme,
+                &true,
+                Some("account"),
+                None,
+                None,
+                None,
+            ))
             .style(Style::default().bg(theme.background))
             .wrap(Wrap { trim: true }),
         upper_content_layout[0],
@@ -202,7 +199,14 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
 
     frame.render_widget(
         Paragraph::new(quota_text)
-            .block(content_block(true, Some("quota"), None))
+            .block(render_content_block(
+                theme,
+                &true,
+                Some("quota"),
+                None,
+                None,
+                None,
+            ))
             .style(Style::default().bg(theme.background))
             .wrap(Wrap { trim: true }),
         upper_content_layout[1],
@@ -210,7 +214,14 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
 
     frame.render_widget(
         Paragraph::new(plan_text)
-            .block(content_block(true, Some("plan"), None))
+            .block(render_content_block(
+                theme,
+                &true,
+                Some("plan"),
+                None,
+                None,
+                None,
+            ))
             .style(Style::default().bg(theme.background))
             .wrap(Wrap { trim: true }),
         upper_content_layout[2],
@@ -261,7 +272,14 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
 
     frame.render_widget(
         Paragraph::new(chat_keybindings_text)
-            .block(content_block(false, None, Some(1)))
+            .block(render_content_block(
+                theme,
+                &false,
+                None,
+                Some(&1),
+                None,
+                None,
+            ))
             .style(Style::default().bg(theme.background))
             .wrap(Wrap { trim: true }),
         keybindings_layout[0],
@@ -269,7 +287,14 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
 
     frame.render_widget(
         Paragraph::new(account_keybindings_text)
-            .block(content_block(false, None, Some(1)))
+            .block(render_content_block(
+                theme,
+                &false,
+                None,
+                Some(&1),
+                None,
+                None,
+            ))
             .style(Style::default().bg(theme.background))
             .wrap(Wrap { trim: true }),
         keybindings_layout[1],
@@ -277,7 +302,14 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
 
     frame.render_widget(
         Paragraph::new("")
-            .block(content_block(true, Some("plan"), None))
+            .block(render_content_block(
+                theme,
+                &true,
+                Some("plan"),
+                None,
+                None,
+                None,
+            ))
             .style(Style::default().bg(theme.background))
             .wrap(Wrap { trim: true }),
         lower_content_layout[0],
@@ -290,7 +322,14 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
 
     frame.render_widget(
         Paragraph::new(sync_text)
-            .block(content_block(true, Some("sync"), None))
+            .block(render_content_block(
+                theme,
+                &true,
+                Some("sync"),
+                None,
+                None,
+                None,
+            ))
             .style(Style::default().bg(theme.background))
             .wrap(Wrap { trim: true }),
         lower_content_layout[1],
@@ -338,42 +377,24 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
     footer.render(frame, chunks[2]);
 }
 
-fn draw_exit_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
+fn draw_exit_screen(frame: &mut Frame, theme: &Theme, area: Rect) {
     // Set background
     frame.render_widget(
-        Block::default().style(Style::default().bg(theme.background)),
+        render_content_block(theme, &false, None, None, None, None),
         frame.area(),
     );
 
-    // Create main layout with navbar
-    let main_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(3), // Navbar
-            Constraint::Min(1),    // Exit popup content
-        ])
-        .split(area);
-
-    // Render the navbar
-    let navbar = Navbar::new(&app.current_screen, theme, "Wrapper");
-    navbar.render(frame, main_chunks[0]);
-
     // Clear the area for the popup
-    frame.render_widget(Clear, main_chunks[1]);
+    frame.render_widget(Clear, area);
 
-    let popup_block = Block::default()
-        .title(Line::from(vec![
-            Span::styled("  ", Style::default().bg(theme.destructive)),
-            Span::styled(
-                " Exit ",
-                Style::default()
-                    .fg(theme.destructive)
-                    .add_modifier(Modifier::BOLD),
-            ),
-        ]))
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(theme.destructive))
-        .style(Style::default().bg(theme.muted));
+    let popup_block = render_content_block(
+        theme,
+        &Borders::ALL,
+        Some("exit"),
+        None,
+        Some(Style::default().bg(theme.muted)),
+        Some(Style::default().fg(theme.destructive)),
+    );
 
     let exit_text = Text::styled(
         "Are you sure you want to exit? (y/n)",
@@ -384,7 +405,7 @@ fn draw_exit_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
         .block(popup_block)
         .wrap(Wrap { trim: false });
 
-    let area = centered_rect(60, 25, main_chunks[1]);
+    let area = centered_rect(60, 25, area);
     frame.render_widget(exit_paragraph, area);
 }
 

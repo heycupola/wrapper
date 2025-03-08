@@ -1,10 +1,11 @@
 use crate::app::Screen;
+use crate::util::renderer::render_content_block;
 use crate::util::theme::Theme;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::{
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph},
+    widgets::Paragraph,
     Frame,
 };
 
@@ -66,12 +67,9 @@ impl<'a> Navbar<'a> {
         // Create the navbar paragraph
         let navbar = Paragraph::new(navbar_line)
             .alignment(Alignment::Center)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .border_style(Style::default().fg(self.theme.border))
-                    .style(Style::default().bg(self.theme.background)),
-            );
+            .block(render_content_block(
+                self.theme, &true, None, None, None, None,
+            ));
 
         frame.render_widget(navbar, area);
     }

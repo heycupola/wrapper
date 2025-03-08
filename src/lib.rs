@@ -11,5 +11,6 @@ pub mod components {
 }
 
 pub mod util {
+    pub mod renderer;
     pub mod theme;
 }

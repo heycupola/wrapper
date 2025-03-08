@@ -2,11 +2,11 @@ use ratatui::{
     layout::Rect,
     style::Style,
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Paragraph, Wrap},
     Frame,
 };
 
-use crate::util::theme::Theme;
+use crate::util::{renderer::render_focusable_content_block, theme::Theme};
 
 pub struct ChatBox<'a> {
     pub input: &'a String,
@@ -26,22 +26,14 @@ impl<'a> ChatBox<'a> {
     }
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
-        let border_color = if self.is_focused {
-            self.theme.focus
-        } else {
-            self.theme.border
-        };
-
-        let input_block = Block::default()
-            .title(Line::from(vec![
-                Span::styled("  ", Style::default().bg(self.theme.primary)),
-                Span::styled(
-                    " Input ",
-                    Style::default().fg(self.theme.primary_foreground),
-                ),
-            ]))
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(border_color));
+        let input_block = render_focusable_content_block(
+            self.theme,
+            &true,
+            Some("input"),
+            None,
+            None,
+            self.is_focused,
+        );
 
         let input_style = if self.is_focused {
             Style::default().fg(self.theme.foreground)

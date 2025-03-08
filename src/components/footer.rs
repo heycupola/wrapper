@@ -1,12 +1,8 @@
 use crate::app::{PositionOnChat, Screen};
+use crate::util::renderer::render_content_block;
 use crate::util::theme::Theme;
 use ratatui::layout::{Alignment, Rect};
-use ratatui::{
-    style::Style,
-    text::Text,
-    widgets::{Block, Borders, Paragraph},
-    Frame,
-};
+use ratatui::{style::Style, text::Text, widgets::Paragraph, Frame};
 
 pub struct Footer<'a> {
     pub current_screen: &'a Screen,
@@ -48,11 +44,14 @@ impl<'a> Footer<'a> {
             Style::default().fg(self.theme.muted_foreground),
         ))
         .alignment(Alignment::Center)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(self.theme.border)),
-        );
+        .block(render_content_block(
+            &self.theme,
+            &true,
+            None,
+            None,
+            None,
+            None,
+        ));
 
         frame.render_widget(footer, area);
     }

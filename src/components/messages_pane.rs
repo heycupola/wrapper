@@ -2,12 +2,12 @@ use ratatui::{
     layout::Rect,
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Paragraph, Wrap},
     Frame,
 };
 
 use crate::app::Message;
-use crate::util::theme::Theme;
+use crate::util::{renderer::render_focusable_content_block, theme::Theme};
 
 pub struct MessagesPane<'a> {
     pub messages: &'a Vec<Message>,
@@ -32,22 +32,14 @@ impl<'a> MessagesPane<'a> {
     }
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
-        let border_color = if self.is_focused {
-            self.theme.focus
-        } else {
-            self.theme.border
-        };
-
-        let messages_block = Block::default()
-            .title(Line::from(vec![
-                Span::styled("  ", Style::default().bg(self.theme.primary)),
-                Span::styled(
-                    " Messages ",
-                    Style::default().fg(self.theme.primary_foreground),
-                ),
-            ]))
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(border_color));
+        let messages_block = render_focusable_content_block(
+            self.theme,
+            &true,
+            Some("messages"),
+            None,
+            None,
+            self.is_focused,
+        );
 
         let messages_text = self
             .messages

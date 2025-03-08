@@ -2,11 +2,11 @@ use ratatui::{
     layout::Rect,
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem},
+    widgets::{List, ListItem},
     Frame,
 };
 
-use crate::util::theme::Theme;
+use crate::util::{renderer::render_focusable_content_block, theme::Theme};
 
 pub struct ChatHistoryPane<'a> {
     pub chat_history: &'a Vec<String>,
@@ -31,22 +31,14 @@ impl<'a> ChatHistoryPane<'a> {
     }
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
-        let border_color = if self.is_focused {
-            self.theme.focus
-        } else {
-            self.theme.border
-        };
-
-        let chat_history_block = Block::default()
-            .title(Line::from(vec![
-                Span::styled("  ", Style::default().bg(self.theme.primary)),
-                Span::styled(
-                    " Chat History ",
-                    Style::default().fg(self.theme.primary_foreground),
-                ),
-            ]))
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(border_color));
+        let chat_history_block = render_focusable_content_block(
+            self.theme,
+            &true,
+            Some("history"),
+            None,
+            None,
+            self.is_focused,
+        );
 
         let chat_history_items: Vec<ListItem> = self
             .chat_history

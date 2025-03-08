@@ -3,11 +3,11 @@ use ratatui::{
     style::Style,
     symbols,
     text::{Line, Span},
-    widgets::{Block, Borders, Padding, Paragraph},
+    widgets::{Padding, Paragraph},
     Frame,
 };
 
-use crate::util::theme::Theme;
+use crate::util::{renderer::render_content_block, theme::Theme};
 pub struct ConstraintsBox<'a> {
     pub current_model: &'a str,
     pub theme: &'a Theme,
@@ -31,11 +31,14 @@ impl<'a> ConstraintsBox<'a> {
     }
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
-        // Create the main block with title "Constraints"
-        let main_block = Block::default()
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(self.theme.border))
-            .padding(Padding::new(1, 1, 0, 0));
+        let main_block = render_content_block(
+            self.theme,
+            &true,
+            None,
+            Some(&Padding::new(1, 1, 0, 0)),
+            None,
+            None,
+        );
 
         // Get the inner area of the main block
         let inner_area = main_block.inner(area);
