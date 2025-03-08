@@ -1,8 +1,8 @@
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Clear, Paragraph, Wrap},
+    widgets::{Block, Borders, Clear, Padding, Paragraph, Wrap},
     Frame,
 };
 
@@ -127,27 +127,43 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
         .split(area);
 
     let content_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(chunks[1]);
+
+    let upper_content_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
             Constraint::Percentage(33),
             Constraint::Percentage(33),
             Constraint::Percentage(33),
         ])
-        .split(chunks[1]);
+        .split(content_layout[0]);
+
+    let lower_content_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(66), Constraint::Percentage(33)])
+        .split(content_layout[1]);
 
     // headings: account, quota, plan
 
-    let content_block = |title: &str| {
-        Block::default()
-            .title(Line::from(vec![
+    let content_block = |border: bool, title: Option<&str>, padding: Option<u16>| {
+        let mut block = Block::default()
+            .borders(if border { Borders::ALL } else { Borders::NONE })
+            .border_style(Style::default().fg(theme.border))
+            .padding(Padding::uniform(padding.unwrap_or(0)));
+
+        if let Some(t) = title {
+            block = block.title(Line::from(vec![
                 Span::styled("  ", Style::default().bg(theme.primary)),
                 Span::styled(
-                    format!(" {} ", title),
+                    format!(" {} ", t),
                     Style::default().fg(theme.primary_foreground),
                 ),
-            ]))
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(theme.border))
+            ]));
+        }
+
+        return block;
     };
 
     let account_text = vec![
@@ -178,26 +194,106 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
 
     frame.render_widget(
         Paragraph::new(account_text)
-            .block(content_block("account"))
+            .block(content_block(true, Some("account"), None))
             .style(Style::default().bg(theme.background))
             .wrap(Wrap { trim: true }),
-        content_layout[0],
+        upper_content_layout[0],
     );
 
     frame.render_widget(
         Paragraph::new(quota_text)
-            .block(content_block("quota"))
+            .block(content_block(true, Some("quota"), None))
             .style(Style::default().bg(theme.background))
             .wrap(Wrap { trim: true }),
-        content_layout[1],
+        upper_content_layout[1],
     );
 
     frame.render_widget(
         Paragraph::new(plan_text)
-            .block(content_block("plan"))
+            .block(content_block(true, Some("plan"), None))
             .style(Style::default().bg(theme.background))
             .wrap(Wrap { trim: true }),
-        content_layout[2],
+        upper_content_layout[2],
+    );
+
+    let keybindings_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(lower_content_layout[0]);
+
+    let chat_keybindings_text = vec![
+        Line::from(Span::styled(
+            format!("chat keybindings:"),
+            Style::default()
+                .fg(theme.foreground)
+                .add_modifier(Modifier::BOLD),
+        )),
+        Line::from(Span::styled(
+            format!(" go chat: ctrl+c"),
+            Style::default().fg(theme.foreground),
+        )),
+        Line::from(Span::styled(
+            format!("go messages: ctrl+l"),
+            Style::default().fg(theme.foreground),
+        )),
+    ];
+
+    let account_keybindings_text = vec![
+        Line::from(Span::styled(
+            format!("account keybindings:"),
+            Style::default()
+                .fg(theme.foreground)
+                .add_modifier(Modifier::BOLD),
+        )),
+        Line::from(Span::styled(
+            format!("login: l"),
+            Style::default().fg(theme.foreground),
+        )),
+        Line::from(Span::styled(
+            format!("logout: o"),
+            Style::default().fg(theme.foreground),
+        )),
+        Line::from(Span::styled(
+            format!("chat: c"),
+            Style::default().fg(theme.foreground),
+        )),
+    ];
+
+    frame.render_widget(
+        Paragraph::new(chat_keybindings_text)
+            .block(content_block(false, None, Some(1)))
+            .style(Style::default().bg(theme.background))
+            .wrap(Wrap { trim: true }),
+        keybindings_layout[0],
+    );
+
+    frame.render_widget(
+        Paragraph::new(account_keybindings_text)
+            .block(content_block(false, None, Some(1)))
+            .style(Style::default().bg(theme.background))
+            .wrap(Wrap { trim: true }),
+        keybindings_layout[1],
+    );
+
+    frame.render_widget(
+        Paragraph::new("")
+            .block(content_block(true, Some("plan"), None))
+            .style(Style::default().bg(theme.background))
+            .wrap(Wrap { trim: true }),
+        lower_content_layout[0],
+    );
+
+    let sync_text = vec![Line::from(Span::styled(
+        format!("Last sync: {}", "24hrs ago"),
+        Style::default().fg(theme.foreground),
+    ))];
+
+    frame.render_widget(
+        Paragraph::new(sync_text)
+            .block(content_block(true, Some("sync"), None))
+            .style(Style::default().bg(theme.background))
+            .wrap(Wrap { trim: true }),
+        lower_content_layout[1],
     );
 
     // Render the navbar
