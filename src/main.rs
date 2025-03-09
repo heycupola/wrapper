@@ -57,7 +57,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         Screen::Chat => handle_chat_keys(key, app),
                         Screen::Account => handle_account_keys(key, app),
                         Screen::Exit => {
-                            if handle_exit_keys(key) {
+                            if handle_exit_keys(key, app) {
                                 return Ok(true);
                             }
                         }
@@ -166,10 +166,13 @@ fn handle_account_keys(key: KeyEvent, app: &mut App) {
     }
 }
 
-fn handle_exit_keys(key: KeyEvent) -> bool {
+fn handle_exit_keys(key: KeyEvent, app: &mut App) -> bool {
     match key.code {
         KeyCode::Char('y') => true,
-        KeyCode::Char('n') | KeyCode::Char('q') => false,
+        KeyCode::Char('n') => {
+            app.switch_screen(app.last_screen.clone());
+            return false;
+        }
         _ => false,
     }
 }

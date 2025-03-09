@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub enum Screen {
     Chat,
     Account,
@@ -27,6 +28,7 @@ pub struct App {
     pub available_models: Vec<String>,
     pub is_prompting: bool,
     pub current_screen: Screen,
+    pub last_screen: Screen,
     pub position_on_chat: Option<PositionOnChat>,
     pub messages: Vec<Message>,
     pub chat_history: Vec<String>,
@@ -52,6 +54,7 @@ impl Default for App {
             ],
             is_prompting: false,
             current_screen: Screen::Chat,
+            last_screen: Screen::Chat,
             position_on_chat: Some(PositionOnChat::ChatBox),
             messages: Vec::default(),
             chat_history: vec![
@@ -214,6 +217,7 @@ impl App {
     }
 
     pub fn switch_screen(&mut self, screen: Screen) {
+        self.last_screen = self.current_screen.clone();
         self.current_screen = screen;
     }
 
