@@ -2,14 +2,20 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Clear, Paragraph, Wrap},
+    widgets::{Borders, Clear, Paragraph, Wrap},
     Frame,
 };
 
-use crate::util::theme::{current_theme, Theme};
 use crate::{
     app::{App, PositionOnChat, Screen},
     components::footer::Footer,
+};
+use crate::{
+    components::keybinds::Keybinds,
+    util::{
+        renderer::centered_rect,
+        theme::{current_theme, Theme},
+    },
 };
 use crate::{
     components::{
@@ -232,73 +238,8 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(lower_content_layout[0]);
 
-    let chat_keybindings_text = vec![
-        Line::from(Span::styled(
-            format!("chat keybindings:"),
-            Style::default()
-                .fg(theme.foreground)
-                .add_modifier(Modifier::BOLD),
-        )),
-        Line::from(Span::styled(
-            format!(" go chat: ctrl+c"),
-            Style::default().fg(theme.foreground),
-        )),
-        Line::from(Span::styled(
-            format!("go messages: ctrl+l"),
-            Style::default().fg(theme.foreground),
-        )),
-    ];
-
-    let account_keybindings_text = vec![
-        Line::from(Span::styled(
-            format!("account keybindings:"),
-            Style::default()
-                .fg(theme.foreground)
-                .add_modifier(Modifier::BOLD),
-        )),
-        Line::from(Span::styled(
-            format!("login: l"),
-            Style::default().fg(theme.foreground),
-        )),
-        Line::from(Span::styled(
-            format!("logout: o"),
-            Style::default().fg(theme.foreground),
-        )),
-        Line::from(Span::styled(
-            format!("chat: c"),
-            Style::default().fg(theme.foreground),
-        )),
-    ];
-
-    frame.render_widget(
-        Paragraph::new(chat_keybindings_text)
-            .block(render_content_block(
-                theme,
-                &false,
-                None,
-                Some(&1),
-                None,
-                None,
-            ))
-            .style(Style::default().bg(theme.background))
-            .wrap(Wrap { trim: true }),
-        keybindings_layout[0],
-    );
-
-    frame.render_widget(
-        Paragraph::new(account_keybindings_text)
-            .block(render_content_block(
-                theme,
-                &false,
-                None,
-                Some(&1),
-                None,
-                None,
-            ))
-            .style(Style::default().bg(theme.background))
-            .wrap(Wrap { trim: true }),
-        keybindings_layout[1],
-    );
+    let keybinds = Keybinds::new(&theme);
+    keybinds.render(frame, [keybindings_layout[0], keybindings_layout[1]]);
 
     frame.render_widget(
         Paragraph::new("")
@@ -378,26 +319,31 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
 }
 
 fn draw_exit_screen(frame: &mut Frame, theme: &Theme, area: Rect) {
-    // Set background
-    frame.render_widget(
-        render_content_block(theme, &false, None, None, None, None),
-        frame.area(),
-    );
-
     // Clear the area for the popup
     frame.render_widget(Clear, area);
+
+    let bg_block = render_content_block(
+        theme,
+        &false,
+        None,
+        None,
+        Some(Style::default().bg(theme.background)),
+        None,
+    );
+
+    frame.render_widget(bg_block, area);
 
     let popup_block = render_content_block(
         theme,
         &Borders::ALL,
         Some("exit"),
         None,
-        Some(Style::default().bg(theme.muted)),
+        Some(Style::default().bg(theme.background)),
         Some(Style::default().fg(theme.destructive)),
     );
 
     let exit_text = Text::styled(
-        "Are you sure you want to exit? (y/n)",
+        "are you sure you want to exit? (y/n)",
         Style::default().fg(theme.destructive_foreground),
     );
 
@@ -405,26 +351,7 @@ fn draw_exit_screen(frame: &mut Frame, theme: &Theme, area: Rect) {
         .block(popup_block)
         .wrap(Wrap { trim: false });
 
-    let area = centered_rect(60, 25, area);
+    let area = centered_rect(40, 25, area);
+
     frame.render_widget(exit_paragraph, area);
-}
-
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage((100 - percent_y) / 2),
-            Constraint::Percentage(percent_y),
-            Constraint::Percentage((100 - percent_y) / 2),
-        ])
-        .split(r);
-
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage((100 - percent_x) / 2),
-            Constraint::Percentage(percent_x),
-            Constraint::Percentage((100 - percent_x) / 2),
-        ])
-        .split(popup_layout[1])[1]
 }
