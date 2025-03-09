@@ -1,14 +1,17 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Modifier, Style},
-    text::{Line, Span, Text},
+    style::Style,
+    text::Text,
     widgets::{Borders, Clear, Paragraph, Wrap},
     Frame,
 };
 
 use crate::{
     app::{App, PositionOnChat, Screen},
-    components::footer::Footer,
+    components::{
+        account_info::AccountInfo, footer::Footer, plan_info::PlanInfo, quota_info::QuotaInfo,
+        sync_box::SyncBox,
+    },
 };
 use crate::{
     components::keybinds::Keybinds,
@@ -26,10 +29,8 @@ use crate::{
 };
 
 pub fn ui(frame: &mut Frame, app: &App) {
-    // Get the current theme
     let theme = current_theme();
 
-    // Set the background color for the entire frame
     frame.render_widget(
         render_content_block(
             &theme,
@@ -42,7 +43,6 @@ pub fn ui(frame: &mut Frame, app: &App) {
         frame.area(),
     );
 
-    // Create a centered area with padding on all sides
     let centered_area = centered_rect(70, 90, frame.area());
 
     match app.current_screen {
@@ -53,49 +53,47 @@ pub fn ui(frame: &mut Frame, app: &App) {
 }
 
 fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
-    // Create main layout with navbar, title and content
+    // main layout
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3), // Navbar
-            Constraint::Min(1),    // Content -> History + Messages + Input
-            Constraint::Length(3), // Footer
+            Constraint::Length(3), // navbar
+            Constraint::Min(1),    // content
+            Constraint::Length(3), // footer
         ])
         .split(area);
 
-    // Render the navbar
-    let navbar = Navbar::new(&app.current_screen, theme, "Wrapper");
-    navbar.render(frame, main_chunks[0]);
+    // render navbar
+    Navbar::new(&app.current_screen, theme, "wrapper").render(frame, main_chunks[0]);
 
-    // Split content horizontally for chat history and messages/input
     let content_chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
-            Constraint::Percentage(20), // Chat history
-            Constraint::Percentage(80), // Messages and input
+            Constraint::Percentage(20), // chat history
+            Constraint::Percentage(80), // messages and input
         ])
         .split(main_chunks[1]);
 
+    // layout for chat history pane and constraints box
     let left_side_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Min(1), Constraint::Length(5)])
         .split(content_chunks[0]);
 
-    // ChatHistoryPane component
-    let chat_history_pane = ChatHistoryPane::new(
+    // render chat history pane
+    ChatHistoryPane::new(
         &app.chat_history,
         app.history_scroll,
         matches!(app.position_on_chat, Some(PositionOnChat::ChatHistory)),
         theme,
-    );
+    )
+    .render(frame, left_side_chunks[0]);
 
-    chat_history_pane.render(frame, left_side_chunks[0]);
+    // render constraints box
+    ConstraintsBox::new(&app.model, theme, app.reason, app.search_on_web)
+        .render(frame, left_side_chunks[1]);
 
-    // ModelsBox component
-    let constraints_box = ConstraintsBox::new(&app.model, theme, app.reason, app.search_on_web);
-    constraints_box.render(frame, left_side_chunks[1]);
-
-    // Split right side vertically for messages and input
+    // layout for messages and chat box
     let right_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -104,17 +102,16 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
         ])
         .split(content_chunks[1]);
 
-    // MessagesPane component
-    let messages_pane = MessagesPane::new(
+    // render messages pane
+    MessagesPane::new(
         &app.messages,
         app.message_scroll,
         matches!(app.position_on_chat, Some(PositionOnChat::Messages)),
         theme,
-    );
+    )
+    .render(frame, right_chunks[0]);
 
-    messages_pane.render(frame, right_chunks[0]);
-
-    // ChatBox component
+    // render chatbox
     let mut chat_box = ChatBox::new(
         &app.input,
         matches!(app.position_on_chat, Some(PositionOnChat::ChatBox)),
@@ -125,22 +122,24 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
 
     chat_box.render(frame, right_chunks[1]);
 
-    // Footer component
-    let footer = Footer::new(&app.current_screen, theme, &app.position_on_chat, None);
-
-    footer.render(frame, main_chunks[2]);
+    // render footer
+    Footer::new(&app.current_screen, theme, &app.position_on_chat, None)
+        .render(frame, main_chunks[2]);
 }
 
 fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
-    // Create main layout
+    // main layout
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3), // Navbar
-            Constraint::Min(1),    // Content
-            Constraint::Length(3), // Footer
+            Constraint::Length(3), // navbar
+            Constraint::Min(1),    // content
+            Constraint::Length(3), // footer
         ])
         .split(area);
+
+    // render navbar
+    Navbar::new(&app.current_screen, theme, "Wrapper").render(frame, chunks[0]);
 
     let content_layout = Layout::default()
         .direction(Direction::Vertical)
@@ -156,91 +155,31 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
         ])
         .split(content_layout[0]);
 
+    // render account info
+    AccountInfo::new(&theme, &app.user.email, app.user.remaining_messages)
+        .render(frame, upper_content_layout[0]);
+
+    // render quota info
+    QuotaInfo::new(&theme).render(frame, upper_content_layout[1]);
+
+    // render plan info
+    PlanInfo::new(&theme).render(frame, upper_content_layout[2]);
+
     let lower_content_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(66), Constraint::Percentage(33)])
         .split(content_layout[1]);
 
-    // headings: account, quota, plan
-    let account_text = vec![
-        Line::from(Span::styled(
-            format!("Email: {}", app.user.email),
-            Style::default().fg(theme.foreground),
-        )),
-        Line::from(Span::styled(
-            format!("Remaining Messages: {}", app.user.remaining_messages),
-            Style::default().fg(theme.foreground),
-        )),
-        Line::from(""),
-        Line::from(Span::styled(
-            "Press 'o' to log out",
-            Style::default().fg(theme.warning),
-        )),
-    ];
-
-    let quota_text = vec![Line::from(Span::styled(
-        format!("Remaining Quota: {}", "31"),
-        Style::default().fg(theme.foreground),
-    ))];
-
-    let plan_text = vec![Line::from(Span::styled(
-        format!("Current plan: {}", "Free af"),
-        Style::default().fg(theme.foreground),
-    ))];
-
-    frame.render_widget(
-        Paragraph::new(account_text)
-            .block(render_content_block(
-                theme,
-                &true,
-                Some("account"),
-                None,
-                None,
-                None,
-            ))
-            .style(Style::default().bg(theme.background))
-            .wrap(Wrap { trim: true }),
-        upper_content_layout[0],
-    );
-
-    frame.render_widget(
-        Paragraph::new(quota_text)
-            .block(render_content_block(
-                theme,
-                &true,
-                Some("quota"),
-                None,
-                None,
-                None,
-            ))
-            .style(Style::default().bg(theme.background))
-            .wrap(Wrap { trim: true }),
-        upper_content_layout[1],
-    );
-
-    frame.render_widget(
-        Paragraph::new(plan_text)
-            .block(render_content_block(
-                theme,
-                &true,
-                Some("plan"),
-                None,
-                None,
-                None,
-            ))
-            .style(Style::default().bg(theme.background))
-            .wrap(Wrap { trim: true }),
-        upper_content_layout[2],
-    );
-
-    let keybindings_layout = Layout::default()
+    let keybinds_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(lower_content_layout[0]);
 
-    let keybinds = Keybinds::new(&theme);
-    keybinds.render(frame, [keybindings_layout[0], keybindings_layout[1]]);
+    // render keybinds
+    Keybinds::new(&theme).render(frame, [keybinds_layout[0], keybinds_layout[1]]);
 
+    // NOTE: this rendering is for creating a background block for keybindings
+    // because we need to give them a separate look
     frame.render_widget(
         Paragraph::new("")
             .block(render_content_block(
@@ -256,29 +195,8 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
         lower_content_layout[0],
     );
 
-    let sync_text = vec![Line::from(Span::styled(
-        format!("Last sync: {}", "24hrs ago"),
-        Style::default().fg(theme.foreground),
-    ))];
-
-    frame.render_widget(
-        Paragraph::new(sync_text)
-            .block(render_content_block(
-                theme,
-                &true,
-                Some("sync"),
-                None,
-                None,
-                None,
-            ))
-            .style(Style::default().bg(theme.background))
-            .wrap(Wrap { trim: true }),
-        lower_content_layout[1],
-    );
-
-    // Render the navbar
-    let navbar = Navbar::new(&app.current_screen, theme, "Wrapper");
-    navbar.render(frame, chunks[0]);
+    // render syncbox
+    SyncBox::new(&theme).render(frame, lower_content_layout[1]);
 
     // TODO: we're gonna render here after figuring out the desing of the account page with
     // authenticated account
@@ -307,15 +225,14 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
 
     // frame.render_widget(login_hero_paragraph, login_box);
 
-    // Footer component
-    let footer = Footer::new(
+    // render footer
+    Footer::new(
         &app.current_screen,
         theme,
         &app.position_on_chat,
         Some(app.user.is_logged_in),
-    );
-
-    footer.render(frame, chunks[2]);
+    )
+    .render(frame, chunks[2]);
 }
 
 fn draw_exit_screen(frame: &mut Frame, theme: &Theme, area: Rect) {
