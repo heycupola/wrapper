@@ -43,36 +43,54 @@ pub fn ui(frame: &mut Frame, app: &App) {
         frame.area(),
     );
 
+    // NOTE: this is our main area that represents screen with padding in x and y axes
     let centered_area = centered_rect(70, 90, frame.area());
 
-    match app.current_screen {
-        Screen::Chat => draw_chat_screen(frame, app, &theme, centered_area),
-        Screen::Account => draw_account_screen(frame, app, &theme, centered_area),
+    fn adjust_main_layout(f: &mut Frame, app: &App, theme: &Theme, centered_area: Rect) -> Rect {
+        let layout = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(3),
+                Constraint::Min(1),
+                Constraint::Length(3),
+            ])
+            .split(centered_area);
+
+        Navbar::new(&app.current_screen, theme, "wrapper").render(f, layout[0]);
+
+        Footer::new(
+            &app.current_screen,
+            theme,
+            &app.position_on_chat,
+            Some(app.user.is_logged_in),
+        )
+        .render(f, layout[2]);
+
+        layout[1]
+    }
+
+    let main_layout = match &app.current_screen {
+        Screen::Chat | Screen::Account => {
+            Some(adjust_main_layout(frame, app, &theme, centered_area))
+        }
+        _ => None,
+    };
+
+    match &app.current_screen {
+        Screen::Chat => draw_chat_screen(frame, app, &theme, main_layout.unwrap()),
+        Screen::Account => draw_account_screen(frame, app, &theme, main_layout.unwrap()),
         Screen::Exit => draw_exit_screen(frame, &theme, centered_area),
     }
 }
 
 fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
-    // main layout
-    let main_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(3), // navbar
-            Constraint::Min(1),    // content
-            Constraint::Length(3), // footer
-        ])
-        .split(area);
-
-    // render navbar
-    Navbar::new(&app.current_screen, theme, "wrapper").render(frame, main_chunks[0]);
-
     let content_chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
             Constraint::Percentage(20), // chat history
             Constraint::Percentage(80), // messages and input
         ])
-        .split(main_chunks[1]);
+        .split(area);
 
     // layout for chat history pane and constraints box
     let left_side_chunks = Layout::default()
@@ -121,30 +139,13 @@ fn draw_chat_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
     chat_box.cursor_position = app.cursor_position;
 
     chat_box.render(frame, right_chunks[1]);
-
-    // render footer
-    Footer::new(&app.current_screen, theme, &app.position_on_chat, None)
-        .render(frame, main_chunks[2]);
 }
 
 fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) {
-    // main layout
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(3), // navbar
-            Constraint::Min(1),    // content
-            Constraint::Length(3), // footer
-        ])
-        .split(area);
-
-    // render navbar
-    Navbar::new(&app.current_screen, theme, "Wrapper").render(frame, chunks[0]);
-
     let content_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(chunks[1]);
+        .split(area);
 
     let upper_content_layout = Layout::default()
         .direction(Direction::Horizontal)
@@ -224,15 +225,6 @@ fn draw_account_screen(frame: &mut Frame, app: &App, theme: &Theme, area: Rect) 
     //     .wrap(Wrap { trim: true });
 
     // frame.render_widget(login_hero_paragraph, login_box);
-
-    // render footer
-    Footer::new(
-        &app.current_screen,
-        theme,
-        &app.position_on_chat,
-        Some(app.user.is_logged_in),
-    )
-    .render(frame, chunks[2]);
 }
 
 fn draw_exit_screen(frame: &mut Frame, theme: &Theme, area: Rect) {
