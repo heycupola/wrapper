@@ -95,9 +95,9 @@ fn handle_chat_keys(key: KeyEvent, app: &mut App) {
         match key.code {
             KeyCode::Char(c) => match c {
                 'n' => app.clear_chat(),
-                'p' => app.prompt(),
                 'h' => app.change_chat_position(PositionOnChat::ChatHistory),
                 'l' => app.change_chat_position(PositionOnChat::Messages),
+                'j' => app.change_chat_position(PositionOnChat::ChatBox),
                 'q' => app.cancel_prompting(),
                 _ => {}
             },
@@ -108,7 +108,7 @@ fn handle_chat_keys(key: KeyEvent, app: &mut App) {
 
     match app.position_on_chat {
         Some(PositionOnChat::ChatBox) => {
-            if key.modifiers == KeyModifiers::CONTROL {
+            if key.modifiers == KeyModifiers::ALT {
                 match key.code {
                     KeyCode::Char(c) => match c {
                         'w' => app.toggle_search_on_web(),

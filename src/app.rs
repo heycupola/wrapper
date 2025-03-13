@@ -66,9 +66,9 @@ impl Default for App {
             position_on_chat: Some(PositionOnChat::ChatBox),
             messages: Vec::default(),
             chat_history: vec![
-                String::from("Chat 1"),
-                String::from("Chat 2"),
                 String::from("Chat 3"),
+                String::from("Chat 2"),
+                String::from("Chat 1"),
             ],
             user: User {
                 email: String::default(),
@@ -234,7 +234,7 @@ impl App {
         // Add the current chat to history if it's not empty
         if !self.messages.is_empty() {
             let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M").to_string();
-            self.chat_history.push(format!("Chat {}", timestamp));
+            self.chat_history.insert(0, format!("Chat {}", timestamp));
         }
 
         self.messages.clear();

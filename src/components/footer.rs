@@ -30,15 +30,22 @@ impl<'a> Footer<'a> {
     }
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
+        let os = std::env::consts::OS;
+        let control_key = if os == "macos" { "⌘" } else { "C" };
+        let alt_key = if os == "macos" { "⌥" } else { "Alt" };
+
         let footer_text = match self.current_screen {
             Screen::Chat => {
-                let base = "new chat: <C-n> | prompt: <C-p> | history: <C-h> | messages: <C-l>";
+                let base = format!(
+                    "new chat: <{}-n> | prompt: <{}-j> | history: <{}-h> | messages: <{}-l>",
+                    control_key, control_key, control_key, control_key
+                );
 
                 let result: String = if let Some(a) = self.position_on_chat {
                     match a {
                         PositionOnChat::ChatBox => format!(
-                            "{} | switch model: Tab | reason: <C-r> | search on web: <C-w>",
-                            base
+                            "{} | switch model: Tab | reason: <{}-r> | search on web: <{}-w>",
+                            base, alt_key, alt_key
                         ),
                         PositionOnChat::Messages => format!("{} | navigate: ↑/↓ | copy: c", base),
                         PositionOnChat::ChatHistory => {
@@ -54,11 +61,11 @@ impl<'a> Footer<'a> {
             Screen::Account => {
                 let user_plan = if let Some(ref user_plan) = self.user_plan {
                     match user_plan {
-                        Plan::Free => "get premium: <C-u>",
-                        Plan::Premium => "",
+                        Plan::Free => format!("get premium: <{}-u>", control_key),
+                        Plan::Premium => String::new(),
                     }
                 } else {
-                    ""
+                    String::new()
                 };
 
                 let authentication = if let Some(is_logged_in) = self.is_logged_in {
@@ -71,7 +78,10 @@ impl<'a> Footer<'a> {
                     ""
                 };
 
-                format!("{} | sync: <C-s> | {}", user_plan, authentication)
+                format!(
+                    "{} | sync: <{}-s> | {}",
+                    user_plan, control_key, authentication
+                )
             }
             Screen::Exit => String::from(""),
         };
