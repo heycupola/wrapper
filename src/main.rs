@@ -53,6 +53,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         continue;
                     }
 
+                    handle_global_keys(key, app);
+
                     match app.current_screen {
                         Screen::Chat => handle_chat_keys(key, app),
                         Screen::Account => handle_account_keys(key, app),
@@ -74,18 +76,29 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
     }
 }
 
+fn handle_global_keys(key: KeyEvent, app: &mut App) {
+    if key.modifiers == KeyModifiers::CONTROL {
+        match key.code {
+            KeyCode::Char(c) => match c {
+                'c' => app.switch_screen(Screen::Chat),
+                'a' => app.switch_screen(Screen::Account),
+                'z' => app.switch_screen(Screen::Exit),
+                _ => {}
+            },
+            _ => {}
+        }
+    }
+}
+
 fn handle_chat_keys(key: KeyEvent, app: &mut App) {
     if key.modifiers == KeyModifiers::CONTROL {
         match key.code {
             KeyCode::Char(c) => match c {
-                'c' => app.change_chat_position(PositionOnChat::ChatBox),
-                'l' => app.change_chat_position(PositionOnChat::Messages),
-                'h' => app.change_chat_position(PositionOnChat::ChatHistory),
-                'q' => app.cancel_prompting(),
-                'a' => app.switch_screen(Screen::Account),
                 'n' => app.clear_chat(),
-                'r' => app.toggle_reason(),
-                'w' => app.toggle_search_on_web(),
+                'p' => app.prompt(),
+                'h' => app.change_chat_position(PositionOnChat::ChatHistory),
+                'l' => app.change_chat_position(PositionOnChat::Messages),
+                'q' => app.cancel_prompting(),
                 _ => {}
             },
             _ => {}
@@ -94,47 +107,62 @@ fn handle_chat_keys(key: KeyEvent, app: &mut App) {
     }
 
     match app.position_on_chat {
-        Some(PositionOnChat::ChatBox) => match key.code {
-            KeyCode::Enter => {
-                if matches!(app.position_on_chat, Some(PositionOnChat::ChatBox)) {
+        Some(PositionOnChat::ChatBox) => {
+            if key.modifiers == KeyModifiers::CONTROL {
+                match key.code {
+                    KeyCode::Char(c) => match c {
+                        'w' => app.toggle_search_on_web(),
+                        'r' => app.toggle_reason(),
+                        _ => {}
+                    },
+                    _ => {}
+                }
+
+                return;
+            }
+
+            match key.code {
+                KeyCode::Enter => {
                     app.prompt();
                 }
+                KeyCode::Char(c) => {
+                    app.insert_char(c);
+                }
+                KeyCode::Backspace => {
+                    app.delete_char();
+                }
+                KeyCode::Delete => {
+                    app.delete_char_forward();
+                }
+                KeyCode::Left => {
+                    app.move_cursor_left();
+                }
+                KeyCode::Right => {
+                    app.move_cursor_right();
+                }
+                KeyCode::Home => {
+                    app.cursor_to_start();
+                }
+                KeyCode::End => {
+                    app.cursor_to_end();
+                }
+                KeyCode::Tab => {
+                    app.cycle_model();
+                }
+                _ => {}
             }
-            KeyCode::Char(c) => {
-                app.insert_char(c);
-            }
-            KeyCode::Backspace => {
-                app.delete_char();
-            }
-            KeyCode::Delete => {
-                app.delete_char_forward();
-            }
-            KeyCode::Left => {
-                app.move_cursor_left();
-            }
-            KeyCode::Right => {
-                app.move_cursor_right();
-            }
-            KeyCode::Home => {
-                app.cursor_to_start();
-            }
-            KeyCode::End => {
-                app.cursor_to_end();
-            }
-            KeyCode::Tab => {
-                app.cycle_model();
-            }
-            _ => {}
-        },
+        }
         Some(PositionOnChat::Messages) => match key.code {
             KeyCode::Up => app.navigate_chat("up"),
             KeyCode::Down => app.navigate_chat("down"),
+            KeyCode::Char('c') => app.copy_to_clipboard(),
             _ => {}
         },
         Some(PositionOnChat::ChatHistory) => match key.code {
             KeyCode::Up => app.navigate_chat("up"),
             KeyCode::Down => app.navigate_chat("down"),
             KeyCode::Enter => app.select_chat(),
+            KeyCode::Char('d') => app.delete_chat_history(),
             _ => {}
         },
         None => {
@@ -145,6 +173,18 @@ fn handle_chat_keys(key: KeyEvent, app: &mut App) {
 }
 
 fn handle_account_keys(key: KeyEvent, app: &mut App) {
+    if key.modifiers == KeyModifiers::CONTROL {
+        match key.code {
+            KeyCode::Char(c) => match c {
+                // go to wrapper.sh webpage
+                'u' => app.open_url(),
+                's' => app.sync_data(),
+                _ => {}
+            },
+            _ => {}
+        }
+    }
+
     match key.code {
         KeyCode::Char('l') => {
             if !app.user.is_logged_in {
@@ -155,12 +195,6 @@ fn handle_account_keys(key: KeyEvent, app: &mut App) {
             if app.user.is_logged_in {
                 app.logout();
             }
-        }
-        KeyCode::Char('c') => {
-            app.switch_screen(Screen::Chat);
-        }
-        KeyCode::Char('q') => {
-            app.switch_screen(Screen::Exit);
         }
         _ => {}
     }

@@ -1,3 +1,5 @@
+use crate::util::{browser::Browser, clipboard::Clipboard};
+
 #[derive(Clone, PartialEq)]
 pub enum Screen {
     Chat,
@@ -324,4 +326,22 @@ impl App {
     pub fn toggle_search_on_web(&mut self) {
         self.search_on_web = !self.search_on_web;
     }
+
+    pub fn copy_to_clipboard(&mut self) {
+        Clipboard::copy("wrapper.sh");
+    }
+
+    pub fn delete_chat_history(&mut self) {
+        self.chat_history.remove(self.history_scroll);
+
+        if self.history_scroll > 0 {
+            self.history_scroll -= 1;
+        }
+    }
+
+    pub fn open_url(&mut self) {
+        Browser::open_url("https://x.com/icanvardar");
+    }
+
+    pub fn sync_data(&mut self) {}
 }
