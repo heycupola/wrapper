@@ -16,6 +16,8 @@ pub mod components {
 }
 
 pub mod util {
+    pub mod browser;
+    pub mod clipboard;
     pub mod renderer;
     pub mod theme;
 }
