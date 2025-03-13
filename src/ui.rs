@@ -63,6 +63,11 @@ pub fn ui(frame: &mut Frame, app: &App) {
             theme,
             &app.position_on_chat,
             Some(app.user.is_logged_in),
+            if &app.current_screen == &Screen::Account {
+                Some(&app.user.plan)
+            } else {
+                None
+            },
         )
         .render(f, layout[2]);
 

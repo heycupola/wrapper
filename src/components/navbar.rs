@@ -52,8 +52,11 @@ impl<'a> Navbar<'a> {
             Style::default().fg(self.theme.muted_foreground)
         };
 
-        let chat_tab = Span::styled(" c chat ", chat_tab_style);
-        let account_tab = Span::styled(" ctrl+a account ", account_tab_style);
+        let exit_tab_style = Style::default().fg(self.theme.muted_foreground);
+
+        let chat_tab = Span::styled(" chat: <C-c> ", chat_tab_style);
+        let account_tab = Span::styled(" account: <C-a> ", account_tab_style);
+        let exit_tab = Span::styled(" exit: <C-z> ", exit_tab_style);
 
         // Combine all elements into a single line
         let navbar_line = Line::from(vec![
@@ -62,6 +65,8 @@ impl<'a> Navbar<'a> {
             chat_tab,
             Span::styled(" | ", Style::default().fg(self.theme.border)),
             account_tab,
+            Span::styled(" | ", Style::default().fg(self.theme.border)),
+            exit_tab,
         ]);
 
         // Create the navbar paragraph

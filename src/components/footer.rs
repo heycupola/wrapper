@@ -1,4 +1,4 @@
-use crate::app::{PositionOnChat, Screen};
+use crate::app::{Plan, PositionOnChat, Screen};
 use crate::util::renderer::render_content_block;
 use crate::util::theme::Theme;
 use ratatui::layout::{Alignment, Rect};
@@ -9,6 +9,7 @@ pub struct Footer<'a> {
     pub theme: &'a Theme,
     pub position_on_chat: &'a Option<PositionOnChat>,
     pub is_logged_in: Option<bool>,
+    pub user_plan: Option<&'a Plan>,
 }
 
 impl<'a> Footer<'a> {
@@ -17,26 +18,62 @@ impl<'a> Footer<'a> {
         theme: &'a Theme,
         position_on_chat: &'a Option<PositionOnChat>,
         is_logged_in: Option<bool>,
+        user_plan: Option<&'a Plan>,
     ) -> Self {
         Self {
             current_screen,
             theme,
             position_on_chat,
             is_logged_in,
+            user_plan,
         }
     }
 
     pub fn render(&self, frame: &mut Frame, area: Rect) {
         let footer_text = match self.current_screen {
-            Screen::Chat => "ctrl+n: new chat | ctrl+l: messages | ctrl+h: history | ctrl+c: chat | ctrl+r: reason | ctrl+w: search on web",
-            Screen::Account => {
-                if self.is_logged_in.unwrap_or(false) {
-                    "o: logout | q: exit"
+            Screen::Chat => {
+                let base = "new chat: <C-n> | prompt: <C-p> | history: <C-h> | messages: <C-l>";
+
+                let result: String = if let Some(a) = self.position_on_chat {
+                    match a {
+                        PositionOnChat::ChatBox => format!(
+                            "{} | switch model: Tab | reason: <C-r> | search on web: <C-w>",
+                            base
+                        ),
+                        PositionOnChat::Messages => format!("{} | navigate: ↑/↓ | copy: c", base),
+                        PositionOnChat::ChatHistory => {
+                            format!("{} | navigate: ↑/↓ | delete: d", base)
+                        }
+                    }
                 } else {
-                    "l: login | q: exit"
-                }
+                    base.to_string()
+                };
+
+                result
             }
-            Screen::Exit => "",
+            Screen::Account => {
+                let user_plan = if let Some(ref user_plan) = self.user_plan {
+                    match user_plan {
+                        Plan::Free => "get premium: <C-u>",
+                        Plan::Premium => "",
+                    }
+                } else {
+                    ""
+                };
+
+                let authentication = if let Some(is_logged_in) = self.is_logged_in {
+                    if is_logged_in {
+                        "logout: o"
+                    } else {
+                        "login: l"
+                    }
+                } else {
+                    ""
+                };
+
+                format!("{} | sync: <C-s> | {}", user_plan, authentication)
+            }
+            Screen::Exit => String::from(""),
         };
 
         let footer = Paragraph::new(Text::styled(

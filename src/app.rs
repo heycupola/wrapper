@@ -16,10 +16,16 @@ pub struct Message {
     pub is_user: bool,
 }
 
+pub enum Plan {
+    Free,
+    Premium,
+}
+
 pub struct User {
     pub email: String,
     pub remaining_messages: u32,
     pub is_logged_in: bool,
+    pub plan: Plan,
 }
 
 pub struct App {
@@ -66,6 +72,7 @@ impl Default for App {
                 email: String::default(),
                 remaining_messages: 0,
                 is_logged_in: false,
+                plan: Plan::Free,
             },
             message_scroll: 0,
             history_scroll: 0,
