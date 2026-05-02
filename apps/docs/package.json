@@ -2,30 +2,18 @@
   "name": "docs",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
+  "license": "MIT",
   "scripts": {
-    "dev": "next dev --port 3001",
-    "build": "next build",
-    "start": "next start",
-    "lint": "oxlint .",
-    "lint:fix": "oxlint --fix .",
+    "dev": "mint dev --port 3001",
+    "build": "mint validate",
+    "lint": "oxlint . --no-error-on-unmatched-pattern",
+    "lint:fix": "oxlint . --fix --no-error-on-unmatched-pattern",
     "format": "oxfmt .",
-    "format:check": "oxfmt --check .",
-    "check-types": "next typegen && tsc --noEmit"
-  },
-  "dependencies": {
-    "@repo/ui": "*",
-    "next": "catalog:",
-    "react": "catalog:",
-    "react-dom": "catalog:"
+    "format:check": "oxfmt --check ."
   },
   "devDependencies": {
-    "@repo/typescript-config": "*",
-    "@types/node": "catalog:",
-    "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
+    "mint": "^4",
     "oxfmt": "catalog:",
-    "oxlint": "catalog:",
-    "typescript": "catalog:"
+    "oxlint": "catalog:"
   }
 }

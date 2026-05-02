@@ -24,7 +24,7 @@ This is a Bun + Turborepo monorepo.
 apps/
   cli/      Wrapper CLI — shell wrapping, registry, attach, install
   web/      Marketing / waitlist landing page (Next.js)
-  docs/     Public docs site (Next.js)
+  docs/     Public docs site (Mintlify)
 packages/
   protocol/             Wire schema shared by every wrapper component
   backend/              Convex backend blueprint and implementation plan
@@ -38,8 +38,6 @@ works and what every command does.
 
 Backend implementation planning is tracked in
 [`packages/backend/README.md`](./packages/backend/README.md).
-
-Delivery phase status is tracked in [`PHASES.md`](./PHASES.md).
 
 ## Local development
 
