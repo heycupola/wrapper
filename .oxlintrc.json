@@ -1,0 +1,60 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "import",
+    "promise",
+    "react",
+    "react-perf",
+    "jsx-a11y",
+    "node",
+    "nextjs"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn",
+    "style": "off"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2024": true
+  },
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**",
+    "**/.turbo/**",
+    "**/.open-next/**",
+    "**/.wrangler/**",
+    "**/out/**",
+    "**/build/**",
+    "**/coverage/**",
+    "bun.lock"
+  ],
+  "rules": {
+    "no-console": "off",
+    "react/react-in-jsx-scope": "off",
+    "import/no-unassigned-import": "off",
+    "react-perf/jsx-no-new-function-as-prop": "off",
+    "nextjs/no-page-custom-font": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["apps/web/**/*.{ts,tsx}", "apps/docs/**/*.{ts,tsx}", "packages/ui/**/*.{ts,tsx}"],
+      "rules": {
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": "warn"
+      }
+    },
+    {
+      "files": ["apps/cli/**/*.ts"],
+      "env": {
+        "browser": false,
+        "node": true
+      }
+    }
+  ]
+}

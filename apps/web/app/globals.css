@@ -45,7 +45,11 @@ body {
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   font-weight: 400;
   line-height: 1.6;
   letter-spacing: -0.02em;
@@ -133,7 +137,9 @@ a {
   background: transparent;
   color: var(--color-text);
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
   text-decoration: none;
 }
 
@@ -229,5 +235,4 @@ a {
     width: 100%;
     justify-content: center;
   }
-
 }

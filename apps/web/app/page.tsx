@@ -24,9 +24,8 @@ export default function Home() {
         </div>
 
         <p className="description">
-          An AI harness that connects, manages, and orchestrates capabilities
-          across your devices. One command to bridge your remote terminal, your
-          tools, and everything in between.
+          An AI harness that connects, manages, and orchestrates capabilities across your devices.
+          One command to bridge your remote terminal, your tools, and everything in between.
         </p>
 
         <div className="social-buttons">
@@ -54,12 +53,7 @@ export default function Home() {
           </a>
         </div>
 
-        <a
-          href="https://cupo.la"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="built-by"
-        >
+        <a href="https://cupo.la" target="_blank" rel="noopener noreferrer" className="built-by">
           <span>Coming soon from</span>
           <Image
             src="/cupola-dark.svg"
