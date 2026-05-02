@@ -148,6 +148,12 @@ wrapper logs --follow
 wrapper shell-host
 ```
 
+### Local development helper
+
+```bash
+bun run dev:host
+```
+
 ## In-session prefix shortcuts
 
 Inside host shell:

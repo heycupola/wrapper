@@ -19,7 +19,7 @@
   "type": "module",
   "module": "index.ts",
   "scripts": {
-    "dev": "DEV=true bun run index.ts",
+    "dev:host": "DEV=true bun run index.ts shell-host",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
     "format": "oxfmt .",
