@@ -1,12 +1,17 @@
 {
-  "name": "@repo/ui",
+  "name": "@repo/protocol",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
+  "module": "index.ts",
   "exports": {
-    "./*": "./*.tsx"
+    ".": "./index.ts",
+    "./messages": "./messages.ts",
+    "./session": "./session.ts",
+    "./codec": "./codec.ts",
+    "./id": "./id.ts"
   },
   "scripts": {
-    "generate:component": "turbo gen react-component",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
     "format": "oxfmt .",
@@ -14,16 +19,16 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "react": "catalog:",
-    "react-dom": "catalog:"
+    "nanoid": "^5.1.9",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
-    "@types/node": "catalog:",
-    "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
+    "@types/bun": "catalog:",
     "oxfmt": "catalog:",
-    "oxlint": "catalog:",
+    "oxlint": "catalog:"
+  },
+  "peerDependencies": {
     "typescript": "catalog:"
   }
 }

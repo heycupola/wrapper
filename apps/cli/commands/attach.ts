@@ -1,0 +1,204 @@
+import * as p from "@clack/prompts";
+import { createLogger, trackError, trackEvent } from "@repo/logger";
+import { startAttachClient } from "../client/attach-client";
+import { findSession, latestSession, listSessions, type SessionRecord } from "../registry/sessions";
+import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
+import { bell, clearTitle, inlineMessage, setTitle } from "../util/feedback";
+import { installShutdownHandlers } from "../util/signals";
+
+const log = createLogger("attach");
+
+/**
+ * `wrapper attach` — connect a viewer terminal to a running session.
+ *
+ * Resolution order for the target session:
+ *   1. `--id <sessionId>` if provided.
+ *   2. `--port <number>` if provided (skips registry).
+ *   3. Single live registry entry → use it.
+ *   4. Multiple live entries → interactive picker.
+ *   5. No live entries → fail with a hint.
+ *
+ * The client speaks the same wire protocol the relay/mobile app will use,
+ * so debugging the local case validates the remote case.
+ */
+
+export interface AttachOptions {
+  id?: string;
+  port?: number;
+  host?: string;
+}
+
+const SIGINT_EXIT = 130;
+
+export async function runAttach(opts: AttachOptions): Promise<void> {
+  const host = opts.host ?? "127.0.0.1";
+
+  const target = await resolveTarget(opts);
+  if (!target) process.exit(2);
+
+  const url = `ws://${host}:${target.port}`;
+  log.info("attaching", { url, sessionId: target.id });
+  trackEvent("attach_started");
+  process.stderr.write(`[wrapper] attaching to ${url}\n`);
+  process.stderr.write(`[wrapper] press Ctrl+\\ then 'd' to detach (session keeps running)\n`);
+
+  let userAborted = false;
+  const sessionTag = target.id.slice(0, 6);
+
+  /*
+   * Wrapper's keystroke prefix on the attach side. The host has its
+   * own filter for share/unshare; here we expose only the actions
+   * that make sense for a viewer:
+   *
+   *   Ctrl+\ d   — disconnect this viewer (session keeps running)
+   *   Ctrl+\ ?   — quick status to stderr
+   *
+   * `share`, `unshare` etc. arrive too but are ignored: paylaşımı
+   * sadece host kontrol eder.
+   */
+  const handlePrefixCommand = (cmd: PrefixCommand): void => {
+    switch (cmd) {
+      case "detach":
+        userAborted = true;
+        log.info("detach requested via prefix", { sessionId: target.id });
+        trackEvent("attach_detach_keystroke");
+        // Title back to normal before we close the socket so the
+        // "● wrapper armed" overlay doesn't outlive the viewer.
+        clearTitle();
+        void handle.detach();
+        break;
+      case "status":
+        inlineMessage(`viewing ${sessionTag} on port ${target.port}`);
+        setTitle(`wrapper • viewer • ${sessionTag}`);
+        break;
+      case "share":
+      case "unshare":
+        // Viewer cannot publish a session it doesn't own. Bell-only
+        // hint so the user knows the keystroke landed somewhere.
+        inlineMessage("only the session host can share/unshare");
+        bell();
+        break;
+    }
+  };
+
+  const prefixFilter = new PrefixFilter({
+    onCommand: handlePrefixCommand,
+    onArmedChange: (armed) => {
+      if (armed) {
+        setTitle(`● wrapper armed • viewer • ${sessionTag}`);
+        bell();
+      } else {
+        setTitle(`wrapper • viewer • ${sessionTag}`);
+      }
+    },
+  });
+
+  const handle = startAttachClient({
+    url,
+    initialSize: {
+      cols: process.stdout.columns ?? 80,
+      rows: process.stdout.rows ?? 24,
+    },
+    connectRetries: 5,
+    connectRetryDelayMs: 100,
+    interceptStdin: (chunk) => prefixFilter.process(chunk),
+  });
+
+  // Initial title so the user sees this is a viewer window.
+  setTitle(`wrapper • viewer • ${sessionTag}`);
+
+  const signals = installShutdownHandlers({
+    onShutdown: async () => {
+      userAborted = true;
+      clearTitle();
+      await handle.detach();
+    },
+  });
+
+  const result = await handle.done;
+  signals.dispose();
+  // Always restore the title — every exit branch below ends the viewer.
+  clearTitle();
+
+  if (userAborted) {
+    log.info("detached by user");
+    trackEvent("attach_ended", { reason: "user_aborted" });
+    process.exit(SIGINT_EXIT);
+  }
+  if (result.reason === "error" && result.error) {
+    log.error("attach failed", { error: result.error.message });
+    trackError("attach", result.error);
+    process.stderr.write(`[wrapper] attach failed: ${result.error.message}\n`);
+    process.exit(1);
+  }
+  if (result.reason === "session_closed") {
+    log.info("session closed by host", { exitCode: result.exitCode });
+    trackEvent("attach_ended", { reason: "session_closed", exitCode: result.exitCode ?? null });
+    process.exit(result.exitCode ?? 0);
+  }
+  log.info("disconnected");
+  trackEvent("attach_ended", { reason: result.reason });
+  process.exit(0);
+}
+
+async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null> {
+  if (opts.id) {
+    const found = findSession(opts.id);
+    if (!found) {
+      process.stderr.write(`[wrapper] no live session with id ${opts.id}\n`);
+      return null;
+    }
+    return { id: found.id, port: found.port };
+  }
+
+  if (opts.port) {
+    return { id: "<unknown>", port: opts.port };
+  }
+
+  const sessions = listSessions();
+  if (sessions.length === 0) {
+    process.stderr.write(
+      "[wrapper] no live sessions. Open a new terminal or run `wrapper shell-host`.\n",
+    );
+    return null;
+  }
+  if (sessions.length === 1) {
+    const only = sessions[0]!;
+    return { id: only.id, port: only.port };
+  }
+
+  const picked = await pickSession(sessions);
+  return picked;
+}
+
+interface TargetSession {
+  id: string;
+  port: number;
+}
+
+async function pickSession(sessions: SessionRecord[]): Promise<TargetSession | null> {
+  const sorted = sessions.toSorted((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const choice = await p.select({
+    message: "Multiple sessions are live. Pick one:",
+    options: sorted.map((s) => ({
+      value: s.id,
+      label: `${s.id}  port=${s.port}  pid=${s.pid}`,
+      hint: `${shortShell(s.shell)}  ${shortenHome(s.cwd)}`,
+    })),
+    initialValue: latestSession()?.id,
+  });
+  if (p.isCancel(choice)) return null;
+  const found = sorted.find((s) => s.id === choice);
+  if (!found) return null;
+  return { id: found.id, port: found.port };
+}
+
+function shortShell(path: string): string {
+  return path.split("/").pop() ?? path;
+}
+
+function shortenHome(path: string): string {
+  const home = process.env.HOME;
+  if (!home) return path;
+  return path.startsWith(home) ? `~${path.slice(home.length)}` : path;
+}

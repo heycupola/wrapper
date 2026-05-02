@@ -1,0 +1,9 @@
+{
+  "extends": "@repo/typescript-config/bundler.json",
+  "compilerOptions": {
+    "moduleDetection": "force",
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["index.ts", "config.ts", "transports/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["node_modules"]
+}
