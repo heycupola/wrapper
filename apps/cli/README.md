@@ -3,8 +3,8 @@
 Wrapper CLI is the runtime core of the product.
 
 It wraps every interactive shell session and exposes that live session over a
-local WebSocket endpoint so other clients can attach. Today that client is
-`wrapper attach`; later it also includes relay and mobile clients.
+local WebSocket endpoint so other clients can attach. It can also publish a
+shared session through the relay transport for remote viewers.
 
 This README is a technical walkthrough so you can understand the system while
 building.
@@ -81,6 +81,7 @@ sequenceDiagram
    - host start -> `session:open`
    - periodic tick -> `session:heartbeat`
    - shutdown -> `session:close`
+8. On `share`, it issues a relay host ticket and starts a relay bridge.
 
 Important safety guards:
 
@@ -92,8 +93,9 @@ Important safety guards:
 `commands/attach.ts` does:
 
 1. Resolve target session by `--id`, `--port`, or picker from registry.
-2. If session id is known and Convex is configured, run `session:authorizeAttach`.
-3. Connect to `ws://127.0.0.1:<port>`.
+2. Local path: run `session:authorizeAttach`, then connect to `ws://127.0.0.1:<port>`.
+3. Relay path (`--relay` or no local match for `--id`): issue `relay:issueViewerTicket`
+   and connect to `WRAPPER_RELAY_URL/ws?ticket=...`.
 4. Bridge stdin/stdout via protocol messages.
 5. Support detach without ending host session (`Ctrl+\` then `d`).
 
@@ -149,6 +151,7 @@ wrapper status
 wrapper attach
 wrapper attach --id <sessionId>
 wrapper attach --port <port>
+wrapper attach --relay --id <sessionId>
 wrapper logs --follow
 ```
 
@@ -183,8 +186,8 @@ Inside attach viewer:
 | `Ctrl+\` `d` | detach viewer |
 | `Ctrl+\` `?` | viewer status |
 
-Note: relay transport is not yet wired, so `share/unshare` currently updates
-local state and feedback only.
+When shared and authenticated, `Ctrl+\` + `s` starts a relay bridge and enables
+remote attach with `wrapper attach --relay --id <sessionId>`.
 
 ## Debugging workflow
 
@@ -248,6 +251,8 @@ pty/
   session.ts                   pty lifecycle + replay buffer
 registry/
   sessions.ts                  local session metadata
+relay/
+  host-bridge.ts               host relay websocket bridge
 shell/
   detect.ts                    shell detection
   rc-edit.ts                   managed rc patcher

@@ -10,8 +10,12 @@ integration used by the CLI.
 - `hostSession`
   - `sessionId`, `ownerUserId`, `shell`, `cwd`
   - `port`, `hostPid`, `shared`
+  - `relayState`, `relayLastChangedAt`
   - `status` (`active` or `closed`)
   - `createdAt`, `updatedAt`, `lastHeartbeatAt`, `closedAt`, `closeReason`
+- `relayTicket`
+  - `tokenHash`, `sessionId`, `role`, `userId`
+  - `createdAt`, `expiresAt`, `usedAt`
 
 ## Current handlers
 
@@ -23,10 +27,18 @@ integration used by the CLI.
 - `listActive` - list active sessions for authenticated owner
 - `authorizeAttach` - allow attach only if caller is owner or session is shared
 - `markStaleIfTimedOut` (internal) - scheduler task that auto-closes stale active sessions
+- `setRelayState` - owner-only relay presence/state sync (`offline/connecting/online/error`)
 
 `convex/deviceAuth.ts`:
 
 - device authorization flow wrappers around Better Auth component
+
+`convex/relay.ts`:
+
+- `issueHostTicket` - owner-only short-lived ticket for host relay socket
+- `issueViewerTicket` - shared/owner-allowed short-lived ticket for viewer socket
+- `consumeTicket` - single-use ticket consumption for relay handshake
+- `cleanupTicket` (internal) - scheduled cleanup of used/expired ticket rows
 
 ## Auth model
 
@@ -46,6 +58,11 @@ integration used by the CLI.
 Total stale close delay is:
 
 `WRAPPER_SESSION_STALE_AFTER_MS + WRAPPER_SESSION_STALE_GRACE_MS`
+
+## Relay ticket config
+
+- `WRAPPER_RELAY_HOST_TICKET_TTL_MS` - host ticket TTL (default `30000`)
+- `WRAPPER_RELAY_VIEWER_TICKET_TTL_MS` - viewer ticket TTL (default `60000`)
 
 ## Dev commands
 

@@ -5,6 +5,7 @@ import { startAttachClient } from "../client/attach-client";
 import { findSession, latestSession, listSessions, type SessionRecord } from "../registry/sessions";
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
 import { resolveAuthedConvexClient } from "../util/convex-client";
+import { env } from "../util/env";
 import { bell, clearTitle, inlineMessage, setTitle } from "../util/feedback";
 import { installShutdownHandlers } from "../util/signals";
 
@@ -23,11 +24,25 @@ type AuthorizeAttachResponse = {
   updatedAt: number;
 };
 
+type IssueViewerTicketArgs = {
+  sessionId: string;
+};
+
+type IssueViewerTicketResponse = {
+  ticket: string;
+  expiresAt: number;
+};
+
 const authorizeAttachRef = makeFunctionReference<
   "query",
   AuthorizeAttachArgs,
   AuthorizeAttachResponse
 >("session:authorizeAttach");
+const issueViewerRelayTicketRef = makeFunctionReference<
+  "mutation",
+  IssueViewerTicketArgs,
+  IssueViewerTicketResponse
+>("relay:issueViewerTicket");
 
 /**
  * `wrapper attach` — connect a viewer terminal to a running session.
@@ -47,6 +62,7 @@ export interface AttachOptions {
   id?: string;
   port?: number;
   host?: string;
+  relay?: boolean;
 }
 
 const SIGINT_EXIT = 130;
@@ -56,10 +72,12 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
 
   const target = await resolveTarget(opts);
   if (!target) process.exit(2);
-  const allowed = await ensureAttachAllowed(target);
-  if (!allowed) process.exit(1);
-
-  const url = `ws://${host}:${target.port}`;
+  const url = await resolveAttachUrl({
+    host,
+    target,
+    preferRelay: Boolean(opts.relay),
+  });
+  if (!url) process.exit(1);
   log.info("attaching", { url, sessionId: target.id });
   trackEvent("attach_started");
   process.stderr.write(`[wrapper] attaching to ${url}\n`);
@@ -167,15 +185,12 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
 async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null> {
   if (opts.id) {
     const found = findSession(opts.id);
-    if (!found) {
-      process.stderr.write(`[wrapper] no live session with id ${opts.id}\n`);
-      return null;
-    }
-    return { id: found.id, port: found.port };
+    if (found) return { id: found.id, port: found.port, local: true };
+    return { id: opts.id, local: false };
   }
 
   if (opts.port) {
-    return { id: "<unknown>", port: opts.port };
+    return { id: "<unknown>", port: opts.port, local: true };
   }
 
   const sessions = listSessions();
@@ -187,7 +202,7 @@ async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null>
   }
   if (sessions.length === 1) {
     const only = sessions[0]!;
-    return { id: only.id, port: only.port };
+    return { id: only.id, port: only.port, local: true };
   }
 
   const picked = await pickSession(sessions);
@@ -196,7 +211,8 @@ async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null>
 
 interface TargetSession {
   id: string;
-  port: number;
+  port?: number;
+  local: boolean;
 }
 
 async function pickSession(sessions: SessionRecord[]): Promise<TargetSession | null> {
@@ -213,7 +229,7 @@ async function pickSession(sessions: SessionRecord[]): Promise<TargetSession | n
   if (p.isCancel(choice)) return null;
   const found = sorted.find((s) => s.id === choice);
   if (!found) return null;
-  return { id: found.id, port: found.port };
+  return { id: found.id, port: found.port, local: true };
 }
 
 function shortShell(path: string): string {
@@ -227,6 +243,7 @@ function shortenHome(path: string): string {
 }
 
 async function ensureAttachAllowed(target: TargetSession): Promise<boolean> {
+  if (!target.local || target.port === undefined) return false;
   if (target.id === "<unknown>") return true;
 
   const backend = resolveAuthedConvexClient();
@@ -243,6 +260,45 @@ async function ensureAttachAllowed(target: TargetSession): Promise<boolean> {
     const message = normalizeAttachAuthorizationError(error);
     process.stderr.write(`[wrapper] attach authorization failed: ${message}\n`);
     return false;
+  }
+}
+
+async function resolveAttachUrl(input: {
+  host: string;
+  target: TargetSession;
+  preferRelay: boolean;
+}): Promise<string | null> {
+  if (!input.preferRelay && input.target.local && input.target.port !== undefined) {
+    const allowed = await ensureAttachAllowed(input.target);
+    if (!allowed) return null;
+    return `ws://${input.host}:${input.target.port}`;
+  }
+
+  if (input.target.id === "<unknown>") {
+    process.stderr.write("[wrapper] relay attach requires `--id <sessionId>`.\n");
+    return null;
+  }
+  return await resolveRelayAttachUrl(input.target.id);
+}
+
+async function resolveRelayAttachUrl(sessionId: string): Promise<string | null> {
+  const backend = resolveAuthedConvexClient();
+  if (backend.status === "unconfigured") {
+    process.stderr.write("[wrapper] relay attach requires WRAPPER_CONVEX_URL configuration.\n");
+    return null;
+  }
+  if (backend.status === "missing_auth") {
+    process.stderr.write("[wrapper] relay attach requires login. Run `wrapper auth login`.\n");
+    return null;
+  }
+
+  try {
+    const issued = await backend.client.mutation(issueViewerRelayTicketRef, { sessionId });
+    return buildRelayWsUrl(env.relayUrl, issued.ticket);
+  } catch (error) {
+    const message = normalizeAttachAuthorizationError(error);
+    process.stderr.write(`[wrapper] relay attach failed: ${message}\n`);
+    return null;
   }
 }
 
@@ -270,4 +326,15 @@ function extractErrorCode(message: string): string | null {
     /\b(UNAUTHORIZED|INSUFFICIENT_PERMISSION|RESOURCE_NOT_FOUND)\b/,
   )?.[1];
   return plainCode ?? null;
+}
+
+function buildRelayWsUrl(baseUrl: string, ticket: string): string {
+  const url = new URL(baseUrl);
+  if (url.protocol === "http:") url.protocol = "ws:";
+  if (url.protocol === "https:") url.protocol = "wss:";
+  if (!url.pathname || url.pathname === "/") {
+    url.pathname = "/ws";
+  }
+  url.searchParams.set("ticket", ticket);
+  return url.toString();
 }

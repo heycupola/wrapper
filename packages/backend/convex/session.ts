@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
 import { protectedMutation, protectedQuery } from "./lib/middleware.ts";
-import { getSessionTimeoutConfig, shouldMarkSessionStale } from "./lib/session-config.ts";
+import { getSessionTimeoutConfig, shouldMarkSessionStale } from "./lib/sessionConfig.ts";
 import { createError, ErrorCode } from "./lib/errors.ts";
 import { ErrorSeverity } from "./lib/types.ts";
 
@@ -33,6 +33,8 @@ export const open = protectedMutation({
         port: args.port,
         hostPid: args.hostPid,
         shared: args.shared ?? false,
+        relayState: "offline",
+        relayLastChangedAt: now,
         status: "active",
         createdAt: now,
         updatedAt: now,
@@ -64,6 +66,8 @@ export const open = protectedMutation({
       port: args.port,
       hostPid: args.hostPid,
       shared: args.shared ?? existing.shared,
+      relayState: existing.relayState ?? "offline",
+      relayLastChangedAt: existing.relayLastChangedAt,
       status: "active",
       updatedAt: now,
       lastHeartbeatAt: now,
@@ -115,6 +119,8 @@ export const heartbeat = protectedMutation({
     await ctx.db.patch(existing._id, {
       status: "active",
       shared: args.shared ?? existing.shared,
+      relayState: existing.relayState,
+      relayLastChangedAt: existing.relayLastChangedAt,
       port: args.port ?? existing.port,
       updatedAt: now,
       lastHeartbeatAt: now,
@@ -218,6 +224,47 @@ export const authorizeAttach = protectedQuery({
       isOwner,
       updatedAt: session.updatedAt,
     };
+  },
+});
+
+export const setRelayState = protectedMutation({
+  args: {
+    sessionId: v.string(),
+    relayState: v.union(
+      v.literal("offline"),
+      v.literal("connecting"),
+      v.literal("online"),
+      v.literal("error"),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("hostSession")
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
+      .first();
+
+    if (!session) {
+      throw createError({
+        code: ErrorCode.RESOURCE_NOT_FOUND,
+        message: "Session not found",
+        severity: ErrorSeverity.Medium,
+      });
+    }
+    if (session.ownerUserId !== ctx.userId) {
+      throw createError({
+        code: ErrorCode.INSUFFICIENT_PERMISSION,
+        message: "You cannot change relay state for another user's session",
+        severity: ErrorSeverity.High,
+      });
+    }
+
+    await ctx.db.patch(session._id, {
+      relayState: args.relayState,
+      relayLastChangedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    return { ok: true };
   },
 });
 

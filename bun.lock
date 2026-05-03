@@ -46,6 +46,25 @@
         "oxlint": "catalog:",
       },
     },
+    "apps/relay": {
+      "name": "@repo/relay",
+      "version": "0.0.0",
+      "dependencies": {
+        "@repo/logger": "*",
+        "@repo/protocol": "*",
+        "convex": "^1.37.0",
+        "hono": "^4.10.6",
+      },
+      "devDependencies": {
+        "@repo/typescript-config": "*",
+        "@types/bun": "catalog:",
+        "oxfmt": "catalog:",
+        "oxlint": "catalog:",
+      },
+      "peerDependencies": {
+        "typescript": "catalog:",
+      },
+    },
     "apps/web": {
       "name": "web",
       "version": "0.1.0",
@@ -799,6 +818,8 @@
     "@repo/logger": ["@repo/logger@workspace:packages/logger"],
 
     "@repo/protocol": ["@repo/protocol@workspace:packages/protocol"],
+
+    "@repo/relay": ["@repo/relay@workspace:apps/relay"],
 
     "@repo/terminal": ["@repo/terminal@workspace:packages/terminal"],
 
@@ -1641,6 +1662,8 @@
     "hastscript": ["hastscript@9.0.1", "", { "dependencies": { "@types/hast": "^3.0.0", "comma-separated-tokens": "^2.0.0", "hast-util-parse-selector": "^4.0.0", "property-information": "^7.0.0", "space-separated-tokens": "^2.0.0" } }, "sha512-g7df9rMFX/SPi34tyGCyUBREQoKkapwdY/T04Qn9TDWfHhAYt4/I0gMVirzK5wEzeUqIjEB+LXC/ypb7Aqno5w=="],
 
     "hex-rgb": ["hex-rgb@5.0.0", "", {}, "sha512-NQO+lgVUCtHxZ792FodgW0zflK+ozS9X9dwGp9XvvmPlH7pyxd588cn24TD3rmPm/N0AIRXF10Otah8yKqGw4w=="],
+
+    "hono": ["hono@4.12.16", "", {}, "sha512-jN0ZewiNAWSe5khM3EyCmBb250+b40wWbwNILNfEvq84VREWwOIkuUsFONk/3i3nqkz7Oe1PcpM2mwQEK2L9Kg=="],
 
     "html-void-elements": ["html-void-elements@3.0.0", "", {}, "sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg=="],
 

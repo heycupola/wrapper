@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { getSessionTimeoutConfig, shouldMarkSessionStale } from "../convex/lib/session-config";
+import { getSessionTimeoutConfig, shouldMarkSessionStale } from "../convex/lib/sessionConfig";
 
 describe("session timeout config", () => {
   test("uses defaults when env is missing", () => {

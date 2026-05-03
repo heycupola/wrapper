@@ -12,9 +12,8 @@ single `Ctrl+\ s` opens a relay tunnel; `Ctrl+\ u` closes it again.
 
 ## Status
 
-The CLI core is in place: shell wrapping, registry, attach, install hooks,
-keystroke prefix, environments. The relay, the auth backend, and the iOS
-app are coming next, in that order.
+CLI core, Convex auth/backend, and relay transport are now implemented in this
+repository. The next major phase is the iOS app.
 
 ## Repository layout
 
@@ -23,6 +22,7 @@ This is a Bun + Turborepo monorepo.
 ```
 apps/
   cli/      Wrapper CLI — shell wrapping, registry, attach, install
+  relay/    Relay service — authenticated WS routing for shared sessions
   web/      Marketing / waitlist landing page (Next.js)
   docs/     Public docs site (Mintlify)
 packages/

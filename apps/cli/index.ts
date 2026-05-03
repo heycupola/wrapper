@@ -130,11 +130,13 @@ program
   .option("-i, --id <sessionId>", "specific session id (skips picker)")
   .option("-p, --port <number>", "explicit port (skips registry lookup)")
   .option("-H, --host <hostname>", "host running the session", "127.0.0.1")
+  .option("-r, --relay", "attach via relay using backend-issued ticket")
   .action(async (raw) => {
     await runAttach({
       id: raw.id,
       port: raw.port ? Number(raw.port) : undefined,
       host: raw.host,
+      relay: Boolean(raw.relay),
     });
   });
 

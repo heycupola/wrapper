@@ -4,10 +4,12 @@ import { createSessionId } from "@repo/protocol";
 import { makeFunctionReference } from "convex/server";
 import { startAttachClient, type AttachClientHandle } from "../client/attach-client";
 import { PtySession } from "../pty/session";
+import { startRelayHostBridge, type RelayHostBridge } from "../relay/host-bridge";
 import { registerSession, setSessionShared, unregisterSession } from "../registry/sessions";
 import { startLocalServer, type LocalServerHandle } from "../server/local";
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
 import { resolveAuthedConvexClient } from "../util/convex-client";
+import { env } from "../util/env";
 import { bell, clearTitle, inlineMessage, notifyOS, setTitle } from "../util/feedback";
 import { installShutdownHandlers, type ShutdownReason } from "../util/signals";
 
@@ -48,6 +50,20 @@ type SessionCloseArgs = {
   reason?: string;
 };
 
+type SetRelayStateArgs = {
+  sessionId: string;
+  relayState: "offline" | "connecting" | "online" | "error";
+};
+
+type IssueRelayTicketArgs = {
+  sessionId: string;
+};
+
+type IssueRelayTicketResponse = {
+  ticket: string;
+  expiresAt: number;
+};
+
 const sessionOpenRef = makeFunctionReference<
   "mutation",
   SessionOpenArgs,
@@ -61,6 +77,14 @@ const sessionHeartbeatRef = makeFunctionReference<
 const sessionCloseRef = makeFunctionReference<"mutation", SessionCloseArgs, { ok: boolean }>(
   "session:close",
 );
+const setRelayStateRef = makeFunctionReference<"mutation", SetRelayStateArgs, { ok: boolean }>(
+  "session:setRelayState",
+);
+const issueHostRelayTicketRef = makeFunctionReference<
+  "mutation",
+  IssueRelayTicketArgs,
+  IssueRelayTicketResponse
+>("relay:issueHostTicket");
 
 export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   // Guard against recursive shell-host re-entry.
@@ -149,6 +173,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   }
 
   let shared = false;
+  let relayBridge: RelayHostBridge | null = null;
   const sessionTag = sessionId.slice(0, 6);
   const heartbeat = setInterval(() => {
     if (backend.status !== "ready") return;
@@ -176,6 +201,69 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     notifyOS("wrapper", body);
   }
 
+  const startRelayBridge = async (): Promise<void> => {
+    if (relayBridge) return;
+    if (backend.status !== "ready") {
+      announce(
+        `wrapper • shared • ${sessionTag}`,
+        "session shared locally (relay unavailable: login/backend required)",
+      );
+      return;
+    }
+
+    try {
+      await backend.client.mutation(setRelayStateRef, { sessionId, relayState: "connecting" });
+      const issued = await backend.client.mutation(issueHostRelayTicketRef, { sessionId });
+      relayBridge = startRelayHostBridge({
+        relayUrl: env.relayUrl,
+        ticket: issued.ticket,
+        sessionId,
+        pty: session,
+        onOpen: () => {
+          if (backend.status !== "ready") return;
+          void backend.client
+            .mutation(setRelayStateRef, { sessionId, relayState: "online" })
+            .catch(() => {});
+        },
+        onClose: () => {
+          if (backend.status !== "ready") return;
+          void backend.client
+            .mutation(setRelayStateRef, { sessionId, relayState: "offline" })
+            .catch(() => {});
+        },
+        onError: () => {
+          if (backend.status !== "ready") return;
+          void backend.client
+            .mutation(setRelayStateRef, { sessionId, relayState: "error" })
+            .catch(() => {});
+        },
+      });
+      announce(`wrapper • shared • ${sessionTag}`, "session shared via relay");
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      log.warn("failed to start relay bridge", { error: err.message });
+      await backend.client
+        .mutation(setRelayStateRef, { sessionId, relayState: "error" })
+        .catch(() => {});
+      announce(
+        `wrapper • shared • ${sessionTag}`,
+        "session shared locally (relay connect failed; check logs/auth)",
+      );
+    }
+  };
+
+  const stopRelayBridge = async (): Promise<void> => {
+    if (!relayBridge) return;
+    const bridge = relayBridge;
+    relayBridge = null;
+    await bridge.stop();
+    if (backend.status === "ready") {
+      await backend.client
+        .mutation(setRelayStateRef, { sessionId, relayState: "offline" })
+        .catch(() => {});
+    }
+  };
+
   const handlePrefixCommand = (cmd: PrefixCommand): void => {
     switch (cmd) {
       case "share":
@@ -191,7 +279,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
             .mutation(sessionHeartbeatRef, { sessionId, shared: true, port: server.port })
             .catch(() => {});
         }
-        announce(`wrapper • shared • ${sessionTag}`, "session shared (relay not wired yet)");
+        void startRelayBridge();
         break;
       case "unshare":
         if (!shared) {
@@ -206,6 +294,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
             .mutation(sessionHeartbeatRef, { sessionId, shared: false, port: server.port })
             .catch(() => {});
         }
+        void stopRelayBridge();
         announce("", "session unshared");
         break;
       case "status":
@@ -249,6 +338,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shuttingDown = true;
     log.debug("shell-host shutting down", { sessionId, reason });
     clearInterval(heartbeat);
+    await stopRelayBridge();
     if (backend.status === "ready") {
       try {
         await backend.client.mutation(sessionCloseRef, {
