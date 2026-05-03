@@ -53,6 +53,13 @@ Requires:
 - **POSIX**: macOS or Linux. Windows users should run Wrapper inside
   [WSL](https://learn.microsoft.com/windows/wsl/).
 
+Environment templates are included here:
+
+- `.env.example` (shared)
+- `apps/cli/.env.example`
+- `apps/relay/.env.example`
+- `packages/backend/.env.example`
+
 ```sh
 bun install            # one-time
 bun run check-types    # typecheck every package
