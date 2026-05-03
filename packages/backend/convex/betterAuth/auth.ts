@@ -1,3 +1,8 @@
 import { createAuth } from "../auth";
 
-export const auth = createAuth({} as never);
+type StaticAuthCtx = Parameters<typeof createAuth>[0];
+
+const staticAuth = createAuth({} as StaticAuthCtx);
+
+export const auth = staticAuth;
+export const authOptions = staticAuth.options;
