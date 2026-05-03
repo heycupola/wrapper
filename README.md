@@ -15,6 +15,12 @@ single `Ctrl+\ s` opens a relay tunnel; `Ctrl+\ u` closes it again.
 CLI core, Convex auth/backend, and relay transport are now implemented in this
 repository. The next major phase is the iOS app.
 
+Before mobile app development, the remaining operational setup is:
+
+- deploy relay service (`apps/relay`)
+- run deployed smoke check (`bun run --cwd apps/relay smoke`)
+- run manual end-to-end relay attach flow from CLI
+
 ## Repository layout
 
 This is a Bun + Turborepo monorepo.

@@ -33,7 +33,11 @@
     "groups": [
       {
         "group": "Getting Started",
-        "pages": ["introduction"]
+        "pages": ["introduction", "installation", "setup"]
+      },
+      {
+        "group": "Reference",
+        "pages": ["architecture"]
       }
     ]
   }
