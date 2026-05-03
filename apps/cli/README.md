@@ -223,7 +223,7 @@ remote attach with `wrapper attach --relay --id <sessionId>`.
 | `WRAPPER_TELEMETRY_URL` | telemetry endpoint                 | `https://telemetry.wrapper.sh`               |
 | `WRAPPER_RELAY_URL`     | relay endpoint override            | dev localhost, prod `wss://relay.wrapper.sh` |
 | `WRAPPER_AUTH_ORIGIN`   | auth callback origin               | dev localhost, prod `https://wrapper.sh`     |
-| `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend  | falls back to `CONVEX_URL` if set             |
+| `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend  | falls back to `CONVEX_URL` if set            |
 | `WRAPPER_DISABLE`       | disable hook in one terminal       | unset                                        |
 | `WRAPPER_WRAPPED`       | set by `shell-host` in inner shell | unset                                        |
 
