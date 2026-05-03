@@ -1,0 +1,189 @@
+import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import { mutation, query } from "./_generated/server";
+
+function generateSecureDeviceCode(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+}
+
+function generateSecureUserCode(length: number = 8): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  const randomBytes = new Uint8Array(length);
+  crypto.getRandomValues(randomBytes);
+
+  for (let i = 0; i < length; i++) {
+    const byte = randomBytes[i];
+    if (byte !== undefined) {
+      code += chars[byte % chars.length];
+    }
+  }
+
+  return code.match(/.{1,4}/g)?.join("-") ?? code;
+}
+
+export const requestDeviceCode = mutation({
+  args: {
+    clientId: v.optional(v.string()),
+    scope: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const deviceCode = generateSecureDeviceCode();
+    const userCode = generateSecureUserCode(8);
+    const now = Date.now();
+    const expiresIn = 30 * 60 * 1_000;
+    const pollingInterval = 5 * 1_000;
+
+    await ctx.db.insert("deviceCode", {
+      deviceCode,
+      userCode,
+      clientId: args.clientId,
+      scope: args.scope,
+      status: "pending",
+      expiresAt: now + expiresIn,
+      pollingInterval,
+    });
+
+    return {
+      device_code: deviceCode,
+      user_code: userCode,
+      expires_in: Math.floor(expiresIn / 1000),
+      interval: Math.floor(pollingInterval / 1000),
+    };
+  },
+});
+
+export const pollDeviceToken = mutation({
+  args: {
+    device_code: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const deviceCodeEntry = await ctx.db
+      .query("deviceCode")
+      .withIndex("by_deviceCode", (q) => q.eq("deviceCode", args.device_code))
+      .first();
+
+    if (!deviceCodeEntry) throw new Error("invalid_request");
+
+    const now = Date.now();
+    if (now > deviceCodeEntry.expiresAt) {
+      await ctx.db.delete(deviceCodeEntry._id);
+      throw new Error("expired_token");
+    }
+
+    if (deviceCodeEntry.lastPolledAt) {
+      const elapsed = now - deviceCodeEntry.lastPolledAt;
+      const interval = deviceCodeEntry.pollingInterval ?? 5_000;
+      if (elapsed < interval) throw new Error("slow_down");
+    }
+
+    await ctx.db.patch(deviceCodeEntry._id, { lastPolledAt: now });
+
+    if (deviceCodeEntry.status === "pending") throw new Error("authorization_pending");
+    if (deviceCodeEntry.status === "denied") {
+      await ctx.db.delete(deviceCodeEntry._id);
+      throw new Error("access_denied");
+    }
+    if (!deviceCodeEntry.userId) throw new Error("invalid_request");
+
+    const user = await ctx.db.get(deviceCodeEntry.userId as Id<"user">);
+    if (!user) throw new Error("invalid_request");
+
+    await ctx.db.delete(deviceCodeEntry._id);
+
+    const sessionToken = generateSecureDeviceCode();
+    const sessionExpiresAt = now + 30 * 24 * 60 * 60 * 1_000;
+
+    await ctx.db.insert("session", {
+      token: sessionToken,
+      userId: user._id,
+      expiresAt: sessionExpiresAt,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return {
+      session_token: sessionToken,
+      token_type: "Bearer",
+      expires_in: 30 * 24 * 60 * 60,
+    };
+  },
+});
+
+export const getDeviceCodeInfo = query({
+  args: {
+    user_code: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const deviceCodeEntry = await ctx.db
+      .query("deviceCode")
+      .withIndex("by_userCode", (q) => q.eq("userCode", args.user_code))
+      .first();
+
+    if (!deviceCodeEntry) return null;
+    if (Date.now() > deviceCodeEntry.expiresAt) return null;
+
+    return {
+      userCode: deviceCodeEntry.userCode,
+      clientId: deviceCodeEntry.clientId ?? undefined,
+      scope: deviceCodeEntry.scope ?? undefined,
+      status: deviceCodeEntry.status,
+    };
+  },
+});
+
+export const approveDeviceCode = mutation({
+  args: {
+    user_code: v.string(),
+    userId: v.id("user"),
+  },
+  handler: async (ctx, args) => {
+    const deviceCodeEntry = await ctx.db
+      .query("deviceCode")
+      .withIndex("by_userCode", (q) => q.eq("userCode", args.user_code))
+      .first();
+
+    if (!deviceCodeEntry) throw new Error("invalid_request");
+    if (Date.now() > deviceCodeEntry.expiresAt) {
+      await ctx.db.delete(deviceCodeEntry._id);
+      throw new Error("expired_token");
+    }
+    if (deviceCodeEntry.status !== "pending") throw new Error("invalid_request");
+
+    await ctx.db.patch(deviceCodeEntry._id, {
+      userId: args.userId,
+      status: "approved",
+    });
+
+    return { success: true };
+  },
+});
+
+export const denyDeviceCode = mutation({
+  args: {
+    user_code: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const deviceCodeEntry = await ctx.db
+      .query("deviceCode")
+      .withIndex("by_userCode", (q) => q.eq("userCode", args.user_code))
+      .first();
+
+    if (!deviceCodeEntry) throw new Error("invalid_request");
+    if (Date.now() > deviceCodeEntry.expiresAt) {
+      await ctx.db.delete(deviceCodeEntry._id);
+      throw new Error("expired_token");
+    }
+
+    await ctx.db.patch(deviceCodeEntry._id, {
+      status: "denied",
+    });
+
+    return { success: true };
+  },
+});

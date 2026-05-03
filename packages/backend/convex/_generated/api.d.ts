@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as autumn from "../autumn.js";
+import type * as deviceAuth from "../deviceAuth.js";
 import type * as lib_errors from "../lib/errors.js";
 import type * as lib_logger from "../lib/logger.js";
 import type * as lib_middleware from "../lib/middleware.js";
@@ -20,6 +21,7 @@ import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   autumn: typeof autumn;
+  deviceAuth: typeof deviceAuth;
   "lib/errors": typeof lib_errors;
   "lib/logger": typeof lib_logger;
   "lib/middleware": typeof lib_middleware;
@@ -47,6 +49,6 @@ export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "publ
 export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
 
 export declare const components: {
-  betterAuth: import("@convex-dev/better-auth/_generated/component.js").ComponentApi<"betterAuth">;
+  betterAuth: import("../betterAuth/_generated/component.js").ComponentApi<"betterAuth">;
   autumn: import("@useautumn/convex/_generated/component.js").ComponentApi<"autumn">;
 };
