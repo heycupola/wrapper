@@ -15,6 +15,7 @@ import type * as lib_errors from "../lib/errors.js";
 import type * as lib_logger from "../lib/logger.js";
 import type * as lib_middleware from "../lib/middleware.js";
 import type * as lib_types from "../lib/types.js";
+import type * as session from "../session.js";
 
 import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
 
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   "lib/logger": typeof lib_logger;
   "lib/middleware": typeof lib_middleware;
   "lib/types": typeof lib_types;
+  session: typeof session;
 }>;
 
 /**

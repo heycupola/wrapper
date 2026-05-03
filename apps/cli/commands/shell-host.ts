@@ -1,11 +1,13 @@
 import { basename } from "node:path";
 import { createLogger, trackError, trackEvent } from "@repo/logger";
 import { createSessionId } from "@repo/protocol";
+import { makeFunctionReference } from "convex/server";
 import { startAttachClient, type AttachClientHandle } from "../client/attach-client";
 import { PtySession } from "../pty/session";
 import { registerSession, setSessionShared, unregisterSession } from "../registry/sessions";
 import { startLocalServer, type LocalServerHandle } from "../server/local";
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
+import { resolveAuthedConvexClient } from "../util/convex-client";
 import { bell, clearTitle, inlineMessage, notifyOS, setTitle } from "../util/feedback";
 import { installShutdownHandlers, type ShutdownReason } from "../util/signals";
 
@@ -24,6 +26,41 @@ export interface ShellHostOptions {
 
 const SIGINT_EXIT = 130;
 const SIGTERM_EXIT = 143;
+const HEARTBEAT_INTERVAL_MS = 15_000;
+
+type SessionOpenArgs = {
+  sessionId: string;
+  shell: string;
+  cwd: string;
+  port?: number;
+  hostPid?: number;
+  shared?: boolean;
+};
+
+type SessionHeartbeatArgs = {
+  sessionId: string;
+  shared?: boolean;
+  port?: number;
+};
+
+type SessionCloseArgs = {
+  sessionId: string;
+  reason?: string;
+};
+
+const sessionOpenRef = makeFunctionReference<
+  "mutation",
+  SessionOpenArgs,
+  { id: string; created: boolean }
+>("session:open");
+const sessionHeartbeatRef = makeFunctionReference<
+  "mutation",
+  SessionHeartbeatArgs,
+  { ok: boolean }
+>("session:heartbeat");
+const sessionCloseRef = makeFunctionReference<"mutation", SessionCloseArgs, { ok: boolean }>(
+  "session:close",
+);
 
 export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   // Guard against recursive shell-host re-entry.
@@ -92,8 +129,41 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shared: false,
   });
 
+  const backend = resolveAuthedConvexClient();
+  if (backend.status === "ready") {
+    try {
+      await backend.client.mutation(sessionOpenRef, {
+        sessionId,
+        shell: resolvedShell,
+        cwd: process.cwd(),
+        port: server.port,
+        hostPid: process.pid,
+        shared: false,
+      });
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      log.warn("failed to open backend session record", { error: err.message });
+    }
+  } else if (backend.status === "missing_auth") {
+    log.debug("convex url configured but no auth token found; backend sync disabled");
+  }
+
   let shared = false;
   const sessionTag = sessionId.slice(0, 6);
+  const heartbeat = setInterval(() => {
+    if (backend.status !== "ready") return;
+    void backend.client
+      .mutation(sessionHeartbeatRef, {
+        sessionId,
+        shared,
+        port: server.port,
+      })
+      .catch((error: unknown) => {
+        const err = error instanceof Error ? error : new Error(String(error));
+        log.warn("session heartbeat failed", { error: err.message });
+      });
+  }, HEARTBEAT_INTERVAL_MS);
+  heartbeat.unref();
 
   function paintRestingTitle(): void {
     setTitle(shared ? `wrapper • shared • ${sessionTag}` : "");
@@ -116,6 +186,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         shared = true;
         setSessionShared(sessionId, true);
         trackEvent("session_shared");
+        if (backend.status === "ready") {
+          void backend.client
+            .mutation(sessionHeartbeatRef, { sessionId, shared: true, port: server.port })
+            .catch(() => {});
+        }
         announce(`wrapper • shared • ${sessionTag}`, "session shared (relay not wired yet)");
         break;
       case "unshare":
@@ -126,6 +201,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         shared = false;
         setSessionShared(sessionId, false);
         trackEvent("session_unshared");
+        if (backend.status === "ready") {
+          void backend.client
+            .mutation(sessionHeartbeatRef, { sessionId, shared: false, port: server.port })
+            .catch(() => {});
+        }
         announce("", "session unshared");
         break;
       case "status":
@@ -168,6 +248,18 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     if (shuttingDown) return 0;
     shuttingDown = true;
     log.debug("shell-host shutting down", { sessionId, reason });
+    clearInterval(heartbeat);
+    if (backend.status === "ready") {
+      try {
+        await backend.client.mutation(sessionCloseRef, {
+          sessionId,
+          reason,
+        });
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        log.warn("failed to close backend session record", { error: err.message });
+      }
+    }
     clearTitle();
     await attach.detach();
     await server.stop();
@@ -188,10 +280,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   });
 
   signals.dispose();
-  clearTitle();
-  await attach.detach();
-  await server.stop();
-  unregisterSession(sessionId);
+  await shutdown("exit");
 
   log.info("shell-host ended", { sessionId, exitCode });
   trackEvent("shell_host_ended", { exitCode: exitCode ?? null });

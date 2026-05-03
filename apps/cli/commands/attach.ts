@@ -1,12 +1,33 @@
 import * as p from "@clack/prompts";
 import { createLogger, trackError, trackEvent } from "@repo/logger";
+import { makeFunctionReference } from "convex/server";
 import { startAttachClient } from "../client/attach-client";
 import { findSession, latestSession, listSessions, type SessionRecord } from "../registry/sessions";
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
+import { resolveAuthedConvexClient } from "../util/convex-client";
 import { bell, clearTitle, inlineMessage, setTitle } from "../util/feedback";
 import { installShutdownHandlers } from "../util/signals";
 
 const log = createLogger("attach");
+
+type AuthorizeAttachArgs = {
+  sessionId: string;
+};
+
+type AuthorizeAttachResponse = {
+  ok: boolean;
+  sessionId: string;
+  port?: number;
+  shared: boolean;
+  isOwner: boolean;
+  updatedAt: number;
+};
+
+const authorizeAttachRef = makeFunctionReference<
+  "query",
+  AuthorizeAttachArgs,
+  AuthorizeAttachResponse
+>("session:authorizeAttach");
 
 /**
  * `wrapper attach` — connect a viewer terminal to a running session.
@@ -35,6 +56,8 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
 
   const target = await resolveTarget(opts);
   if (!target) process.exit(2);
+  const allowed = await ensureAttachAllowed(target);
+  if (!allowed) process.exit(1);
 
   const url = `ws://${host}:${target.port}`;
   log.info("attaching", { url, sessionId: target.id });
@@ -201,4 +224,50 @@ function shortenHome(path: string): string {
   const home = process.env.HOME;
   if (!home) return path;
   return path.startsWith(home) ? `~${path.slice(home.length)}` : path;
+}
+
+async function ensureAttachAllowed(target: TargetSession): Promise<boolean> {
+  if (target.id === "<unknown>") return true;
+
+  const backend = resolveAuthedConvexClient();
+  if (backend.status === "unconfigured") return true;
+  if (backend.status === "missing_auth") {
+    process.stderr.write("[wrapper] backend auth required. Run `wrapper auth login` first.\n");
+    return false;
+  }
+
+  try {
+    await backend.client.query(authorizeAttachRef, { sessionId: target.id });
+    return true;
+  } catch (error) {
+    const message = normalizeAttachAuthorizationError(error);
+    process.stderr.write(`[wrapper] attach authorization failed: ${message}\n`);
+    return false;
+  }
+}
+
+function normalizeAttachAuthorizationError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error);
+  const code = extractErrorCode(raw);
+
+  switch (code) {
+    case "UNAUTHORIZED":
+      return "Not signed in. Run `wrapper auth login` and try again.";
+    case "INSUFFICIENT_PERMISSION":
+      return "Access denied. Ask session owner to share it, or attach to your own session.";
+    case "RESOURCE_NOT_FOUND":
+      return "Session not found or no longer active.";
+    default:
+      return raw;
+  }
+}
+
+function extractErrorCode(message: string): string | null {
+  const jsonCode = message.match(/"code":"([A-Z_]+)"/)?.[1];
+  if (jsonCode) return jsonCode;
+
+  const plainCode = message.match(
+    /\b(UNAUTHORIZED|INSUFFICIENT_PERMISSION|RESOURCE_NOT_FOUND)\b/,
+  )?.[1];
+  return plainCode ?? null;
 }

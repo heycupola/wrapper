@@ -1,141 +1,68 @@
-# `@repo/backend` (planned) - Convex backend blueprint
+# `@repo/backend`
 
-This package documents the backend architecture for Wrapper.
+Convex backend for Wrapper.
 
-It is intentionally docs-first right now: no implementation yet, only the
-baseline contract for Phase 2 and onward.
+This package owns authenticated APIs for session lifecycle and device auth
+integration used by the CLI.
 
-## Why this package exists
+## Current schema
 
-The CLI already has local PTY + attach flow. To make Wrapper truly remote and
-multi-device, we need backend ownership for identity, routing, state, and ops.
+- `hostSession`
+  - `sessionId`, `ownerUserId`, `shell`, `cwd`
+  - `port`, `hostPid`, `shared`
+  - `status` (`active` or `closed`)
+  - `createdAt`, `updatedAt`, `lastHeartbeatAt`, `closedAt`, `closeReason`
 
-This package defines that backend baseline so implementation stays coherent.
+## Current handlers
 
-## Scope boundaries
+`convex/session.ts`:
 
-Backend owns:
+- `open` - create or re-open host session (owner-only)
+- `heartbeat` - update liveness and share/port state (owner-only)
+- `close` - close host session (owner-only)
+- `listActive` - list active sessions for authenticated owner
+- `authorizeAttach` - allow attach only if caller is owner or session is shared
+- `markStaleIfTimedOut` (internal) - scheduler task that auto-closes stale active sessions
 
-- auth-linked identity and authorization
-- session lifecycle source of truth
-- relay routing metadata
-- realtime state sync
-- push token management + notification triggers
-- operational/audit events
+`convex/deviceAuth.ts`:
 
-Backend does not own:
+- device authorization flow wrappers around Better Auth component
 
-- local PTY byte handling (CLI)
-- local attach protocol plumbing (CLI local server)
-- terminal UI rendering (attach/mobile clients)
+## Auth model
 
-## Core entities (Convex model)
+- Public handlers use `protectedQuery` / `protectedMutation` from
+  `convex/lib/middleware.ts`.
+- Identity is required for all session lifecycle operations.
+- Errors are normalized through `convex/lib/errors.ts` and
+  `convex/lib/types.ts`.
+- Session liveness uses heartbeat timeout. Missing heartbeats trigger scheduler
+  cleanup and close with `closeReason: "stale_timeout"`.
 
-Minimum tables/collections:
+## Session timeout config
 
-- `users`
-- `devices`
-- `sessions`
-- `sessionConnections`
-- `sessionEvents`
-- `pushTokens`
-- `auditLogs`
+- `WRAPPER_SESSION_STALE_AFTER_MS` - heartbeat timeout window (default `60000`)
+- `WRAPPER_SESSION_STALE_GRACE_MS` - scheduler grace window (default `10000`)
 
-Every row must be tenant-safe and user-scoped.
+Total stale close delay is:
 
-## Baseline API surface
+`WRAPPER_SESSION_STALE_AFTER_MS + WRAPPER_SESSION_STALE_GRACE_MS`
 
-Required backend functions:
+## Dev commands
 
-- `session.open`
-- `session.heartbeat`
-- `session.share`
-- `session.unshare`
-- `session.close`
-- `session.listActive`
-- `device.registerPushToken`
-- `device.unregisterPushToken`
+From monorepo root:
 
-## Auth integration (Better Auth)
-
-Backend should accept verified user identity from Better Auth and map it to:
-
-- canonical user record
-- per-device identity (`host-cli`, `mobile-ios`, future clients)
-
-Never trust caller-provided `userId`; derive authorization from verified auth
-context in every mutation/action.
-
-## Relay + Convex responsibility split
-
-```mermaid
-flowchart LR
-  cli[WrapperCliShellHost] --> relay[RelayTransport]
-  mobile[MobileClient] --> relay
-  relay --> convex[ConvexBackend]
-  convex --> relay
-  convex --> mobile
-
-  relay -->|"stream terminal bytes"| cli
-  convex -->|"identity, routing, session state"| relay
-  convex -->|"realtime subscriptions"| mobile
+```bash
+bunx tsc --noEmit -p packages/backend/tsconfig.json
+bunx oxlint packages/backend/convex
+cd packages/backend && bunx convex codegen
+bun test packages/backend/tests
 ```
 
-- Relay carries transport streams.
-- Convex stores truth and authorization.
-- Clients subscribe to Convex for session state transitions.
+## Smoke checklist
 
-## Reliability baseline
-
-Implement early:
-
-- heartbeat expiry / stale session cleanup
-- idempotency guards on open/close
-- dedupe window for repeated push triggers
-- event correlation ids (`sessionId`, `connectionId`, `requestId`)
-
-## Notification baseline
-
-Push notifications should trigger on high-signal events:
-
-- session shared
-- viewer attached
-- session closed
-
-Then evolve to smarter heuristics in Phase 5.
-
-## Phase mapping
-
-### Phase 2 (next)
-
-- auth + identity model
-- session lifecycle APIs
-- routing metadata for relay
-- minimal realtime subscriptions
-
-### Phase 3
-
-- mobile client integration
-- APNs pipeline tied to `pushTokens`
-
-### Phase 5
-
-- notification intelligence and policy
-- suppression, dedupe, priority tuning
-
-## MVP-first implementation order
-
-1. auth + users/devices
-2. sessions + lifecycle mutations
-3. routing metadata + authorization checks
-4. realtime subscriptions
-5. push token registration + basic push triggers
-6. cleanup jobs + audit views
-
-## Deliverable target for this package
-
-When backend coding begins, this package should be expanded with:
-
-- concrete Convex schema docs
-- API contract docs
-- operational runbook for local/dev/prod
+1. `wrapper auth login`
+2. Start a wrapped shell (`wrapper shell-host` or normal wrapped terminal)
+3. `wrapper attach --id <sessionId>`
+4. Detach viewer (`Ctrl+\`, then `d`)
+5. Exit host shell and verify session closes
+6. Kill host process without close and verify stale timeout auto-closes session

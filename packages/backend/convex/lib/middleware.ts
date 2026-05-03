@@ -36,12 +36,15 @@ export const protectedQuery = customQuery(query, {
     ctx: QueryCtx,
     args: Record<string, unknown>,
   ): Promise<{
-    ctx: AuthenticatedCtx;
+    ctx: QueryCtx & AuthenticatedCtx;
     args: Record<string, unknown>;
   }> => {
     const identity = await requireIdentity(ctx);
     return {
-      ctx: identity,
+      ctx: {
+        ...ctx,
+        ...identity,
+      },
       args,
     };
   },
@@ -53,12 +56,15 @@ export const protectedMutation = customMutation(mutation, {
     ctx: MutationCtx,
     args: Record<string, unknown>,
   ): Promise<{
-    ctx: AuthenticatedCtx;
+    ctx: MutationCtx & AuthenticatedCtx;
     args: Record<string, unknown>;
   }> => {
     const identity = await requireIdentity(ctx);
     return {
-      ctx: identity,
+      ctx: {
+        ...ctx,
+        ...identity,
+      },
       args,
     };
   },
@@ -70,7 +76,7 @@ export const protectedAction = customAction(action, {
     ctx: ActionCtx,
     args: Record<string, unknown>,
   ): Promise<{
-    ctx: AuthenticatedCtx & { autumn: Autumn };
+    ctx: ActionCtx & AuthenticatedCtx & { autumn: Autumn };
     args: Record<string, unknown>;
   }> => {
     const identity = await requireIdentity(ctx);
@@ -84,6 +90,7 @@ export const protectedAction = customAction(action, {
 
     return {
       ctx: {
+        ...ctx,
         autumn,
         ...identity,
       },

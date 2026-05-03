@@ -10,6 +10,7 @@
     "format": "oxfmt --ignore-path ../../.oxfmtignore .",
     "format:check": "oxfmt --check --ignore-path ../../.oxfmtignore .",
     "check-types": "tsc --noEmit",
+    "test": "bun test tests",
     "betterAuth:generate-schema": "cd ./convex/betterAuth && bunx better-auth generate -y --output generatedSchema.ts",
     "deploy": "bunx convex deploy",
     "deploy:dry-run": "bunx convex deploy --dry-run"

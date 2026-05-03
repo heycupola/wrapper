@@ -1,8 +1,9 @@
 import * as p from "@clack/prompts";
 import { createLogger, trackError, trackEvent } from "@repo/logger";
-import { existsSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, unlinkSync, writeFileSync } from "node:fs";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
+import { type StoredAuthToken, loadStoredAuthToken, resolveConvexUrl } from "../util/auth-session";
 import { paths } from "../util/paths";
 import { installShutdownHandlers } from "../util/signals";
 
@@ -31,15 +32,6 @@ type PollDeviceTokenResponse = {
   token_type: string;
   expires_in: number;
 };
-
-interface StoredAuthToken {
-  provider: "convex-device-auth";
-  convexUrl: string;
-  sessionToken: string;
-  tokenType: string;
-  issuedAt: string;
-  expiresAt: string;
-}
 
 const requestDeviceCodeRef = makeFunctionReference<
   "mutation",
@@ -153,12 +145,6 @@ export async function runAuthLogout(): Promise<void> {
   }
 }
 
-function resolveConvexUrl(): string | null {
-  const raw = process.env.WRAPPER_CONVEX_URL ?? process.env.CONVEX_URL;
-  if (!raw) return null;
-  return raw.trim().replace(/\/+$/, "");
-}
-
 async function waitForDeviceToken(
   client: ConvexHttpClient,
   deviceCode: RequestDeviceCodeResponse,
@@ -236,26 +222,4 @@ function normalizeErrorMessage(error: unknown): string {
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function loadStoredAuthToken(): StoredAuthToken | null {
-  const file = paths.authFile();
-  if (!existsSync(file)) return null;
-  try {
-    const raw = readFileSync(file, "utf8");
-    const parsed = JSON.parse(raw) as Partial<StoredAuthToken>;
-    if (
-      parsed.provider !== "convex-device-auth" ||
-      typeof parsed.sessionToken !== "string" ||
-      typeof parsed.convexUrl !== "string" ||
-      typeof parsed.tokenType !== "string" ||
-      typeof parsed.issuedAt !== "string" ||
-      typeof parsed.expiresAt !== "string"
-    ) {
-      return null;
-    }
-    return parsed as StoredAuthToken;
-  } catch {
-    return null;
-  }
 }

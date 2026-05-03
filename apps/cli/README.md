@@ -77,6 +77,10 @@ sequenceDiagram
 5. Starts in-process attach bridge (`client/attach-client.ts`) so the current
    terminal stays interactive.
 6. Installs signal handlers and deterministic shutdown.
+7. If authenticated, syncs session lifecycle to Convex:
+   - host start -> `session:open`
+   - periodic tick -> `session:heartbeat`
+   - shutdown -> `session:close`
 
 Important safety guards:
 
@@ -88,14 +92,17 @@ Important safety guards:
 `commands/attach.ts` does:
 
 1. Resolve target session by `--id`, `--port`, or picker from registry.
-2. Connect to `ws://127.0.0.1:<port>`.
-3. Bridge stdin/stdout via protocol messages.
-4. Support detach without ending host session (`Ctrl+\` then `d`).
+2. If session id is known and Convex is configured, run `session:authorizeAttach`.
+3. Connect to `ws://127.0.0.1:<port>`.
+4. Bridge stdin/stdout via protocol messages.
+5. Support detach without ending host session (`Ctrl+\` then `d`).
 
 Detach semantics:
 
 - Detach closes only the viewer socket.
 - Host keeps running until inner shell exits.
+- Authorization failures are normalized with actionable hints (login required,
+  not shared, or session not active).
 
 ## Protocol path in local phase
 
@@ -135,6 +142,9 @@ fi
 ### Daily usage
 
 ```bash
+wrapper auth login
+wrapper auth whoami
+wrapper auth logout
 wrapper status
 wrapper attach
 wrapper attach --id <sessionId>
@@ -158,20 +168,20 @@ bun run dev:host
 
 Inside host shell:
 
-| Keys              | Action |
-| ----------------- | ------ |
-| `Ctrl+\` `s`      | mark shared |
-| `Ctrl+\` `u`      | mark unshared |
-| `Ctrl+\` `?`      | status overlay |
+| Keys              | Action                    |
+| ----------------- | ------------------------- |
+| `Ctrl+\` `s`      | mark shared               |
+| `Ctrl+\` `u`      | mark unshared             |
+| `Ctrl+\` `?`      | status overlay            |
 | `Ctrl+\` `Ctrl+\` | send literal control byte |
-| `Ctrl+\` `Esc`    | cancel prefix mode |
+| `Ctrl+\` `Esc`    | cancel prefix mode        |
 
 Inside attach viewer:
 
-| Keys          | Action |
-| ------------- | ------ |
-| `Ctrl+\` `d`  | detach viewer |
-| `Ctrl+\` `?`  | viewer status |
+| Keys         | Action        |
+| ------------ | ------------- |
+| `Ctrl+\` `d` | detach viewer |
+| `Ctrl+\` `?` | viewer status |
 
 Note: relay transport is not yet wired, so `share/unshare` currently updates
 local state and feedback only.
@@ -199,19 +209,20 @@ local state and feedback only.
 
 ## Environment variables
 
-| Variable                | Description | Default |
-| ----------------------- | ----------- | ------- |
-| `DEV`                   | enable dev mode | unset |
-| `CI`                    | enable CI mode | unset |
-| `WRAPPER_LOG`           | `debug/info/warn/error/off` | dev=`info`, prod=`warn` |
-| `WRAPPER_LOG_FILE`      | override log file path | platform default |
-| `WRAPPER_TELEMETRY`     | `"false"` disables telemetry | enabled after consent |
-| `WRAPPER_POSTHOG_KEY`   | PostHog key | empty |
-| `WRAPPER_TELEMETRY_URL` | telemetry endpoint | `https://telemetry.wrapper.sh` |
-| `WRAPPER_RELAY_URL`     | relay endpoint override | dev localhost, prod `wss://relay.wrapper.sh` |
-| `WRAPPER_AUTH_ORIGIN`   | auth callback origin | dev localhost, prod `https://wrapper.sh` |
-| `WRAPPER_DISABLE`       | disable hook in one terminal | unset |
-| `WRAPPER_WRAPPED`       | set by `shell-host` in inner shell | unset |
+| Variable                | Description                        | Default                                      |
+| ----------------------- | ---------------------------------- | -------------------------------------------- |
+| `DEV`                   | enable dev mode                    | unset                                        |
+| `CI`                    | enable CI mode                     | unset                                        |
+| `WRAPPER_LOG`           | `debug/info/warn/error/off`        | dev=`info`, prod=`warn`                      |
+| `WRAPPER_LOG_FILE`      | override log file path             | platform default                             |
+| `WRAPPER_TELEMETRY`     | `"false"` disables telemetry       | enabled after consent                        |
+| `WRAPPER_POSTHOG_KEY`   | PostHog key                        | empty                                        |
+| `WRAPPER_TELEMETRY_URL` | telemetry endpoint                 | `https://telemetry.wrapper.sh`               |
+| `WRAPPER_RELAY_URL`     | relay endpoint override            | dev localhost, prod `wss://relay.wrapper.sh` |
+| `WRAPPER_AUTH_ORIGIN`   | auth callback origin               | dev localhost, prod `https://wrapper.sh`     |
+| `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend  | falls back to `CONVEX_URL` if set             |
+| `WRAPPER_DISABLE`       | disable hook in one terminal       | unset                                        |
+| `WRAPPER_WRAPPED`       | set by `shell-host` in inner shell | unset                                        |
 
 `DEV=true` redirects state into `wrapper-dev`, uses localhost defaults, and
 mirrors logs to stderr for easier local debugging.
@@ -223,6 +234,7 @@ index.ts                       commander entrypoint
 commands/
   shell-host.ts                host runtime orchestration
   attach.ts                    viewer command
+  auth.ts                      device auth login/whoami/logout
   install.ts                   rc install flow
   uninstall.ts                 rc uninstall flow
   init.ts                      snippet generator
@@ -243,6 +255,8 @@ shell/
 util/
   env.ts                       runtime env flags and defaults
   paths.ts                     config/state path helpers
+  auth-session.ts              stored auth token + Convex URL resolution
+  convex-client.ts             shared authenticated Convex client helper
   feedback.ts                  title/inline/bell notifications
   signals.ts                   signal shutdown helper
 ```
