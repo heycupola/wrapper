@@ -3,6 +3,7 @@ import { initLogger, isFirstRun, saveTelemetryPreference } from "@repo/logger";
 import { Command } from "commander";
 import pc from "picocolors";
 import { runAttach } from "./commands/attach";
+import { runAuthLogin, runAuthLogout, runAuthWhoami } from "./commands/auth";
 import { runInit } from "./commands/init";
 import { runInstall } from "./commands/install";
 import { runLogs } from "./commands/logs";
@@ -162,5 +163,20 @@ const telemetryCmd = program
 telemetryCmd.command("status").description("Show telemetry status").action(telemetryStatus);
 telemetryCmd.command("enable").description("Enable telemetry").action(telemetryEnable);
 telemetryCmd.command("disable").description("Disable telemetry").action(telemetryDisable);
+
+const authCmd = program.command("auth").description("Authenticate Wrapper CLI");
+authCmd
+  .command("login")
+  .description("Start device authorization flow")
+  .option("--client-id <clientId>", "OAuth client id")
+  .option("--scope <scope>", "OAuth scope")
+  .action(async (raw) => {
+    await runAuthLogin({
+      clientId: raw.clientId,
+      scope: raw.scope,
+    });
+  });
+authCmd.command("whoami").description("Show current auth session").action(runAuthWhoami);
+authCmd.command("logout").description("Remove local auth session").action(runAuthLogout);
 
 await program.parseAsync(process.argv);
