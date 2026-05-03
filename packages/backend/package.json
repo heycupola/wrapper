@@ -1,5 +1,27 @@
 {
-  "name": "@repo/backend",
-  "version": "0.0.0",
-  "private": true
+  "name": "backend",
+  "private": true,
+  "type": "module",
+  "module": "index.ts",
+  "scripts": {
+    "lint": "oxlint -c ../../.oxlintrc.json .",
+    "lint:fix": "oxlint -c ../../.oxlintrc.json . --fix",
+    "format": "oxfmt --ignore-path ../../.oxfmtignore .",
+    "format:check": "oxfmt --check --ignore-path ../../.oxfmtignore .",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@convex-dev/better-auth": "^0.12.2",
+    "@useautumn/convex": "^0.0.12",
+    "better-auth": "~1.6.9",
+    "convex": "^1.37.0",
+    "convex-helpers": "^0.1.98"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
 }

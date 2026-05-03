@@ -8,4 +8,5 @@ out
 build
 coverage
 bun.lock
+**/convex/_generated/**
 **/CHANGELOG.md
