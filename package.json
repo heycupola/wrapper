@@ -34,6 +34,10 @@
     "check-types": "turbo run check-types",
     "prepare": "lefthook install"
   },
+  "dependencies": {
+    "@convex-dev/better-auth": "^0.12.2",
+    "better-auth": "^1.6.9"
+  },
   "devDependencies": {
     "lefthook": "^1.13.0",
     "oxfmt": "^0.45.0",

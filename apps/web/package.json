@@ -16,7 +16,10 @@
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
+    "@convex-dev/better-auth": "^0.12.2",
     "@opennextjs/cloudflare": "^1.18.0",
+    "better-auth": "^1.6.9",
+    "convex": "^1.37.0",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"

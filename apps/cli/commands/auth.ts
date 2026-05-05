@@ -215,9 +215,24 @@ function persistAuthToken(convexUrl: string, token: PollDeviceTokenResponse): vo
 }
 
 function normalizeErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.length > 0) return error.message;
-  if (typeof error === "string" && error.length > 0) return error;
-  return "unknown_error";
+  const raw =
+    error instanceof Error && error.message.length > 0
+      ? error.message
+      : typeof error === "string" && error.length > 0
+        ? error
+        : "unknown_error";
+
+  const knownCodes = [
+    "authorization_pending",
+    "slow_down",
+    "access_denied",
+    "expired_token",
+    "invalid_request",
+  ] as const;
+  for (const code of knownCodes) {
+    if (raw.includes(code)) return code;
+  }
+  return raw;
 }
 
 function sleep(ms: number): Promise<void> {

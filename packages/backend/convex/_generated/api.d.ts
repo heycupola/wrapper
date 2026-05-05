@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as autumn from "../autumn.js";
 import type * as deviceAuth from "../deviceAuth.js";
+import type * as http from "../http.js";
 import type * as lib_errors from "../lib/errors.js";
 import type * as lib_logger from "../lib/logger.js";
 import type * as lib_middleware from "../lib/middleware.js";
@@ -26,6 +27,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   autumn: typeof autumn;
   deviceAuth: typeof deviceAuth;
+  http: typeof http;
   "lib/errors": typeof lib_errors;
   "lib/logger": typeof lib_logger;
   "lib/middleware": typeof lib_middleware;

@@ -11,6 +11,7 @@ import authSchema from "./betterAuth/schema";
 const siteUrl =
   process.env.SITE_URL ||
   (process.env.ENVIRONMENT === "development" ? "http://localhost:3000" : "https://wrapper.sh");
+const betterAuthSecret = process.env.BETTER_AUTH_SECRET ?? "wrapper-local-dev-secret-change-me";
 
 // The component client has methods needed for integrating Convex with Better Auth,
 // as well as helper methods for general use.
@@ -21,20 +22,26 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
 }) as ReturnType<typeof createClient<DataModel>>;
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
+  const socialProviders: NonNullable<Parameters<typeof betterAuth>[0]["socialProviders"]> = {};
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    socialProviders.google = {
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      prompt: "select_account",
+    };
+  }
+  if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+    socialProviders.github = {
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    };
+  }
+
   return betterAuth({
     baseURL: siteUrl,
+    secret: betterAuthSecret,
     database: authComponent.adapter(ctx),
-    socialProviders: {
-      google: {
-        clientId: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        prompt: "select_account",
-      },
-      github: {
-        clientId: process.env.GITHUB_CLIENT_ID!,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-      },
-    },
+    socialProviders,
     plugins: [
       convex({ authConfig }),
       deviceAuthorization(),

@@ -36,17 +36,23 @@ export const pollDeviceToken = mutation({
     device_code: v.string(),
   },
   handler: async (ctx, args) => {
-    const { expires_in, session_token, token_type } = await ctx.runMutation(
-      components.betterAuth.deviceAuth.pollDeviceToken,
-      {
+    let result: {
+      expires_in: number;
+      session_token: string;
+      token_type: string;
+    };
+    try {
+      result = await ctx.runMutation(components.betterAuth.deviceAuth.pollDeviceToken, {
         device_code: args.device_code,
-      },
-    );
+      });
+    } catch (error: unknown) {
+      throw new Error(normalizeDeviceAuthError(error), { cause: error });
+    }
 
     return {
-      session_token,
-      token_type,
-      expires_in,
+      session_token: result.session_token,
+      token_type: result.token_type,
+      expires_in: result.expires_in,
     };
   },
 });
@@ -88,3 +94,18 @@ export const denyDeviceCode = protectedMutation({
     return { success: true };
   },
 });
+
+function normalizeDeviceAuthError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error);
+  const known = [
+    "authorization_pending",
+    "slow_down",
+    "access_denied",
+    "expired_token",
+    "invalid_request",
+  ];
+  for (const code of known) {
+    if (raw.includes(code)) return code;
+  }
+  return raw;
+}
