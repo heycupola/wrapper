@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/typescript-config/bundler.json",
+  "extends": "../../packages/typescript-config/bundler.json",
   "compilerOptions": {
     "moduleDetection": "force",
     "noUncheckedIndexedAccess": true

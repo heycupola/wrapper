@@ -17,18 +17,12 @@
     "smoke": "bun run scripts/smoke.ts"
   },
   "dependencies": {
-    "@repo/logger": "*",
-    "@repo/protocol": "*",
     "convex": "^1.37.0",
     "hono": "^4.10.6"
   },
   "devDependencies": {
-    "@repo/typescript-config": "*",
     "@types/bun": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:"
-  },
-  "peerDependencies": {
-    "typescript": "catalog:"
   }
 }

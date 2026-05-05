@@ -1,4 +1,4 @@
-import { encodeMessage, parseMessage, type WrapperMessage } from "@repo/protocol";
+import { encodeMessage, parseMessage, type WrapperMessage } from "./protocol";
 
 export interface RelayPeer {
   send: (payload: string) => void;

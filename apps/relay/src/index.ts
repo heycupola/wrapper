@@ -1,9 +1,9 @@
 import type { ServerWebSocket } from "bun";
-import { createLogger } from "@repo/logger";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { Hono } from "hono";
 import { RelayHub, type RelayRole } from "./hub";
+import { createLogger } from "./logger";
 
 type ConsumeTicketArgs = {
   ticket: string;
