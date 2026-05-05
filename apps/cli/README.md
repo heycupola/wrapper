@@ -214,7 +214,7 @@ remote attach with `wrapper attach --relay --id <sessionId>`.
 
 | Variable                | Description                        | Default                                      |
 | ----------------------- | ---------------------------------- | -------------------------------------------- |
-| `DEV`                   | enable dev mode                    | unset                                        |
+| `NODE_ENV`              | runtime mode (`production` or dev) | unset (treated as dev)                       |
 | `CI`                    | enable CI mode                     | unset                                        |
 | `WRAPPER_LOG`           | `debug/info/warn/error/off`        | dev=`info`, prod=`warn`                      |
 | `WRAPPER_LOG_FILE`      | override log file path             | platform default                             |
@@ -227,7 +227,7 @@ remote attach with `wrapper attach --relay --id <sessionId>`.
 | `WRAPPER_DISABLE`       | disable hook in one terminal       | unset                                        |
 | `WRAPPER_WRAPPED`       | set by `shell-host` in inner shell | unset                                        |
 
-`DEV=true` redirects state into `wrapper-dev`, uses localhost defaults, and
+`NODE_ENV=development` redirects state into `wrapper-dev`, uses localhost defaults, and
 mirrors logs to stderr for easier local debugging.
 
 ## Source map

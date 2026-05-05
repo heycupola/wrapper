@@ -49,6 +49,7 @@ export type TerminalOptions = {
 
 const READ_BUF_SIZE = 64 * 1024;
 const DEFAULT_POLL_MS = 4;
+const IS_DEV = (process.env.NODE_ENV ?? "").toLowerCase() !== "production";
 
 export class Terminal {
   /** Process id of the helper-spawned shell. */
@@ -235,7 +236,7 @@ export class Terminal {
       ],
       stdio: ["ignore", "ignore", "ignore"],
     });
-    if (!result.success && process.env["DEV"] === "true") {
+    if (!result.success && IS_DEV) {
       console.error("[@repo/terminal] stty resize failed", {
         size,
         slavePath: this.slavePath,
@@ -287,7 +288,7 @@ export class Terminal {
         } catch (err) {
           // Never let a consumer exception kill the read loop.
           // Surface to stderr in dev only.
-          if (process.env["DEV"] === "true") {
+          if (IS_DEV) {
             console.error("[@repo/terminal] onData threw:", err);
           }
         }

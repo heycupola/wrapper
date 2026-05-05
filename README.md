@@ -68,10 +68,10 @@ bun run format         # oxfmt --write
 bun run dev --filter=@repo/cli -- shell-host    # try the wrapping flow
 
 # or, in apps/cli:
-DEV=true bun run index.ts shell-host
+NODE_ENV=development bun run index.ts shell-host
 ```
 
-`DEV=true` redirects every on-disk path into a `wrapper-dev` namespace
+`NODE_ENV=development` redirects every on-disk path into a `wrapper-dev` namespace
 under XDG state (or `%APPDATA%\wrapper-dev\` on Windows), points the
 relay/auth URLs at localhost, mirrors logs to stderr, and writes rc-file
 patches to a fake-rc directory. A developer running the CLI locally can

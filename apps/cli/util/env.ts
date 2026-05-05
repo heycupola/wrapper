@@ -3,7 +3,8 @@
  *
  * Two boolean toggles, read once at module load:
  *
- *   - `DEV=true`  → development mode (relic-style convention).
+ *   - `NODE_ENV`  → set to `production` for production mode.
+ *                   Any other value (or unset) is treated as development.
  *                   Switches every server URL to localhost, namespaces all
  *                   on-disk paths under `wrapper-dev`, mirrors logs to
  *                   stderr, and disables telemetry.
@@ -14,7 +15,7 @@
  *
  * Always switch via the env var, never via code:
  *
- *     DEV=true bun run index.ts shell-host
+ *     NODE_ENV=development bun run index.ts shell-host
  *
  * The `dev` script in `apps/cli/package.json` already sets it.
  *
@@ -22,8 +23,8 @@
  * worked on either project sees the same environment knobs.
  */
 
-const RAW_DEV = (process.env.DEV ?? "").toLowerCase();
-const IS_DEV = RAW_DEV === "true";
+const NODE_ENV = (process.env.NODE_ENV ?? "").toLowerCase();
+const IS_DEV = NODE_ENV !== "production";
 const IS_CI = process.env.CI !== undefined && process.env.CI !== "";
 
 export const env = {

@@ -9,10 +9,10 @@ import { dirname, join, resolve } from "node:path";
  * other workspace package — so it can move out of this repository unchanged
  * the moment we're ready to publish it as a standalone Cupola package.
  *
- * Environment knobs (mirrors Relic's vocabulary):
+ * Environment knobs:
  *
- *   DEV=true                 dev mode (mirror to console, debug log file,
- *                            telemetry off)
+ *   NODE_ENV=production      production mode
+ *                            (any other value is development mode)
  *   CI                       any value flips CI mode (telemetry off,
  *                            console mirror off)
  *   WRAPPER_LOG              "debug" | "info" | "warn" | "error" | "off"
@@ -23,7 +23,7 @@ import { dirname, join, resolve } from "node:path";
  */
 
 const HOME = process.env.HOME || process.env.USERPROFILE || "~";
-const IS_DEV = process.env.DEV === "true";
+const IS_DEV = (process.env.NODE_ENV ?? "").toLowerCase() !== "production";
 const IS_CI = process.env.CI !== undefined && process.env.CI !== "";
 const NS = IS_DEV ? "wrapper-dev" : "wrapper";
 

@@ -60,7 +60,7 @@ trackError("shell-host", err, { sessionId: "abc123" });
 | Mode               | Console output        | File transport | Telemetry               |
 | ------------------ | --------------------- | -------------- | ----------------------- |
 | Default (prod)     | off                   | yes            | enabled (after consent) |
-| `DEV=true`         | yes (Consola colours) | yes            | disabled                |
+| `NODE_ENV!=production` | yes (Consola colours) | yes         | disabled                |
 | `CI=…` (any value) | off                   | yes            | disabled                |
 
 ## Log files
@@ -100,7 +100,7 @@ Preference lives at `<config>/wrapper/telemetry.json` (or
 | `WRAPPER_TELEMETRY`     | `"false"` disables telemetry                        | enabled                        |
 | `WRAPPER_POSTHOG_KEY`   | PostHog project key                                 | empty (telemetry off)          |
 | `WRAPPER_TELEMETRY_URL` | Proxy host                                          | `https://telemetry.wrapper.sh` |
-| `DEV`                   | `"true"` enables dev mode                           | unset                          |
+| `NODE_ENV`              | `production` disables dev mode; others are dev      | unset (treated as dev)         |
 | `CI`                    | Any value enables CI mode                           | unset                          |
 
 ## Dev workflow

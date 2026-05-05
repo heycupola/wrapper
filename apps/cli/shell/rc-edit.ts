@@ -74,7 +74,7 @@ function renderBlock(shell: SupportedShell): string {
 }
 
 function renderInitLine(shell: SupportedShell): string {
-  const cmd = env.isDev ? `DEV=true wrapper init ${shell}` : `wrapper init ${shell}`;
+  const cmd = env.isDev ? `NODE_ENV=development wrapper init ${shell}` : `wrapper init ${shell}`;
   if (shell === "fish") return `${cmd} | source`;
   return `eval "$(${cmd})"`;
 }
