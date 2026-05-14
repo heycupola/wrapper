@@ -98,3 +98,5 @@ fly logs --app <app-name>
 
 If release is complete and all machines are on the same image/version, the app is
 typically in a good state even when dashboard sync lags.
+
+For SLOs, incident steps, and rollback procedure, see `apps/relay/RUNBOOK.md`.
