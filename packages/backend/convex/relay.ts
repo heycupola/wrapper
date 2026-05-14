@@ -1,17 +1,53 @@
 import { v } from "convex/values";
+import { makeFunctionReference } from "convex/server";
 import { internal } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { createError, ErrorCode } from "./lib/errors.ts";
-import { protectedMutation, publicMutation } from "./lib/middleware.ts";
+import { protectedAction, protectedMutation, publicMutation } from "./lib/middleware.ts";
 import { getRelayTicketConfig, createRelayTicket, hashRelayTicket } from "./lib/relayTicket.ts";
 import { ErrorSeverity } from "./lib/types.ts";
 
 const RELAY_TICKET = getRelayTicketConfig();
+const issueHostTicketInternalRef = makeFunctionReference<
+  "mutation",
+  { sessionId: string; userId: string },
+  { ticket: string; expiresAt: number }
+>("relay:issueHostTicketInternal");
 
-export const issueHostTicket = protectedMutation({
+export const issueHostTicket = protectedAction({
   args: {
     sessionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const featureId = getRelayShareFeatureId();
+    const access = await ctx.autumn.check(ctx, { featureId });
+    if (access.error || !access.data) {
+      throw createError({
+        code: ErrorCode.EXTERNAL_SERVICE_ERROR,
+        message: "Unable to verify relay sharing plan",
+        severity: ErrorSeverity.High,
+      });
+    }
+    if (!access.data.allowed) {
+      throw createError({
+        code: ErrorCode.INSUFFICIENT_PERMISSION,
+        message: "Relay sharing requires Pro plan",
+        severity: ErrorSeverity.High,
+      });
+    }
+
+    return await ctx.runMutation(issueHostTicketInternalRef, {
+      sessionId: args.sessionId,
+      userId: ctx.userId,
+    });
+  },
+});
+
+export const issueHostTicketInternal = internalMutation({
+  args: {
+    sessionId: v.string(),
+    userId: v.string(),
   },
   handler: async (ctx, args) => {
     const session = await findActiveSession(ctx, args.sessionId);
@@ -22,7 +58,7 @@ export const issueHostTicket = protectedMutation({
         severity: ErrorSeverity.Medium,
       });
     }
-    if (session.ownerUserId !== ctx.userId) {
+    if (session.ownerUserId !== args.userId) {
       throw createError({
         code: ErrorCode.INSUFFICIENT_PERMISSION,
         message: "Only session owner can request host relay ticket",
@@ -32,7 +68,7 @@ export const issueHostTicket = protectedMutation({
 
     return await issueTicket(ctx, {
       sessionId: args.sessionId,
-      userId: ctx.userId,
+      userId: args.userId,
       role: "host",
       ttlMs: RELAY_TICKET.hostTtlMs,
     });
@@ -68,6 +104,26 @@ export const issueViewerTicket = protectedMutation({
       role: "viewer",
       ttlMs: RELAY_TICKET.viewerTtlMs,
     });
+  },
+});
+
+export const checkShareEntitlement = protectedAction({
+  args: {},
+  handler: async (ctx) => {
+    const featureId = getRelayShareFeatureId();
+    const access = await ctx.autumn.check(ctx, { featureId });
+    if (access.error || !access.data) {
+      throw createError({
+        code: ErrorCode.EXTERNAL_SERVICE_ERROR,
+        message: "Unable to verify relay sharing plan",
+        severity: ErrorSeverity.High,
+      });
+    }
+
+    return {
+      allowed: access.data.allowed === true,
+      featureId,
+    };
   },
 });
 
@@ -187,4 +243,10 @@ async function issueTicket(
   });
 
   return { ticket, expiresAt };
+}
+
+function getRelayShareFeatureId(): string {
+  const value = process.env.WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID;
+  if (!value) return "can_share_relay";
+  return value.trim();
 }
