@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type OnboardingState = {
   needsOnboarding: boolean;
@@ -44,6 +46,7 @@ export function OnboardingClient({
   token: string;
   initialState: OnboardingState;
 }) {
+  const router = useRouter();
   const [state, setState] = useState<OnboardingState>(initialState);
   const [busy, setBusy] = useState(false);
   const [source, setSource] = useState(state.source ?? "");
@@ -51,6 +54,9 @@ export function OnboardingClient({
   const [teamSize, setTeamSize] = useState(state.teamSize ?? "");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const completedCount =
+    Number(state.completedProfile) + Number(state.connectedCli) + Number(state.sharedFirstSession);
+  const progressPct = Math.round((completedCount / 3) * 100);
 
   const client = useMemo(() => {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -76,6 +82,11 @@ export function OnboardingClient({
         status: next.status,
         needsOnboarding: next.status !== "completed",
       }));
+      emitOnboardingEvent("onboarding_step_updated", {
+        step,
+        value,
+        status: next.status,
+      });
     } catch (err) {
       setError(normalizeError(err));
     } finally {
@@ -102,7 +113,14 @@ export function OnboardingClient({
         status: "completed",
         needsOnboarding: false,
       }));
+      emitOnboardingEvent("onboarding_completed", {
+        source: source.trim() || null,
+        teamSize: teamSize.trim() || null,
+      });
       setStatus("Onboarding complete. You can now use Wrapper from the CLI.");
+      setTimeout(() => {
+        router.push("/");
+      }, 500);
     } catch (err) {
       setError(normalizeError(err));
     } finally {
@@ -113,6 +131,9 @@ export function OnboardingClient({
   return (
     <div className="authCard">
       <p className="authHint">Mark each step once you've done it.</p>
+      <p className="authHint">
+        Progress: {completedCount}/3 ({progressPct}%)
+      </p>
       <label className="onboardingStep">
         <input
           type="checkbox"
@@ -188,6 +209,9 @@ export function OnboardingClient({
         >
           Finish onboarding
         </button>
+        <Link className="social-btn" href="/oauth/authorize">
+          Back to device auth
+        </Link>
       </div>
       {status ? <p className="authSuccess">{status}</p> : null}
       {error ? <p className="authError">{error}</p> : null}
@@ -198,4 +222,17 @@ export function OnboardingClient({
 function normalizeError(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
   return String(error);
+}
+
+function emitOnboardingEvent(name: string, payload: Record<string, unknown>): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("wrapper:onboarding", {
+      detail: {
+        name,
+        payload,
+        at: Date.now(),
+      },
+    }),
+  );
 }

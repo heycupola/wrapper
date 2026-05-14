@@ -72,6 +72,92 @@ a {
   position: relative;
 }
 
+.horizontalPage {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.hTopBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.hNav {
+  display: inline-flex;
+  gap: 14px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.hNav a:hover {
+  color: var(--color-text);
+}
+
+.hScroller {
+  flex: 1;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(340px, 100dvw);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.hSection {
+  scroll-snap-align: start;
+  border-right: 1px solid var(--color-border);
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hSectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hSectionEyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.hSectionTitle {
+  font-size: clamp(1.2rem, 1.6vw, 2rem);
+  line-height: 1.2;
+}
+
+.hSectionBody {
+  max-width: 520px;
+}
+
+.hActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.hList {
+  list-style: square;
+  margin-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: var(--color-text-muted);
+}
+
+.hOrdered {
+  list-style: decimal;
+}
+
 .content {
   display: flex;
   flex-direction: column;
@@ -303,5 +389,18 @@ a {
   .social-btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .hTopBar {
+    padding: 12px 14px;
+  }
+
+  .hNav {
+    gap: 8px;
+    font-size: 0.75rem;
+  }
+
+  .hSection {
+    padding: 24px 14px;
   }
 }
