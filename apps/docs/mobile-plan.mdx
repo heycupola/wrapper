@@ -1,0 +1,22 @@
+---
+title: Mobile Plan
+description: What is locked now so mobile can plug in later.
+---
+
+Mobile app implementation is intentionally deferred, but the integration contract
+is already defined:
+
+- backend remains source of truth for auth/session entitlement
+- relay ticket flow is reusable for non-CLI clients
+- protocol messages stay versioned in `@repo/protocol`
+
+## Current boundary
+
+- mobile app is not part of current release phases
+- docs and onboarding are written so users can complete setup without mobile
+
+## Next mobile phase
+
+- repo linkage strategy: submodule under `apps/mobile`
+- auth bootstrapping via Better Auth session handoff
+- relay viewer mode first, host mode later

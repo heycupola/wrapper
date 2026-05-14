@@ -1,0 +1,50 @@
+---
+title: Onboarding
+description: First-time flow for getting Wrapper ready in minutes.
+---
+
+## 1) Sign in
+
+Use device auth from your terminal:
+
+```bash
+wrapper auth login
+```
+
+Open the displayed URL, sign in with GitHub/Google, and approve the code.
+
+## 2) Complete web onboarding
+
+After approving the code, continue to `/onboarding` in the web app.
+
+Checklist:
+
+- complete profile setup
+- confirm CLI login is working
+- share your first session
+
+## 3) Start your host session
+
+```bash
+wrapper shell-host
+```
+
+This is your owner terminal.
+
+## 4) Share and attach
+
+In host terminal:
+
+- `Ctrl+\` then `s` to share
+- `Ctrl+\` then `u` to unshare
+- `Ctrl+\` then `?` for status
+
+From another terminal:
+
+```bash
+wrapper attach --relay --id <sessionId>
+```
+
+## 5) Done
+
+Once these steps are complete, onboarding is marked as finished for your account.

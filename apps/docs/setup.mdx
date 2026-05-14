@@ -10,6 +10,7 @@ description: Configure environment variables, run checks, and verify your local 
 - `WRAPPER_CONVEX_URL`: Convex deployment URL
 - `WRAPPER_RELAY_URL`: Relay WebSocket base URL
 - `WRAPPER_AUTH_ORIGIN`: Auth UI origin
+- `WRAPPER_HUD`: `on` by default, set `off` to disable host HUD/title updates
 - `NODE_ENV=development`: local development mode
 
 ### Relay
@@ -53,7 +54,8 @@ This validates:
 ## Manual end to end check
 
 1. `wrapper auth login`
-2. Start host shell and share (`Ctrl+\\` then `s`)
-3. Find id with `wrapper status`
-4. Attach via relay from another terminal
-5. Detach (`Ctrl+\\` then `d`) and unshare (`Ctrl+\\` then `u`)
+2. Complete web onboarding at `/onboarding` once signed in
+3. Start host shell and share (`Ctrl+\\` then `s`)
+4. Find id with `wrapper status`
+5. Attach via relay from another terminal
+6. Detach (`Ctrl+\\` then `d`) and unshare (`Ctrl+\\` then `u`)

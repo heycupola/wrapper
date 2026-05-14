@@ -32,12 +32,12 @@
   "navigation": {
     "groups": [
       {
-        "group": "Getting Started",
-        "pages": ["introduction", "installation", "setup"]
+        "group": "Start Here",
+        "pages": ["introduction", "onboarding", "installation", "setup"]
       },
       {
-        "group": "Reference",
-        "pages": ["architecture"]
+        "group": "Operate",
+        "pages": ["troubleshooting", "release-channels", "architecture", "mobile-plan"]
       }
     ]
   }
