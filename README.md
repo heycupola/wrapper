@@ -12,14 +12,14 @@ single `Ctrl+\ s` opens a relay tunnel; `Ctrl+\ u` closes it again.
 
 ## Status
 
-CLI core, Convex auth/backend, and relay transport are now implemented in this
-repository. The next major phase is the iOS app.
+CLI core, Convex auth/backend, relay transport, and web onboarding are now implemented in this
+repository. The next major phase remains the iOS app.
 
-Before mobile app development, the remaining operational setup is:
+Before mobile app development, the active focus is operational hardening and release channels:
 
-- deploy relay service (`apps/relay`)
-- run deployed smoke check (`bun run --cwd apps/relay smoke`)
-- run manual end-to-end relay attach flow from CLI
+- deploy relay service (`apps/relay`) via workflow + smoke checks
+- publish CLI release archives and update Homebrew tap formula
+- keep critical auth/relay test lanes green in CI
 
 ## Repository layout
 
