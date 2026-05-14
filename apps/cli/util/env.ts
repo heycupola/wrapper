@@ -26,6 +26,8 @@
 const NODE_ENV = (process.env.NODE_ENV ?? "").toLowerCase();
 const IS_DEV = NODE_ENV !== "production";
 const IS_CI = process.env.CI !== undefined && process.env.CI !== "";
+const HUD = (process.env.WRAPPER_HUD ?? "").toLowerCase();
+const HUD_ENABLED = HUD !== "0" && HUD !== "false" && HUD !== "off";
 
 export const env = {
   /** Development mode toggle. */
@@ -47,4 +49,6 @@ export const env = {
   /** Auth callback origin used by the future Better Auth flow. */
   authOrigin:
     process.env.WRAPPER_AUTH_ORIGIN ?? (IS_DEV ? "http://localhost:3000" : "https://wrapper.sh"),
+  /** CLI HUD toggle: on by default, set WRAPPER_HUD=off to disable. */
+  hudEnabled: HUD_ENABLED,
 } as const;
