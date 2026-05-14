@@ -71,3 +71,30 @@ The smoke script checks:
 3. Note `sessionId` from `wrapper status`.
 4. From another terminal: `wrapper attach --relay --id <sessionId>`
 5. Run commands, verify output, detach (`Ctrl+\` then `d`), then unshare (`Ctrl+\` then `u`).
+
+## Operational checklist
+
+- Deploy relay only from `apps/relay/fly.toml`.
+- Keep `RELAY_CONVEX_URL` secret configured in Fly.
+- Verify app health after deploy:
+  - `fly status --app <app-name>`
+  - `fly machine list --app <app-name>`
+  - `RELAY_URL=\"https://<app-name>.fly.dev\" bun run --cwd apps/relay smoke`
+
+## Fly dashboard: Pending Sync
+
+`Pending Sync` usually means machine state is converging toward the latest release.
+With `min_machines_running = 0` and `auto_stop_machines = \"stop\"`, machines can be
+stopped while still being healthy for scale-to-zero operation.
+
+If you see `Pending Sync`, run:
+
+```bash
+fly releases --app <app-name>
+fly machine list --app <app-name>
+fly status --app <app-name>
+fly logs --app <app-name>
+```
+
+If release is complete and all machines are on the same image/version, the app is
+typically in a good state even when dashboard sync lags.

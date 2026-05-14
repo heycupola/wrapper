@@ -14,7 +14,8 @@
     "server/",
     "shell/",
     "util/",
-    "bin/"
+    "bin/",
+    "scripts/"
   ],
   "type": "module",
   "module": "index.ts",

@@ -81,7 +81,7 @@ const setRelayStateRef = makeFunctionReference<"mutation", SetRelayStateArgs, { 
   "session:setRelayState",
 );
 const issueHostRelayTicketRef = makeFunctionReference<
-  "mutation",
+  "action",
   IssueRelayTicketArgs,
   IssueRelayTicketResponse
 >("relay:issueHostTicket");
@@ -191,14 +191,19 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   heartbeat.unref();
 
   function paintRestingTitle(): void {
+    if (!env.hudEnabled) return;
     setTitle(shared ? `wrapper • shared • ${sessionTag}` : "");
   }
 
   function announce(title: string, body: string): void {
     log.info(body);
-    setTitle(title);
+    if (env.hudEnabled) {
+      setTitle(title);
+    }
     if (session.isIdle) inlineMessage(body);
-    notifyOS("wrapper", body);
+    if (env.hudEnabled) {
+      notifyOS("wrapper", body);
+    }
   }
 
   const startRelayBridge = async (): Promise<void> => {
@@ -213,7 +218,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
 
     try {
       await backend.client.mutation(setRelayStateRef, { sessionId, relayState: "connecting" });
-      const issued = await backend.client.mutation(issueHostRelayTicketRef, { sessionId });
+      const issued = await backend.client.action(issueHostRelayTicketRef, { sessionId });
       relayBridge = startRelayHostBridge({
         relayUrl: env.relayUrl,
         ticket: issued.ticket,
@@ -245,6 +250,13 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       await backend.client
         .mutation(setRelayStateRef, { sessionId, relayState: "error" })
         .catch(() => {});
+      if (isProPlanRequiredError(err.message)) {
+        announce(
+          `wrapper • shared • ${sessionTag}`,
+          "relay share requires Pro plan (upgrade plan and try again)",
+        );
+        return;
+      }
       announce(
         `wrapper • shared • ${sessionTag}`,
         "session shared locally (relay connect failed; check logs/auth)",
@@ -312,6 +324,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   const prefixFilter = new PrefixFilter({
     onCommand: handlePrefixCommand,
     onArmedChange: (armed) => {
+      if (!env.hudEnabled) return;
       if (armed) {
         setTitle(`● wrapper armed • ${sessionTag}`);
         bell();
@@ -350,7 +363,9 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         log.warn("failed to close backend session record", { error: err.message });
       }
     }
-    clearTitle();
+    if (env.hudEnabled) {
+      clearTitle();
+    }
     await attach.detach();
     await server.stop();
     session.kill();
@@ -382,4 +397,8 @@ function currentSize(): { cols: number; rows: number } {
     cols: process.stdout.columns ?? 80,
     rows: process.stdout.rows ?? 24,
   };
+}
+
+function isProPlanRequiredError(message: string): boolean {
+  return message.includes("Relay sharing requires Pro plan");
 }
