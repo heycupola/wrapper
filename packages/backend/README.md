@@ -16,6 +16,12 @@ integration used by the CLI.
 - `relayTicket`
   - `tokenHash`, `sessionId`, `role`, `userId`
   - `createdAt`, `expiresAt`, `usedAt`
+- `onboarding`
+  - `userId`
+  - `completedProfile`, `connectedCli`, `sharedFirstSession`
+  - `status` (`in_progress` or `completed`)
+  - `source`, `sourceOther`, `teamSize`
+  - `createdAt`, `updatedAt`, `completedAt`
 
 ## Current handlers
 
@@ -37,8 +43,15 @@ integration used by the CLI.
 
 - `issueHostTicket` - owner-only short-lived ticket for host relay socket
 - `issueViewerTicket` - shared/owner-allowed short-lived ticket for viewer socket
+- `checkShareEntitlement` - checks if caller has Autumn Pro entitlement for relay sharing
 - `consumeTicket` - single-use ticket consumption for relay handshake
 - `cleanupTicket` (internal) - scheduled cleanup of used/expired ticket rows
+
+`convex/onboarding.ts`:
+
+- `getState` - returns current onboarding progress for authenticated user
+- `completeStep` - update one onboarding checklist step
+- `complete` - finalize onboarding and persist optional attribution data
 
 ## Auth model
 
@@ -63,6 +76,8 @@ Total stale close delay is:
 
 - `WRAPPER_RELAY_HOST_TICKET_TTL_MS` - host ticket TTL (default `30000`)
 - `WRAPPER_RELAY_VIEWER_TICKET_TTL_MS` - viewer ticket TTL (default `60000`)
+- `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID` - Autumn entitlement checked before
+  issuing host relay ticket (default `can_share_relay`)
 
 ## Dev commands
 

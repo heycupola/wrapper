@@ -2,6 +2,21 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  onboarding: defineTable({
+    userId: v.string(),
+    completedProfile: v.boolean(),
+    connectedCli: v.boolean(),
+    sharedFirstSession: v.boolean(),
+    status: v.union(v.literal("in_progress"), v.literal("completed")),
+    source: v.optional(v.string()),
+    sourceOther: v.optional(v.string()),
+    teamSize: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_status", ["userId", "status"]),
   hostSession: defineTable({
     sessionId: v.string(),
     ownerUserId: v.string(),

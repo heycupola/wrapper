@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { authClient } from "../../../lib/auth-client";
 
 type GetDeviceCodeInfoArgs = {
@@ -218,6 +219,11 @@ export function DeviceAuthorizeClient({ authenticated, initialToken }: DeviceAut
 
       {deviceInfo ? <pre className="authInfo">{JSON.stringify(deviceInfo, null, 2)}</pre> : null}
       {status ? <p className="authSuccess">{status}</p> : null}
+      {status === "Device code approved" ? (
+        <Link className="social-btn" href="/onboarding">
+          Continue to onboarding
+        </Link>
+      ) : null}
       {error ? <p className="authError">{error}</p> : null}
     </div>
   );
