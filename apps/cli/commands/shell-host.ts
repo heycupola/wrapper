@@ -225,6 +225,14 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     }
 
     try {
+      // Persist the shared flag before issuing the relay ticket so backend
+      // state (e.g. viewer authorization checks) is synchronized rather than
+      // racing the periodic fire-and-forget heartbeat.
+      await backend.client.mutation(sessionHeartbeatRef, {
+        sessionId,
+        shared: true,
+        port: server.port,
+      });
       await backend.client.mutation(setRelayStateRef, { sessionId, relayState: "connecting" });
       const issued = await backend.client.action(issueHostRelayTicketRef, { sessionId });
       relayBridge = startRelayHostBridge({
@@ -294,11 +302,8 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         shared = true;
         setSessionShared(sessionId, true);
         trackEvent("session_shared");
-        if (backend.status === "ready") {
-          void backend.client
-            .mutation(sessionHeartbeatRef, { sessionId, shared: true, port: server.port })
-            .catch(() => {});
-        }
+        // Backend `shared` state is persisted (awaited) inside startRelayBridge
+        // before the relay ticket is issued, avoiding a sync race.
         void startRelayBridge();
         break;
       case "unshare":
@@ -331,6 +336,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
 
   const prefixFilter = new PrefixFilter({
     onCommand: handlePrefixCommand,
+    onForward: (data) => session.write(data),
     onArmedChange: (armed) => {
       if (!env.hudEnabled) return;
       if (armed) {
