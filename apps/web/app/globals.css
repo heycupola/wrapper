@@ -101,7 +101,7 @@ a {
   flex: 1;
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(340px, 100dvw);
+  grid-auto-columns: max-content;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
@@ -111,10 +111,105 @@ a {
 .hSection {
   scroll-snap-align: start;
   border-right: 1px solid var(--color-border);
-  padding: 32px 24px;
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  width: min(90dvw, 560px);
+}
+
+.hSectionHero {
+  width: min(96dvw, 1080px);
+  flex-direction: row;
+  align-items: center;
+  gap: 40px;
+}
+
+.heroCopy {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  flex: 1 1 44%;
+  min-width: 0;
+}
+
+.heroTitle {
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.heroMedia {
+  flex: 1 1 56%;
+  min-width: 0;
+}
+
+.heroVideo {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-text) 4%, transparent);
+  display: block;
+}
+
+.social-btn-primary {
+  background: var(--color-accent-pop);
+  border-color: var(--color-accent-pop);
+  color: #fff;
+}
+
+.social-btn-primary:hover {
+  background: color-mix(in srgb, var(--color-accent-pop) 88%, #000);
+  border-color: color-mix(in srgb, var(--color-accent-pop) 88%, #000);
+}
+
+.installPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.copyCommand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+  color: var(--color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s ease;
+}
+
+.copyCommand:hover {
+  border-color: var(--color-text-muted);
+}
+
+.copyCommandPrompt {
+  color: var(--color-accent-pop);
+  user-select: none;
+}
+
+.copyCommandText {
+  flex: 1;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.copyCommandHint {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  user-select: none;
 }
 
 .hSectionHeader {
@@ -401,6 +496,18 @@ a {
   }
 
   .hSection {
-    padding: 24px 14px;
+    padding: 28px 18px;
+    width: 92dvw;
+  }
+
+  .hSectionHero {
+    width: 92dvw;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .hNav a:not(:first-child):not(:last-child) {
+    display: none;
   }
 }
