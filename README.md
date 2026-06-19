@@ -49,7 +49,7 @@ Backend implementation planning is tracked in
 
 Requires:
 
-- **Bun ≥ 1.3.5** (we use `Bun.Terminal` and the `terminal:` option of `Bun.spawn`).
+- **Bun ≥ 1.3.5** for runtime, package management, and bundling.
 - **POSIX**: macOS or Linux. Windows users should run Wrapper inside
   [WSL](https://learn.microsoft.com/windows/wsl/).
 

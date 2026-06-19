@@ -16,7 +16,7 @@ const siteUrl =
 const DEV_AUTH_SECRET = "wrapper-local-dev-secret-change-me";
 
 function resolveBetterAuthSecret(): string {
-  const secret = process.env.BETTER_AUTH_SECRET;
+  const secret = process.env.BETTER_AUTH_SECRET?.trim();
   if (secret) return secret;
 
   if (isDevEnvironment) {

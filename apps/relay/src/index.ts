@@ -21,9 +21,11 @@ type WsData = {
   sessionId?: string;
   role?: RelayRole;
   userId?: string;
-  authorized: boolean;
-  pending: Array<string | ArrayBuffer | Uint8Array>;
+  authorized?: boolean;
+  pendingMessages?: RelayPayload[];
 };
+
+type RelayPayload = string | ArrayBuffer | Uint8Array;
 
 // Cap frames buffered before authorization completes so a misbehaving or
 // malicious client cannot use the pre-auth window to exhaust memory.
@@ -61,7 +63,7 @@ const server = Bun.serve<WsData>({
     if (url.pathname === "/ws") {
       const ticket = url.searchParams.get("ticket");
       const upgraded = serverInstance.upgrade(req, {
-        data: { ticket, authorized: false, pending: [] },
+        data: { ticket, authorized: false, pendingMessages: [] },
       });
       if (upgraded) return undefined;
       return new Response("Expected websocket upgrade", { status: 426 });
@@ -72,31 +74,11 @@ const server = Bun.serve<WsData>({
   websocket: {
     open(ws) {
       sockets.add(ws);
+      ws.data.pendingMessages = [];
       void authorizeSocket(ws);
     },
     message(ws, raw) {
-      if (
-        typeof raw !== "string" &&
-        !(raw instanceof ArrayBuffer) &&
-        !(raw instanceof Uint8Array)
-      ) {
-        return;
-      }
-
-      // Authorization is an async Convex round-trip. Frames can arrive before
-      // it completes (the host bridge sends `session.opened` immediately on
-      // open), so buffer them and flush in order once the socket is bound,
-      // instead of dropping the socket as "unbound".
-      if (!ws.data.authorized) {
-        if (ws.data.pending.length >= MAX_PENDING_FRAMES) {
-          ws.close(4003, "too many pre-auth messages");
-          return;
-        }
-        ws.data.pending.push(raw);
-        return;
-      }
-
-      hub.routeInbound(ws, raw);
+      routeOrQueueMessage(ws, raw);
     },
     close(ws) {
       sockets.delete(ws);
@@ -139,23 +121,52 @@ async function authorizeSocket(ws: ServerWebSocket<WsData>): Promise<void> {
       sessionId: consumed.sessionId,
     });
     ws.data.authorized = true;
-    // Flush any frames buffered during authorization, in arrival order.
-    const pending = ws.data.pending;
-    ws.data.pending = [];
-    for (const frame of pending) {
-      hub.routeInbound(ws, frame);
-    }
     log.debug("socket authorized", {
       role: consumed.role,
       sessionId: consumed.sessionId,
-      flushed: pending.length,
     });
+    // Flush frames buffered during authorization, in arrival order.
+    flushPendingMessages(ws);
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     log.warn("ticket rejected", { error: err.message });
-    ws.data.pending = [];
+    ws.data.pendingMessages = [];
     ws.close(4003, "unauthorized");
   }
+}
+
+// Authorization is an async Convex round-trip. Frames can arrive before it
+// completes (the host bridge sends `session.opened` immediately on open), so
+// buffer them and flush in order once the socket is bound, instead of dropping
+// the socket as "unbound".
+function routeOrQueueMessage(ws: ServerWebSocket<WsData>, raw: unknown): void {
+  if (!isRelayPayload(raw)) return;
+
+  if (ws.data.authorized) {
+    hub.routeInbound(ws, raw);
+    return;
+  }
+
+  const pendingMessages = ws.data.pendingMessages ?? [];
+  if (pendingMessages.length >= MAX_PENDING_FRAMES) {
+    ws.close(4003, "too many pre-auth messages");
+    return;
+  }
+  pendingMessages.push(raw);
+  ws.data.pendingMessages = pendingMessages;
+}
+
+function flushPendingMessages(ws: ServerWebSocket<WsData>): void {
+  const pendingMessages = ws.data.pendingMessages ?? [];
+  ws.data.pendingMessages = [];
+
+  for (const raw of pendingMessages) {
+    hub.routeInbound(ws, raw);
+  }
+}
+
+function isRelayPayload(raw: unknown): raw is RelayPayload {
+  return typeof raw === "string" || raw instanceof ArrayBuffer || raw instanceof Uint8Array;
 }
 
 function resolveConvexUrl(): string {
