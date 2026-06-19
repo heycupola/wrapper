@@ -272,7 +272,8 @@ util/
 - Bun >= 1.3.5
 - POSIX shells (macOS/Linux)
 
-## Why Bun.Terminal instead of node-pty
+## Why `@repo/terminal` instead of node-pty
 
-`Bun.Terminal` keeps PTY lifecycle in Bun-native APIs and avoids known edge
-cases seen with `node-pty` on Bun runtimes.
+`@repo/terminal` keeps PTY lifecycle in Bun-native code while using the
+committed `wrapper-pty-helper` binaries to provide real controlling terminals
+on macOS and Linux.

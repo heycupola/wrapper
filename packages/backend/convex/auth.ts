@@ -11,7 +11,8 @@ import authSchema from "./betterAuth/schema";
 const siteUrl =
   process.env.SITE_URL ||
   (process.env.ENVIRONMENT === "development" ? "http://localhost:3000" : "https://wrapper.sh");
-const betterAuthSecret = process.env.BETTER_AUTH_SECRET ?? "wrapper-local-dev-secret-change-me";
+const LOCAL_BETTER_AUTH_SECRET = "wrapper-local-dev-secret-change-me";
+const betterAuthSecret = resolveBetterAuthSecret();
 
 // The component client has methods needed for integrating Convex with Better Auth,
 // as well as helper methods for general use.
@@ -60,3 +61,16 @@ export const getCurrentUser = query({
     return authComponent.getAuthUser(ctx);
   },
 });
+
+function resolveBetterAuthSecret(): string {
+  const secret = process.env.BETTER_AUTH_SECRET?.trim();
+  if (secret) return secret;
+
+  if (process.env.ENVIRONMENT === "development") {
+    return LOCAL_BETTER_AUTH_SECRET;
+  }
+
+  throw new Error(
+    "Missing BETTER_AUTH_SECRET. Set a strong Better Auth secret for non-development deployments.",
+  );
+}

@@ -21,7 +21,11 @@ type WsData = {
   sessionId?: string;
   role?: RelayRole;
   userId?: string;
+  authorized?: boolean;
+  pendingMessages?: RelayPayload[];
 };
+
+type RelayPayload = string | ArrayBuffer | Uint8Array;
 
 const log = createLogger("relay");
 const app = new Hono();
@@ -66,16 +70,11 @@ const server = Bun.serve<WsData>({
   websocket: {
     open(ws) {
       sockets.add(ws);
+      ws.data.pendingMessages = [];
       void authorizeSocket(ws);
     },
     message(ws, raw) {
-      if (typeof raw === "string") {
-        hub.routeInbound(ws, raw);
-        return;
-      }
-      if (raw instanceof ArrayBuffer || raw instanceof Uint8Array) {
-        hub.routeInbound(ws, raw);
-      }
+      routeOrQueueMessage(ws, raw);
     },
     close(ws) {
       sockets.delete(ws);
@@ -115,15 +114,47 @@ async function authorizeSocket(ws: ServerWebSocket<WsData>): Promise<void> {
       role: consumed.role,
       sessionId: consumed.sessionId,
     });
+    ws.data.authorized = true;
     log.debug("socket authorized", {
       role: consumed.role,
       sessionId: consumed.sessionId,
     });
+    flushPendingMessages(ws);
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     log.warn("ticket rejected", { error: err.message });
     ws.close(4003, "unauthorized");
   }
+}
+
+function routeOrQueueMessage(ws: ServerWebSocket<WsData>, raw: unknown): void {
+  if (!isRelayPayload(raw)) return;
+
+  if (ws.data.authorized) {
+    hub.routeInbound(ws, raw);
+    return;
+  }
+
+  const pendingMessages = ws.data.pendingMessages ?? [];
+  if (pendingMessages.length >= 32) {
+    ws.close(4003, "authorization pending");
+    return;
+  }
+  pendingMessages.push(raw);
+  ws.data.pendingMessages = pendingMessages;
+}
+
+function flushPendingMessages(ws: ServerWebSocket<WsData>): void {
+  const pendingMessages = ws.data.pendingMessages ?? [];
+  ws.data.pendingMessages = [];
+
+  for (const raw of pendingMessages) {
+    hub.routeInbound(ws, raw);
+  }
+}
+
+function isRelayPayload(raw: unknown): raw is RelayPayload {
+  return typeof raw === "string" || raw instanceof ArrayBuffer || raw instanceof Uint8Array;
 }
 
 function resolveConvexUrl(): string {
