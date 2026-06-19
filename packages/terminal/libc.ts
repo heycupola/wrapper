@@ -29,7 +29,7 @@ export const O_RDWR = 2;
 export const O_NOCTTY = PLATFORM === "darwin" ? 0x20000 : 0o400;
 export const O_NONBLOCK = PLATFORM === "darwin" ? 0x0004 : 0o4000;
 
-const lib = dlopen(`libc.${suffix}`, {
+const LIBC_SYMBOLS = {
   posix_openpt: { args: [FFIType.i32], returns: FFIType.i32 },
   grantpt: { args: [FFIType.i32], returns: FFIType.i32 },
   unlockpt: { args: [FFIType.i32], returns: FFIType.i32 },
@@ -44,6 +44,33 @@ const lib = dlopen(`libc.${suffix}`, {
     returns: FFIType.i64,
   },
   tcgetpgrp: { args: [FFIType.i32], returns: FFIType.i32 },
-});
+} as const;
+
+/*
+ * On Linux, `libc.so` is an ld linker script (text), not a dlopen-able
+ * shared object — the real object is `libc.so.6` (glibc) or the musl
+ * equivalent. On macOS the system resolver handles `libc.dylib`. We try
+ * the most likely names per platform so the bindings load everywhere.
+ */
+const LIBC_CANDIDATES =
+  PLATFORM === "darwin"
+    ? [`libc.${suffix}`]
+    : ["libc.so.6", "libc.so", "libc.musl-x86_64.so.1", `libc.${suffix}`];
+
+function loadLibc(): ReturnType<typeof dlopen<typeof LIBC_SYMBOLS>> {
+  let lastError: unknown;
+  for (const name of LIBC_CANDIDATES) {
+    try {
+      return dlopen(name, LIBC_SYMBOLS);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw new Error(`@repo/terminal: failed to load libc (tried ${LIBC_CANDIDATES.join(", ")})`, {
+    cause: lastError,
+  });
+}
+
+const lib = loadLibc();
 
 export const libc = lib.symbols;
