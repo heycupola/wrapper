@@ -85,7 +85,10 @@ function isTelemetryEnabled(): boolean {
   if (IS_DEV) return false;
   const preference = readTelemetryPreference();
   if (preference !== null) return preference;
-  return true;
+  // No recorded consent yet. Many users first launch via the rc `shell-host`
+  // hook, which never shows the opt-out banner, so default to OFF until an
+  // explicit preference is saved (the first-run banner records consent).
+  return false;
 }
 
 export function getConfig(): LoggerConfig {
