@@ -124,14 +124,30 @@ export class RelayHub {
   private forwardHostMessage(binding: PeerBinding, msg: WrapperMessage): void {
     switch (msg.type) {
       case "session.opened":
-      case "session.closed":
       case "output":
       case "error":
         this.broadcastToViewers(binding.sessionId, msg);
         break;
+      case "session.closed":
+        // The session ended: deliver the final frame, then close every viewer
+        // so relay attaches don't linger open after the host is gone.
+        this.broadcastToViewers(binding.sessionId, msg);
+        this.closeViewers(binding.sessionId, CLOSE_HOST_DISCONNECTED, "session closed");
+        break;
       default:
         this.log.warn("unexpected host message", { type: msg.type, sessionId: binding.sessionId });
     }
+  }
+
+  private closeViewers(sessionId: string, code: number, reason: string): void {
+    const viewers = this.viewersBySession.get(sessionId);
+    if (!viewers || viewers.size === 0) return;
+    for (const viewer of viewers) {
+      viewer.close(code, reason);
+      this.bindingByPeer.delete(viewer);
+      this.viewerState.delete(viewer);
+    }
+    this.viewersBySession.delete(sessionId);
   }
 
   private forwardViewerMessage(binding: PeerBinding, msg: WrapperMessage, peer: RelayPeer): void {
