@@ -109,4 +109,18 @@ describe("PrefixFilter", () => {
     expect(filter.armed).toBe(false);
     expect(armedHistory).toEqual([true, false]);
   });
+
+  test("auto-timeout re-emits the prefix byte instead of dropping it", async () => {
+    const forwarded: string[] = [];
+    const filter = new PrefixFilter({
+      onCommand: () => {},
+      onForward: (data) => forwarded.push(data),
+      armedTimeoutMs: 50,
+    });
+    expect(filter.process(PFX)).toBe("");
+    expect(forwarded).toEqual([]);
+    await new Promise((r) => setTimeout(r, 100));
+    expect(filter.armed).toBe(false);
+    expect(forwarded).toEqual([PFX]);
+  });
 });
