@@ -57,8 +57,8 @@ jobs:
 
       - name: Verify archive layout
         run: |
-          tar -tzf "dist/${{ matrix.archive }}" | grep "^bin/wrapper$"
-          tar -tzf "dist/${{ matrix.archive }}" | grep "^bin/wrapper-pty-helper-"
+          tar -tzf "dist/${{ matrix.archive }}" | grep -E "(^|\./)bin/wrapper$"
+          tar -tzf "dist/${{ matrix.archive }}" | grep -E "(^|\./)bin/wrapper-pty-helper-"
 
       - name: Upload dry-run archive
         uses: actions/upload-artifact@v4
