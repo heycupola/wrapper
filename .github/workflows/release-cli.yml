@@ -129,6 +129,12 @@ jobs:
           echo "sha_darwin_x64=$(sha256sum dist/wrapper-darwin-x86_64.tar.gz | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
           echo "sha_linux_x64=$(sha256sum dist/wrapper-linux-x86_64.tar.gz | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
+      - name: Write checksums file
+        run: |
+          cd dist
+          sha256sum wrapper-darwin-arm64.tar.gz wrapper-darwin-x86_64.tar.gz wrapper-linux-x86_64.tar.gz > checksums.txt
+          cat checksums.txt
+
       - name: Create or update release
         uses: softprops/action-gh-release@v2
         with:
@@ -139,6 +145,7 @@ jobs:
             dist/wrapper-darwin-arm64.tar.gz
             dist/wrapper-darwin-x86_64.tar.gz
             dist/wrapper-linux-x86_64.tar.gz
+            dist/checksums.txt
 
   update-homebrew:
     name: Update Homebrew Tap

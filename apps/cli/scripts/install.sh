@@ -37,12 +37,39 @@ if [ "$VERSION" = "latest" ]; then
 fi
 
 archive="wrapper-${platform}.tar.gz"
-url="https://github.com/${REPO}/releases/download/${VERSION}/${archive}"
+base="https://github.com/${REPO}/releases/download/${VERSION}"
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
-echo "Downloading ${url}"
-curl -fsSL "$url" -o "${tmp_dir}/${archive}"
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | cut -d' ' -f1
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | cut -d' ' -f1
+  else
+    echo "Neither sha256sum nor shasum is available for integrity verification" >&2
+    exit 1
+  fi
+}
+
+echo "Downloading ${base}/${archive}"
+curl -fsSL "${base}/${archive}" -o "${tmp_dir}/${archive}"
+
+echo "Verifying checksum"
+curl -fsSL "${base}/checksums.txt" -o "${tmp_dir}/checksums.txt"
+expected="$(grep " ${archive}\$" "${tmp_dir}/checksums.txt" | cut -d' ' -f1)"
+if [ -z "$expected" ]; then
+  echo "No checksum found for ${archive} in checksums.txt; aborting" >&2
+  exit 1
+fi
+actual="$(sha256_of "${tmp_dir}/${archive}")"
+if [ "$expected" != "$actual" ]; then
+  echo "Checksum mismatch for ${archive}" >&2
+  echo "  expected: ${expected}" >&2
+  echo "  actual:   ${actual}" >&2
+  exit 1
+fi
+
 mkdir -p "$INSTALL_DIR"
 tar -xzf "${tmp_dir}/${archive}" -C "$INSTALL_DIR"
 chmod +x "${INSTALL_DIR}/bin/wrapper" || true
