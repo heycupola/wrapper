@@ -27,6 +27,10 @@ type WsData = {
 
 type RelayPayload = string | ArrayBuffer | Uint8Array;
 
+// Cap frames buffered before authorization completes so a misbehaving or
+// malicious client cannot use the pre-auth window to exhaust memory.
+const MAX_PENDING_FRAMES = 32;
+
 const log = createLogger("relay");
 const app = new Hono();
 const convexClient = new ConvexHttpClient(resolveConvexUrl());
@@ -59,7 +63,7 @@ const server = Bun.serve<WsData>({
     if (url.pathname === "/ws") {
       const ticket = url.searchParams.get("ticket");
       const upgraded = serverInstance.upgrade(req, {
-        data: { ticket },
+        data: { ticket, authorized: false, pendingMessages: [] },
       });
       if (upgraded) return undefined;
       return new Response("Expected websocket upgrade", { status: 426 });
@@ -106,6 +110,8 @@ async function authorizeSocket(ws: ServerWebSocket<WsData>): Promise<void> {
 
   try {
     const consumed = await convexClient.mutation(consumeTicketRef, { ticket });
+    // The socket may have closed while the ticket round-trip was in flight.
+    if (ws.readyState !== WebSocket.OPEN) return;
     ws.data.role = consumed.role;
     ws.data.sessionId = consumed.sessionId;
     ws.data.userId = consumed.userId;
@@ -119,14 +125,20 @@ async function authorizeSocket(ws: ServerWebSocket<WsData>): Promise<void> {
       role: consumed.role,
       sessionId: consumed.sessionId,
     });
+    // Flush frames buffered during authorization, in arrival order.
     flushPendingMessages(ws);
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     log.warn("ticket rejected", { error: err.message });
+    ws.data.pendingMessages = [];
     ws.close(4003, "unauthorized");
   }
 }
 
+// Authorization is an async Convex round-trip. Frames can arrive before it
+// completes (the host bridge sends `session.opened` immediately on open), so
+// buffer them and flush in order once the socket is bound, instead of dropping
+// the socket as "unbound".
 function routeOrQueueMessage(ws: ServerWebSocket<WsData>, raw: unknown): void {
   if (!isRelayPayload(raw)) return;
 
@@ -136,8 +148,8 @@ function routeOrQueueMessage(ws: ServerWebSocket<WsData>, raw: unknown): void {
   }
 
   const pendingMessages = ws.data.pendingMessages ?? [];
-  if (pendingMessages.length >= 32) {
-    ws.close(4003, "authorization pending");
+  if (pendingMessages.length >= MAX_PENDING_FRAMES) {
+    ws.close(4003, "too many pre-auth messages");
     return;
   }
   pendingMessages.push(raw);

@@ -1,3 +1,13 @@
+/*
+ * Deploy-time copy of `@repo/protocol`.
+ *
+ * The relay Docker image installs only its own package (no monorepo
+ * workspace context), so it cannot resolve `@repo/protocol` at runtime.
+ * This hand-rolled copy keeps the relay self-contained. Drift is guarded by
+ * `tests/protocol-parity.test.ts`, which fails CI if this diverges from
+ * `@repo/protocol`. Keep both in sync when the wire protocol changes.
+ */
+
 export type RawWireData = string | ArrayBuffer | Uint8Array;
 
 type SessionId = string;
