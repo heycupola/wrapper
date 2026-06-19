@@ -1,0 +1,43 @@
+---
+title: Troubleshooting
+description: Common issues for auth, relay, and shell-host.
+---
+
+## Social login returns 500
+
+Check backend env vars in Convex deployment:
+
+- `BETTER_AUTH_SECRET`
+- `SITE_URL`
+- `GITHUB_CLIENT_ID`
+- `GITHUB_CLIENT_SECRET`
+
+If one social provider is missing env values, only that provider should fail.
+
+## `authorization_pending` during `wrapper auth login`
+
+This is expected while waiting for approval in browser. Keep the command running
+until approve/deny happens on the web page.
+
+## Relay share says Pro is required
+
+Sharing via relay is gated by Autumn entitlement (`can_share_relay` by default).
+Upgrade plan or adjust entitlement mapping for your deployment.
+
+## Fly dashboard shows `Pending Sync`
+
+This usually means Fly machines are converging to latest release.
+Check actual state with:
+
+```bash
+fly releases --app <app-name>
+fly machine list --app <app-name>
+fly status --app <app-name>
+```
+
+If image/version is consistent and health checks pass, deploy is generally okay.
+
+## Web hydration mismatch warning
+
+If you see random attributes like `cz-shortcut-listen`, it is usually a browser
+extension mutating DOM before hydration.

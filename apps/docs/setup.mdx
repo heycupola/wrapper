@@ -1,0 +1,61 @@
+---
+title: Setup
+description: Configure environment variables, run checks, and verify your local stack.
+---
+
+## Core environment variables
+
+### CLI
+
+- `WRAPPER_CONVEX_URL`: Convex deployment URL
+- `WRAPPER_RELAY_URL`: Relay WebSocket base URL
+- `WRAPPER_AUTH_ORIGIN`: Auth UI origin
+- `WRAPPER_HUD`: `on` by default, set `off` to disable host HUD/title updates
+- `NODE_ENV=development`: local development mode
+
+### Relay
+
+- `PORT`: Relay HTTP port (default `8080`)
+- `RELAY_CONVEX_URL`: Convex URL for ticket consumption
+
+### Backend timeouts
+
+- `WRAPPER_SESSION_STALE_AFTER_MS`
+- `WRAPPER_SESSION_STALE_GRACE_MS`
+- `WRAPPER_RELAY_HOST_TICKET_TTL_MS`
+- `WRAPPER_RELAY_VIEWER_TICKET_TTL_MS`
+
+## Local quality checks
+
+From repo root:
+
+```bash
+bun run lint
+bun run format:check
+bun run check-types
+bunx turbo run test
+```
+
+Note: `@repo/terminal` tests can fail in restricted environments where PTY syscalls are blocked.
+
+## Relay smoke check
+
+After deploying relay:
+
+```bash
+RELAY_URL="https://relay.example.com" bun run --cwd apps/relay smoke
+```
+
+This validates:
+
+- `GET /healthz` returns expected payload
+- unauthenticated `GET /ws` is rejected
+
+## Manual end to end check
+
+1. `wrapper auth login`
+2. Complete web onboarding at `/onboarding` once signed in
+3. Start host shell and share (`Ctrl+\\` then `s`)
+4. Find id with `wrapper status`
+5. Attach via relay from another terminal
+6. Detach (`Ctrl+\\` then `d`) and unshare (`Ctrl+\\` then `u`)

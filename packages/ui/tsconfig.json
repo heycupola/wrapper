@@ -4,6 +4,6 @@
     "outDir": "dist",
     "strictNullChecks": true
   },
-  "include": ["src"],
+  "include": ["*.tsx"],
   "exclude": ["node_modules", "dist"]
 }

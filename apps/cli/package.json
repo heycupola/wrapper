@@ -1,0 +1,49 @@
+{
+  "name": "@repo/cli",
+  "version": "0.1.0",
+  "private": true,
+  "bin": {
+    "wrapper": "./index.ts"
+  },
+  "files": [
+    "*.ts",
+    "client/",
+    "commands/",
+    "pty/",
+    "registry/",
+    "server/",
+    "shell/",
+    "util/",
+    "bin/",
+    "scripts/"
+  ],
+  "type": "module",
+  "module": "index.ts",
+  "scripts": {
+    "dev:host": "NODE_ENV=development bun run index.ts shell-host",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "check-types": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@clack/prompts": "catalog:",
+    "@repo/logger": "*",
+    "@repo/protocol": "*",
+    "@repo/terminal": "*",
+    "commander": "^14.0.3",
+    "convex": "^1.37.0",
+    "picocolors": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@types/bun": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:"
+  },
+  "peerDependencies": {
+    "typescript": "catalog:"
+  }
+}

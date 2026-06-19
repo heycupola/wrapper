@@ -1,0 +1,62 @@
+---
+title: Installation
+description: Install Wrapper, wire it into your shell, and run the first attach flow.
+---
+
+## Requirements
+
+- Bun 1.3.2 or newer
+- macOS or Linux
+- A shell like zsh, bash, or fish
+
+## Install dependencies
+
+From repo root:
+
+```bash
+bun install --ignore-scripts
+```
+
+## Install shell hooks
+
+Use the CLI install command:
+
+```bash
+bun run apps/cli/index.ts install
+```
+
+This writes a managed block to your rc file and runs `wrapper shell-host` when a new shell opens.
+
+## Start a host session
+
+Open a new terminal or run manually:
+
+```bash
+bun run apps/cli/index.ts shell-host
+```
+
+## Attach from another terminal
+
+```bash
+bun run apps/cli/index.ts attach
+```
+
+If multiple sessions are live, you can choose from the picker or pass an id:
+
+```bash
+bun run apps/cli/index.ts attach --id <sessionId>
+```
+
+## Auth and relay attach
+
+Login first:
+
+```bash
+bun run apps/cli/index.ts auth login
+```
+
+Then use relay attach:
+
+```bash
+bun run apps/cli/index.ts attach --relay --id <sessionId>
+```

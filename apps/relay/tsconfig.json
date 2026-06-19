@@ -1,0 +1,9 @@
+{
+  "extends": "../../packages/typescript-config/bundler.json",
+  "compilerOptions": {
+    "moduleDetection": "force",
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

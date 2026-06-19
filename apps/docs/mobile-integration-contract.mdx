@@ -1,0 +1,40 @@
+---
+title: Mobile Integration Contract
+description: Contract to keep backend, relay, and mobile client aligned.
+---
+
+## Scope
+
+This contract defines what mobile clients can rely on before the mobile app is built.
+
+## Auth contract
+
+- Mobile client authenticates through Better Auth session flow.
+- Backend identity remains the source of truth for authorization decisions.
+- Device/session approval routes remain server-authoritative.
+
+## Relay contract
+
+- Relay access always requires a backend-issued ticket.
+- Tickets are single-use and short TTL.
+- Relay roles:
+  - `host`: publishes output, receives input/resize
+  - `viewer`: receives output, sends input/resize
+
+## Session contract
+
+- Session lifecycle is owned by backend handlers:
+  - `session:open`
+  - `session:heartbeat`
+  - `session:close`
+  - `session:listActive`
+- Access checks are server-side (`session:authorizeAttach`).
+
+## Versioning
+
+- Wire payloads are versioned through `@repo/protocol`.
+- Breaking protocol changes require dual-support window before mobile rollout.
+
+## Repository linkage
+
+Current strategy is to reserve `apps/mobile` as a submodule integration point in a later phase.

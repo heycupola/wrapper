@@ -1,0 +1,21 @@
+{
+  "extends": "@repo/typescript-config/bundler.json",
+  "compilerOptions": {
+    "moduleDetection": "force",
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "index.ts",
+    "commands/**/*.ts",
+    "pty/**/*.ts",
+    "server/**/*.ts",
+    "client/**/*.ts",
+    "util/**/*.ts",
+    "shell/**/*.ts",
+    "registry/**/*.ts",
+    "relay/**/*.ts",
+    "tests/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

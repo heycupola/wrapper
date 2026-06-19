@@ -1,159 +1,96 @@
-# Turborepo starter
+# Wrapper
 
-This Turborepo starter is maintained by the Turborepo core team.
+> One command to make any terminal you open reachable from your phone.
 
-## Using this example
+Wrapper transparently wraps every interactive shell session you open
+(zsh, bash, or fish) so an authenticated phone — or any other client —
+can mirror it on demand. The wrapping itself is invisible: your dotfiles,
+prompt, plugins, and history all behave exactly as before.
 
-Run the following command:
+The session never leaves your machine until you decide to share it. A
+single `Ctrl+\ s` opens a relay tunnel; `Ctrl+\ u` closes it again.
 
-```sh
-npx create-turbo@latest
+## Status
+
+CLI core, Convex auth/backend, relay transport, and web onboarding are now implemented in this
+repository. The next major phase remains the iOS app.
+
+Before mobile app development, the active focus is operational hardening and release channels:
+
+- deploy relay service (`apps/relay`) via workflow + smoke checks
+- publish CLI release archives and update Homebrew tap formula
+- keep critical auth/relay test lanes green in CI
+
+## Repository layout
+
+This is a Bun + Turborepo monorepo.
+
+```
+apps/
+  cli/      Wrapper CLI — shell wrapping, registry, attach, install
+  relay/    Relay service — authenticated WS routing for shared sessions
+  web/      Marketing / waitlist landing page (Next.js)
+  docs/     Public docs site (Mintlify)
+packages/
+  protocol/             Wire schema shared by every wrapper component
+  backend/              Convex backend blueprint and implementation plan
+  ui/                   Shared React components for web + docs
+  typescript-config/    Single-source tsconfig presets
 ```
 
-## What's inside?
+The CLI is the heart of the project — see
+[`apps/cli/README.md`](./apps/cli/README.md) for how the wrapping flow
+works and what every command does.
 
-This Turborepo includes the following packages/apps:
+Backend implementation planning is tracked in
+[`packages/backend/README.md`](./packages/backend/README.md).
 
-### Apps and Packages
+## Local development
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+Requires:
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+- **Bun ≥ 1.3.5** for runtime, package management, and bundling.
+- **POSIX**: macOS or Linux. Windows users should run Wrapper inside
+  [WSL](https://learn.microsoft.com/windows/wsl/).
 
-### Utilities
+Environment templates are included here:
 
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+- `.env.example` (shared)
+- `apps/cli/.env.example`
+- `apps/relay/.env.example`
+- `packages/backend/.env.example`
 
 ```sh
-cd my-turborepo
-turbo build
+bun install            # one-time
+bun run check-types    # typecheck every package
+bun run lint           # oxlint
+bun run format         # oxfmt --write
+bun run dev --filter=@repo/cli -- shell-host    # try the wrapping flow
+
+# or, in apps/cli:
+NODE_ENV=development bun run index.ts shell-host
 ```
 
-Without global `turbo`, use your package manager:
+`NODE_ENV=development` redirects every on-disk path into a `wrapper-dev` namespace
+under XDG state (or `%APPDATA%\wrapper-dev\` on Windows), points the
+relay/auth URLs at localhost, mirrors logs to stderr, and writes rc-file
+patches to a fake-rc directory. A developer running the CLI locally can
+never corrupt a real installation's registry, logs, or rc files.
 
-```sh
-cd my-turborepo
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
+`CI=…` (any value) disables telemetry and console output.
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+For a full list of environment variables see
+[`apps/cli/README.md`](./apps/cli/README.md#environment-variables).
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## Tooling
 
-```sh
-turbo build --filter=docs
-```
+- **Bun** for runtime, package management, and bundling.
+- **Turborepo** for task orchestration and caching.
+- **oxlint + oxfmt** for linting/formatting (no ESLint, no Prettier).
+- **Lefthook** for git hooks (pre-commit oxfmt + oxlint, pre-push checks).
+- **Catalog dependencies** so `react`, `next`, `zod`, `typescript`, etc.
+  share a single pinned version across the workspace.
 
-Without global `turbo`:
+## License
 
-```sh
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+TBD.

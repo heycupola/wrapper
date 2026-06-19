@@ -1,0 +1,50 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "linden",
+  "name": "Wrapper",
+  "colors": {
+    "primary": "#6E56CF",
+    "light": "#9B8AE8",
+    "dark": "#5B45B0"
+  },
+  "background": {
+    "color": {
+      "light": "#FFFFFF",
+      "dark": "#0A0A0A"
+    },
+    "decoration": "grid"
+  },
+  "appearance": {
+    "default": "system"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Website",
+        "href": "https://wrapper.sh"
+      },
+      {
+        "type": "github",
+        "href": "https://github.com/heycupola/wrapper"
+      }
+    ]
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Start Here",
+        "pages": ["introduction", "onboarding", "installation", "setup"]
+      },
+      {
+        "group": "Operate",
+        "pages": [
+          "troubleshooting",
+          "release-channels",
+          "architecture",
+          "mobile-plan",
+          "mobile-integration-contract"
+        ]
+      }
+    ]
+  }
+}

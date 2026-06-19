@@ -1,0 +1,33 @@
+{
+  "name": "backend",
+  "private": true,
+  "type": "module",
+  "module": "index.ts",
+  "scripts": {
+    "dev": "bunx convex dev",
+    "lint": "oxlint -c ../../.oxlintrc.json .",
+    "lint:fix": "oxlint -c ../../.oxlintrc.json . --fix",
+    "format": "oxfmt --ignore-path ../../.oxfmtignore .",
+    "format:check": "oxfmt --check --ignore-path ../../.oxfmtignore .",
+    "check-types": "tsc --noEmit",
+    "test": "bun test tests",
+    "betterAuth:generate-schema": "cd ./convex/betterAuth && bunx better-auth generate -y --output generatedSchema.ts",
+    "deploy": "bunx convex deploy",
+    "deploy:dry-run": "bunx convex deploy --dry-run"
+  },
+  "dependencies": {
+    "@convex-dev/better-auth": "^0.12.2",
+    "@useautumn/convex": "^0.0.12",
+    "better-auth": "~1.6.9",
+    "convex": "^1.37.0",
+    "convex-helpers": "^0.1.98"
+  },
+  "devDependencies": {
+    "@better-auth/cli": "latest",
+    "@types/bun": "latest",
+    "typescript": "^5"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

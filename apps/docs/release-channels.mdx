@@ -1,0 +1,25 @@
+---
+title: Release Channels
+description: How Wrapper CLI is released and distributed.
+---
+
+## Distribution channels
+
+- GitHub Releases: versioned archives for macOS/Linux
+- Homebrew: formula in [`heycupola/homebrew-tap`](https://github.com/heycupola/homebrew-tap)
+- Curl installer: `apps/cli/scripts/install.sh`
+
+## Release automation
+
+`release-cli.yml` builds cross-platform binaries and publishes release assets:
+
+- `wrapper-darwin-arm64.tar.gz`
+- `wrapper-darwin-x86_64.tar.gz`
+- `wrapper-linux-x86_64.tar.gz`
+
+Then `update-homebrew-tap.yml` updates `Formula/wrapper.rb` in the shared tap.
+
+## Required GitHub secrets
+
+- `HOMEBREW_TAP_TOKEN` for committing formula updates
+- standard repo permissions for creating releases

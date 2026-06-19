@@ -1,0 +1,78 @@
+---
+title: Architecture
+description: Understand how CLI, backend, and relay work together.
+---
+
+## System components
+
+- `apps/cli`: host shell, local attach, auth commands, relay bridge
+- `packages/backend`: Convex auth, session lifecycle, relay ticket APIs
+- `apps/relay`: authenticated WebSocket router for host and viewers
+- `packages/protocol`: shared message schema and codec
+
+## High level flow
+
+```mermaid
+flowchart LR
+  hostCli[HostCLI] -->|session open heartbeat close| backend[ConvexBackend]
+  viewerCli[ViewerCLI] -->|authorize attach and ticket request| backend
+  hostCli -->|ws with host ticket| relay[RelayService]
+  viewerCli -->|ws with viewer ticket| relay
+  relay -->|input resize| hostCli
+  hostCli -->|output session events| relay
+  relay -->|broadcast output and close| viewerCli
+```
+
+## Session lifecycle
+
+Backend handlers in `convex/session.ts`:
+
+- `open`
+- `heartbeat`
+- `close`
+- `listActive`
+- `authorizeAttach`
+- `setRelayState`
+
+Onboarding handlers in `convex/onboarding.ts`:
+
+- `getState`
+- `completeStep`
+- `complete`
+
+Timeout safety:
+
+- stale sessions are closed by scheduler
+- relay state tracks `offline`, `connecting`, `online`, `error`
+
+## Relay auth and routing
+
+Backend handlers in `convex/relay.ts`:
+
+- `issueHostTicket`
+- `issueViewerTicket`
+- `consumeTicket`
+- `cleanupTicket`
+
+Relay routing in `apps/relay/src/hub.ts`:
+
+- one host socket per session
+- multiple viewer sockets per session
+- consensus resize from smallest viewer dimensions
+- host disconnect closes viewers with `session.closed`
+
+## Project structure
+
+```text
+apps/
+  cli/
+  relay/
+  web/
+  docs/
+packages/
+  backend/
+  protocol/
+  terminal/
+  logger/
+  ui/
+```

@@ -1,0 +1,32 @@
+---
+title: Introduction
+description: Wrapper lets you run one terminal session and reach it from your other devices with authenticated access.
+---
+
+Wrapper is a terminal access platform with three core parts:
+
+- CLI runtime that hosts your shell session
+- Convex backend for auth and session lifecycle
+- Relay service for remote WebSocket attach
+
+## What Wrapper does
+
+Wrapper starts from your shell and keeps your normal workflow intact.
+When you choose to share a session, Wrapper exposes it through an authenticated relay path.
+
+## Current status
+
+The platform is complete up to mobile app development:
+
+- CLI host and attach flow
+- Device authorization flow
+- Web onboarding flow for first-run setup
+- Backend session lifecycle and access control
+- Relay ticket handshake and message routing
+- CI checks for lint, format, typecheck, and tests
+
+## Where to go next
+
+- Read [Installation](/installation) to install and run commands
+- Read [Setup](/setup) for environment and local development
+- Read [Architecture](/architecture) for component and message flow

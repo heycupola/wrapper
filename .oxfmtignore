@@ -1,0 +1,12 @@
+node_modules
+dist
+.next
+.turbo
+.open-next
+.wrangler
+out
+build
+coverage
+bun.lock
+**/_generated/**
+**/CHANGELOG.md
