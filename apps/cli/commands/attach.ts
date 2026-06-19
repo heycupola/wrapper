@@ -2,7 +2,13 @@ import * as p from "@clack/prompts";
 import { createLogger, trackError, trackEvent } from "@repo/logger";
 import { makeFunctionReference } from "convex/server";
 import { startAttachClient } from "../client/attach-client";
-import { findSession, latestSession, listSessions, type SessionRecord } from "../registry/sessions";
+import {
+  findSession,
+  findSessionByPort,
+  latestSession,
+  listSessions,
+  type SessionRecord,
+} from "../registry/sessions";
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
 import { resolveAuthedConvexClient } from "../util/convex-client";
 import { env } from "../util/env";
@@ -124,6 +130,7 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
 
   const prefixFilter = new PrefixFilter({
     onCommand: handlePrefixCommand,
+    onForward: (data) => handle.forwardInput(data),
     onArmedChange: (armed) => {
       if (armed) {
         setTitle(`● wrapper armed • viewer • ${sessionTag}`);
@@ -190,6 +197,11 @@ async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null>
   }
 
   if (opts.port) {
+    // Resolve the real session id from the registry so the attach can be
+    // authorized. If the port isn't a known local session, keep it unknown —
+    // authorization will then refuse (when a backend is configured).
+    const byPort = findSessionByPort(opts.port);
+    if (byPort) return { id: byPort.id, port: byPort.port, local: true };
     return { id: "<unknown>", port: opts.port, local: true };
   }
 
@@ -244,12 +256,22 @@ function shortenHome(path: string): string {
 
 async function ensureAttachAllowed(target: TargetSession): Promise<boolean> {
   if (!target.local || target.port === undefined) return false;
-  if (target.id === "<unknown>") return true;
 
   const backend = resolveAuthedConvexClient();
+  // No backend configured: nothing to authorize against (pure local dev).
   if (backend.status === "unconfigured") return true;
   if (backend.status === "missing_auth") {
     process.stderr.write("[wrapper] backend auth required. Run `wrapper auth login` first.\n");
+    return false;
+  }
+
+  // A backend is configured but we couldn't resolve a session id (e.g. attach
+  // by an unknown port). We cannot verify ownership/sharing, so refuse rather
+  // than silently granting access.
+  if (target.id === "<unknown>") {
+    process.stderr.write(
+      "[wrapper] cannot authorize attach by port alone. Re-run with `--id <sessionId>`.\n",
+    );
     return false;
   }
 
