@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { protectedMutation } from "./lib/middleware";
+import { enforceRateLimit } from "./lib/rateLimit";
 
 const siteUrl =
   process.env.SITE_URL ||
@@ -13,6 +14,17 @@ export const requestDeviceCode = mutation({
     scope: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // Throttle unauthenticated issuance to prevent storage/abuse flooding:
+    // a per-client window plus a global ceiling. Keys stay low-cardinality.
+    await enforceRateLimit(ctx, `requestDeviceCode:client:${args.clientId ?? "anon"}`, {
+      limit: 10,
+      windowMs: 60_000,
+    });
+    await enforceRateLimit(ctx, "requestDeviceCode:global", {
+      limit: 120,
+      windowMs: 60_000,
+    });
+
     const result = await ctx.runMutation(components.betterAuth.deviceAuth.requestDeviceCode, {
       clientId: args.clientId,
       scope: args.scope,
@@ -36,6 +48,13 @@ export const pollDeviceToken = mutation({
     device_code: v.string(),
   },
   handler: async (ctx, args) => {
+    // Global poll ceiling caps flooding; per-code pacing is enforced by the
+    // Better Auth `interval`/`slow_down` contract the CLI already honours.
+    await enforceRateLimit(ctx, "pollDeviceToken:global", {
+      limit: 600,
+      windowMs: 60_000,
+    });
+
     let result: {
       expires_in: number;
       session_token: string;
