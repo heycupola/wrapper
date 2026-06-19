@@ -76,8 +76,8 @@ jobs:
       - name: Backend deploy dry run
         run: |
           if [ -z "$CONVEX_DEPLOY_KEY" ]; then
-            echo "CONVEX_DEPLOY_KEY is required for backend deploy dry-run." >&2
-            exit 1
+            echo "::warning::CONVEX_DEPLOY_KEY is not configured; skipping Convex deploy dry-run."
+            exit 0
           fi
           bun run --cwd packages/backend deploy:dry-run
         env:
