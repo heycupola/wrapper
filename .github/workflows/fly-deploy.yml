@@ -13,7 +13,9 @@ jobs:
   deploy:
     name: Deploy relay app
     runs-on: ubuntu-latest
-    concurrency: deploy-relay-group
+    concurrency:
+      group: deploy-relay-group
+      cancel-in-progress: false
     env:
       FLY_APP_NAME: wrapper-dry-pathway-1935
     steps:

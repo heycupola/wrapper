@@ -44,6 +44,10 @@ export interface PrefixFilterOptions {
   /** Called when the filter enters or leaves "armed" state — useful for
    *  rendering an overlay hint. Defaults to a no-op. */
   onArmedChange?: (armed: boolean) => void;
+  /** Called to forward bytes to the shell out-of-band — used to re-emit the
+   *  prefix byte when the armed state times out without a follow-up command,
+   *  so the keystroke is never silently dropped. Defaults to a no-op. */
+  onForward?: (data: string) => void;
   /** Auto-reset the armed state after this many milliseconds. Defaults to
    *  1500. Set to 0 to disable the timeout (not recommended). */
   armedTimeoutMs?: number;
@@ -64,6 +68,7 @@ export class PrefixFilter {
   private readonly prefix: number;
   private readonly onCommand: (cmd: PrefixCommand) => void;
   private readonly onArmedChange: (armed: boolean) => void;
+  private readonly onForward: (data: string) => void;
   private readonly timeoutMs: number;
   private state: State = "idle";
   private armedTimer: ReturnType<typeof setTimeout> | null = null;
@@ -72,6 +77,7 @@ export class PrefixFilter {
     this.prefix = opts.prefix ?? DEFAULT_PREFIX;
     this.onCommand = opts.onCommand;
     this.onArmedChange = opts.onArmedChange ?? (() => undefined);
+    this.onForward = opts.onForward ?? (() => undefined);
     this.timeoutMs = opts.armedTimeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
@@ -154,17 +160,15 @@ export class PrefixFilter {
     this.onArmedChange(true);
     if (this.timeoutMs > 0) {
       this.armedTimer = setTimeout(() => {
-        // Time elapsed without a follow-up keystroke. Re-emit the prefix
-        // byte to the shell so it isn't lost — the user clearly didn't
-        // intend it to be a wrapper command.
+        // Time elapsed without a follow-up keystroke. Re-emit the prefix byte
+        // to the shell so it isn't lost — the user clearly didn't intend it as
+        // a wrapper command. `process()` already returned, so we forward it
+        // out-of-band via the onForward hook (host writes it to the PTY;
+        // viewer sends it as input). This upholds the "never drop input"
+        // invariant even across the armed timeout.
         if (this.state !== "armed") return;
         this.disarm();
-        // We cannot synchronously add to the previous `process` call's
-        // output, so caller must surface the byte by listening to
-        // onArmedChange(false) and relying on its own input plumbing.
-        // In practice this is fine: a 1.5 s gap means the user paused, and
-        // the very next byte they type already arrives in idle state, so
-        // the worst case is a single dropped byte (the prefix itself).
+        this.onForward(String.fromCharCode(this.prefix));
       }, this.timeoutMs);
       // Don't keep the event loop alive just for this timer.
       this.armedTimer.unref?.();

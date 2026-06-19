@@ -3,7 +3,7 @@ set -euo pipefail
 
 REPO="${WRAPPER_RELEASE_REPO:-heycupola/wrapper}"
 VERSION="${WRAPPER_VERSION:-latest}"
-INSTALL_DIR="${WRAPPER_INSTALL_DIR:-$HOME/.wrapper/bin}"
+INSTALL_DIR="${WRAPPER_INSTALL_DIR:-$HOME/.wrapper}"
 
 detect_platform() {
   local os arch

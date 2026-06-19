@@ -26,6 +26,8 @@ export interface AttachResult {
 export interface AttachClientHandle {
   done: Promise<AttachResult>;
   detach: () => Promise<AttachResult>;
+  /** Send raw bytes to the session as input (used to forward stray keystrokes). */
+  forwardInput: (data: string) => void;
 }
 
 const ABORTED_REASON = "user_aborted" as const;
@@ -206,6 +208,10 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
         exitCode = msg.exitCode;
         reason = "session_closed";
         log.debug("session ended remotely", { exitCode });
+        // Complete the attach flow now rather than waiting for the socket to
+        // close. Over the relay the viewer socket may linger after the host
+        // session ends, which would otherwise keep the attach open forever.
+        finalize();
         break;
       case "error":
         log.warn("host error", { code: msg.code, message: msg.message });
@@ -220,6 +226,11 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
     detach: async (): Promise<AttachResult> => {
       if (!finalized) reason = ABORTED_REASON;
       return finalize();
+    },
+    forwardInput: (data: string): void => {
+      if (!sessionId) return;
+      if (ws.readyState !== WebSocket.OPEN) return;
+      safeSend(ws, { type: "input", sessionId, data });
     },
   };
 }

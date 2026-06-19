@@ -6,6 +6,7 @@ import {
   unlinkSync,
   openSync,
   closeSync,
+  statSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { createLogger } from "@repo/logger";
@@ -102,6 +103,58 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+const LOCK_ACQUIRE_TIMEOUT_MS = 2000;
+const LOCK_STALE_MS = 10_000;
+const LOCK_RETRY_MS = 15;
+
+/**
+ * Serialize read-modify-write on the registry with an exclusive lock file so
+ * two `shell-host` processes starting together can't clobber each other's
+ * record. Best-effort: if the lock can't be acquired within the timeout (or a
+ * stale lock is detected), we break/proceed so the CLI never deadlocks.
+ */
+function withRegistryLock<T>(fn: () => T): T {
+  const lockFile = `${paths.sessionsRegistry()}.lock`;
+  const start = Date.now();
+  let fd: number | null = null;
+
+  while (fd === null) {
+    try {
+      fd = openSync(lockFile, "wx", 0o600);
+    } catch {
+      try {
+        const age = Date.now() - statSync(lockFile).mtimeMs;
+        if (age > LOCK_STALE_MS) {
+          unlinkSync(lockFile);
+          continue;
+        }
+      } catch {
+        // Lock vanished between open and stat; retry immediately.
+        continue;
+      }
+      if (Date.now() - start > LOCK_ACQUIRE_TIMEOUT_MS) break;
+      Bun.sleepSync(LOCK_RETRY_MS);
+    }
+  }
+
+  try {
+    return fn();
+  } finally {
+    if (fd !== null) {
+      try {
+        closeSync(fd);
+      } catch {
+        // ignore
+      }
+      try {
+        unlinkSync(lockFile);
+      } catch {
+        // ignore
+      }
+    }
+  }
+}
+
 function isPidAlive(pid: number): boolean {
   try {
     // Signal 0 is the standard "is this process reachable?" probe.
@@ -141,6 +194,11 @@ export function findSession(id: SessionId): SessionRecord | null {
   return listSessions().find((s) => s.id === id) ?? null;
 }
 
+/** Find a live session by its local port, or `null` if none matches. */
+export function findSessionByPort(port: number): SessionRecord | null {
+  return listSessions().find((s) => s.port === port) ?? null;
+}
+
 /** Most recently created live session (helper for `wrapper attach` w/o args). */
 export function latestSession(): SessionRecord | null {
   const sessions = listSessions();
@@ -150,27 +208,33 @@ export function latestSession(): SessionRecord | null {
 
 /** Insert a record. Replaces any existing entry with the same id. */
 export function registerSession(record: SessionRecord): void {
-  const raw = readRaw();
-  const others = raw.sessions.filter((s) => s.id !== record.id);
-  others.push(record);
-  writeRaw({ version: SCHEMA_VERSION, sessions: others });
+  withRegistryLock(() => {
+    const raw = readRaw();
+    const others = raw.sessions.filter((s) => s.id !== record.id);
+    others.push(record);
+    writeRaw({ version: SCHEMA_VERSION, sessions: others });
+  });
   log.debug("registry registered session", { id: record.id, pid: record.pid, port: record.port });
 }
 
 /** Remove a record by id. No-op if the record is already gone. */
 export function unregisterSession(id: SessionId): void {
-  const raw = readRaw();
-  const next = raw.sessions.filter((s) => s.id !== id);
-  if (next.length === raw.sessions.length) return;
-  writeRaw({ version: SCHEMA_VERSION, sessions: next });
+  withRegistryLock(() => {
+    const raw = readRaw();
+    const next = raw.sessions.filter((s) => s.id !== id);
+    if (next.length === raw.sessions.length) return;
+    writeRaw({ version: SCHEMA_VERSION, sessions: next });
+  });
   log.debug("registry unregistered session", { id });
 }
 
 /** Mutate the `shared` flag of a record in place. */
 export function setSessionShared(id: SessionId, shared: boolean): void {
-  const raw = readRaw();
-  const next = raw.sessions.map((s) => (s.id === id ? { ...s, shared } : s));
-  writeRaw({ version: SCHEMA_VERSION, sessions: next });
+  withRegistryLock(() => {
+    const raw = readRaw();
+    const next = raw.sessions.map((s) => (s.id === id ? { ...s, shared } : s));
+    writeRaw({ version: SCHEMA_VERSION, sessions: next });
+  });
 }
 
 /**

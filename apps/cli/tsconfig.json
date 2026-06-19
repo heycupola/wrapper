@@ -2,7 +2,8 @@
   "extends": "@repo/typescript-config/bundler.json",
   "compilerOptions": {
     "moduleDetection": "force",
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true
   },
   "include": [
     "index.ts",

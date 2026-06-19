@@ -12,8 +12,11 @@ import { runStatus } from "./commands/status";
 import { telemetryDisable, telemetryEnable, telemetryStatus } from "./commands/telemetry";
 import { runUninstall } from "./commands/uninstall";
 import type { SupportedShell } from "./shell/detect";
+import pkg from "./package.json";
 
-const VERSION = "0.0.0";
+// Single source of truth: the published package version. Keeping this in sync
+// with package.json ensures `wrapper --version` matches release/Homebrew.
+const VERSION = pkg.version;
 const SUPPORTED_SHELLS: SupportedShell[] = ["zsh", "bash", "fish"];
 
 const subcommand = process.argv[2];
