@@ -57,11 +57,11 @@ trackError("shell-host", err, { sessionId: "abc123" });
 
 ## Behaviour matrix
 
-| Mode               | Console output        | File transport | Telemetry               |
-| ------------------ | --------------------- | -------------- | ----------------------- |
-| Default (prod)     | off                   | yes            | enabled (after consent) |
-| `NODE_ENV!=production` | yes (Consola colours) | yes         | disabled                |
-| `CI=…` (any value) | off                   | yes            | disabled                |
+| Mode                   | Console output        | File transport | Telemetry               |
+| ---------------------- | --------------------- | -------------- | ----------------------- |
+| Default (prod)         | off                   | yes            | enabled (after consent) |
+| `NODE_ENV!=production` | yes (Consola colours) | yes            | disabled                |
+| `CI=…` (any value)     | off                   | yes            | disabled                |
 
 ## Log files
 
