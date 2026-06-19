@@ -116,6 +116,14 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     trackError("shell-host", err, { scope: "pty" });
   });
 
+  // PtySession reports spawn failure synchronously via state. Bail out before
+  // any further setup so a failed spawn cannot hang the host process.
+  if (session.status === "closed") {
+    log.error("failed to start shell session", { sessionId });
+    process.stderr.write("wrapper: failed to start shell session\n");
+    process.exit(1);
+  }
+
   let server: LocalServerHandle;
   try {
     server = startLocalServer({
@@ -381,6 +389,12 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   });
 
   const exitCode = await new Promise<number | null>((resolve) => {
+    // Guard against a session that already exited during setup, otherwise the
+    // late `once("exit")` listener would never fire and the host would hang.
+    if (session.status === "closed") {
+      resolve(session.lastExitCode);
+      return;
+    }
     session.once("exit", (code) => resolve(code));
   });
 

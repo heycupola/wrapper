@@ -146,8 +146,14 @@ export class PtySession extends EventEmitter<PtySessionEvents> {
       });
     } catch (err) {
       this.state = "closed";
-      this.emit("error", asError(err, "pty:spawn"));
-      this.emit("exit", null);
+      // Defer emits to a microtask: the constructor returns first so callers
+      // can attach `error`/`exit` listeners. Emitting synchronously here would
+      // throw on the unlistened `error` event and lose `exit`, hanging the host.
+      // Callers can also detect failure synchronously via `status === "closed"`.
+      queueMicrotask(() => {
+        this.emit("error", asError(err, "pty:spawn"));
+        this.emit("exit", null);
+      });
       return;
     }
 
