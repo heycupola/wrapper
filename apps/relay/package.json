@@ -21,6 +21,7 @@
     "hono": "^4.10.6"
   },
   "devDependencies": {
+    "@repo/protocol": "*",
     "@types/bun": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:"
