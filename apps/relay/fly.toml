@@ -1,4 +1,7 @@
-app = "wrapper-dry-pathway-1935"
+# Shared config for both Fly apps. The deploy workflow always passes `--app`
+# (wrapper-relay-dev on the `dev` branch, wrapper-relay-prod on `main`), which
+# overrides the value below. Each app holds its own CONVEX_URL secret.
+app = "wrapper-relay-prod"
 primary_region = "fra"
 
 [build]

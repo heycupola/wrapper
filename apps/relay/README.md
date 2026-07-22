@@ -46,11 +46,6 @@ fly secrets set RELAY_CONVEX_URL="https://<your-convex>.convex.cloud"
 fly deploy
 ```
 
-### Railway
-
-`apps/relay/railway.json` is included for baseline runtime policy.
-Set `RELAY_CONVEX_URL` in Railway service variables.
-
 ## Smoke verification
 
 ### Automated smoke (deployed relay)
