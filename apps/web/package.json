@@ -6,19 +6,15 @@
   "scripts": {
     "dev": "next dev --port 3000",
     "build": "next build",
-    "build:cloudflare": "opennextjs-cloudflare build",
     "start": "next start",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
-    "check-types": "next typegen && tsc --noEmit",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@convex-dev/better-auth": "^0.12.2",
-    "@opennextjs/cloudflare": "^1.18.0",
     "better-auth": "^1.6.9",
     "convex": "^1.37.0",
     "next": "catalog:",
@@ -32,7 +28,6 @@
     "@types/react-dom": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
-    "typescript": "catalog:",
-    "wrangler": "^4.80.0"
+    "typescript": "catalog:"
   }
 }
