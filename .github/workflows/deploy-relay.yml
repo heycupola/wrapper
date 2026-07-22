@@ -50,7 +50,10 @@ jobs:
       - name: Deploy
         # Pass apps/relay as the build context (WORKDIR positional) so the
         # Dockerfile's relative COPYs resolve; --config only points at fly.toml.
-        run: flyctl deploy apps/relay --remote-only --config apps/relay/fly.toml --app "${{ vars.FLY_APP_NAME }}"
+        # --ha=false: launch a single machine. The Fly org can't launch the
+        # HA second machine yet (needs billing/verification); drop this flag
+        # once HA is authorized.
+        run: flyctl deploy apps/relay --remote-only --config apps/relay/fly.toml --app "${{ vars.FLY_APP_NAME }}" --ha=false
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
