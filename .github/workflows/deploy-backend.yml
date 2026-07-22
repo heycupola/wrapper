@@ -1,8 +1,8 @@
 name: Deploy backend (Convex)
 
 # Branch -> environment:
-#   push to `dev`  -> GitHub Environment "dev"        -> wrapper-dev Convex project
-#   push to `main` -> GitHub Environment "production"  -> production Convex project
+#   push to `dev`  -> GitHub Environment "dev"        -> dev Convex deployment (sleek-echidna)
+#   push to `main` -> GitHub Environment "production"  -> prod Convex deployment (confident-fox)
 # The only thing that differs per environment is the env-scoped CONVEX_DEPLOY_KEY
 # secret; `convex deploy` targets whichever deployment that key belongs to.
 
