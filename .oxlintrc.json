@@ -32,7 +32,9 @@
     "**/out/**",
     "**/build/**",
     "**/coverage/**",
-    "bun.lock"
+    "bun.lock",
+    "**/autumn.config.ts",
+    "**/@useautumn-sdk.d.ts"
   ],
   "rules": {
     "no-console": "off",

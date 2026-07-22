@@ -257,11 +257,15 @@ function shortenHome(path: string): string {
 async function ensureAttachAllowed(target: TargetSession): Promise<boolean> {
   if (!target.local || target.port === undefined) return false;
 
-  const backend = resolveAuthedConvexClient();
+  const backend = await resolveAuthedConvexClient();
   // No backend configured: nothing to authorize against (pure local dev).
   if (backend.status === "unconfigured") return true;
   if (backend.status === "missing_auth") {
     process.stderr.write("[wrapper] backend auth required. Run `wrapper auth login` first.\n");
+    return false;
+  }
+  if (backend.status === "auth_error") {
+    process.stderr.write(`[wrapper] backend auth failed: ${backend.error.message}\n`);
     return false;
   }
 
@@ -304,13 +308,17 @@ async function resolveAttachUrl(input: {
 }
 
 async function resolveRelayAttachUrl(sessionId: string): Promise<string | null> {
-  const backend = resolveAuthedConvexClient();
+  const backend = await resolveAuthedConvexClient();
   if (backend.status === "unconfigured") {
     process.stderr.write("[wrapper] relay attach requires WRAPPER_CONVEX_URL configuration.\n");
     return null;
   }
   if (backend.status === "missing_auth") {
     process.stderr.write("[wrapper] relay attach requires login. Run `wrapper auth login`.\n");
+    return null;
+  }
+  if (backend.status === "auth_error") {
+    process.stderr.write(`[wrapper] relay attach failed: ${backend.error.message}\n`);
     return null;
   }
 

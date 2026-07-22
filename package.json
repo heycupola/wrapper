@@ -39,6 +39,7 @@
     "better-auth": "^1.6.9"
   },
   "devDependencies": {
+    "atmn": "latest",
     "lefthook": "^1.13.0",
     "oxfmt": "^0.45.0",
     "oxlint": "^1.60.0",

@@ -10,3 +10,5 @@ coverage
 bun.lock
 **/_generated/**
 **/CHANGELOG.md
+**/autumn.config.ts
+**/@useautumn-sdk.d.ts

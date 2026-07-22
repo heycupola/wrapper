@@ -25,5 +25,8 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  // `autumn.config.ts` is consumed only by the `atmn` CLI (imports the `atmn`
+  // package, generates `@useautumn-sdk.d.ts`); keep it out of the app typecheck.
+  "exclude": ["node_modules", "autumn.config.ts", "@useautumn-sdk.d.ts"]
 }
