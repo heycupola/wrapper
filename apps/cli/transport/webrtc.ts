@@ -1,3 +1,6 @@
+// werift's RTCDataChannel delivers events via `on*` callbacks (not
+// addEventListener), so the on-assignment style is intentional here.
+/* eslint-disable unicorn/prefer-add-event-listener */
 import { createLogger } from "@repo/logger";
 import type { SignalMessage } from "@repo/protocol";
 import { RTCPeerConnection } from "werift";

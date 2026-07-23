@@ -174,12 +174,13 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
       });
       entry = { negotiation };
       p2pPeers.set(peerId, entry);
-      void negotiation.transport.then((t) => {
+      void (async () => {
+        const t = await negotiation.transport;
         if (t) {
           p2pChannels.set(peerId, t);
           log.info("p2p data channel up (host)", { sessionId: opts.sessionId, peerId });
         }
-      });
+      })();
     }
     entry.negotiation.acceptSignal(msg.kind, msg.data);
   }

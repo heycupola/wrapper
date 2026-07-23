@@ -260,12 +260,13 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
         );
       },
     });
-    void negotiation.transport.then((t) => {
+    void (async () => {
+      const t = await negotiation?.transport;
       if (t) {
         dataTransport = t;
         log.info("p2p data channel up (viewer)");
       }
-    });
+    })();
   }
 
   return {
