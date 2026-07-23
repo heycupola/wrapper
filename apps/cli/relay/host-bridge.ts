@@ -1,6 +1,7 @@
 import { createLogger } from "@repo/logger";
 import { encodeMessage, parseMessage, type SessionId, type WrapperMessage } from "@repo/protocol";
 import type { PtySession } from "../pty/session";
+import { WebSocketTransport, type Transport } from "../transport/transport";
 
 const log = createLogger("relay-host-bridge");
 
@@ -20,8 +21,46 @@ export interface RelayHostBridge {
 
 export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBridge {
   const wsUrl = buildRelayWsUrl(opts.relayUrl, opts.ticket);
-  const socket = new WebSocket(wsUrl);
+  const safeUrl = wsUrl.replace(/ticket=[^&]+/, "ticket=***");
   let closed = false;
+
+  // Transport is a dumb protocol-frame pipe. Today it's a WebSocket to the
+  // relay; a WebRtcTransport will drop in here for direct P2P (relay fallback).
+  const transport: Transport = new WebSocketTransport(wsUrl, {
+    onOpen: () => {
+      log.info("relay host connected", { sessionId: opts.sessionId });
+      opts.onOpen?.();
+      send({
+        type: "session.opened",
+        sessionId: opts.sessionId,
+        size: opts.pty.size,
+      });
+    },
+    onMessage: (data) => {
+      const msg = parseMessage(data as string | ArrayBuffer);
+      if (!msg) return;
+      if (msg.sessionId !== opts.sessionId) return;
+      handleInbound(msg);
+    },
+    onClose: (info) => {
+      opts.onClose?.();
+      if (!closed) {
+        log.warn("relay host disconnected", {
+          sessionId: opts.sessionId,
+          code: info.code,
+          reason: info.reason,
+        });
+      }
+    },
+    onError: (info) => {
+      opts.onError?.(new Error("relay websocket error"));
+      log.warn("relay host websocket error", {
+        sessionId: opts.sessionId,
+        url: safeUrl,
+        message: info.message,
+      });
+    },
+  });
 
   const onPtyData = (chunk: string): void => {
     send({
@@ -42,45 +81,6 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
 
   opts.pty.on("data", onPtyData);
   opts.pty.on("exit", onPtyExit);
-
-  socket.addEventListener("open", () => {
-    log.info("relay host connected", { sessionId: opts.sessionId });
-    opts.onOpen?.();
-    send({
-      type: "session.opened",
-      sessionId: opts.sessionId,
-      size: opts.pty.size,
-    });
-  });
-
-  socket.addEventListener("message", (event) => {
-    const msg = parseMessage(event.data as string | ArrayBuffer);
-    if (!msg) return;
-    if (msg.sessionId !== opts.sessionId) return;
-    handleInbound(msg);
-  });
-
-  socket.addEventListener("close", (event) => {
-    opts.onClose?.();
-    if (!closed) {
-      const { code, reason } = event as { code?: number; reason?: string };
-      log.warn("relay host disconnected", {
-        sessionId: opts.sessionId,
-        code,
-        reason: reason && reason.length > 0 ? reason : undefined,
-      });
-    }
-  });
-
-  socket.addEventListener("error", (event) => {
-    opts.onError?.(new Error("relay websocket error"));
-    const message = (event as { message?: string }).message;
-    log.warn("relay host websocket error", {
-      sessionId: opts.sessionId,
-      url: wsUrl.replace(/ticket=[^&]+/, "ticket=***"),
-      message: message && message.length > 0 ? message : undefined,
-    });
-  });
 
   function handleInbound(msg: WrapperMessage): void {
     switch (msg.type) {
@@ -103,12 +103,8 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
   }
 
   function send(msg: WrapperMessage): void {
-    if (socket.readyState !== WebSocket.OPEN) return;
-    try {
-      socket.send(encodeMessage(msg));
-    } catch {
-      // close handler reports disconnects.
-    }
+    if (!transport.isOpen) return;
+    transport.send(encodeMessage(msg));
   }
 
   function close(): void {
@@ -116,13 +112,7 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
     closed = true;
     opts.pty.off("data", onPtyData);
     opts.pty.off("exit", onPtyExit);
-    try {
-      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
-        socket.close();
-      }
-    } catch {
-      // already closed
-    }
+    transport.close();
   }
 
   return {

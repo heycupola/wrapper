@@ -1,6 +1,7 @@
 import { createLogger } from "@repo/logger";
 import { encodeMessage, parseMessage, type SessionId, type WrapperMessage } from "@repo/protocol";
 import { stripTerminalResponses } from "../shell/terminal-responses";
+import { WebSocketTransport, type Transport, type TransportFactory } from "../transport/transport";
 
 const log = createLogger("attach-client");
 
@@ -8,6 +9,8 @@ const log = createLogger("attach-client");
 
 export interface AttachClientOptions {
   url: string;
+  /** Transport factory; defaults to a WebSocket to `url`. Lets WebRTC drop in. */
+  transportFactory?: TransportFactory;
   stdin?: NodeJS.ReadStream;
   stdout?: NodeJS.WriteStream;
   initialSize?: { cols: number; rows: number };
@@ -37,6 +40,8 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
   const stdout = opts.stdout ?? process.stdout;
   const maxAttempts = Math.max(1, opts.connectRetries ?? 1);
   const retryDelayMs = Math.max(0, opts.connectRetryDelayMs ?? 100);
+  const makeTransport: TransportFactory =
+    opts.transportFactory ?? ((handlers) => new WebSocketTransport(opts.url, handlers));
 
   let sessionId: SessionId | null = null;
   let exitCode: number | null = null;
@@ -48,9 +53,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
     resolveDone = resolve;
   });
 
-  let ws: WebSocket = createSocket();
   let attempts = 1;
-
   let rawModeEnabled = false;
   let ioAttached = false;
   let finalized = false;
@@ -80,7 +83,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
 
   const onStdin = (chunk: Buffer | string): void => {
     if (!sessionId) return;
-    if (ws.readyState !== WebSocket.OPEN) return;
+    if (!transport.isOpen) return;
     const raw = typeof chunk === "string" ? chunk : chunk.toString("utf8");
     // Drop terminal query responses to avoid echo-looping them back into PTY.
     const cleaned = stripTerminalResponses(raw);
@@ -88,13 +91,13 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
     // Optional prefix-interceptor hook (used by shell-host).
     const passthrough = opts.interceptStdin ? opts.interceptStdin(cleaned) : cleaned;
     if (passthrough === null || passthrough.length === 0) return;
-    safeSend(ws, { type: "input", sessionId, data: passthrough });
+    safeSend({ type: "input", sessionId, data: passthrough });
   };
 
   const onResize = (): void => {
     if (!sessionId) return;
-    if (ws.readyState !== WebSocket.OPEN) return;
-    safeSend(ws, {
+    if (!transport.isOpen) return;
+    safeSend({
       type: "resize",
       sessionId,
       size: { cols: stdout.columns ?? 80, rows: stdout.rows ?? 24 },
@@ -125,72 +128,57 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
     }
     finalized = true;
     detachIO();
-    try {
-      if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-        ws.close();
-      }
-    } catch {
-      // already closed
-    }
+    transport.close();
     const result: AttachResult = { sessionId, exitCode, reason, error: lastError };
     resolveDone(result);
     return result;
   };
 
-  attachListeners(ws);
-
-  function createSocket(): WebSocket {
-    const socket = new WebSocket(opts.url);
-    socket.binaryType = "arraybuffer";
-    return socket;
-  }
-
-  function attachListeners(socket: WebSocket): void {
-    socket.addEventListener("open", () => {
-      log.debug("ws connected", { url: opts.url, attempt: attempts });
-      attachIO();
-    });
-
-    socket.addEventListener("message", (ev) => {
-      const msg = parseMessage(ev.data as string | ArrayBuffer);
-      if (!msg) {
-        log.warn("dropping unparseable message from host");
-        return;
-      }
-      handleHostMessage(msg);
-    });
-
-    socket.addEventListener("close", () => {
-      // Retry during initial connect window only.
-      if (!ioAttached && attempts < maxAttempts && !finalized) {
-        attempts += 1;
-        log.debug("retrying ws connect", { attempt: attempts, maxAttempts });
-        setTimeout(() => {
-          if (finalized) return;
-          ws = createSocket();
-          attachListeners(ws);
-        }, retryDelayMs);
-        return;
-      }
-      log.debug("ws closed");
-      finalize();
-    });
-
-    socket.addEventListener("error", (ev) => {
-      const errMsg = (ev as ErrorEvent).message ?? "unknown";
-      if (!ioAttached && attempts < maxAttempts) {
-        log.debug("ws connect attempt failed, will retry", {
-          attempt: attempts,
-          error: errMsg,
-        });
-        return;
-      }
-      lastError = new Error(`websocket error: ${errMsg}`);
-      reason = "error";
-      log.error("ws error", { error: lastError.message });
-      finalize();
+  function connect(): Transport {
+    return makeTransport({
+      onOpen: () => {
+        log.debug("transport connected", { attempt: attempts });
+        attachIO();
+      },
+      onMessage: (data) => {
+        const msg = parseMessage(data as string | ArrayBuffer);
+        if (!msg) {
+          log.warn("dropping unparseable message from host");
+          return;
+        }
+        handleHostMessage(msg);
+      },
+      onClose: () => {
+        // Retry during the initial connect window only.
+        if (!ioAttached && attempts < maxAttempts && !finalized) {
+          attempts += 1;
+          log.debug("retrying connect", { attempt: attempts, maxAttempts });
+          setTimeout(() => {
+            if (finalized) return;
+            transport = connect();
+          }, retryDelayMs);
+          return;
+        }
+        log.debug("transport closed");
+        finalize();
+      },
+      onError: (info) => {
+        if (!ioAttached && attempts < maxAttempts) {
+          log.debug("connect attempt failed, will retry", {
+            attempt: attempts,
+            error: info.message,
+          });
+          return;
+        }
+        lastError = new Error(`transport error: ${info.message ?? "unknown"}`);
+        reason = "error";
+        log.error("transport error", { error: lastError.message });
+        finalize();
+      },
     });
   }
+
+  let transport: Transport = connect();
 
   function handleHostMessage(msg: WrapperMessage): void {
     switch (msg.type) {
@@ -198,7 +186,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
         sessionId = msg.sessionId;
         log.debug("session attached", { sessionId, size: msg.size });
         if (opts.initialSize && sessionId) {
-          safeSend(ws, { type: "resize", sessionId, size: opts.initialSize });
+          safeSend({ type: "resize", sessionId, size: opts.initialSize });
         }
         break;
       case "output":
@@ -221,6 +209,11 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
     }
   }
 
+  function safeSend(msg: WrapperMessage): void {
+    if (!transport.isOpen) return;
+    transport.send(encodeMessage(msg));
+  }
+
   return {
     done,
     detach: async (): Promise<AttachResult> => {
@@ -229,20 +222,11 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
     },
     forwardInput: (data: string): void => {
       if (!sessionId) return;
-      if (ws.readyState !== WebSocket.OPEN) return;
-      safeSend(ws, { type: "input", sessionId, data });
+      safeSend({ type: "input", sessionId, data });
     },
   };
 }
 
 export async function runAttachClient(opts: AttachClientOptions): Promise<AttachResult> {
   return startAttachClient(opts).done;
-}
-
-function safeSend(ws: WebSocket, msg: WrapperMessage): void {
-  try {
-    ws.send(encodeMessage(msg));
-  } catch {
-    // close handler resolves final state.
-  }
 }
