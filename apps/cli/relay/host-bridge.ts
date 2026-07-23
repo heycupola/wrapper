@@ -60,16 +60,26 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
     handleInbound(msg);
   });
 
-  socket.addEventListener("close", () => {
+  socket.addEventListener("close", (event) => {
     opts.onClose?.();
     if (!closed) {
-      log.warn("relay host disconnected", { sessionId: opts.sessionId });
+      const { code, reason } = event as { code?: number; reason?: string };
+      log.warn("relay host disconnected", {
+        sessionId: opts.sessionId,
+        code,
+        reason: reason && reason.length > 0 ? reason : undefined,
+      });
     }
   });
 
-  socket.addEventListener("error", () => {
+  socket.addEventListener("error", (event) => {
     opts.onError?.(new Error("relay websocket error"));
-    log.warn("relay host websocket error", { sessionId: opts.sessionId });
+    const message = (event as { message?: string }).message;
+    log.warn("relay host websocket error", {
+      sessionId: opts.sessionId,
+      url: wsUrl.replace(/ticket=[^&]+/, "ticket=***"),
+      message: message && message.length > 0 ? message : undefined,
+    });
   });
 
   function handleInbound(msg: WrapperMessage): void {
