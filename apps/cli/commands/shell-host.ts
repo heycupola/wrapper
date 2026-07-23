@@ -264,6 +264,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         ticket: issued.ticket,
         sessionId,
         pty: session,
+        enableP2P: env.p2pEnabled,
         onOpen: () => {
           if (backend.status !== "ready") return;
           void backend.client

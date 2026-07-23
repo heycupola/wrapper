@@ -2,6 +2,7 @@ import { createLogger } from "@repo/logger";
 import { encodeMessage, parseMessage, type SessionId, type WrapperMessage } from "@repo/protocol";
 import { stripTerminalResponses } from "../shell/terminal-responses";
 import { WebSocketTransport, type Transport, type TransportFactory } from "../transport/transport";
+import { negotiateWebRtc, type Negotiation } from "../transport/webrtc";
 
 const log = createLogger("attach-client");
 
@@ -17,6 +18,8 @@ export interface AttachClientOptions {
   connectRetries?: number;
   connectRetryDelayMs?: number;
   interceptStdin?: (chunk: string) => string | null;
+  /** Opt-in viewer P2P: negotiate a direct data channel for this session. */
+  p2p?: { sessionId: SessionId };
 }
 
 export interface AttachResult {
@@ -57,6 +60,10 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
   let rawModeEnabled = false;
   let ioAttached = false;
   let finalized = false;
+  // P2P fast path (opt-in). The relay WS stays as signaling + fallback; once the
+  // data channel is open it carries session traffic and relay output is deduped.
+  let dataTransport: Transport | null = null;
+  let negotiation: Negotiation | null = null;
 
   // `stdin.isTTY` can be unreliable under bun run, so check setRawMode directly.
   const canRawMode = typeof stdin.setRawMode === "function";
@@ -83,7 +90,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
 
   const onStdin = (chunk: Buffer | string): void => {
     if (!sessionId) return;
-    if (!transport.isOpen) return;
+    if (!transport.isOpen && !dataTransport?.isOpen) return;
     const raw = typeof chunk === "string" ? chunk : chunk.toString("utf8");
     // Drop terminal query responses to avoid echo-looping them back into PTY.
     const cleaned = stripTerminalResponses(raw);
@@ -96,7 +103,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
 
   const onResize = (): void => {
     if (!sessionId) return;
-    if (!transport.isOpen) return;
+    if (!transport.isOpen && !dataTransport?.isOpen) return;
     safeSend({
       type: "resize",
       sessionId,
@@ -128,6 +135,8 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
     }
     finalized = true;
     detachIO();
+    negotiation?.cancel();
+    dataTransport?.close();
     transport.close();
     const result: AttachResult = { sessionId, exitCode, reason, error: lastError };
     resolveDone(result);
@@ -139,6 +148,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
       onOpen: () => {
         log.debug("transport connected", { attempt: attempts });
         attachIO();
+        if (opts.p2p && !negotiation) startP2P(opts.p2p.sessionId);
       },
       onMessage: (data) => {
         const msg = parseMessage(data as string | ArrayBuffer);
@@ -146,6 +156,12 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
           log.warn("dropping unparseable message from host");
           return;
         }
+        if (msg.type === "signal") {
+          negotiation?.acceptSignal(msg.kind, msg.data);
+          return;
+        }
+        // Once P2P is live it carries output; drop the relay's duplicate copy.
+        if (dataTransport?.isOpen && msg.type === "output") return;
         handleHostMessage(msg);
       },
       onClose: () => {
@@ -210,8 +226,46 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
   }
 
   function safeSend(msg: WrapperMessage): void {
-    if (!transport.isOpen) return;
-    transport.send(encodeMessage(msg));
+    // Prefer the P2P channel when open; the relay WS is the fallback.
+    const active = dataTransport?.isOpen ? dataTransport : transport;
+    if (!active.isOpen) return;
+    active.send(encodeMessage(msg));
+  }
+
+  function startP2P(p2pSessionId: SessionId): void {
+    negotiation = negotiateWebRtc({
+      role: "viewer",
+      handlers: {
+        onMessage: (data) => {
+          const m = parseMessage(data as string | ArrayBuffer);
+          if (m) handleHostMessage(m);
+        },
+        onClose: () => {
+          dataTransport = null;
+        },
+        onError: () => {},
+      },
+      // Signaling always travels over the relay WS (never the data channel).
+      sendSignal: ({ kind, data }) => {
+        if (!transport.isOpen) return;
+        transport.send(
+          encodeMessage({
+            type: "signal",
+            sessionId: p2pSessionId,
+            to: "host",
+            from: "self",
+            kind,
+            data,
+          }),
+        );
+      },
+    });
+    void negotiation.transport.then((t) => {
+      if (t) {
+        dataTransport = t;
+        log.info("p2p data channel up (viewer)");
+      }
+    });
   }
 
   return {

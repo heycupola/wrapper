@@ -141,6 +141,9 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     },
   });
 
+  // P2P applies only to relay attaches (remote peers); local 127.0.0.1 attaches
+  // are already direct. Relay URLs carry the `/ws?ticket=` path.
+  const usingRelay = url.includes("/ws?ticket=");
   const handle = startAttachClient({
     url,
     initialSize: {
@@ -150,6 +153,7 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     connectRetries: 5,
     connectRetryDelayMs: 100,
     interceptStdin: (chunk) => prefixFilter.process(chunk),
+    p2p: env.p2pEnabled && usingRelay ? { sessionId: target.id } : undefined,
   });
 
   // Initial title so the user sees this is a viewer window.
