@@ -31,6 +31,10 @@ export class RelayHub {
   private readonly viewersBySession = new Map<string, Set<RelayPeer>>();
   private readonly bindingByPeer = new Map<RelayPeer, PeerBinding>();
   private readonly viewerState = new Map<RelayPeer, ViewerState>();
+  // Last `session.opened` frame per session. The host emits it only once (on
+  // connect), so viewers that join later must have it replayed — otherwise their
+  // attach client never learns the sessionId and never forwards input.
+  private readonly lastSessionOpened = new Map<string, string>();
 
   constructor(private readonly log: RelayHubLogger) {}
 
@@ -51,6 +55,10 @@ export class RelayHub {
     viewers.add(binding.peer);
     this.viewersBySession.set(binding.sessionId, viewers);
     this.viewerState.set(binding.peer, { size: null });
+    // Replay the cached `session.opened` so this viewer learns the sessionId and
+    // can start forwarding input immediately (the host won't re-emit it).
+    const opened = this.lastSessionOpened.get(binding.sessionId);
+    if (opened) binding.peer.send(opened);
     this.log.debug("viewer bound", {
       sessionId: binding.sessionId,
       viewerCount: viewers.size,
@@ -79,6 +87,7 @@ export class RelayHub {
         }
       }
       this.viewersBySession.delete(binding.sessionId);
+      this.lastSessionOpened.delete(binding.sessionId);
       this.log.debug("host unbound", { sessionId: binding.sessionId });
       return;
     }
@@ -124,6 +133,10 @@ export class RelayHub {
   private forwardHostMessage(binding: PeerBinding, msg: WrapperMessage): void {
     switch (msg.type) {
       case "session.opened":
+        // Cache so late-joining viewers can be caught up (see `bind`).
+        this.lastSessionOpened.set(binding.sessionId, encodeMessage(msg));
+        this.broadcastToViewers(binding.sessionId, msg);
+        break;
       case "output":
       case "error":
         this.broadcastToViewers(binding.sessionId, msg);

@@ -2,7 +2,10 @@
 # (wrapper-relay-dev on the `dev` branch, wrapper-relay-prod on `main`), which
 # overrides the value below. Each app holds its own CONVEX_URL secret.
 app = "wrapper-relay-prod"
-primary_region = "fra"
+# Bucharest — the closest Fly region to Turkey (~450km from Istanbul vs ~1870km
+# to Frankfurt/fra), which roughly halves relay round-trip latency for TR users.
+# Revisit (or go multi-region) as the user base spreads.
+primary_region = "otp"
 
 [build]
 dockerfile = "Dockerfile"
@@ -13,9 +16,12 @@ PORT = "8080"
 [http_service]
 internal_port = 8080
 force_https = true
+# The relay carries live WebSocket sessions. fly-proxy does not hold a WS
+# upgrade through a cold start, so an auto-stopped machine drops shares. Keep
+# one machine always running so WS connections never hit a cold boot.
 auto_stop_machines = "stop"
 auto_start_machines = true
-min_machines_running = 0
+min_machines_running = 1
 processes = ["app"]
 
 [[vm]]
