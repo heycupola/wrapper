@@ -15,11 +15,18 @@ single `Ctrl+\ s` opens a relay tunnel; `Ctrl+\ u` closes it again.
 CLI core, Convex auth/backend, relay transport, and web onboarding are now implemented in this
 repository. The next major phase remains the iOS app.
 
+Sharing runs over the relay, with an optional direct **WebRTC P2P fast path**
+(`WRAPPER_P2P`, off by default; relay stays the fallback) for lower latency — see
+[`apps/cli/transport/README.md`](./apps/cli/transport/README.md). Dev/prod deploy
+automation and the full environment matrix are documented in
+[`ENVIRONMENTS.md`](./ENVIRONMENTS.md).
+
 Before mobile app development, the active focus is operational hardening and release channels:
 
 - deploy relay service (`apps/relay`) via workflow + smoke checks
 - publish CLI release archives and update Homebrew tap formula
 - keep critical auth/relay test lanes green in CI
+- verify the P2P fast path on real networks (NAT traversal)
 
 ## Repository layout
 
