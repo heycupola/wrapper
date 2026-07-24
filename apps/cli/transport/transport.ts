@@ -34,7 +34,7 @@ export class WebSocketTransport implements Transport {
   readonly describe: string;
 
   constructor(url: string, handlers: TransportHandlers) {
-    this.describe = url.replace(/ticket=[^&]+/, "ticket=***");
+    this.describe = url.replace(/ticket=[^&]+/, "ticket=***").replace(/token=[^&]+/, "token=***");
     this.ws = new WebSocket(url);
     this.ws.binaryType = "arraybuffer";
 

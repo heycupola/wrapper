@@ -166,6 +166,20 @@ Behaviors to know once viewers join:
 - **One host per session:** a second host connecting to the same session id
   replaces the first.
 
+### Local attach security
+
+The local WebSocket server listens on `127.0.0.1`, which any process on the
+machine can reach. To stop another local user from attaching to your shell, the
+host generates a per-session loopback token, stores it only in the `0600`
+registry inside your `0700` config dir, and requires it as `?token=` on every
+local connection. `wrapper attach` reads the token from the registry, so only a
+user who can read your registry (you, or root) can attach locally. The token is
+redacted from logs.
+
+Long-running hosts also keep their backend auth fresh: the short-lived Convex JWT
+is re-minted from the stored session token before it expires, so a session that
+runs for hours does not start failing its heartbeats.
+
 ## Commands
 
 ### Install and hook management

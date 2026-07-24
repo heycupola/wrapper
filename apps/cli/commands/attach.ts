@@ -87,9 +87,10 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     code: opts.code,
   });
   if (!url) process.exit(1);
-  // Relay URLs carry a single-use join ticket in the query string. Redact it so
-  // the credential never lands in the log file or the terminal scrollback.
-  const safeUrl = url.replace(/ticket=[^&]+/, "ticket=***");
+  // Relay URLs carry a single-use join ticket, and local URLs carry the loopback
+  // token, in the query string. Redact both so no credential lands in the log
+  // file or the terminal scrollback.
+  const safeUrl = url.replace(/ticket=[^&]+/, "ticket=***").replace(/token=[^&]+/, "token=***");
   log.info("attaching", { url: safeUrl, sessionId: target.id });
   trackEvent("attach_started");
   process.stderr.write(`[wrapper] attaching to ${safeUrl}\n`);
@@ -202,7 +203,7 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
 async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null> {
   if (opts.id) {
     const found = findSession(opts.id);
-    if (found) return { id: found.id, port: found.port, local: true };
+    if (found) return { id: found.id, port: found.port, local: true, localToken: found.localToken };
     return { id: opts.id, local: false };
   }
 
@@ -211,7 +212,9 @@ async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null>
     // authorized. If the port isn't a known local session, keep it unknown —
     // authorization will then refuse (when a backend is configured).
     const byPort = findSessionByPort(opts.port);
-    if (byPort) return { id: byPort.id, port: byPort.port, local: true };
+    if (byPort) {
+      return { id: byPort.id, port: byPort.port, local: true, localToken: byPort.localToken };
+    }
     return { id: "<unknown>", port: opts.port, local: true };
   }
 
@@ -224,7 +227,7 @@ async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null>
   }
   if (sessions.length === 1) {
     const only = sessions[0]!;
-    return { id: only.id, port: only.port, local: true };
+    return { id: only.id, port: only.port, local: true, localToken: only.localToken };
   }
 
   const picked = await pickSession(sessions);
@@ -235,6 +238,7 @@ interface TargetSession {
   id: string;
   port?: number;
   local: boolean;
+  localToken?: string;
 }
 
 async function pickSession(sessions: SessionRecord[]): Promise<TargetSession | null> {
@@ -251,7 +255,7 @@ async function pickSession(sessions: SessionRecord[]): Promise<TargetSession | n
   if (p.isCancel(choice)) return null;
   const found = sorted.find((s) => s.id === choice);
   if (!found) return null;
-  return { id: found.id, port: found.port, local: true };
+  return { id: found.id, port: found.port, local: true, localToken: found.localToken };
 }
 
 function shortShell(path: string): string {
@@ -308,7 +312,8 @@ async function resolveAttachUrl(input: {
   if (!input.preferRelay && input.target.local && input.target.port !== undefined) {
     const allowed = await ensureAttachAllowed(input.target);
     if (!allowed) return null;
-    return `ws://${input.host}:${input.target.port}`;
+    const base = `ws://${input.host}:${input.target.port}`;
+    return input.target.localToken ? `${base}?token=${input.target.localToken}` : base;
   }
 
   if (input.target.id === "<unknown>") {

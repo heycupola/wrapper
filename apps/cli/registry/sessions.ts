@@ -54,6 +54,12 @@ export interface SessionRecord {
   createdAt: string;
   /** Whether the session has opted in to relay forwarding. */
   shared: boolean;
+  /**
+   * Secret required to connect to the local WebSocket server. Stored only in the
+   * 0600 registry inside the owner's 0700 config dir, so only the owner (or root)
+   * can read it. Prevents another local user from attaching to the loopback port.
+   */
+  localToken?: string;
 }
 
 interface RegistryFile {
