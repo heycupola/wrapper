@@ -29,7 +29,9 @@ const IS_CI = process.env.CI !== undefined && process.env.CI !== "";
 const HUD = (process.env.WRAPPER_HUD ?? "").toLowerCase();
 const HUD_ENABLED = HUD !== "0" && HUD !== "false" && HUD !== "off";
 const P2P = (process.env.WRAPPER_P2P ?? "").toLowerCase();
-const P2P_ENABLED = P2P === "1" || P2P === "true" || P2P === "on";
+// P2P is on by default (with automatic relay fallback). Opt out with
+// WRAPPER_P2P=0 (or false/off) to force everything over the relay WebSocket.
+const P2P_ENABLED = P2P !== "0" && P2P !== "false" && P2P !== "off";
 
 export const env = {
   /** Development mode toggle. */
@@ -54,9 +56,9 @@ export const env = {
   /** CLI HUD toggle: on by default, set WRAPPER_HUD=off to disable. */
   hudEnabled: HUD_ENABLED,
   /**
-   * Opt-in WebRTC P2P fast path (WRAPPER_P2P=1). Off by default: the relay
-   * WebSocket remains the transport. When on, host/viewer try a direct data
-   * channel and fall back to the relay if it can't be established.
+   * WebRTC P2P fast path. On by default: host/viewer try a direct data channel
+   * for low latency and fall back to the relay WebSocket if it cannot be
+   * established. Opt out with WRAPPER_P2P=0 (or false/off).
    */
   p2pEnabled: P2P_ENABLED,
 } as const;
