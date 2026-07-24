@@ -1,66 +1,97 @@
 # Wrapper
 
-> One command to make any terminal you open reachable from your phone.
+> One command to make any terminal you open reachable from your phone or another device.
 
 Wrapper transparently wraps every interactive shell session you open
-(zsh, bash, or fish) so an authenticated phone — or any other client —
-can mirror it on demand. The wrapping itself is invisible: your dotfiles,
-prompt, plugins, and history all behave exactly as before.
+(zsh, bash, or fish) so an authenticated device can mirror it on demand.
+The wrapping itself is invisible: your dotfiles, prompt, plugins, and
+history all behave exactly as before.
 
-The session never leaves your machine until you decide to share it. A
-single `Ctrl+\ s` opens a relay tunnel; `Ctrl+\ u` closes it again.
+A session never leaves your machine until you decide to share it. Inside
+a wrapped shell, `Ctrl+\ s` opens a relay tunnel and `Ctrl+\ u` closes it
+again. A second device then attaches to that session and sees the live
+terminal.
 
-## Status
+## How it works in one minute
 
-CLI core, Convex auth/backend, relay transport, and web onboarding are now implemented in this
-repository. The next major phase remains the iOS app.
-
-Sharing runs over the relay, with an optional direct **WebRTC P2P fast path**
-(`WRAPPER_P2P`, off by default; relay stays the fallback) for lower latency — see
-[`apps/cli/transport/README.md`](./apps/cli/transport/README.md). Dev/prod deploy
-automation and the full environment matrix are documented in
-[`ENVIRONMENTS.md`](./ENVIRONMENTS.md).
-
-Before mobile app development, the active focus is operational hardening and release channels:
-
-- deploy relay service (`apps/relay`) via workflow + smoke checks
-- publish CLI release archives and update Homebrew tap formula
-- keep critical auth/relay test lanes green in CI
-- verify the P2P fast path on real networks (NAT traversal)
+1. You open a terminal. Your rc file runs `wrapper shell-host`, which spawns
+   your real shell inside a pseudo-terminal (PTY) and starts a tiny local
+   WebSocket server bound to `127.0.0.1`. Nothing is exposed yet.
+2. From the same machine, `wrapper attach` connects to that local server and
+   mirrors the session. This path needs no account and no network.
+3. When you press `Ctrl+\ s`, the CLI asks the Convex backend for a short-lived
+   host ticket, connects to the relay on Fly.io, and marks the session shared.
+   Another device runs `wrapper attach --relay` to join over the relay.
+4. If `WRAPPER_P2P=1` is set on both ends, the relay is used only to exchange
+   WebRTC signaling, and the actual keystrokes and output move over a direct
+   peer-to-peer data channel for lower latency. The relay stays as the fallback.
 
 ## Repository layout
 
-This is a Bun + Turborepo monorepo.
+This is a Bun and Turborepo monorepo.
 
 ```
 apps/
-  cli/      Wrapper CLI — shell wrapping, registry, attach, install
-  relay/    Relay service — authenticated WS routing for shared sessions
-  web/      Marketing / waitlist landing page (Next.js)
-  docs/     Public docs site (Mintlify)
+  cli/      Wrapper CLI: shell wrapping, session registry, local + relay attach, device auth, optional P2P
+  relay/    Relay service: authenticated WebSocket routing for shared sessions, deployed on Fly.io
+  web/      Next.js app on Vercel: landing page, device-login approval, onboarding, Pro upgrade
+  docs/     Public documentation site (Mintlify)
+  mobile/   Git submodule pointer to the external mobile app repository (not built here)
 packages/
-  protocol/             Wire schema shared by every wrapper component
-  backend/              Convex backend blueprint and implementation plan
-  ui/                   Shared React components for web + docs
-  typescript-config/    Single-source tsconfig presets
+  protocol/           Zod wire schema shared by every wrapper component (JSON frames + WebRTC signal)
+  backend/            Convex backend: Better Auth, session lifecycle, relay tickets, onboarding, billing
+  terminal/           Bun-native PTY layer using the wrapper-pty-helper binary
+  logger/             Consola logging plus opt-in PostHog telemetry
+  typescript-config/  Single-source tsconfig presets
+tools/
+  pty-helper/         C source and Makefile for the wrapper-pty-helper binary shipped with the CLI
 ```
 
-The CLI is the heart of the project — see
-[`apps/cli/README.md`](./apps/cli/README.md) for how the wrapping flow
-works and what every command does.
+The CLI is the heart of the project. See
+[`apps/cli/README.md`](./apps/cli/README.md) for how the wrapping flow works
+and what every command does. The transport layer (relay WebSocket and the
+optional direct WebRTC path) is documented in
+[`apps/cli/transport/README.md`](./apps/cli/transport/README.md).
 
-Backend implementation planning is tracked in
-[`packages/backend/README.md`](./packages/backend/README.md).
+## Where to read next
+
+| Topic | Document |
+| ----- | -------- |
+| CLI commands, keystrokes, env vars | [`apps/cli/README.md`](./apps/cli/README.md) |
+| Relay + direct P2P transports | [`apps/cli/transport/README.md`](./apps/cli/transport/README.md) |
+| Relay service and Fly deploy | [`apps/relay/README.md`](./apps/relay/README.md) |
+| Convex backend (auth, sessions, tickets, billing) | [`packages/backend/README.md`](./packages/backend/README.md) |
+| Wire protocol | [`packages/protocol/README.md`](./packages/protocol/README.md) |
+| PTY internals | [`packages/terminal/README.md`](./packages/terminal/README.md) |
+| Logging and telemetry | [`packages/logger/README.md`](./packages/logger/README.md) |
+| Dev and prod environments, deploy automation | [`ENVIRONMENTS.md`](./ENVIRONMENTS.md) |
+| The full docs site | [`apps/docs`](./apps/docs) (run `bun run --cwd apps/docs dev`) |
+
+## Status
+
+The CLI core, the Convex auth and backend, the relay transport, and the web
+onboarding flow are implemented in this repository. Sharing runs over the relay
+with an optional direct WebRTC P2P fast path (`WRAPPER_P2P`, off by default, with
+the relay as the fallback). The next major phase is the mobile app, which lives
+in the `apps/mobile` submodule and is planned in the docs site.
+
+The active focus before mobile work is operational hardening and release
+channels:
+
+- deploy the relay service (`apps/relay`) through the workflow with smoke checks
+- publish CLI release archives and update the Homebrew tap formula
+- keep the critical auth and relay test lanes green in CI
+- verify the P2P fast path on real networks (NAT traversal)
 
 ## Local development
 
-Requires:
+Requirements:
 
-- **Bun ≥ 1.3.5** for runtime, package management, and bundling.
-- **POSIX**: macOS or Linux. Windows users should run Wrapper inside
+- **Bun 1.3.5 or newer** for runtime, package management, and bundling.
+- **A POSIX system** (macOS or Linux). On Windows, run Wrapper inside
   [WSL](https://learn.microsoft.com/windows/wsl/).
 
-Environment templates are included here:
+Environment templates are included:
 
 - `.env.example` (shared)
 - `apps/cli/.env.example`
@@ -72,31 +103,29 @@ bun install            # one-time
 bun run check-types    # typecheck every package
 bun run lint           # oxlint
 bun run format         # oxfmt --write
-bun run dev --filter=@repo/cli -- shell-host    # try the wrapping flow
 
-# or, in apps/cli:
-NODE_ENV=development bun run index.ts shell-host
+# try the wrapping flow locally
+cd apps/cli && NODE_ENV=development bun run index.ts shell-host
 ```
 
-`NODE_ENV=development` redirects every on-disk path into a `wrapper-dev` namespace
-under XDG state (or `%APPDATA%\wrapper-dev\` on Windows), points the
-relay/auth URLs at localhost, mirrors logs to stderr, and writes rc-file
-patches to a fake-rc directory. A developer running the CLI locally can
-never corrupt a real installation's registry, logs, or rc files.
+`NODE_ENV=development` moves every on-disk path into a `wrapper-dev` namespace
+under XDG state (or `%APPDATA%\wrapper-dev\` on Windows), points the relay and
+auth URLs at localhost, mirrors logs to stderr, and writes rc-file patches into
+a throwaway directory. A developer running the CLI locally can never corrupt a
+real installation's registry, logs, or rc files.
 
-`CI=…` (any value) disables telemetry and console output.
-
-For a full list of environment variables see
+Setting `CI` to any value disables telemetry and console output. For the full
+list of CLI environment variables, see
 [`apps/cli/README.md`](./apps/cli/README.md#environment-variables).
 
 ## Tooling
 
 - **Bun** for runtime, package management, and bundling.
 - **Turborepo** for task orchestration and caching.
-- **oxlint + oxfmt** for linting/formatting (no ESLint, no Prettier).
-- **Lefthook** for git hooks (pre-commit oxfmt + oxlint, pre-push checks).
-- **Catalog dependencies** so `react`, `next`, `zod`, `typescript`, etc.
-  share a single pinned version across the workspace.
+- **oxlint and oxfmt** for linting and formatting (no ESLint, no Prettier).
+- **Lefthook** for git hooks (pre-commit oxfmt and oxlint, pre-push checks).
+- **Catalog dependencies** so shared packages such as `react`, `next`, `zod`,
+  and `typescript` use a single pinned version across the workspace.
 
 ## License
 

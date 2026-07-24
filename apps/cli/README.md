@@ -125,14 +125,14 @@ Main message flow used by CLI:
 
 ## Transports: relay + direct P2P
 
-Host and viewer are transport-agnostic — they exchange `@repo/protocol` frames
+Host and viewer are transport-agnostic, so they exchange `@repo/protocol` frames
 through a small `Transport` interface (`transport/transport.ts`), so the wire can
 be either:
 
-- **Relay WebSocket** (`WebSocketTransport`) — always used; also carries WebRTC
+- **Relay WebSocket** (`WebSocketTransport`), always used, and it also carries WebRTC
   signaling and is the fallback.
 - **WebRTC data channel** (`WebRtcDataChannelTransport`, opt-in via
-  `WRAPPER_P2P`) — a direct P2P connection negotiated over the relay. When it
+  `WRAPPER_P2P`), a direct P2P connection negotiated over the relay. When it
   opens, session traffic flows directly (SSH-like latency); if ICE can't connect,
   the session transparently stays on the relay.
 

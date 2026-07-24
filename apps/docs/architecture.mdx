@@ -5,10 +5,16 @@ description: Understand how CLI, backend, and relay work together.
 
 ## System components
 
-- `apps/cli`: host shell, local attach, auth commands, relay bridge
-- `packages/backend`: Convex auth, session lifecycle, relay ticket APIs
-- `apps/relay`: authenticated WebSocket router for host and viewers
+- `apps/cli`: host shell, local attach, auth commands, relay bridge, optional
+  direct WebRTC transport
+- `packages/backend`: Convex auth, session lifecycle, relay tickets, onboarding,
+  billing
+- `apps/relay`: authenticated WebSocket router for host and viewers, and the
+  WebRTC signaling passthrough
+- `apps/web`: Next.js app for landing, device-login approval, and onboarding
 - `packages/protocol`: shared message schema and codec
+- `packages/terminal`: Bun-native PTY layer using the `wrapper-pty-helper` binary
+- `packages/logger`: logging and opt-in telemetry
 
 ## High level flow
 
@@ -60,19 +66,43 @@ Relay routing in `apps/relay/src/hub.ts`:
 - multiple viewer sockets per session
 - consensus resize from smallest viewer dimensions
 - host disconnect closes viewers with `session.closed`
+- `signal` frames are routed by session with an authoritative peer id so a
+  viewer cannot spoof another peer
+
+## Transports
+
+Terminal traffic can move over two transports, both abstracted behind the
+`Transport` interface in `apps/cli/transport`:
+
+- **Relay WebSocket** (default): frames travel host to relay to viewer.
+- **Direct WebRTC** (opt-in with `WRAPPER_P2P=1`): the relay carries only the
+  offer, answer, and ICE candidates, and the terminal bytes flow over a direct
+  peer-to-peer data channel. If negotiation fails, the relay path keeps working.
+
+See [Transports](/transports) for the negotiation flow and the security model.
+
+## Billing
+
+`convex/billing.ts` exposes `createProCheckout`, which returns a Stripe checkout
+URL through Autumn. Relay sharing is gated by the `can_share_relay` entitlement
+on the Pro plan, and the gate fails open on billing-provider errors so an outage
+cannot break sharing.
 
 ## Project structure
 
 ```text
 apps/
-  cli/
-  relay/
-  web/
-  docs/
+  cli/      shell wrapping, local + relay attach, device auth, optional P2P
+  relay/    authenticated WebSocket router on Fly.io
+  web/      Next.js app on Vercel
+  docs/     this documentation site (Mintlify)
+  mobile/   git submodule pointer to the external mobile repository
 packages/
-  backend/
-  protocol/
-  terminal/
-  logger/
-  ui/
+  backend/            Convex: auth, sessions, tickets, onboarding, billing
+  protocol/           shared Zod wire schema
+  terminal/           Bun-native PTY layer
+  logger/             logging and telemetry
+  typescript-config/  shared tsconfig presets
+tools/
+  pty-helper/         C source for the wrapper-pty-helper binary
 ```

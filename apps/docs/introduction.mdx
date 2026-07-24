@@ -3,30 +3,54 @@ title: Introduction
 description: Wrapper lets you run one terminal session and reach it from your other devices with authenticated access.
 ---
 
-Wrapper is a terminal access platform with three core parts:
+Wrapper wraps every interactive shell you open so an authenticated device can
+mirror it on demand. Your shell stays local until you choose to share it, and
+the wrapping is invisible: your dotfiles, prompt, plugins, and history behave
+exactly as before.
 
-- CLI runtime that hosts your shell session
-- Convex backend for auth and session lifecycle
-- Relay service for remote WebSocket attach
+## The parts
+
+- **CLI** (`apps/cli`): hosts your shell inside a PTY, runs a local WebSocket
+  server, and bridges to the relay when you share.
+- **Backend** (`packages/backend`, Convex): authentication (Better Auth),
+  session lifecycle, relay join tickets, onboarding, and billing (Autumn).
+- **Relay** (`apps/relay`, Fly.io): an authenticated WebSocket router that
+  connects a host to its viewers, and passes WebRTC signaling for the direct
+  path.
+- **Web** (`apps/web`, Vercel): the landing page, the device-login approval
+  screen, and onboarding.
+- **Protocol** (`packages/protocol`): the shared Zod message schema every part
+  speaks.
 
 ## What Wrapper does
 
-Wrapper starts from your shell and keeps your normal workflow intact.
-When you choose to share a session, Wrapper exposes it through an authenticated relay path.
+1. You open a terminal and the CLI hosts your real shell locally. Nothing is
+   exposed.
+2. `wrapper attach` mirrors that session from the same machine with no account
+   and no network.
+3. Pressing `Ctrl+\ s` shares the session over the relay. Another device joins
+   with `wrapper attach --relay`.
+4. With `WRAPPER_P2P=1` on both ends, keystrokes and output travel over a direct
+   WebRTC data channel for lower latency, and the relay is used only for
+   signaling and as a fallback.
 
 ## Current status
 
 The platform is complete up to mobile app development:
 
-- CLI host and attach flow
-- Device authorization flow
-- Web onboarding flow for first-run setup
+- CLI host and attach flow (local and relay)
+- Optional direct WebRTC P2P fast path
+- Device authorization login flow
+- Web onboarding for first-run setup
 - Backend session lifecycle and access control
 - Relay ticket handshake and message routing
-- CI checks for lint, format, typecheck, and tests
+- Billing gate for relay sharing (Autumn Pro plan)
+- CI for lint, format, typecheck, and tests, plus deploy automation
 
 ## Where to go next
 
-- Read [Installation](/installation) to install and run commands
-- Read [Setup](/setup) for environment and local development
-- Read [Architecture](/architecture) for component and message flow
+- [Installation](/installation): install the CLI and run the first attach flow
+- [Setup](/setup): environment variables and local checks
+- [Architecture](/architecture): components and message flow
+- [Transports](/transports): relay and direct WebRTC P2P
+- [Environments](/environments): local, dev, and prod, plus deploy automation

@@ -1,4 +1,4 @@
-# `transport/` — session transport abstraction + WebRTC P2P
+# `transport/`: session transport abstraction + WebRTC P2P
 
 This directory owns **how** wrapper protocol frames travel between a host and a
 viewer. The host (`relay/host-bridge.ts`) and viewer (`client/attach-client.ts`)
@@ -15,7 +15,7 @@ Two transports exist:
 ## Why P2P
 
 A relay is a middle hop: every keystroke echoes `viewer → relay → host → relay →
-viewer`. For distant peers that's ~2× the RTT to the relay region — laggy for
+viewer`. For distant peers that's roughly 2x the RTT to the relay region, which is laggy for
 interactive typing. WebRTC establishes a **direct** peer connection (NAT
 traversal via STUN/ICE), giving SSH-like latency, and only falls back to the
 relay when a direct path can't be formed. This mirrors how Mosh/Tailscale/SSH
@@ -46,7 +46,7 @@ construction. Encoding/parsing stays in the host/viewer, not the transport.
 - **Signaling rides the relay.** SDP offer/answer and ICE candidates are carried
   as `signal` protocol frames over the existing relay WebSocket (see
   `apps/relay/src/hub.ts`). No extra signaling server.
-- **Discovery:** public STUN servers. The relay is the TURN-equivalent — if ICE
+- **Discovery:** public STUN servers. The relay is the TURN-equivalent: if ICE
   can't connect within a timeout, the session transparently stays on the relay.
 - **`negotiateWebRtc()`** returns a `Negotiation` whose `transport` promise
   resolves with a data-channel `Transport` once the channel opens, or `null` on
@@ -96,7 +96,7 @@ keeps one peer connection per viewer.
 
 ## Enabling it
 
-`WRAPPER_P2P` is **off by default** — the relay WebSocket is the transport and
+`WRAPPER_P2P` is **off by default**, so the relay WebSocket is the transport and
 behaviour is unchanged. Turn it on per-session:
 
 ```bash
@@ -113,7 +113,7 @@ attaches; local `127.0.0.1` attaches are already direct.
 
 - Unit-testable: the transport abstraction and the relay's signal routing
   (`apps/relay/tests/hub.test.ts`).
-- **NAT traversal must be verified on two real machines/networks** — it cannot be
+- **NAT traversal must be verified on two real machines/networks**, since it cannot be
   exercised in CI/sandbox. Because the flag defaults off and the relay is the
   fallback, shipping this cannot regress the working relay path.
 

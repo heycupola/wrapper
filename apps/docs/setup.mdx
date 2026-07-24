@@ -11,19 +11,29 @@ description: Configure environment variables, run checks, and verify your local 
 - `WRAPPER_RELAY_URL`: Relay WebSocket base URL
 - `WRAPPER_AUTH_ORIGIN`: Auth UI origin
 - `WRAPPER_HUD`: `on` by default, set `off` to disable host HUD/title updates
+- `WRAPPER_P2P`: set to `1` to opt in to the direct WebRTC path (off by default,
+  relay stays the fallback). See [Transports](/transports).
 - `NODE_ENV=development`: local development mode
 
 ### Relay
 
 - `PORT`: Relay HTTP port (default `8080`)
-- `RELAY_CONVEX_URL`: Convex URL for ticket consumption
+- `RELAY_CONVEX_URL` (also read as `CONVEX_URL`): Convex URL for ticket
+  consumption. The relay refuses to start without it.
 
-### Backend timeouts
+### Backend timeouts and billing
 
 - `WRAPPER_SESSION_STALE_AFTER_MS`
 - `WRAPPER_SESSION_STALE_GRACE_MS`
 - `WRAPPER_RELAY_HOST_TICKET_TTL_MS`
 - `WRAPPER_RELAY_VIEWER_TICKET_TTL_MS`
+- `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID`: Autumn feature gating relay sharing
+  (default `can_share_relay`, empty disables the gate)
+- `BETTER_AUTH_SECRET`, `SITE_URL`, `AUTUMN_SECRET_KEY`: required backend secrets
+  in dev and prod
+
+For the full per-environment matrix (Convex, Fly, Vercel, and GitHub Actions),
+see [Environments](/environments).
 
 ## Local quality checks
 

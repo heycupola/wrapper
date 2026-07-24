@@ -49,11 +49,11 @@ Real Convex URLs:
 | `.github/workflows/deploy-relay.yml` | push `dev`/`main` on `apps/relay/**` | Fly app (`flyctl deploy --app`) |
 | `.github/workflows/ci.yml` | every PR/push | lint, types, tests, web build, relay smoke (no deploy) |
 
-Web is **not** in GitHub Actions — Vercel deploys it directly from Git.
+Web is **not** in GitHub Actions. Vercel deploys it directly from Git.
 
 ## Env var matrix
 
-### backend — Convex (set per deployment: `bunx convex env set KEY value`)
+### backend: Convex (set per deployment with `bunx convex env set KEY value`)
 
 | Key | dev (sleek-echidna) | prod (confident-fox) |
 |---|---|---|
@@ -65,14 +65,14 @@ Web is **not** in GitHub Actions — Vercel deploys it directly from Git.
 | `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID` | `can_share_relay` | `can_share_relay` |
 | `WRAPPER_RELAY_HOST_TICKET_TTL_MS` etc. | optional (has defaults) | optional (has defaults) |
 
-### relay — Fly secrets (`flyctl secrets set KEY=value --app <app>`)
+### relay: Fly secrets (`flyctl secrets set KEY=value --app <app>`)
 
 | Key | wrapper-relay-dev | wrapper-relay-prod |
 |---|---|---|
 | `CONVEX_URL` | `https://sleek-echidna-539.convex.cloud` | `https://confident-fox-458.convex.cloud` |
 | `PORT` | 8080 (in fly.toml) | 8080 (in fly.toml) |
 
-### web — Vercel (Project → Settings → Environment Variables)
+### web: Vercel (Project, then Settings, then Environment Variables)
 
 Vercel scopes: **Production** = `main`, **Preview** = `dev` + PRs, **Development**
 = local `vercel dev` only. The web app only needs these two (both are baked at
@@ -83,7 +83,7 @@ build time):
 | `NEXT_PUBLIC_CONVEX_URL` | `…confident-fox-458.convex.cloud` | `…sleek-echidna-539.convex.cloud` | `…sleek-echidna-539.convex.cloud` |
 | `NEXT_PUBLIC_CONVEX_SITE_URL` | `…confident-fox-458.convex.site` | `…sleek-echidna-539.convex.site` | `…sleek-echidna-539.convex.site` |
 
-### GitHub → Settings → Environments (`dev`, `production`) — backend + relay only
+### GitHub Environments (`dev`, `production`): backend and relay only
 
 | Name | Kind | dev | production |
 |---|---|---|---|
@@ -93,13 +93,13 @@ build time):
 
 ## One-time setup checklist
 
-1. **Vercel (web)** — import the repo, set **Root Directory = `apps/web`** and
+1. **Vercel (web)**: import the repo, set **Root Directory = `apps/web`** and
    **Production Branch = `main`**. Add the env vars from the web table above
    (Production / Preview / Development). If the build fails resolving the bun
    `catalog:` versions, set the Install Command to run at the repo root
    (`cd ../.. && bun install`).
 
-2. **Convex env** — set the backend vars on both deployments and create a deploy
+2. **Convex env**: set the backend vars on both deployments and create a deploy
    key each (Dashboard → Settings → Deploy Keys):
 
    ```bash
@@ -110,7 +110,7 @@ build time):
    bunx convex env set SITE_URL https://<vercel-prod-url>
    ```
 
-3. **Fly (relay)** — two apps + secrets:
+3. **Fly (relay)**: two apps plus secrets:
 
    ```bash
    flyctl apps create wrapper-relay-dev
@@ -122,14 +122,14 @@ build time):
    After the new prod app is verified, delete the old one:
    `flyctl apps destroy wrapper-dry-pathway-1935`.
 
-4. **GitHub Environments** — create `dev` and `production`; fill the table above.
+4. **GitHub Environments**: create `dev` and `production`, then fill the table above.
 
-5. **OAuth apps** — dev GitHub OAuth app now (callback
+5. **OAuth apps**: dev GitHub OAuth app now (callback
    `https://sleek-echidna-539.convex.site/api/auth/callback/github`), prod later
    (`https://confident-fox-458.convex.site/api/auth/callback/github`). Put client
    id/secret in the matching Convex deployment env.
 
-6. **Autumn** — push config to both (not automatic; key decides env):
+6. **Autumn**: push config to both (not automatic, the key decides the env):
 
    ```bash
    cd packages/backend
@@ -167,10 +167,10 @@ the CLI at local with `apps/cli/.env` (copy from `.env.example`).
 1. In the host shell, press `Ctrl+\` then `s` to share.
 2. As a **free** user you should see *"Relay sharing requires Pro"* + a checkout
    URL (URL only if Stripe is connected in the Autumn sandbox; otherwise the
-   generic message — still correctly denied).
+   generic message, still correctly denied).
 3. Grant Pro (Stripe test card `4242 4242 4242 4242`, or attach `pro` in the
    Autumn dashboard), retry → sharing succeeds and a viewer can attach:
 
    ```bash
-   bun run index.ts attach <session-id>
+   bun run index.ts attach --id <session-id>
    ```

@@ -8,7 +8,7 @@ tickets and routes `@repo/protocol` messages by `sessionId`.
 It also relays **WebRTC signaling** (`signal` frames) between a host and a
 specific viewer so they can upgrade to a direct P2P data channel (lower latency);
 the relay remains the fallback when P2P can't be established. Signaling is
-session-scoped with relay-assigned, non-spoofable peer ids — see the routing
+session-scoped with relay-assigned, non-spoofable peer ids. See the routing
 notes in `src/hub.ts` and [`apps/cli/transport/README.md`](../cli/transport/README.md).
 
 ## Endpoints
@@ -88,7 +88,7 @@ The smoke script checks:
 `min_machines_running = 1` keeps one machine always warm (so WebSocket upgrades
 never hit a cold start, which would drop live shares); `auto_stop_machines = \"stop\"`
 still stops any extra machines. `primary_region = \"otp\"` (Bucharest) is the closest
-Fly region to Turkey — adjust as the user base spreads.
+Fly region to Turkey. Adjust as the user base spreads.
 
 If you see `Pending Sync`, run:
 

@@ -4,14 +4,14 @@ The single source of truth for the wire protocol spoken between every Wrapper
 component:
 
 ```
-wrapper start  ◄── ws ──►  wrapper attach
-       ▲                          ▲
-       │                          │
-       └────────── ws ────── relay (Faz 2) ◄── ws ── mobile app (Faz 3)
+wrapper shell-host  ◄── ws ──►  wrapper attach   (local, same machine)
+        ▲                              ▲
+        │                              │
+        └────────── ws ────────── relay service ◄── ws ── remote attach / mobile app
 ```
 
 All messages are JSON-encoded and validated with Zod. There is exactly one
-discriminated union of message types — no version negotiation yet.
+discriminated union of message types, with no version negotiation yet.
 
 Terminal traffic can travel over the relay WebSocket or, once negotiated, a
 direct WebRTC data channel. The `signal` message carries the WebRTC offer/answer/

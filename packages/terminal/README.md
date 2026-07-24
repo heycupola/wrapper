@@ -25,7 +25,7 @@ const term = new Terminal({
 term.write("echo hello\n");
 term.resize(140, 40);
 
-// At any time, observe the foreground process group of the slave —
+// At any time, observe the foreground process group of the slave,
 // useful for telling "shell prompt" from "TUI".
 console.log(term.foregroundProcessGroup);
 
