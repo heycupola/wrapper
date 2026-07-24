@@ -35,15 +35,24 @@ This is your owner terminal.
 
 In host terminal:
 
-- `Ctrl+\` then `s` to share
-- `Ctrl+\` then `u` to unshare
+- `Ctrl+\` then `s` to share (prints a share code and the join command)
+- `Ctrl+\` then `u` to unshare (revokes access immediately)
 - `Ctrl+\` then `?` for status
 
-From another terminal:
+From another device signed in as you, no code is needed:
 
 ```bash
 wrapper attach --relay --id <sessionId>
 ```
+
+To let someone else in (for example pair-prompting), give them the share code:
+
+```bash
+wrapper attach --relay --id <sessionId> --code <shareCode>
+```
+
+Every viewer who joins can type into the same shell, so only share the code with
+people you want to co-drive the session.
 
 ## 5) Done
 

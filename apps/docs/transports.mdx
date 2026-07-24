@@ -8,10 +8,10 @@ Wrapper protocol frames can travel over two transports. Both sit behind a small
 (`relay/host-bridge.ts`) and the viewer (`client/attach-client.ts`) never touch a
 socket directly.
 
-| Transport                  | File           | Used for                                            |
-| -------------------------- | -------------- | --------------------------------------------------- |
-| Relay WebSocket            | `transport.ts` | The relay path, always. Signaling and fallback.     |
-| Direct WebRTC data channel | `webrtc.ts`    | The direct P2P fast path, opt-in via `WRAPPER_P2P`. |
+| Transport                  | File           | Used for                                                               |
+| -------------------------- | -------------- | ---------------------------------------------------------------------- |
+| Relay WebSocket            | `transport.ts` | The relay path, always. Signaling and fallback.                        |
+| Direct WebRTC data channel | `webrtc.ts`    | The direct P2P fast path, on by default; opt out with `WRAPPER_P2P=0`. |
 
 ## Why a direct path
 
@@ -67,14 +67,14 @@ fallback if ICE cannot connect in time.
 
 ## Enabling it
 
-`WRAPPER_P2P` is off by default, so the relay WebSocket is the transport and
-behavior is unchanged. Turn it on per session on both ends:
+`WRAPPER_P2P` is on by default, so host and viewer negotiate a direct data
+channel automatically and fall back to the relay if it cannot be formed. Opt out
+per session on either end with `WRAPPER_P2P=0`:
 
 ```bash
-# host
-WRAPPER_P2P=1 wrapper shell-host          # then Ctrl+\ s to share
-# viewer
-WRAPPER_P2P=1 wrapper attach --relay -i <sessionId>
+# force the relay path (no P2P)
+WRAPPER_P2P=0 wrapper shell-host          # then Ctrl+\ s to share
+WRAPPER_P2P=0 wrapper attach --relay -i <sessionId> -c <shareCode>
 ```
 
 Look for `p2p data channel up` in both logs. P2P applies only to relay attaches;

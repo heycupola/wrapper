@@ -11,8 +11,8 @@ description: Configure environment variables, run checks, and verify your local 
 - `WRAPPER_RELAY_URL`: Relay WebSocket base URL
 - `WRAPPER_AUTH_ORIGIN`: Auth UI origin
 - `WRAPPER_HUD`: `on` by default, set `off` to disable host HUD/title updates
-- `WRAPPER_P2P`: set to `1` to opt in to the direct WebRTC path (off by default,
-  relay stays the fallback). See [Transports](/transports).
+- `WRAPPER_P2P`: WebRTC direct path, on by default with automatic relay fallback.
+  Set to `0` to force the relay. See [Transports](/transports).
 - `NODE_ENV=development`: local development mode
 
 ### Relay

@@ -39,6 +39,8 @@ who may attach to which session.
 - `listActive`: list active sessions for the authenticated owner
 - `authorizeAttach`: allow attach only if the caller is the owner or the session
   is shared
+- `setShareCode`: owner-only; start sharing and store the SHA-256 of the access
+  code, or stop sharing and clear it (revoking outstanding access)
 - `markStaleIfTimedOut` (internal): scheduler task that auto-closes stale active
   sessions
 - `setRelayState`: owner-only relay presence sync (`offline`, `connecting`,
@@ -59,8 +61,10 @@ who may attach to which session.
 
 - `issueHostTicket`: owner-only short-lived ticket for the host relay socket,
   gated by the Autumn sharing entitlement
-- `issueViewerTicket`: short-lived ticket for a viewer socket (owner or a shared
-  session)
+- `issueViewerTicket`: short-lived ticket for a viewer socket. The owner is
+  always allowed on their own devices. A non-owner must present the correct
+  share code, and non-owner attempts are rate limited per user and session to
+  stop code guessing
 - `consumeTicket`: single-use consumption during the relay handshake, called by
   the relay itself without a user identity
 - `cleanupTicket` (internal): scheduled cleanup of used and expired ticket rows
@@ -97,6 +101,29 @@ who may attach to which session.
   `apps/cli/util/convex-client.ts`.
 - Session liveness uses a heartbeat timeout. Missing heartbeats trigger scheduler
   cleanup and close the session with `closeReason: "stale_timeout"`.
+
+## Session access model
+
+Access to a session is deliberately narrow:
+
+- **Not shared:** owner only. Every lifecycle call (open, heartbeat, close,
+  relay state, host ticket) rejects anyone who is not the owner.
+- **Shared:** the owner runs `setShareCode`, which marks the session shared and
+  stores only the SHA-256 of a secret code the host generates. To join, a
+  non-owner must call `issueViewerTicket` with the matching code. Knowing the
+  session id alone is not enough, and the owner can still join their own session
+  from any device without a code.
+- **Revocation:** unsharing (or closing) clears the code hash, and
+  `consumeTicket` re-checks the shared state, so outstanding viewer tickets stop
+  working the moment the owner unshares.
+- **Anti-guessing:** non-owner `issueViewerTicket` calls are rate limited per
+  user and session, so a leaked session id cannot be paired with a brute-forced
+  code.
+
+This is a capability model (possession of the code grants access), which suits
+pair-prompting on a shared session. Note that every viewer who joins shares
+control of the same shell (anyone connected can type). A per-join host approval
+step could be layered on later if watch-only viewers are needed.
 
 ## Relay ticket security
 

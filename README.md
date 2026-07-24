@@ -20,11 +20,14 @@ terminal.
 2. From the same machine, `wrapper attach` connects to that local server and
    mirrors the session. This path needs no account and no network.
 3. When you press `Ctrl+\ s`, the CLI asks the Convex backend for a short-lived
-   host ticket, connects to the relay on Fly.io, and marks the session shared.
-   Another device runs `wrapper attach --relay` to join over the relay.
-4. If `WRAPPER_P2P=1` is set on both ends, the relay is used only to exchange
-   WebRTC signaling, and the actual keystrokes and output move over a direct
-   peer-to-peer data channel for lower latency. The relay stays as the fallback.
+   host ticket, connects to the relay on Fly.io, marks the session shared, and
+   prints a secret share code. You join your own devices with
+   `wrapper attach --relay --id <id>`; anyone else must pass the code with
+   `--code <code>`, so knowing the session id alone is not enough.
+4. By default the relay is used only to exchange WebRTC signaling, and the actual
+   keystrokes and output move over a direct peer-to-peer data channel for lower
+   latency. The relay stays as the fallback, and you can force it with
+   `WRAPPER_P2P=0`.
 
 ## Repository layout
 

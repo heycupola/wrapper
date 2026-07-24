@@ -7,10 +7,10 @@ are transport-agnostic: they speak `@repo/protocol` frames through a small
 
 Two transports exist:
 
-| Transport                    | File           | Used for                                         |
-| ---------------------------- | -------------- | ------------------------------------------------ |
-| `WebSocketTransport`         | `transport.ts` | Relay path (always). Signaling + fallback.       |
-| `WebRtcDataChannelTransport` | `webrtc.ts`    | Direct P2P fast path (opt-in via `WRAPPER_P2P`). |
+| Transport                    | File           | Used for                                                            |
+| ---------------------------- | -------------- | ------------------------------------------------------------------- |
+| `WebSocketTransport`         | `transport.ts` | Relay path (always). Signaling + fallback.                          |
+| `WebRtcDataChannelTransport` | `webrtc.ts`    | Direct P2P fast path (on by default; opt out with `WRAPPER_P2P=0`). |
 
 ## Why P2P
 
@@ -96,18 +96,19 @@ keeps one peer connection per viewer.
 
 ## Enabling it
 
-`WRAPPER_P2P` is **off by default**, so the relay WebSocket is the transport and
-behaviour is unchanged. Turn it on per-session:
+`WRAPPER_P2P` is **on by default**, so host and viewer negotiate a direct data
+channel automatically and fall back to the relay if it cannot be formed. Opt out
+per session with `WRAPPER_P2P=0`:
 
 ```bash
-# host
-WRAPPER_P2P=1 bun run index.ts shell-host          # then Ctrl+\ s to share
-# viewer (relay attach)
-WRAPPER_P2P=1 bun run index.ts attach --relay -i <sessionId>
+# force the relay path (no P2P)
+WRAPPER_P2P=0 bun run index.ts shell-host          # then Ctrl+\ s to share
+WRAPPER_P2P=0 bun run index.ts attach --relay -i <sessionId> -c <shareCode>
 ```
 
 Look for `p2p data channel up` in both logs. P2P applies only to **relay**
-attaches; local `127.0.0.1` attaches are already direct.
+attaches; local `127.0.0.1` attaches are already direct. A direct connection
+exposes each peer's IP to the other, which is why the opt-out exists.
 
 ## Testing
 

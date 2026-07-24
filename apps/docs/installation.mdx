@@ -76,8 +76,16 @@ Login first:
 bun run apps/cli/index.ts auth login
 ```
 
-Then use relay attach:
+Then use relay attach. To join your own session from another device no code is
+needed:
 
 ```bash
 bun run apps/cli/index.ts attach --relay --id <sessionId>
+```
+
+To join someone else's shared session, pass the share code they printed when they
+shared (`Ctrl+\` then `s`):
+
+```bash
+bun run apps/cli/index.ts attach --relay --id <sessionId> --code <shareCode>
 ```

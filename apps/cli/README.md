@@ -97,7 +97,8 @@ Important safety guards:
 1. Resolve target session by `--id`, `--port`, or picker from registry.
 2. Local path: run `session:authorizeAttach`, then connect to `ws://127.0.0.1:<port>`.
 3. Relay path (`--relay` or no local match for `--id`): issue `relay:issueViewerTicket`
-   and connect to `WRAPPER_RELAY_URL/ws?ticket=...`.
+   (passing `--code` when joining someone else's session) and connect to
+   `WRAPPER_RELAY_URL/ws?ticket=...`.
 4. Bridge stdin/stdout via protocol messages.
 5. Support detach without ending host session (`Ctrl+\` then `d`).
 
@@ -131,14 +132,39 @@ be either:
 
 - **Relay WebSocket** (`WebSocketTransport`), always used, and it also carries WebRTC
   signaling and is the fallback.
-- **WebRTC data channel** (`WebRtcDataChannelTransport`, opt-in via
-  `WRAPPER_P2P`), a direct P2P connection negotiated over the relay. When it
-  opens, session traffic flows directly (SSH-like latency); if ICE can't connect,
-  the session transparently stays on the relay.
+- **WebRTC data channel** (`WebRtcDataChannelTransport`), a direct P2P connection
+  negotiated over the relay. It is **on by default** (opt out with
+  `WRAPPER_P2P=0`). When it opens, session traffic flows directly (SSH-like
+  latency); if ICE can't connect, the session transparently stays on the relay.
 
 Full design, security model, and testing steps live in
 [`transport/README.md`](./transport/README.md). P2P applies only to `--relay`
-attaches; local `127.0.0.1` attaches are already direct.
+attaches; local `127.0.0.1` attaches are already direct. A direct connection
+exposes each peer's IP to the other, so opt out if that matters for a session.
+
+## Sharing and access
+
+Sharing is capability-based, so only people you explicitly invite can join:
+
+- Pressing `Ctrl+\` `s` marks the session shared and prints a **share code** plus
+  the exact join command. The backend stores only the hash of that code.
+- The owner can attach to their own session from any device with no code.
+- Anyone else must pass the code:
+  `wrapper attach --relay --id <sessionId> --code <code>`. Knowing the session id
+  alone is not enough, and guessing is rate limited.
+- Pressing `Ctrl+\` `u` (or ending the shell) revokes access immediately by
+  clearing the stored code and shared flag.
+
+Behaviors to know once viewers join:
+
+- **Shared control:** every connected viewer can type into the same shell. This
+  is intended for pair-prompting. There is no watch-only viewer mode yet.
+- **Multiple viewers:** many viewers can attach to one session at once; host
+  output is broadcast to all of them (and fanned out over each P2P channel).
+- **Consensus resize:** the terminal is sized to the smallest connected viewer,
+  so a small window shrinks everyone's view.
+- **One host per session:** a second host connecting to the same session id
+  replaces the first.
 
 ## Commands
 
@@ -171,6 +197,7 @@ wrapper attach
 wrapper attach --id <sessionId>
 wrapper attach --port <port>
 wrapper attach --relay --id <sessionId>
+wrapper attach --relay --id <sessionId> --code <shareCode>
 wrapper logs --follow
 ```
 
@@ -192,8 +219,8 @@ Inside host shell:
 
 | Keys              | Action                    |
 | ----------------- | ------------------------- |
-| `Ctrl+\` `s`      | mark shared               |
-| `Ctrl+\` `u`      | mark unshared             |
+| `Ctrl+\` `s`      | share + print share code  |
+| `Ctrl+\` `u`      | unshare + revoke access   |
 | `Ctrl+\` `?`      | status overlay            |
 | `Ctrl+\` `Ctrl+\` | send literal control byte |
 | `Ctrl+\` `Esc`    | cancel prefix mode        |
@@ -205,8 +232,9 @@ Inside attach viewer:
 | `Ctrl+\` `d` | detach viewer |
 | `Ctrl+\` `?` | viewer status |
 
-When shared and authenticated, `Ctrl+\` + `s` starts a relay bridge and enables
-remote attach with `wrapper attach --relay --id <sessionId>`.
+When shared and authenticated, `Ctrl+\` + `s` starts a relay bridge, prints a
+share code, and enables remote attach with
+`wrapper attach --relay --id <sessionId> --code <shareCode>`.
 
 ## Debugging workflow
 
@@ -231,22 +259,22 @@ remote attach with `wrapper attach --relay --id <sessionId>`.
 
 ## Environment variables
 
-| Variable                | Description                               | Default                                      |
-| ----------------------- | ----------------------------------------- | -------------------------------------------- |
-| `NODE_ENV`              | runtime mode (`production` or dev)        | unset (treated as dev)                       |
-| `CI`                    | enable CI mode                            | unset                                        |
-| `WRAPPER_LOG`           | `debug/info/warn/error/off`               | dev=`info`, prod=`warn`                      |
-| `WRAPPER_LOG_FILE`      | override log file path                    | platform default                             |
-| `WRAPPER_TELEMETRY`     | `"false"` disables telemetry              | enabled after consent                        |
-| `WRAPPER_POSTHOG_KEY`   | PostHog key                               | empty                                        |
-| `WRAPPER_TELEMETRY_URL` | telemetry endpoint                        | `https://telemetry.wrapper.sh`               |
-| `WRAPPER_RELAY_URL`     | relay endpoint override                   | dev localhost, prod `wss://relay.wrapper.sh` |
-| `WRAPPER_AUTH_ORIGIN`   | auth callback origin                      | dev localhost, prod `https://wrapper.sh`     |
-| `WRAPPER_HUD`           | HUD (`on/off`)                            | `on`                                         |
-| `WRAPPER_P2P`           | opt-in WebRTC P2P fast path (`1/true/on`) | off (relay used)                             |
-| `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend         | falls back to `CONVEX_URL` if set            |
-| `WRAPPER_DISABLE`       | disable hook in one terminal              | unset                                        |
-| `WRAPPER_WRAPPED`       | set by `shell-host` in inner shell        | unset                                        |
+| Variable                | Description                                  | Default                                      |
+| ----------------------- | -------------------------------------------- | -------------------------------------------- |
+| `NODE_ENV`              | runtime mode (`production` or dev)           | unset (treated as dev)                       |
+| `CI`                    | enable CI mode                               | unset                                        |
+| `WRAPPER_LOG`           | `debug/info/warn/error/off`                  | dev=`info`, prod=`warn`                      |
+| `WRAPPER_LOG_FILE`      | override log file path                       | platform default                             |
+| `WRAPPER_TELEMETRY`     | `"false"` disables telemetry                 | enabled after consent                        |
+| `WRAPPER_POSTHOG_KEY`   | PostHog key                                  | empty                                        |
+| `WRAPPER_TELEMETRY_URL` | telemetry endpoint                           | `https://telemetry.wrapper.sh`               |
+| `WRAPPER_RELAY_URL`     | relay endpoint override                      | dev localhost, prod `wss://relay.wrapper.sh` |
+| `WRAPPER_AUTH_ORIGIN`   | auth callback origin                         | dev localhost, prod `https://wrapper.sh`     |
+| `WRAPPER_HUD`           | HUD (`on/off`)                               | `on`                                         |
+| `WRAPPER_P2P`           | WebRTC P2P fast path; `0/false/off` opts out | on (relay is the fallback)                   |
+| `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend            | falls back to `CONVEX_URL` if set            |
+| `WRAPPER_DISABLE`       | disable hook in one terminal                 | unset                                        |
+| `WRAPPER_WRAPPED`       | set by `shell-host` in inner shell           | unset                                        |
 
 `NODE_ENV=development` redirects state into `wrapper-dev`, uses localhost defaults, and
 mirrors logs to stderr for easier local debugging.
