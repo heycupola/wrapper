@@ -3,8 +3,8 @@ import "./globals.css";
 
 const SITE_NAME = "wrapper";
 const SITE_DESCRIPTION =
-  "An AI harness that connects, manages, and orchestrates capabilities across your devices. One command to bridge your remote terminal, your tools, and everything in between.";
-const SITE_URL = "https://wrapper.dev";
+  "Wrap any terminal you open and reach it from your phone or another device. Your shell stays local until you choose to share it.";
+const SITE_URL = "https://wrapper.sh";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     template: `%s / ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  keywords: ["wrapper", "AI", "remote terminal", "orchestration", "developer tools", "CLI"],
+  keywords: ["wrapper", "remote terminal", "terminal sharing", "developer tools", "CLI", "shell"],
   authors: [{ name: "Cupola", url: "https://cupo.la" }],
   creator: "Cupola",
   referrer: "origin-when-cross-origin",
