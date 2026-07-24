@@ -84,9 +84,12 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     preferRelay: Boolean(opts.relay),
   });
   if (!url) process.exit(1);
-  log.info("attaching", { url, sessionId: target.id });
+  // Relay URLs carry a single-use join ticket in the query string. Redact it so
+  // the credential never lands in the log file or the terminal scrollback.
+  const safeUrl = url.replace(/ticket=[^&]+/, "ticket=***");
+  log.info("attaching", { url: safeUrl, sessionId: target.id });
   trackEvent("attach_started");
-  process.stderr.write(`[wrapper] attaching to ${url}\n`);
+  process.stderr.write(`[wrapper] attaching to ${safeUrl}\n`);
   process.stderr.write(`[wrapper] press Ctrl+\\ then 'd' to detach (session keeps running)\n`);
 
   let userAborted = false;
