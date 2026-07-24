@@ -5,6 +5,12 @@ Relay service for remote Wrapper session attach.
 It authenticates host/viewer WebSocket connections with short-lived Convex
 tickets and routes `@repo/protocol` messages by `sessionId`.
 
+It also relays **WebRTC signaling** (`signal` frames) between a host and a
+specific viewer so they can upgrade to a direct P2P data channel (lower latency);
+the relay remains the fallback when P2P can't be established. Signaling is
+session-scoped with relay-assigned, non-spoofable peer ids. See the routing
+notes in `src/hub.ts` and [`apps/cli/transport/README.md`](../cli/transport/README.md).
+
 ## Endpoints
 
 - `GET /healthz` - health check
@@ -46,11 +52,6 @@ fly secrets set RELAY_CONVEX_URL="https://<your-convex>.convex.cloud"
 fly deploy
 ```
 
-### Railway
-
-`apps/relay/railway.json` is included for baseline runtime policy.
-Set `RELAY_CONVEX_URL` in Railway service variables.
-
 ## Smoke verification
 
 ### Automated smoke (deployed relay)
@@ -84,8 +85,10 @@ The smoke script checks:
 ## Fly dashboard: Pending Sync
 
 `Pending Sync` usually means machine state is converging toward the latest release.
-With `min_machines_running = 0` and `auto_stop_machines = \"stop\"`, machines can be
-stopped while still being healthy for scale-to-zero operation.
+`min_machines_running = 1` keeps one machine always warm (so WebSocket upgrades
+never hit a cold start, which would drop live shares); `auto_stop_machines = \"stop\"`
+still stops any extra machines. `primary_region = \"otp\"` (Bucharest) is the closest
+Fly region to Turkey. Adjust as the user base spreads.
 
 If you see `Pending Sync`, run:
 

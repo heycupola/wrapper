@@ -21,20 +21,23 @@ export const issueHostTicket = protectedAction({
   },
   handler: async (ctx, args) => {
     const featureId = getRelayShareFeatureId();
-    const access = await ctx.autumn.check(ctx, { featureId });
-    if (access.error || !access.data) {
-      throw createError({
-        code: ErrorCode.EXTERNAL_SERVICE_ERROR,
-        message: "Unable to verify relay sharing plan",
-        severity: ErrorSeverity.High,
-      });
-    }
-    if (!access.data.allowed) {
-      throw createError({
-        code: ErrorCode.INSUFFICIENT_PERMISSION,
-        message: "Relay sharing requires Pro plan",
-        severity: ErrorSeverity.High,
-      });
+    if (featureId) {
+      const access = await ctx.autumn.check(ctx, { featureId });
+      if (access.error) {
+        // Billing provider misconfiguration (e.g. feature not defined) or
+        // outage. Fail open so a billing problem doesn't block the core relay
+        // feature; log loudly so it's noticed. Genuine "not entitled" (a
+        // definitive `allowed: false`) still denies below.
+        console.warn(
+          `[relay] entitlement check error for "${featureId}"; allowing share (fail-open)`,
+        );
+      } else if (access.data && access.data.allowed === false) {
+        throw createError({
+          code: ErrorCode.INSUFFICIENT_PERMISSION,
+          message: "Relay sharing requires Pro plan",
+          severity: ErrorSeverity.High,
+        });
+      }
     }
 
     return await ctx.runMutation(issueHostTicketInternalRef, {
@@ -104,26 +107,6 @@ export const issueViewerTicket = protectedMutation({
       role: "viewer",
       ttlMs: RELAY_TICKET.viewerTtlMs,
     });
-  },
-});
-
-export const checkShareEntitlement = protectedAction({
-  args: {},
-  handler: async (ctx) => {
-    const featureId = getRelayShareFeatureId();
-    const access = await ctx.autumn.check(ctx, { featureId });
-    if (access.error || !access.data) {
-      throw createError({
-        code: ErrorCode.EXTERNAL_SERVICE_ERROR,
-        message: "Unable to verify relay sharing plan",
-        severity: ErrorSeverity.High,
-      });
-    }
-
-    return {
-      allowed: access.data.allowed === true,
-      featureId,
-    };
   },
 });
 
@@ -245,8 +228,14 @@ async function issueTicket(
   return { ticket, expiresAt };
 }
 
-function getRelayShareFeatureId(): string {
+// Returns the Autumn feature id that gates relay sharing, or `null` to disable
+// the gate entirely. Set WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID to "off" (or
+// empty) to turn relay-share gating off until billing is configured.
+function getRelayShareFeatureId(): string | null {
   const value = process.env.WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID;
-  if (!value) return "can_share_relay";
-  return value.trim();
+  if (value === undefined) return "can_share_relay";
+  const trimmed = value.trim();
+  const disabled = ["", "off", "none", "false", "0", "disabled"];
+  if (disabled.includes(trimmed.toLowerCase())) return null;
+  return trimmed;
 }

@@ -25,7 +25,19 @@ export type WrapperMessage =
       sessionId?: SessionId;
       code: "bad_message" | "wrong_session" | "internal";
       message: string;
+    }
+  | {
+      type: "signal";
+      sessionId: SessionId;
+      to: string;
+      from: string;
+      kind: "offer" | "answer" | "ice" | "bye";
+      data: string;
     };
+
+const SIGNAL_DATA_MAX = 64 * 1024;
+const SIGNAL_ID_MAX = 128;
+const SIGNAL_KINDS = new Set(["offer", "answer", "ice", "bye"]);
 
 export function encodeMessage(msg: WrapperMessage): string {
   return JSON.stringify(msg);
@@ -91,6 +103,19 @@ function isWrapperMessage(input: unknown): input is WrapperMessage {
       return isSize(input.size);
     case "session.closed":
       return input.exitCode === null || typeof input.exitCode === "number";
+    case "signal":
+      return (
+        typeof input.to === "string" &&
+        input.to.length >= 1 &&
+        input.to.length <= SIGNAL_ID_MAX &&
+        typeof input.from === "string" &&
+        input.from.length >= 1 &&
+        input.from.length <= SIGNAL_ID_MAX &&
+        typeof input.kind === "string" &&
+        SIGNAL_KINDS.has(input.kind) &&
+        typeof input.data === "string" &&
+        input.data.length <= SIGNAL_DATA_MAX
+      );
     default:
       return false;
   }

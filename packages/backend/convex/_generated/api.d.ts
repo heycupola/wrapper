@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as autumn from "../autumn.js";
+import type * as billing from "../billing.js";
 import type * as deviceAuth from "../deviceAuth.js";
 import type * as http from "../http.js";
 import type * as lib_errors from "../lib/errors.js";
@@ -29,6 +30,7 @@ import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   autumn: typeof autumn;
+  billing: typeof billing;
   deviceAuth: typeof deviceAuth;
   http: typeof http;
   "lib/errors": typeof lib_errors;

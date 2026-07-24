@@ -1,6 +1,7 @@
 import { basename } from "node:path";
 import { createLogger, trackError, trackEvent } from "@repo/logger";
 import { createSessionId } from "@repo/protocol";
+import type { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { startAttachClient, type AttachClientHandle } from "../client/attach-client";
 import { PtySession } from "../pty/session";
@@ -85,6 +86,11 @@ const issueHostRelayTicketRef = makeFunctionReference<
   IssueRelayTicketArgs,
   IssueRelayTicketResponse
 >("relay:issueHostTicket");
+const createProCheckoutRef = makeFunctionReference<
+  "action",
+  { successUrl?: string },
+  { checkoutUrl: string }
+>("billing:createProCheckout");
 
 export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   // Guard against recursive shell-host re-entry.
@@ -161,7 +167,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shared: false,
   });
 
-  const backend = resolveAuthedConvexClient();
+  const backend = await resolveAuthedConvexClient();
   if (backend.status === "ready") {
     try {
       await backend.client.mutation(sessionOpenRef, {
@@ -178,10 +184,15 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     }
   } else if (backend.status === "missing_auth") {
     log.debug("convex url configured but no auth token found; backend sync disabled");
+  } else if (backend.status === "auth_error") {
+    log.warn("backend auth failed; backend sync disabled", { error: backend.error.message });
   }
 
   let shared = false;
   let relayBridge: RelayHostBridge | null = null;
+  // Guards against a second `share` press racing the in-flight relay setup
+  // (we no longer optimistically flip `shared` to serve as that guard).
+  let relayStarting = false;
   const sessionTag = sessionId.slice(0, 6);
   const heartbeat = setInterval(() => {
     if (backend.status !== "ready") return;
@@ -214,9 +225,21 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     }
   }
 
+  // Mark the session as shared. Only called once sharing actually takes effect
+  // (relay bridge up, or a local-only fallback) — never on a denied share — so
+  // the title/registry/analytics never claim "shared" when the user can't share.
+  function commitShared(): void {
+    shared = true;
+    setSessionShared(sessionId, true);
+    trackEvent("session_shared");
+  }
+
   const startRelayBridge = async (): Promise<void> => {
-    if (relayBridge) return;
+    if (relayBridge || relayStarting) return;
+
     if (backend.status !== "ready") {
+      // Local-only share (no relay); allowed without a Pro plan.
+      commitShared();
       announce(
         `wrapper • shared • ${sessionTag}`,
         "session shared locally (relay unavailable: login/backend required)",
@@ -224,6 +247,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       return;
     }
 
+    relayStarting = true;
     try {
       // Persist the shared flag before issuing the relay ticket so backend
       // state (e.g. viewer authorization checks) is synchronized rather than
@@ -240,6 +264,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         ticket: issued.ticket,
         sessionId,
         pty: session,
+        enableP2P: env.p2pEnabled,
         onOpen: () => {
           if (backend.status !== "ready") return;
           void backend.client
@@ -259,24 +284,55 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
             .catch(() => {});
         },
       });
+      commitShared();
       announce(`wrapper • shared • ${sessionTag}`, "session shared via relay");
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      log.warn("failed to start relay bridge", { error: err.message });
       await backend.client
         .mutation(setRelayStateRef, { sessionId, relayState: "error" })
         .catch(() => {});
+
       if (isProPlanRequiredError(err.message)) {
-        announce(
-          `wrapper • shared • ${sessionTag}`,
-          "relay share requires Pro plan (upgrade plan and try again)",
-        );
+        // Expected outcome for free users. `shared` is never committed until a
+        // share succeeds, so nothing to roll back locally — just undo the backend
+        // heartbeat we sent before the ticket, and show a clean upgrade prompt
+        // (with a retry hint) instead of dumping the raw server error.
+        log.debug("relay share denied (Pro required)", { error: err.message });
+        await backend.client
+          .mutation(sessionHeartbeatRef, { sessionId, shared: false, port: server.port })
+          .catch(() => {});
+        if (env.hudEnabled) setTitle("");
+
+        const checkoutUrl = await fetchProCheckoutUrl(backend.client);
+        const lines = checkoutUrl
+          ? [
+              "Relay sharing requires Pro.",
+              `Upgrade → ${checkoutUrl}`,
+              "Once upgraded, press Ctrl+\\ then s to share (no restart needed).",
+            ]
+          : [
+              "Relay sharing requires Pro — upgrade your plan,",
+              "then press Ctrl+\\ then s to try again.",
+            ];
+        if (session.isIdle) {
+          for (const line of lines) inlineMessage(line);
+        } else {
+          for (const line of lines) log.info(line);
+        }
+        if (env.hudEnabled) notifyOS("wrapper", "Relay sharing requires Pro");
         return;
       }
+
+      // Unexpected failure (e.g. relay unreachable): keep the diagnostic warning
+      // and fall back to a local-only share.
+      log.warn("failed to start relay bridge", { error: err.message });
+      commitShared();
       announce(
         `wrapper • shared • ${sessionTag}`,
         "session shared locally (relay connect failed; check logs/auth)",
       );
+    } finally {
+      relayStarting = false;
     }
   };
 
@@ -299,11 +355,9 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
           announce(`wrapper • shared • ${sessionTag}`, "already shared");
           return;
         }
-        shared = true;
-        setSessionShared(sessionId, true);
-        trackEvent("session_shared");
-        // Backend `shared` state is persisted (awaited) inside startRelayBridge
-        // before the relay ticket is issued, avoiding a sync race.
+        // `shared` is committed inside startRelayBridge only once the share
+        // actually takes effect, so a denied relay share (e.g. no Pro plan)
+        // never leaves the session marked as shared.
         void startRelayBridge();
         break;
       case "unshare":
@@ -421,4 +475,16 @@ function currentSize(): { cols: number; rows: number } {
 
 function isProPlanRequiredError(message: string): boolean {
   return message.includes("Relay sharing requires Pro plan");
+}
+
+async function fetchProCheckoutUrl(client: ConvexHttpClient): Promise<string | null> {
+  try {
+    const result = await client.action(createProCheckoutRef, {});
+    return result.checkoutUrl.length > 0 ? result.checkoutUrl : null;
+  } catch (error) {
+    log.warn("failed to create pro checkout link", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
 }

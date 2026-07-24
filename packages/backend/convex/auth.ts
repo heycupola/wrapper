@@ -2,10 +2,9 @@ import { createClient, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
-import { query } from "./_generated/server";
 import { betterAuth } from "better-auth";
 import authConfig from "./auth.config";
-import { deviceAuthorization, lastLoginMethod } from "better-auth/plugins";
+import { bearer, deviceAuthorization, lastLoginMethod } from "better-auth/plugins";
 import authSchema from "./betterAuth/schema";
 
 const isDevEnvironment = process.env.ENVIRONMENT === "development";
@@ -75,18 +74,12 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     plugins: [
       convex({ authConfig }),
       deviceAuthorization(),
+      // Lets the CLI present its device session token as `Authorization:
+      // Bearer <token>` to exchange it for a Convex JWT at /convex/token.
+      bearer(),
       lastLoginMethod({
         storeInDatabase: true,
       }),
     ],
   });
 };
-
-// Example function for getting the current user
-// Feel free to edit, omit, etc.
-export const getCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
-    return authComponent.getAuthUser(ctx);
-  },
-});

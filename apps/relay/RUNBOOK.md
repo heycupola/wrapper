@@ -12,8 +12,9 @@ This runbook defines the minimum production operating standard for `apps/relay`.
 
 1. Confirm Fly app config:
    - `apps/relay/fly.toml` is current
-   - `RELAY_CONVEX_URL` secret is set
-2. Trigger deploy workflow (`fly-deploy.yml`)
+   - `CONVEX_URL` (or `RELAY_CONVEX_URL`) secret is set on the target app
+2. Deploy: push to `dev`/`main` (`deploy-relay.yml`) or run `workflow_dispatch`.
+   Dev -> `wrapper-relay-dev`, prod -> `wrapper-relay-prod` (see ENVIRONMENTS.md)
 3. Verify post-deploy smoke:
    - `/healthz` reports `ok: true`
    - unauthenticated `/ws` closes with `4001` or `4003`

@@ -4,7 +4,9 @@ Wrapper CLI is the runtime core of the product.
 
 It wraps every interactive shell session and exposes that live session over a
 local WebSocket endpoint so other clients can attach. It can also publish a
-shared session through the relay transport for remote viewers.
+shared session through the relay for remote viewers, with an optional direct
+WebRTC **P2P fast path** for lower latency (see
+[`transport/README.md`](./transport/README.md)).
 
 This README is a technical walkthrough so you can understand the system while
 building.
@@ -121,6 +123,23 @@ Main message flow used by CLI:
 
 `server/local.ts` validates and routes these messages between clients and PTY.
 
+## Transports: relay + direct P2P
+
+Host and viewer are transport-agnostic, so they exchange `@repo/protocol` frames
+through a small `Transport` interface (`transport/transport.ts`), so the wire can
+be either:
+
+- **Relay WebSocket** (`WebSocketTransport`), always used, and it also carries WebRTC
+  signaling and is the fallback.
+- **WebRTC data channel** (`WebRtcDataChannelTransport`, opt-in via
+  `WRAPPER_P2P`), a direct P2P connection negotiated over the relay. When it
+  opens, session traffic flows directly (SSH-like latency); if ICE can't connect,
+  the session transparently stays on the relay.
+
+Full design, security model, and testing steps live in
+[`transport/README.md`](./transport/README.md). P2P applies only to `--relay`
+attaches; local `127.0.0.1` attaches are already direct.
+
 ## Commands
 
 ### Install and hook management
@@ -212,21 +231,22 @@ remote attach with `wrapper attach --relay --id <sessionId>`.
 
 ## Environment variables
 
-| Variable                | Description                        | Default                                      |
-| ----------------------- | ---------------------------------- | -------------------------------------------- |
-| `NODE_ENV`              | runtime mode (`production` or dev) | unset (treated as dev)                       |
-| `CI`                    | enable CI mode                     | unset                                        |
-| `WRAPPER_LOG`           | `debug/info/warn/error/off`        | dev=`info`, prod=`warn`                      |
-| `WRAPPER_LOG_FILE`      | override log file path             | platform default                             |
-| `WRAPPER_TELEMETRY`     | `"false"` disables telemetry       | enabled after consent                        |
-| `WRAPPER_POSTHOG_KEY`   | PostHog key                        | empty                                        |
-| `WRAPPER_TELEMETRY_URL` | telemetry endpoint                 | `https://telemetry.wrapper.sh`               |
-| `WRAPPER_RELAY_URL`     | relay endpoint override            | dev localhost, prod `wss://relay.wrapper.sh` |
-| `WRAPPER_AUTH_ORIGIN`   | auth callback origin               | dev localhost, prod `https://wrapper.sh`     |
-| `WRAPPER_HUD`           | HUD (`on/off`)                     | `on`                                         |
-| `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend  | falls back to `CONVEX_URL` if set            |
-| `WRAPPER_DISABLE`       | disable hook in one terminal       | unset                                        |
-| `WRAPPER_WRAPPED`       | set by `shell-host` in inner shell | unset                                        |
+| Variable                | Description                               | Default                                      |
+| ----------------------- | ----------------------------------------- | -------------------------------------------- |
+| `NODE_ENV`              | runtime mode (`production` or dev)        | unset (treated as dev)                       |
+| `CI`                    | enable CI mode                            | unset                                        |
+| `WRAPPER_LOG`           | `debug/info/warn/error/off`               | dev=`info`, prod=`warn`                      |
+| `WRAPPER_LOG_FILE`      | override log file path                    | platform default                             |
+| `WRAPPER_TELEMETRY`     | `"false"` disables telemetry              | enabled after consent                        |
+| `WRAPPER_POSTHOG_KEY`   | PostHog key                               | empty                                        |
+| `WRAPPER_TELEMETRY_URL` | telemetry endpoint                        | `https://telemetry.wrapper.sh`               |
+| `WRAPPER_RELAY_URL`     | relay endpoint override                   | dev localhost, prod `wss://relay.wrapper.sh` |
+| `WRAPPER_AUTH_ORIGIN`   | auth callback origin                      | dev localhost, prod `https://wrapper.sh`     |
+| `WRAPPER_HUD`           | HUD (`on/off`)                            | `on`                                         |
+| `WRAPPER_P2P`           | opt-in WebRTC P2P fast path (`1/true/on`) | off (relay used)                             |
+| `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend         | falls back to `CONVEX_URL` if set            |
+| `WRAPPER_DISABLE`       | disable hook in one terminal              | unset                                        |
+| `WRAPPER_WRAPPED`       | set by `shell-host` in inner shell        | unset                                        |
 
 `NODE_ENV=development` redirects state into `wrapper-dev`, uses localhost defaults, and
 mirrors logs to stderr for easier local debugging.
@@ -245,7 +265,7 @@ commands/
   status.ts                    list live sessions
   logs.ts                      tail log file
 client/
-  attach-client.ts             ws client + tty bridge
+  attach-client.ts             transport-agnostic viewer + tty bridge (WS/P2P)
 server/
   local.ts                     local ws broker
 pty/
@@ -253,7 +273,11 @@ pty/
 registry/
   sessions.ts                  local session metadata
 relay/
-  host-bridge.ts               host relay websocket bridge
+  host-bridge.ts               host relay bridge; per-viewer P2P negotiation
+transport/
+  transport.ts                 Transport interface + WebSocketTransport
+  webrtc.ts                    WebRTC P2P transport (werift, opt-in)
+  README.md                    transport + P2P design/security/testing
 shell/
   detect.ts                    shell detection
   rc-edit.ts                   managed rc patcher

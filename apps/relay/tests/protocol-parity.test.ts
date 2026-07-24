@@ -23,6 +23,7 @@ const samples: RepoMessage[] = [
   { type: "session.closed", sessionId: "s1", exitCode: 0 },
   { type: "output", sessionId: "s1", data: "hi" },
   { type: "error", sessionId: "s1", code: "internal", message: "boom" },
+  { type: "signal", sessionId: "s1", to: "host", from: "p1", kind: "offer", data: "{}" },
 ];
 
 describe("relay protocol parity with @repo/protocol", () => {

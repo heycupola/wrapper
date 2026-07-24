@@ -31,6 +31,14 @@ export class RelayHub {
   private readonly viewersBySession = new Map<string, Set<RelayPeer>>();
   private readonly bindingByPeer = new Map<RelayPeer, PeerBinding>();
   private readonly viewerState = new Map<RelayPeer, ViewerState>();
+  // Last `session.opened` frame per session. The host emits it only once (on
+  // connect), so viewers that join later must have it replayed — otherwise their
+  // attach client never learns the sessionId and never forwards input.
+  private readonly lastSessionOpened = new Map<string, string>();
+  // Relay-assigned viewer identity for WebRTC signaling. Authoritative: clients
+  // cannot spoof it (we stamp `from`), enabling safe host<->viewer routing.
+  private readonly peerIdByViewer = new Map<RelayPeer, string>();
+  private readonly viewerByPeerId = new Map<string, RelayPeer>();
 
   constructor(private readonly log: RelayHubLogger) {}
 
@@ -51,6 +59,13 @@ export class RelayHub {
     viewers.add(binding.peer);
     this.viewersBySession.set(binding.sessionId, viewers);
     this.viewerState.set(binding.peer, { size: null });
+    const peerId = crypto.randomUUID();
+    this.peerIdByViewer.set(binding.peer, peerId);
+    this.viewerByPeerId.set(peerId, binding.peer);
+    // Replay the cached `session.opened` so this viewer learns the sessionId and
+    // can start forwarding input immediately (the host won't re-emit it).
+    const opened = this.lastSessionOpened.get(binding.sessionId);
+    if (opened) binding.peer.send(opened);
     this.log.debug("viewer bound", {
       sessionId: binding.sessionId,
       viewerCount: viewers.size,
@@ -76,9 +91,11 @@ export class RelayHub {
           viewer.close(CLOSE_HOST_DISCONNECTED, "host disconnected");
           this.bindingByPeer.delete(viewer);
           this.viewerState.delete(viewer);
+          this.forgetViewerPeerId(viewer);
         }
       }
       this.viewersBySession.delete(binding.sessionId);
+      this.lastSessionOpened.delete(binding.sessionId);
       this.log.debug("host unbound", { sessionId: binding.sessionId });
       return;
     }
@@ -89,6 +106,7 @@ export class RelayHub {
       if (viewers.size === 0) this.viewersBySession.delete(binding.sessionId);
     }
     this.viewerState.delete(peer);
+    this.forgetViewerPeerId(peer);
     this.recomputeConsensusResize(binding.sessionId);
     this.log.debug("viewer unbound", {
       sessionId: binding.sessionId,
@@ -124,6 +142,10 @@ export class RelayHub {
   private forwardHostMessage(binding: PeerBinding, msg: WrapperMessage): void {
     switch (msg.type) {
       case "session.opened":
+        // Cache so late-joining viewers can be caught up (see `bind`).
+        this.lastSessionOpened.set(binding.sessionId, encodeMessage(msg));
+        this.broadcastToViewers(binding.sessionId, msg);
+        break;
       case "output":
       case "error":
         this.broadcastToViewers(binding.sessionId, msg);
@@ -134,6 +156,14 @@ export class RelayHub {
         this.broadcastToViewers(binding.sessionId, msg);
         this.closeViewers(binding.sessionId, CLOSE_HOST_DISCONNECTED, "session closed");
         break;
+      case "signal": {
+        // WebRTC answer/ICE from host -> a specific viewer. Deliver only to a
+        // viewer bound to THIS session (no cross-session / unknown-peer leaks).
+        const viewer = this.viewerByPeerId.get(msg.to);
+        if (!viewer || !this.viewersBySession.get(binding.sessionId)?.has(viewer)) return;
+        viewer.send(encodeMessage(msg));
+        break;
+      }
       default:
         this.log.warn("unexpected host message", { type: msg.type, sessionId: binding.sessionId });
     }
@@ -146,8 +176,16 @@ export class RelayHub {
       viewer.close(code, reason);
       this.bindingByPeer.delete(viewer);
       this.viewerState.delete(viewer);
+      this.forgetViewerPeerId(viewer);
     }
     this.viewersBySession.delete(sessionId);
+  }
+
+  private forgetViewerPeerId(peer: RelayPeer): void {
+    const peerId = this.peerIdByViewer.get(peer);
+    if (peerId === undefined) return;
+    this.peerIdByViewer.delete(peer);
+    this.viewerByPeerId.delete(peerId);
   }
 
   private forwardViewerMessage(binding: PeerBinding, msg: WrapperMessage, peer: RelayPeer): void {
@@ -167,6 +205,15 @@ export class RelayHub {
         this.viewerState.set(peer, { size: msg.size });
         this.recomputeConsensusResize(binding.sessionId);
         break;
+      case "signal": {
+        // WebRTC offer/ICE from viewer -> host. Stamp the authoritative peerId
+        // (ignore any client-supplied `from`) so the host can address replies
+        // back and a viewer cannot impersonate another peer.
+        const peerId = this.peerIdByViewer.get(peer);
+        if (!peerId) return;
+        host.send(encodeMessage({ ...msg, from: peerId, to: "host" }));
+        break;
+      }
       default:
         this.log.warn("unexpected viewer message", {
           type: msg.type,

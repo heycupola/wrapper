@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { getToken, isAuthenticated } from "../../lib/auth-server";
+import { UpgradePro } from "../../components/upgrade-pro";
 import { OnboardingClient } from "./onboarding-client";
 
 type OnboardingState = {
@@ -50,6 +51,7 @@ export default async function OnboardingPage() {
           Complete these steps once to unlock your full CLI and relay workflow.
         </p>
         <OnboardingClient token={token} initialState={state} />
+        <UpgradePro token={token} />
       </main>
     </div>
   );

@@ -4,8 +4,8 @@ Tagged logging + opt-in PostHog telemetry, used by the Wrapper CLI and any
 future workspace packages that need structured output.
 
 The package is a near-verbatim port of the Relic logger and deliberately
-keeps the same shape — same env vars (renamed `RELIC_*` → `WRAPPER_*`),
-same semantics, same Consola backbone — so an engineer who has worked on
+keeps the same shape: the same env vars (renamed `RELIC_*` to `WRAPPER_*`),
+the same semantics, and the same Consola backbone, so an engineer who has worked on
 either codebase sees the same surface.
 
 ## Usage
@@ -77,7 +77,7 @@ Format: `[ISO timestamp] [LEVEL] [tag] message`
 ## Telemetry
 
 Opt-in PostHog analytics, routed through `https://telemetry.wrapper.sh`
-(a Cloudflare Worker that proxies to `us.i.posthog.com`).
+(a reverse proxy in front of `us.i.posthog.com`).
 
 Telemetry is enabled when **all** are true:
 

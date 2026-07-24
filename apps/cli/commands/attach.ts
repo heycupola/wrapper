@@ -84,9 +84,12 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     preferRelay: Boolean(opts.relay),
   });
   if (!url) process.exit(1);
-  log.info("attaching", { url, sessionId: target.id });
+  // Relay URLs carry a single-use join ticket in the query string. Redact it so
+  // the credential never lands in the log file or the terminal scrollback.
+  const safeUrl = url.replace(/ticket=[^&]+/, "ticket=***");
+  log.info("attaching", { url: safeUrl, sessionId: target.id });
   trackEvent("attach_started");
-  process.stderr.write(`[wrapper] attaching to ${url}\n`);
+  process.stderr.write(`[wrapper] attaching to ${safeUrl}\n`);
   process.stderr.write(`[wrapper] press Ctrl+\\ then 'd' to detach (session keeps running)\n`);
 
   let userAborted = false;
@@ -141,6 +144,9 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     },
   });
 
+  // P2P applies only to relay attaches (remote peers); local 127.0.0.1 attaches
+  // are already direct. Relay URLs carry the `/ws?ticket=` path.
+  const usingRelay = url.includes("/ws?ticket=");
   const handle = startAttachClient({
     url,
     initialSize: {
@@ -150,6 +156,7 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     connectRetries: 5,
     connectRetryDelayMs: 100,
     interceptStdin: (chunk) => prefixFilter.process(chunk),
+    p2p: env.p2pEnabled && usingRelay ? { sessionId: target.id } : undefined,
   });
 
   // Initial title so the user sees this is a viewer window.
@@ -257,11 +264,15 @@ function shortenHome(path: string): string {
 async function ensureAttachAllowed(target: TargetSession): Promise<boolean> {
   if (!target.local || target.port === undefined) return false;
 
-  const backend = resolveAuthedConvexClient();
+  const backend = await resolveAuthedConvexClient();
   // No backend configured: nothing to authorize against (pure local dev).
   if (backend.status === "unconfigured") return true;
   if (backend.status === "missing_auth") {
     process.stderr.write("[wrapper] backend auth required. Run `wrapper auth login` first.\n");
+    return false;
+  }
+  if (backend.status === "auth_error") {
+    process.stderr.write(`[wrapper] backend auth failed: ${backend.error.message}\n`);
     return false;
   }
 
@@ -304,13 +315,17 @@ async function resolveAttachUrl(input: {
 }
 
 async function resolveRelayAttachUrl(sessionId: string): Promise<string | null> {
-  const backend = resolveAuthedConvexClient();
+  const backend = await resolveAuthedConvexClient();
   if (backend.status === "unconfigured") {
     process.stderr.write("[wrapper] relay attach requires WRAPPER_CONVEX_URL configuration.\n");
     return null;
   }
   if (backend.status === "missing_auth") {
     process.stderr.write("[wrapper] relay attach requires login. Run `wrapper auth login`.\n");
+    return null;
+  }
+  if (backend.status === "auth_error") {
+    process.stderr.write(`[wrapper] relay attach failed: ${backend.error.message}\n`);
     return null;
   }
 

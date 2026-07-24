@@ -77,6 +77,31 @@ export const ErrorMessageSchema = z.object({
 export type ErrorMessage = z.infer<typeof ErrorMessageSchema>;
 
 // ────────────────────────────────────────────────────────────────────────────
+// WebRTC signaling (relayed both directions)
+// ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Opaque WebRTC signaling frame relayed between a host and a specific viewer to
+ * negotiate a direct P2P data channel (the low-latency fast path; the relay
+ * remains the fallback).
+ *
+ * Routing/security: `viewer -> host` addresses `to: "host"`; `host -> viewer`
+ * addresses `to: <viewer peerId>`. The relay is authoritative for peer identity
+ * (it stamps `from` with the connection's assigned peerId, ignoring any client
+ * claim) and only routes within a single session, so viewers can neither spoof
+ * another peer nor reach a different session. `data` is capped to bound memory.
+ */
+export const SignalMessageSchema = z.object({
+  type: z.literal("signal"),
+  sessionId: SessionIdSchema,
+  to: z.string().min(1).max(128),
+  from: z.string().min(1).max(128),
+  kind: z.enum(["offer", "answer", "ice", "bye"]),
+  data: z.string().max(64 * 1024),
+});
+export type SignalMessage = z.infer<typeof SignalMessageSchema>;
+
+// ────────────────────────────────────────────────────────────────────────────
 // discriminated union
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -89,5 +114,6 @@ export const WrapperMessageSchema = z.discriminatedUnion("type", [
   SessionClosedMessageSchema,
   OutputMessageSchema,
   ErrorMessageSchema,
+  SignalMessageSchema,
 ]);
 export type WrapperMessage = z.infer<typeof WrapperMessageSchema>;

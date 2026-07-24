@@ -8,7 +8,7 @@ native binary which we then invoke through `Bun.spawn`.
 The helper is dumb: read the slave-pty path from `argv[1]`, become the
 session leader, attach the slave as the controlling terminal, dup it
 onto stdin/stdout/stderr, and `execvp` the shell. After exec the
-helper's image is gone — the shell sees a real terminal, the kernel's
+helper's image is gone, so the shell sees a real terminal, and the kernel's
 line discipline routes Ctrl+C / Ctrl+Z / Ctrl+\\ to the right process
 group, and the wrapper CLI keeps the master fd.
 
@@ -42,6 +42,6 @@ Three reasons:
 
 ## Files
 
-- `pty-helper.c` — the shim (well-commented; ~80 lines)
-- `Makefile` — host + cross-compile (zig) targets
-- `../../apps/cli/bin/wrapper-pty-helper[-<triple>]` — committed binaries
+- `pty-helper.c`: the shim (well-commented, about 80 lines)
+- `Makefile`: host and cross-compile (zig) targets
+- `../../apps/cli/bin/wrapper-pty-helper[-<triple>]`: committed binaries
