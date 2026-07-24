@@ -48,7 +48,7 @@ export const env = {
   /** Relay endpoint (real values land with the relay package). */
   relayUrl:
     process.env.WRAPPER_RELAY_URL ?? (IS_DEV ? "ws://localhost:8080" : "wss://relay.wrapper.sh"),
-  /** Auth callback origin used by the future Better Auth flow. */
+  /** Auth callback origin used by the Better Auth device login flow. */
   authOrigin:
     process.env.WRAPPER_AUTH_ORIGIN ?? (IS_DEV ? "http://localhost:3000" : "https://wrapper.sh"),
   /** CLI HUD toggle: on by default, set WRAPPER_HUD=off to disable. */

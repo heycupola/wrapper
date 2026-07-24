@@ -27,8 +27,6 @@
     "**/dist/**",
     "**/.next/**",
     "**/.turbo/**",
-    "**/.open-next/**",
-    "**/.wrangler/**",
     "**/out/**",
     "**/build/**",
     "**/coverage/**",

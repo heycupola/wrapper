@@ -67,8 +67,6 @@ export const paths = {
   sessionsRegistry: (): string => join(paths.state(), "sessions.json"),
   /** `${state}/wrapper.log` */
   logFile: (): string => join(paths.state(), "wrapper.log"),
-  /** `${config}/config.toml` */
-  configFile: (): string => join(paths.config(), "config.toml"),
   /** `${config}/auth.json` */
   authFile: (): string => join(paths.config(), "auth.json"),
   /** `${config}/telemetry.json` */

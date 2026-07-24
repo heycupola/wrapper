@@ -110,24 +110,6 @@ export const issueViewerTicket = protectedMutation({
   },
 });
 
-export const checkShareEntitlement = protectedAction({
-  args: {},
-  handler: async (ctx) => {
-    const featureId = getRelayShareFeatureId();
-    // Gate disabled: sharing is open.
-    if (!featureId) return { allowed: true, featureId: "" };
-
-    const access = await ctx.autumn.check(ctx, { featureId });
-    // Fail open on billing-provider errors (see issueHostTicket rationale).
-    if (access.error) return { allowed: true, featureId };
-
-    return {
-      allowed: access.data?.allowed === true,
-      featureId,
-    };
-  },
-});
-
 export const consumeTicket = publicMutation({
   args: {
     ticket: v.string(),

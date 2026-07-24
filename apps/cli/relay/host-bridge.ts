@@ -34,8 +34,9 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
   const p2pPeers = new Map<string, { negotiation: Negotiation }>();
   const p2pChannels = new Map<string, Transport>();
 
-  // Transport is a dumb protocol-frame pipe. Today it's a WebSocket to the
-  // relay; a WebRtcTransport will drop in here for direct P2P (relay fallback).
+  // The relay WebSocket is the transport and the WebRTC signaling channel. When
+  // enableP2P is set, `handleSignal` negotiates per-viewer data channels and
+  // `send` fans output to them; otherwise everything flows over this socket.
   const transport: Transport = new WebSocketTransport(wsUrl, {
     onOpen: () => {
       log.info("relay host connected", { sessionId: opts.sessionId });
