@@ -91,6 +91,30 @@ const createProCheckoutRef = makeFunctionReference<
   { successUrl?: string },
   { checkoutUrl: string }
 >("billing:createProCheckout");
+const setShareCodeRef = makeFunctionReference<
+  "mutation",
+  { sessionId: string; code?: string },
+  { ok: boolean; shared: boolean }
+>("session:setShareCode");
+
+// Crockford-style alphabet (no I, L, O, U) so codes are easy to read and type.
+const SHARE_CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+/**
+ * Generate a short, human-friendly share code. The owner gives this to whoever
+ * they want to let in; the backend stores only its hash. Displayed grouped
+ * (XXXX-XXXX) but the backend ignores the dash and case when matching.
+ */
+function generateShareCode(): string {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  let code = "";
+  for (let i = 0; i < bytes.length; i++) {
+    if (i === 4) code += "-";
+    code += SHARE_CODE_ALPHABET[bytes[i]! % SHARE_CODE_ALPHABET.length];
+  }
+  return code;
+}
 
 export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   // Guard against recursive shell-host re-entry.
@@ -189,11 +213,25 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   }
 
   let shared = false;
+  let shareCode: string | null = null;
   let relayBridge: RelayHostBridge | null = null;
   // Guards against a second `share` press racing the in-flight relay setup
   // (we no longer optimistically flip `shared` to serve as that guard).
   let relayStarting = false;
   const sessionTag = sessionId.slice(0, 6);
+
+  function printShareInvite(): void {
+    if (!shareCode) return;
+    const lines = [
+      `share code: ${shareCode}`,
+      `others join with: wrapper attach --relay --id ${sessionId} --code ${shareCode}`,
+    ];
+    if (session.isIdle) {
+      for (const line of lines) inlineMessage(line);
+    } else {
+      for (const line of lines) log.info(line);
+    }
+  }
   const heartbeat = setInterval(() => {
     if (backend.status !== "ready") return;
     void backend.client
@@ -248,15 +286,12 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     }
 
     relayStarting = true;
+    const code = generateShareCode();
     try {
-      // Persist the shared flag before issuing the relay ticket so backend
-      // state (e.g. viewer authorization checks) is synchronized rather than
-      // racing the periodic fire-and-forget heartbeat.
-      await backend.client.mutation(sessionHeartbeatRef, {
-        sessionId,
-        shared: true,
-        port: server.port,
-      });
+      // Persist the shared flag and the access-code hash before issuing the relay
+      // ticket so viewer authorization is synchronized rather than racing the
+      // periodic fire-and-forget heartbeat. Only the code hash is stored.
+      await backend.client.mutation(setShareCodeRef, { sessionId, code });
       await backend.client.mutation(setRelayStateRef, { sessionId, relayState: "connecting" });
       const issued = await backend.client.action(issueHostRelayTicketRef, { sessionId });
       relayBridge = startRelayHostBridge({
@@ -284,8 +319,10 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
             .catch(() => {});
         },
       });
+      shareCode = code;
       commitShared();
       announce(`wrapper • shared • ${sessionTag}`, "session shared via relay");
+      printShareInvite();
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       await backend.client
@@ -298,9 +335,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         // heartbeat we sent before the ticket, and show a clean upgrade prompt
         // (with a retry hint) instead of dumping the raw server error.
         log.debug("relay share denied (Pro required)", { error: err.message });
-        await backend.client
-          .mutation(sessionHeartbeatRef, { sessionId, shared: false, port: server.port })
-          .catch(() => {});
+        await backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
         if (env.hudEnabled) setTitle("");
 
         const checkoutUrl = await fetchProCheckoutUrl(backend.client);
@@ -366,12 +401,13 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
           return;
         }
         shared = false;
+        shareCode = null;
         setSessionShared(sessionId, false);
         trackEvent("session_unshared");
         if (backend.status === "ready") {
-          void backend.client
-            .mutation(sessionHeartbeatRef, { sessionId, shared: false, port: server.port })
-            .catch(() => {});
+          // Clears both `shared` and the stored code hash, revoking any
+          // outstanding viewer access immediately.
+          void backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
         }
         void stopRelayBridge();
         announce("", "session unshared");
@@ -379,7 +415,9 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       case "status":
         announce(
           shared ? `wrapper • shared • ${sessionTag}` : `wrapper • idle • ${sessionTag}`,
-          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : "no"}`,
+          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : "no"}${
+            shared && shareCode ? ` code=${shareCode}` : ""
+          }`,
         );
         break;
       case "detach":

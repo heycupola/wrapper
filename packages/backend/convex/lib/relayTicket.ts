@@ -40,3 +40,16 @@ export async function hashRelayTicket(token: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
   return toHex(new Uint8Array(digest));
 }
+
+/**
+ * Normalize a share code so display formatting never affects matching:
+ * uppercase, and strip anything that is not A-Z or 0-9 (dashes, spaces).
+ * Both storing (owner) and verifying (viewer) must run this first.
+ */
+export function normalizeShareCode(code: string): string {
+  return code.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+export async function hashShareCode(code: string): Promise<string> {
+  return hashRelayTicket(normalizeShareCode(code));
+}

@@ -32,6 +32,7 @@ type AuthorizeAttachResponse = {
 
 type IssueViewerTicketArgs = {
   sessionId: string;
+  code?: string;
 };
 
 type IssueViewerTicketResponse = {
@@ -69,6 +70,7 @@ export interface AttachOptions {
   port?: number;
   host?: string;
   relay?: boolean;
+  code?: string;
 }
 
 const SIGINT_EXIT = 130;
@@ -82,6 +84,7 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     host,
     target,
     preferRelay: Boolean(opts.relay),
+    code: opts.code,
   });
   if (!url) process.exit(1);
   // Relay URLs carry a single-use join ticket in the query string. Redact it so
@@ -300,6 +303,7 @@ async function resolveAttachUrl(input: {
   host: string;
   target: TargetSession;
   preferRelay: boolean;
+  code?: string;
 }): Promise<string | null> {
   if (!input.preferRelay && input.target.local && input.target.port !== undefined) {
     const allowed = await ensureAttachAllowed(input.target);
@@ -311,10 +315,10 @@ async function resolveAttachUrl(input: {
     process.stderr.write("[wrapper] relay attach requires `--id <sessionId>`.\n");
     return null;
   }
-  return await resolveRelayAttachUrl(input.target.id);
+  return await resolveRelayAttachUrl(input.target.id, input.code);
 }
 
-async function resolveRelayAttachUrl(sessionId: string): Promise<string | null> {
+async function resolveRelayAttachUrl(sessionId: string, code?: string): Promise<string | null> {
   const backend = await resolveAuthedConvexClient();
   if (backend.status === "unconfigured") {
     process.stderr.write("[wrapper] relay attach requires WRAPPER_CONVEX_URL configuration.\n");
@@ -330,7 +334,7 @@ async function resolveRelayAttachUrl(sessionId: string): Promise<string | null> 
   }
 
   try {
-    const issued = await backend.client.mutation(issueViewerRelayTicketRef, { sessionId });
+    const issued = await backend.client.mutation(issueViewerRelayTicketRef, { sessionId, code });
     return buildRelayWsUrl(env.relayUrl, issued.ticket);
   } catch (error) {
     const message = normalizeAttachAuthorizationError(error);
@@ -347,7 +351,7 @@ function normalizeAttachAuthorizationError(error: unknown): string {
     case "UNAUTHORIZED":
       return "Not signed in. Run `wrapper auth login` and try again.";
     case "INSUFFICIENT_PERMISSION":
-      return "Access denied. Ask session owner to share it, or attach to your own session.";
+      return "Access denied. Ask the session owner for a share code and pass it with `--code <code>`, or attach to your own session.";
     case "RESOURCE_NOT_FOUND":
       return "Session not found or no longer active.";
     default:

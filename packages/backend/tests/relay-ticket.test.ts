@@ -3,6 +3,8 @@ import {
   createRelayTicket,
   getRelayTicketConfig,
   hashRelayTicket,
+  hashShareCode,
+  normalizeShareCode,
 } from "../convex/lib/relayTicket";
 
 describe("relay ticket config", () => {
@@ -42,5 +44,25 @@ describe("relay ticket primitives", () => {
     const second = await hashRelayTicket("ticket-value");
     expect(first).toBe(second);
     expect(first).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+describe("share code", () => {
+  test("normalizeShareCode uppercases and strips separators", () => {
+    expect(normalizeShareCode("abcd-efgh")).toBe("ABCDEFGH");
+    expect(normalizeShareCode("ab cd-EF gh")).toBe("ABCDEFGH");
+  });
+
+  test("hashShareCode ignores dash and case", async () => {
+    const a = await hashShareCode("ABCD-EFGH");
+    const b = await hashShareCode("abcdefgh");
+    expect(a).toBe(b);
+    expect(a).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  test("hashShareCode differs for different codes", async () => {
+    const a = await hashShareCode("ABCD-EFGH");
+    const b = await hashShareCode("ABCD-EFGJ");
+    expect(a).not.toBe(b);
   });
 });

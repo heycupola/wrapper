@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
 import { protectedMutation, protectedQuery } from "./lib/middleware.ts";
 import { getSessionTimeoutConfig, shouldMarkSessionStale } from "./lib/sessionConfig.ts";
+import { hashShareCode } from "./lib/relayTicket.ts";
 import { createError, ErrorCode } from "./lib/errors.ts";
 import { ErrorSeverity } from "./lib/types.ts";
 
@@ -224,6 +225,60 @@ export const authorizeAttach = protectedQuery({
       isOwner,
       updatedAt: session.updatedAt,
     };
+  },
+});
+
+/**
+ * Owner-only: start or stop sharing a session and set its access code.
+ *
+ * Passing a non-empty `code` marks the session shared and stores the SHA-256 of
+ * the normalized code. A non-owner viewer must later present the matching code
+ * to obtain a viewer ticket. Passing no code (or an empty string) stops sharing
+ * and clears the stored hash, so any outstanding access is revoked immediately.
+ */
+export const setShareCode = protectedMutation({
+  args: {
+    sessionId: v.string(),
+    code: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("hostSession")
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
+      .first();
+
+    if (!session) {
+      throw createError({
+        code: ErrorCode.RESOURCE_NOT_FOUND,
+        message: "Session not found",
+        severity: ErrorSeverity.Medium,
+      });
+    }
+    if (session.ownerUserId !== ctx.userId) {
+      throw createError({
+        code: ErrorCode.INSUFFICIENT_PERMISSION,
+        message: "You cannot change sharing for another user's session",
+        severity: ErrorSeverity.High,
+      });
+    }
+
+    const code = args.code?.trim();
+    const now = Date.now();
+    if (code) {
+      await ctx.db.patch(session._id, {
+        shared: true,
+        shareCodeHash: await hashShareCode(code),
+        updatedAt: now,
+      });
+      return { ok: true, shared: true };
+    }
+
+    await ctx.db.patch(session._id, {
+      shared: false,
+      shareCodeHash: undefined,
+      updatedAt: now,
+    });
+    return { ok: true, shared: false };
   },
 });
 
