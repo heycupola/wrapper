@@ -97,8 +97,9 @@ who may attach to which session.
   sessions stop validating) rather than starting with a predictable key.
 - The CLI authenticates with the device authorization flow, stores a session
   token, then exchanges that token for a short-lived Convex JWT through the
-  `bearer()` plugin before calling any Convex function. See
-  `apps/cli/util/convex-client.ts`.
+  `bearer()` plugin before calling any Convex function. A long-running host
+  re-mints the JWT from the stored session token before it expires, so hours-long
+  sessions keep authenticating. See `apps/cli/util/convex-client.ts`.
 - Session liveness uses a heartbeat timeout. Missing heartbeats trigger scheduler
   cleanup and close the session with `closeReason: "stale_timeout"`.
 

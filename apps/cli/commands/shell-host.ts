@@ -9,7 +9,11 @@ import { startRelayHostBridge, type RelayHostBridge } from "../relay/host-bridge
 import { registerSession, setSessionShared, unregisterSession } from "../registry/sessions";
 import { startLocalServer, type LocalServerHandle } from "../server/local";
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
-import { resolveAuthedConvexClient } from "../util/convex-client";
+import {
+  resolveAuthedConvexClient,
+  startAuthAutoRefresh,
+  type AuthAutoRefresh,
+} from "../util/convex-client";
 import { env } from "../util/env";
 import { bell, clearTitle, inlineMessage, notifyOS, setTitle } from "../util/feedback";
 import { installShutdownHandlers, type ShutdownReason } from "../util/signals";
@@ -97,6 +101,15 @@ const setShareCodeRef = makeFunctionReference<
   { ok: boolean; shared: boolean }
 >("session:setShareCode");
 
+/** 256-bit hex secret gating connections to the local WebSocket server. */
+function createLocalToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  let out = "";
+  for (const byte of bytes) out += byte.toString(16).padStart(2, "0");
+  return out;
+}
+
 // Crockford-style alphabet (no I, L, O, U) so codes are easy to read and type.
 const SHARE_CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
@@ -130,6 +143,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   }
 
   const sessionId = createSessionId();
+  const localToken = createLocalToken();
   const initialSize = currentSize();
 
   const session = new PtySession({
@@ -160,6 +174,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       port: opts.port ?? 0,
       sessionId,
       pty: session,
+      token: localToken,
     });
   } catch (err) {
     log.error("failed to start local server", {
@@ -189,6 +204,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shell: resolvedShell,
     createdAt: new Date().toISOString(),
     shared: false,
+    localToken,
   });
 
   const backend = await resolveAuthedConvexClient();
@@ -210,6 +226,20 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     log.debug("convex url configured but no auth token found; backend sync disabled");
   } else if (backend.status === "auth_error") {
     log.warn("backend auth failed; backend sync disabled", { error: backend.error.message });
+  }
+
+  // Keep the short-lived Convex JWT fresh for the whole life of the host. Without
+  // this, a session that outlives the initial token starts failing every backend
+  // call (heartbeats, share, close) with an expired-token error.
+  let authRefresh: AuthAutoRefresh | null = null;
+  if (backend.status === "ready") {
+    authRefresh = startAuthAutoRefresh({
+      client: backend.client,
+      convexUrl: backend.convexUrl,
+      sessionToken: backend.sessionToken,
+      jwt: backend.jwt,
+      log,
+    });
   }
 
   let shared = false;
@@ -242,6 +272,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       })
       .catch((error: unknown) => {
         const err = error instanceof Error ? error : new Error(String(error));
+        // An expired JWT surfaces here first; kick a refresh so the next tick
+        // (and any share/close call) succeeds instead of looping on the error.
+        if (/InvalidAuthHeader|expired|Unauthenticated/i.test(err.message)) {
+          void authRefresh?.refreshNow();
+        }
         log.warn("session heartbeat failed", { error: err.message });
       });
   }, HEARTBEAT_INTERVAL_MS);
@@ -442,7 +477,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
 
   // Reuse attach-client path so host and viewer go through same protocol.
 
-  const url = `ws://127.0.0.1:${server.port}`;
+  const url = `ws://127.0.0.1:${server.port}?token=${localToken}`;
   const attach: AttachClientHandle = startAttachClient({
     url,
     initialSize,
@@ -457,6 +492,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shuttingDown = true;
     log.debug("shell-host shutting down", { sessionId, reason });
     clearInterval(heartbeat);
+    authRefresh?.stop();
     await stopRelayBridge();
     if (backend.status === "ready") {
       try {
