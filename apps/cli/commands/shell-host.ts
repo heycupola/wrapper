@@ -15,7 +15,16 @@ import {
   type AuthAutoRefresh,
 } from "../util/convex-client";
 import { env } from "../util/env";
-import { bell, clearTitle, inlineMessage, notifyOS, setTitle } from "../util/feedback";
+import {
+  bell,
+  clearTitle,
+  formatControlsHint,
+  formatSessionHud,
+  inlineMessage,
+  notifyOS,
+  setTitle,
+  type SessionTransportStatus,
+} from "../util/feedback";
 import { installShutdownHandlers, type ShutdownReason } from "../util/signals";
 
 const log = createLogger("shell-host");
@@ -245,6 +254,8 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   let shared = false;
   let shareCode: string | null = null;
   let relayBridge: RelayHostBridge | null = null;
+  let relayConnected = false;
+  let p2pPeerCount = 0;
   // Guards against a second `share` press racing the in-flight relay setup
   // (we no longer optimistically flip `shared` to serve as that guard).
   let relayStarting = false;
@@ -282,16 +293,29 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   }, HEARTBEAT_INTERVAL_MS);
   heartbeat.unref();
 
-  function paintRestingTitle(): void {
-    if (!env.hudEnabled) return;
-    setTitle(shared ? `wrapper • shared • ${sessionTag}` : "");
+  function currentTransport(): SessionTransportStatus {
+    if (!shared) return "local";
+    if (relayStarting) return "connecting";
+    if (!relayBridge) return "local";
+    if (p2pPeerCount > 0) return "p2p";
+    return relayConnected ? "relay" : "offline";
   }
 
-  function announce(title: string, body: string): void {
+  function paintRestingTitle(): void {
+    if (!env.hudEnabled) return;
+    setTitle(
+      formatSessionHud({
+        role: "host",
+        sessionTag,
+        transport: currentTransport(),
+        p2pPeerCount,
+      }),
+    );
+  }
+
+  function announce(_title: string, body: string): void {
     log.info(body);
-    if (env.hudEnabled) {
-      setTitle(title);
-    }
+    paintRestingTitle();
     if (session.isIdle) inlineMessage(body);
     if (env.hudEnabled) {
       notifyOS("wrapper", body);
@@ -321,6 +345,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     }
 
     relayStarting = true;
+    paintRestingTitle();
     const code = generateShareCode();
     try {
       // Persist the shared flag and the access-code hash before issuing the relay
@@ -335,6 +360,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         sessionId,
         pty: session,
         enableP2P: env.p2pEnabled,
+        onTransportChange: (state) => {
+          relayConnected = state.relayConnected;
+          p2pPeerCount = state.p2pPeerCount;
+          paintRestingTitle();
+        },
         onOpen: () => {
           if (backend.status !== "ready") return;
           void backend.client
@@ -403,6 +433,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       );
     } finally {
       relayStarting = false;
+      paintRestingTitle();
     }
   };
 
@@ -410,6 +441,9 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     if (!relayBridge) return;
     const bridge = relayBridge;
     relayBridge = null;
+    relayConnected = false;
+    p2pPeerCount = 0;
+    paintRestingTitle();
     await bridge.stop();
     if (backend.status === "ready") {
       await backend.client
@@ -467,13 +501,22 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     onArmedChange: (armed) => {
       if (!env.hudEnabled) return;
       if (armed) {
-        setTitle(`● wrapper armed • ${sessionTag}`);
+        setTitle(
+          formatSessionHud({
+            role: "host",
+            sessionTag,
+            transport: currentTransport(),
+            p2pPeerCount,
+            armed: true,
+          }),
+        );
         bell();
       } else {
         paintRestingTitle();
       }
     },
   });
+  paintRestingTitle();
 
   // Reuse attach-client path so host and viewer go through same protocol.
 
@@ -484,7 +527,28 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     connectRetries: 20,
     connectRetryDelayMs: 50,
     interceptStdin: (chunk) => prefixFilter.process(chunk),
+    onTerminalTitle: paintRestingTitle,
   });
+
+  // Print the control discovery hint once the shell reaches an idle prompt. We
+  // never write it while a foreground program owns the terminal, so a slow shell
+  // startup or a full-screen TUI cannot be corrupted.
+  let controlsHintTimer: ReturnType<typeof setTimeout> | null = null;
+  let controlsHintAttempts = 0;
+  const showControlsHint = (): void => {
+    controlsHintTimer = null;
+    if (session.isIdle) {
+      inlineMessage(formatControlsHint("host"));
+      paintRestingTitle();
+      return;
+    }
+    controlsHintAttempts += 1;
+    if (controlsHintAttempts >= 20) return;
+    controlsHintTimer = setTimeout(showControlsHint, 250);
+    controlsHintTimer.unref?.();
+  };
+  controlsHintTimer = setTimeout(showControlsHint, 500);
+  controlsHintTimer.unref?.();
 
   let shuttingDown = false;
   const shutdown = async (reason: ShutdownReason): Promise<number> => {
@@ -492,6 +556,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shuttingDown = true;
     log.debug("shell-host shutting down", { sessionId, reason });
     clearInterval(heartbeat);
+    if (controlsHintTimer) clearTimeout(controlsHintTimer);
     authRefresh?.stop();
     await stopRelayBridge();
     if (backend.status === "ready") {

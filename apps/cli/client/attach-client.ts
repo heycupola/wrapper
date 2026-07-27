@@ -18,9 +18,15 @@ export interface AttachClientOptions {
   connectRetries?: number;
   connectRetryDelayMs?: number;
   interceptStdin?: (chunk: string) => string | null;
-  /** Opt-in viewer P2P: negotiate a direct data channel for this session. */
+  /** Viewer P2P: negotiate a direct data channel for this relay session. */
   p2p?: { sessionId: SessionId };
+  /** Reports the currently active data path for HUD/status feedback. */
+  onTransportChange?: (status: AttachTransportStatus) => void;
+  /** Called after remote output writes an OSC window-title sequence. */
+  onTerminalTitle?: () => void;
 }
+
+export type AttachTransportStatus = "connecting" | "local" | "relay" | "p2p" | "closed";
 
 export interface AttachResult {
   sessionId: SessionId | null;
@@ -50,6 +56,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
   let exitCode: number | null = null;
   let reason: AttachResult["reason"] = "socket_closed";
   let lastError: Error | undefined;
+  let titleSequenceTail = "";
   let resolveDone: (result: AttachResult) => void;
 
   const done = new Promise<AttachResult>((resolve) => {
@@ -60,10 +67,18 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
   let rawModeEnabled = false;
   let ioAttached = false;
   let finalized = false;
-  // P2P fast path (opt-in). The relay WS stays as signaling + fallback; once the
+  // P2P fast path. The relay WS stays as signaling + fallback; once the
   // data channel is open it carries session traffic and relay output is deduped.
   let dataTransport: Transport | null = null;
   let negotiation: Negotiation | null = null;
+  let transportStatus: AttachTransportStatus = "connecting";
+
+  const reportTransport = (status: AttachTransportStatus): void => {
+    if (transportStatus === status) return;
+    transportStatus = status;
+    opts.onTransportChange?.(status);
+  };
+  opts.onTransportChange?.(transportStatus);
 
   // `stdin.isTTY` can be unreliable under bun run, so check setRawMode directly.
   const canRawMode = typeof stdin.setRawMode === "function";
@@ -134,6 +149,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
       return { sessionId, exitCode, reason, error: lastError };
     }
     finalized = true;
+    reportTransport("closed");
     detachIO();
     negotiation?.cancel();
     dataTransport?.close();
@@ -147,6 +163,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
     return makeTransport({
       onOpen: () => {
         log.debug("transport connected", { attempt: attempts });
+        reportTransport(opts.p2p ? "relay" : "local");
         attachIO();
         if (opts.p2p && !negotiation) startP2P(opts.p2p.sessionId);
       },
@@ -175,6 +192,14 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
           }, retryDelayMs);
           return;
         }
+        // A live P2P channel can keep the session running even if its signaling
+        // WebSocket disappears. If the data channel later drops too, its close
+        // handler finalizes because no relay fallback remains.
+        if (dataTransport?.isOpen) {
+          log.warn("relay transport closed; continuing over p2p");
+          reportTransport("p2p");
+          return;
+        }
         log.debug("transport closed");
         finalize();
       },
@@ -184,6 +209,10 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
             attempt: attempts,
             error: info.message,
           });
+          return;
+        }
+        if (dataTransport?.isOpen) {
+          log.warn("relay transport error; continuing over p2p", { error: info.message });
           return;
         }
         lastError = new Error(`transport error: ${info.message ?? "unknown"}`);
@@ -207,6 +236,22 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
         break;
       case "output":
         stdout.write(msg.data);
+        // Shell prompts and TUIs often set OSC 0/1/2 titles. Repaint Wrapper's
+        // session HUD after those sequences so it stays persistent without
+        // filtering or altering the actual PTY output. Keep a short tail so a
+        // sequence split across protocol frames is still detected.
+        {
+          const titleScan = titleSequenceTail + msg.data;
+          titleSequenceTail = titleScan.slice(-8);
+          const osc = "\u001B]";
+          if (
+            titleScan.includes(`${osc}0;`) ||
+            titleScan.includes(`${osc}1;`) ||
+            titleScan.includes(`${osc}2;`)
+          ) {
+            opts.onTerminalTitle?.();
+          }
+        }
         break;
       case "session.closed":
         exitCode = msg.exitCode;
@@ -242,8 +287,26 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
         },
         onClose: () => {
           dataTransport = null;
+          if (transport.isOpen) {
+            log.info("p2p data channel down; using relay fallback");
+            reportTransport("relay");
+          } else if (!finalized) {
+            finalize();
+          }
         },
-        onError: () => {},
+        onError: (info) => {
+          dataTransport = null;
+          if (transport.isOpen) {
+            log.warn("p2p data channel failed; using relay fallback", {
+              error: info.message,
+            });
+            reportTransport("relay");
+          } else if (!finalized) {
+            lastError = new Error(`p2p transport error: ${info.message ?? "unknown"}`);
+            reason = "error";
+            finalize();
+          }
+        },
       },
       // Signaling always travels over the relay WS (never the data channel).
       sendSignal: ({ kind, data }) => {
@@ -264,7 +327,10 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
       const t = await negotiation?.transport;
       if (t) {
         dataTransport = t;
+        reportTransport("p2p");
         log.info("p2p data channel up (viewer)");
+      } else if (transport.isOpen) {
+        reportTransport("relay");
       }
     })();
   }

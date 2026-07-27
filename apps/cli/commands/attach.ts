@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import { createLogger, trackError, trackEvent } from "@repo/logger";
 import { makeFunctionReference } from "convex/server";
-import { startAttachClient } from "../client/attach-client";
+import { startAttachClient, type AttachTransportStatus } from "../client/attach-client";
 import {
   findSession,
   findSessionByPort,
@@ -12,7 +12,15 @@ import {
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
 import { resolveAuthedConvexClient } from "../util/convex-client";
 import { env } from "../util/env";
-import { bell, clearTitle, inlineMessage, setTitle } from "../util/feedback";
+import {
+  bell,
+  clearTitle,
+  formatControlsHint,
+  formatSessionHud,
+  inlineMessage,
+  setTitle,
+  type SessionTransportStatus,
+} from "../util/feedback";
 import { installShutdownHandlers } from "../util/signals";
 
 const log = createLogger("attach");
@@ -94,10 +102,29 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
   log.info("attaching", { url: safeUrl, sessionId: target.id });
   trackEvent("attach_started");
   process.stderr.write(`[wrapper] attaching to ${safeUrl}\n`);
-  process.stderr.write(`[wrapper] press Ctrl+\\ then 'd' to detach (session keeps running)\n`);
+  process.stderr.write(`[wrapper] ${formatControlsHint("viewer")} (session keeps running)\n`);
 
   let userAborted = false;
   const sessionTag = target.id.slice(0, 6);
+  const usingRelay = url.includes("/ws?ticket=");
+  let transportStatus: AttachTransportStatus = "connecting";
+
+  const hudTransport = (): SessionTransportStatus => {
+    if (transportStatus === "closed") return "offline";
+    return transportStatus;
+  };
+
+  const paintViewerTitle = (armed = false): void => {
+    if (!env.hudEnabled) return;
+    setTitle(
+      formatSessionHud({
+        role: "viewer",
+        sessionTag,
+        transport: hudTransport(),
+        armed,
+      }),
+    );
+  };
 
   /*
    * Wrapper's keystroke prefix on the attach side. The host has its
@@ -122,8 +149,12 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
         void handle.detach();
         break;
       case "status":
-        inlineMessage(`viewing ${sessionTag} on port ${target.port}`);
-        setTitle(`wrapper • viewer • ${sessionTag}`);
+        inlineMessage(
+          `viewing ${sessionTag} transport=${hudTransport()}${
+            target.port === undefined ? "" : ` port=${target.port}`
+          }`,
+        );
+        paintViewerTitle();
         break;
       case "share":
       case "unshare":
@@ -140,17 +171,16 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     onForward: (data) => handle.forwardInput(data),
     onArmedChange: (armed) => {
       if (armed) {
-        setTitle(`● wrapper armed • viewer • ${sessionTag}`);
+        paintViewerTitle(true);
         bell();
       } else {
-        setTitle(`wrapper • viewer • ${sessionTag}`);
+        paintViewerTitle();
       }
     },
   });
 
   // P2P applies only to relay attaches (remote peers); local 127.0.0.1 attaches
   // are already direct. Relay URLs carry the `/ws?ticket=` path.
-  const usingRelay = url.includes("/ws?ticket=");
   const handle = startAttachClient({
     url,
     initialSize: {
@@ -161,10 +191,15 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     connectRetryDelayMs: 100,
     interceptStdin: (chunk) => prefixFilter.process(chunk),
     p2p: env.p2pEnabled && usingRelay ? { sessionId: target.id } : undefined,
+    onTransportChange: (status) => {
+      transportStatus = status;
+      paintViewerTitle();
+    },
+    onTerminalTitle: paintViewerTitle,
   });
 
   // Initial title so the user sees this is a viewer window.
-  setTitle(`wrapper • viewer • ${sessionTag}`);
+  paintViewerTitle();
 
   const signals = installShutdownHandlers({
     onShutdown: async () => {
