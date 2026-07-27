@@ -8,6 +8,8 @@ mirror it on demand. Your shell stays local until you choose to share it, and
 the wrapping is invisible: your dotfiles, prompt, plugins, and history behave
 exactly as before.
 
+{/* TODO(image): Add /images/wrapper-session-overview.webp here. Show a host terminal pressing Ctrl+\ then s, the generated share code, and a remote viewer connected over P2P. Include both desktop and phone in one composition; redact real usernames, paths, and tokens. Essential product overview asset. */}
+
 ## The parts
 
 - **CLI** (`apps/cli`): hosts your shell inside a PTY, runs a local WebSocket
@@ -28,18 +30,17 @@ exactly as before.
    exposed.
 2. `wrapper attach` mirrors that session from the same machine with no account
    and no network.
-3. Pressing `Ctrl+\ s` shares the session over the relay. Another device joins
-   with `wrapper attach --relay`.
-4. With `WRAPPER_P2P=1` on both ends, keystrokes and output travel over a direct
-   WebRTC data channel for lower latency, and the relay is used only for
-   signaling and as a fallback.
+3. Pressing `Ctrl+\ s` shares the session and prints an access code. Your own
+   devices can join directly; another user must supply that code.
+4. Wrapper attempts a direct WebRTC data channel by default. The relay carries
+   signaling and remains connected as the automatic fallback.
 
 ## Current status
 
 The platform is complete up to mobile app development:
 
 - CLI host and attach flow (local and relay)
-- Optional direct WebRTC P2P fast path
+- Default-on direct WebRTC P2P fast path with relay fallback
 - Device authorization login flow
 - Web onboarding for first-run setup
 - Backend session lifecycle and access control

@@ -25,6 +25,9 @@ export default defineSchema({
     port: v.optional(v.number()),
     hostPid: v.optional(v.number()),
     shared: v.boolean(),
+    // SHA-256 of the normalized share code. Set when the owner shares; a viewer
+    // that is not the owner must present the matching code to get a viewer ticket.
+    shareCodeHash: v.optional(v.string()),
     relayState: v.union(
       v.literal("offline"),
       v.literal("connecting"),

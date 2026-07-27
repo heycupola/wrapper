@@ -134,12 +134,14 @@ program
   .option("-p, --port <number>", "explicit port (skips registry lookup)")
   .option("-H, --host <hostname>", "host running the session", "127.0.0.1")
   .option("-r, --relay", "attach via relay using backend-issued ticket")
+  .option("-c, --code <code>", "share code from the host (required to join someone else's session)")
   .action(async (raw) => {
     await runAttach({
       id: raw.id,
       port: raw.port ? Number(raw.port) : undefined,
       host: raw.host,
       relay: Boolean(raw.relay),
+      code: raw.code,
     });
   });
 

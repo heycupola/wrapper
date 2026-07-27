@@ -13,11 +13,13 @@ export interface RelayHostBridgeOptions {
   ticket: string;
   sessionId: SessionId;
   pty: PtySession;
-  /** Opt-in: negotiate direct P2P data channels with viewers (relay fallback). */
+  /** Negotiate direct P2P data channels with viewers (relay fallback). */
   enableP2P?: boolean;
   onOpen?: () => void;
   onClose?: () => void;
   onError?: (error: Error) => void;
+  /** Reports relay connectivity and the number of live direct viewer channels. */
+  onTransportChange?: (state: { relayConnected: boolean; p2pPeerCount: number }) => void;
 }
 
 export interface RelayHostBridge {
@@ -33,12 +35,22 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
   // unless enableP2P; output is fanned out to these in addition to the relay.
   const p2pPeers = new Map<string, { negotiation: Negotiation }>();
   const p2pChannels = new Map<string, Transport>();
+  let relayConnected = false;
+
+  const reportTransport = (): void => {
+    opts.onTransportChange?.({
+      relayConnected,
+      p2pPeerCount: [...p2pChannels.values()].filter((channel) => channel.isOpen).length,
+    });
+  };
 
   // The relay WebSocket is the transport and the WebRTC signaling channel. When
   // enableP2P is set, `handleSignal` negotiates per-viewer data channels and
   // `send` fans output to them; otherwise everything flows over this socket.
   const transport: Transport = new WebSocketTransport(wsUrl, {
     onOpen: () => {
+      relayConnected = true;
+      reportTransport();
       log.info("relay host connected", { sessionId: opts.sessionId });
       opts.onOpen?.();
       send({
@@ -58,6 +70,8 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
       handleInbound(msg);
     },
     onClose: (info) => {
+      relayConnected = false;
+      reportTransport();
       opts.onClose?.();
       if (!closed) {
         log.warn("relay host disconnected", {
@@ -68,6 +82,8 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
       }
     },
     onError: (info) => {
+      relayConnected = false;
+      reportTransport();
       opts.onError?.(new Error("relay websocket error"));
       log.warn("relay host websocket error", {
         sessionId: opts.sessionId,
@@ -135,6 +151,7 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
       p2pPeers.get(peerId)?.negotiation.cancel();
       p2pPeers.delete(peerId);
       p2pChannels.delete(peerId);
+      reportTransport();
       return;
     }
     let entry = p2pPeers.get(peerId);
@@ -154,9 +171,13 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
           },
           onClose: () => {
             p2pChannels.delete(peerId);
+            p2pPeers.delete(peerId);
+            reportTransport();
           },
           onError: () => {
             p2pChannels.delete(peerId);
+            p2pPeers.delete(peerId);
+            reportTransport();
           },
         },
         sendSignal: ({ kind, data }) => {
@@ -179,7 +200,11 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
         const t = await negotiation.transport;
         if (t) {
           p2pChannels.set(peerId, t);
+          reportTransport();
           log.info("p2p data channel up (host)", { sessionId: opts.sessionId, peerId });
+        } else {
+          p2pPeers.delete(peerId);
+          reportTransport();
         }
       })();
     }
@@ -194,6 +219,8 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
     for (const entry of p2pPeers.values()) entry.negotiation.cancel();
     p2pPeers.clear();
     p2pChannels.clear();
+    relayConnected = false;
+    reportTransport();
     transport.close();
   }
 

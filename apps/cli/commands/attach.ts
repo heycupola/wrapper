@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import { createLogger, trackError, trackEvent } from "@repo/logger";
 import { makeFunctionReference } from "convex/server";
-import { startAttachClient } from "../client/attach-client";
+import { startAttachClient, type AttachTransportStatus } from "../client/attach-client";
 import {
   findSession,
   findSessionByPort,
@@ -12,7 +12,15 @@ import {
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
 import { resolveAuthedConvexClient } from "../util/convex-client";
 import { env } from "../util/env";
-import { bell, clearTitle, inlineMessage, setTitle } from "../util/feedback";
+import {
+  bell,
+  clearTitle,
+  formatControlsHint,
+  formatSessionHud,
+  inlineMessage,
+  setTitle,
+  type SessionTransportStatus,
+} from "../util/feedback";
 import { installShutdownHandlers } from "../util/signals";
 
 const log = createLogger("attach");
@@ -32,6 +40,7 @@ type AuthorizeAttachResponse = {
 
 type IssueViewerTicketArgs = {
   sessionId: string;
+  code?: string;
 };
 
 type IssueViewerTicketResponse = {
@@ -69,6 +78,7 @@ export interface AttachOptions {
   port?: number;
   host?: string;
   relay?: boolean;
+  code?: string;
 }
 
 const SIGINT_EXIT = 130;
@@ -82,18 +92,39 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     host,
     target,
     preferRelay: Boolean(opts.relay),
+    code: opts.code,
   });
   if (!url) process.exit(1);
-  // Relay URLs carry a single-use join ticket in the query string. Redact it so
-  // the credential never lands in the log file or the terminal scrollback.
-  const safeUrl = url.replace(/ticket=[^&]+/, "ticket=***");
+  // Relay URLs carry a single-use join ticket, and local URLs carry the loopback
+  // token, in the query string. Redact both so no credential lands in the log
+  // file or the terminal scrollback.
+  const safeUrl = url.replace(/ticket=[^&]+/, "ticket=***").replace(/token=[^&]+/, "token=***");
   log.info("attaching", { url: safeUrl, sessionId: target.id });
   trackEvent("attach_started");
   process.stderr.write(`[wrapper] attaching to ${safeUrl}\n`);
-  process.stderr.write(`[wrapper] press Ctrl+\\ then 'd' to detach (session keeps running)\n`);
+  process.stderr.write(`[wrapper] ${formatControlsHint("viewer")} (session keeps running)\n`);
 
   let userAborted = false;
   const sessionTag = target.id.slice(0, 6);
+  const usingRelay = url.includes("/ws?ticket=");
+  let transportStatus: AttachTransportStatus = "connecting";
+
+  const hudTransport = (): SessionTransportStatus => {
+    if (transportStatus === "closed") return "offline";
+    return transportStatus;
+  };
+
+  const paintViewerTitle = (armed = false): void => {
+    if (!env.hudEnabled) return;
+    setTitle(
+      formatSessionHud({
+        role: "viewer",
+        sessionTag,
+        transport: hudTransport(),
+        armed,
+      }),
+    );
+  };
 
   /*
    * Wrapper's keystroke prefix on the attach side. The host has its
@@ -118,8 +149,12 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
         void handle.detach();
         break;
       case "status":
-        inlineMessage(`viewing ${sessionTag} on port ${target.port}`);
-        setTitle(`wrapper • viewer • ${sessionTag}`);
+        inlineMessage(
+          `viewing ${sessionTag} transport=${hudTransport()}${
+            target.port === undefined ? "" : ` port=${target.port}`
+          }`,
+        );
+        paintViewerTitle();
         break;
       case "share":
       case "unshare":
@@ -136,17 +171,16 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     onForward: (data) => handle.forwardInput(data),
     onArmedChange: (armed) => {
       if (armed) {
-        setTitle(`● wrapper armed • viewer • ${sessionTag}`);
+        paintViewerTitle(true);
         bell();
       } else {
-        setTitle(`wrapper • viewer • ${sessionTag}`);
+        paintViewerTitle();
       }
     },
   });
 
   // P2P applies only to relay attaches (remote peers); local 127.0.0.1 attaches
   // are already direct. Relay URLs carry the `/ws?ticket=` path.
-  const usingRelay = url.includes("/ws?ticket=");
   const handle = startAttachClient({
     url,
     initialSize: {
@@ -157,10 +191,15 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     connectRetryDelayMs: 100,
     interceptStdin: (chunk) => prefixFilter.process(chunk),
     p2p: env.p2pEnabled && usingRelay ? { sessionId: target.id } : undefined,
+    onTransportChange: (status) => {
+      transportStatus = status;
+      paintViewerTitle();
+    },
+    onTerminalTitle: paintViewerTitle,
   });
 
   // Initial title so the user sees this is a viewer window.
-  setTitle(`wrapper • viewer • ${sessionTag}`);
+  paintViewerTitle();
 
   const signals = installShutdownHandlers({
     onShutdown: async () => {
@@ -199,7 +238,7 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
 async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null> {
   if (opts.id) {
     const found = findSession(opts.id);
-    if (found) return { id: found.id, port: found.port, local: true };
+    if (found) return { id: found.id, port: found.port, local: true, localToken: found.localToken };
     return { id: opts.id, local: false };
   }
 
@@ -208,7 +247,9 @@ async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null>
     // authorized. If the port isn't a known local session, keep it unknown —
     // authorization will then refuse (when a backend is configured).
     const byPort = findSessionByPort(opts.port);
-    if (byPort) return { id: byPort.id, port: byPort.port, local: true };
+    if (byPort) {
+      return { id: byPort.id, port: byPort.port, local: true, localToken: byPort.localToken };
+    }
     return { id: "<unknown>", port: opts.port, local: true };
   }
 
@@ -221,7 +262,7 @@ async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null>
   }
   if (sessions.length === 1) {
     const only = sessions[0]!;
-    return { id: only.id, port: only.port, local: true };
+    return { id: only.id, port: only.port, local: true, localToken: only.localToken };
   }
 
   const picked = await pickSession(sessions);
@@ -232,6 +273,7 @@ interface TargetSession {
   id: string;
   port?: number;
   local: boolean;
+  localToken?: string;
 }
 
 async function pickSession(sessions: SessionRecord[]): Promise<TargetSession | null> {
@@ -248,7 +290,7 @@ async function pickSession(sessions: SessionRecord[]): Promise<TargetSession | n
   if (p.isCancel(choice)) return null;
   const found = sorted.find((s) => s.id === choice);
   if (!found) return null;
-  return { id: found.id, port: found.port, local: true };
+  return { id: found.id, port: found.port, local: true, localToken: found.localToken };
 }
 
 function shortShell(path: string): string {
@@ -300,21 +342,23 @@ async function resolveAttachUrl(input: {
   host: string;
   target: TargetSession;
   preferRelay: boolean;
+  code?: string;
 }): Promise<string | null> {
   if (!input.preferRelay && input.target.local && input.target.port !== undefined) {
     const allowed = await ensureAttachAllowed(input.target);
     if (!allowed) return null;
-    return `ws://${input.host}:${input.target.port}`;
+    const base = `ws://${input.host}:${input.target.port}`;
+    return input.target.localToken ? `${base}?token=${input.target.localToken}` : base;
   }
 
   if (input.target.id === "<unknown>") {
     process.stderr.write("[wrapper] relay attach requires `--id <sessionId>`.\n");
     return null;
   }
-  return await resolveRelayAttachUrl(input.target.id);
+  return await resolveRelayAttachUrl(input.target.id, input.code);
 }
 
-async function resolveRelayAttachUrl(sessionId: string): Promise<string | null> {
+async function resolveRelayAttachUrl(sessionId: string, code?: string): Promise<string | null> {
   const backend = await resolveAuthedConvexClient();
   if (backend.status === "unconfigured") {
     process.stderr.write("[wrapper] relay attach requires WRAPPER_CONVEX_URL configuration.\n");
@@ -330,7 +374,7 @@ async function resolveRelayAttachUrl(sessionId: string): Promise<string | null> 
   }
 
   try {
-    const issued = await backend.client.mutation(issueViewerRelayTicketRef, { sessionId });
+    const issued = await backend.client.mutation(issueViewerRelayTicketRef, { sessionId, code });
     return buildRelayWsUrl(env.relayUrl, issued.ticket);
   } catch (error) {
     const message = normalizeAttachAuthorizationError(error);
@@ -347,7 +391,7 @@ function normalizeAttachAuthorizationError(error: unknown): string {
     case "UNAUTHORIZED":
       return "Not signed in. Run `wrapper auth login` and try again.";
     case "INSUFFICIENT_PERMISSION":
-      return "Access denied. Ask session owner to share it, or attach to your own session.";
+      return "Access denied. Ask the session owner for a share code and pass it with `--code <code>`, or attach to your own session.";
     case "RESOURCE_NOT_FOUND":
       return "Session not found or no longer active.";
     default:

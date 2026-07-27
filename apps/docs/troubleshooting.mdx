@@ -37,6 +37,30 @@ fly status --app <app-name>
 
 If image/version is consistent and health checks pass, deploy is generally okay.
 
+## P2P does not come up
+
+The terminal title starts at `relay` and changes to `p2p` when the direct data
+channel opens. If it stays on `relay`, the session is still working through the
+authenticated Fly relay.
+
+1. Run `wrapper logs --follow` on host and viewer.
+2. Confirm both sides use the same session and current CLI version.
+3. Test from two real networks. CI and local sandbox tests cannot reproduce NAT.
+4. Set `WRAPPER_P2P=0` to force relay-only mode while diagnosing.
+
+If an open P2P channel drops, Wrapper waits three seconds for a transient
+disconnect to recover, then switches input/output back to the relay. Look for
+`p2p data channel failed; using relay fallback` in the viewer log.
+
+{/* TODO(image): Add /images/transport-fallback-troubleshooting.webp here. Show a sanitized viewer log transitioning from p2p to relay fallback alongside the title changing to `relay`. Optional. */}
+
+## Controls are not visible
+
+Wrapper prints the available controls once and uses the terminal title as its
+non-disruptive HUD. Press `Ctrl+\` to reveal the role-specific controls. If your
+terminal hides titles, use `Ctrl+\` then `?` for an inline status line. Check
+that `WRAPPER_HUD` is not set to `off`.
+
 ## Web hydration mismatch warning
 
 If you see random attributes like `cz-shortcut-listen`, it is usually a browser

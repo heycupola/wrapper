@@ -8,10 +8,10 @@ Wrapper protocol frames can travel over two transports. Both sit behind a small
 (`relay/host-bridge.ts`) and the viewer (`client/attach-client.ts`) never touch a
 socket directly.
 
-| Transport                  | File           | Used for                                            |
-| -------------------------- | -------------- | --------------------------------------------------- |
-| Relay WebSocket            | `transport.ts` | The relay path, always. Signaling and fallback.     |
-| Direct WebRTC data channel | `webrtc.ts`    | The direct P2P fast path, opt-in via `WRAPPER_P2P`. |
+| Transport                  | File           | Used for                                                               |
+| -------------------------- | -------------- | ---------------------------------------------------------------------- |
+| Relay WebSocket            | `transport.ts` | The relay path, always. Signaling and fallback.                        |
+| Direct WebRTC data channel | `webrtc.ts`    | The direct P2P fast path, on by default; opt out with `WRAPPER_P2P=0`. |
 
 ## Why a direct path
 
@@ -43,20 +43,28 @@ existing relay WebSocket as `signal` protocol frames, so there is no separate
 signaling server. Discovery uses public STUN servers, and the relay is the
 fallback if ICE cannot connect in time.
 
+{/* TODO(image): Add /images/p2p-versus-relay.webp here. Show two paths side by side: direct encrypted host-to-viewer P2P and host-to-Fly-relay-to-viewer fallback. Label signaling separately from terminal data and include the `p2p`/`relay` HUD states. Essential transport asset. */}
+
 ## Data path once P2P is up
 
 - The host fans PTY output to the relay and to every open data channel. Relay
   viewers get the relay copy, and P2P viewers get the data-channel copy.
 - The viewer prefers the data channel for input and resize, and once its channel
   is open it ignores the relay's duplicate output frames.
-- If the data channel drops, both sides revert to the relay automatically.
+- ICE candidates received before the SDP offer/answer are queued until the
+  remote description is ready.
+- If the data channel drops or remains disconnected for three seconds, the
+  viewer immediately resumes input/output over the relay.
+- If the signaling WebSocket closes after P2P is open, the data channel keeps
+  the session alive. If both paths close, the attach ends.
 
 ## Security
 
 - Data channels are DTLS-encrypted end to end. Once P2P is established, frames
   never traverse the relay.
-- Only a viewer that already passed relay ticket auth (which checks ownership or
-  a shared session) can signal, so only authorized peers form a P2P connection.
+- Only a viewer that already passed relay ticket auth can signal. The owner is
+  allowed; a non-owner must present the session's share code. Knowing the
+  session id alone is not enough.
 - The relay assigns an authoritative per-viewer peer id and stamps the
   `signal.from` field, ignoring client claims. Host to viewer signals are routed
   strictly by peer id within the same session, and signal payloads are capped at
@@ -67,18 +75,24 @@ fallback if ICE cannot connect in time.
 
 ## Enabling it
 
-`WRAPPER_P2P` is off by default, so the relay WebSocket is the transport and
-behavior is unchanged. Turn it on per session on both ends:
+`WRAPPER_P2P` is on by default, so host and viewer negotiate a direct data
+channel automatically and fall back to the relay if it cannot be formed. Opt out
+per session on either end with `WRAPPER_P2P=0`:
 
 ```bash
-# host
-WRAPPER_P2P=1 wrapper shell-host          # then Ctrl+\ s to share
-# viewer
-WRAPPER_P2P=1 wrapper attach --relay -i <sessionId>
+# force the relay path (no P2P)
+WRAPPER_P2P=0 wrapper shell-host          # then Ctrl+\ s to share
+WRAPPER_P2P=0 wrapper attach --relay -i <sessionId> -c <shareCode>
 ```
 
 Look for `p2p data channel up` in both logs. P2P applies only to relay attaches;
 local `127.0.0.1` attaches are already direct.
+
+No TURN service or new third-party dependency is required for fallback. Wrapper
+keeps its authenticated WebSocket relay available as the fallback data path.
+Candidate discovery still uses the configured public Google and Twilio STUN
+servers. A dedicated TURN deployment can be added later to improve direct-path
+success behind restrictive symmetric NAT, but it is not required for correctness.
 
 ## Why werift
 
@@ -92,5 +106,7 @@ and mobile viewers use their own native WebRTC.
 The transport abstraction and the relay signal routing are unit tested
 (`apps/relay/tests/hub.test.ts`). Real NAT traversal must be verified on two
 machines on different networks, since it cannot run in CI or a sandbox. Because
-the flag defaults off and the relay is the fallback, enabling P2P cannot regress
-the working relay path.
+P2P is default-on and the relay remains connected, failed negotiation does not
+regress the working relay path.
+
+{/* TODO(image): Add /images/p2p-success-logs.webp here. Capture sanitized host and viewer logs with `p2p data channel up`, then a second capture showing `using relay fallback` after a forced P2P failure. Optional troubleshooting asset. */}

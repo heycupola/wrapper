@@ -5,7 +5,13 @@ import { internalMutation } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { createError, ErrorCode } from "./lib/errors.ts";
 import { protectedAction, protectedMutation, publicMutation } from "./lib/middleware.ts";
-import { getRelayTicketConfig, createRelayTicket, hashRelayTicket } from "./lib/relayTicket.ts";
+import {
+  getRelayTicketConfig,
+  createRelayTicket,
+  hashRelayTicket,
+  hashShareCode,
+} from "./lib/relayTicket.ts";
+import { enforceRateLimit } from "./lib/rateLimit.ts";
 import { ErrorSeverity } from "./lib/types.ts";
 
 const RELAY_TICKET = getRelayTicketConfig();
@@ -81,6 +87,9 @@ export const issueHostTicketInternal = internalMutation({
 export const issueViewerTicket = protectedMutation({
   args: {
     sessionId: v.string(),
+    // Access code shown by the host when it shared. Not required for the owner
+    // (an owner can attach to their own session from any of their devices).
+    code: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const session = await findActiveSession(ctx, args.sessionId);
@@ -93,12 +102,38 @@ export const issueViewerTicket = protectedMutation({
     }
 
     const isOwner = session.ownerUserId === ctx.userId;
-    if (!isOwner && !session.shared) {
-      throw createError({
-        code: ErrorCode.INSUFFICIENT_PERMISSION,
-        message: "Session is not shared",
-        severity: ErrorSeverity.High,
+    if (!isOwner) {
+      // Throttle non-owner attempts per user+session so a leaked session id can
+      // never be paired with a brute-forced share code.
+      await enforceRateLimit(ctx, `issueViewerTicket:${ctx.userId}:${args.sessionId}`, {
+        limit: 10,
+        windowMs: 60_000,
       });
+
+      if (!session.shared || !session.shareCodeHash) {
+        throw createError({
+          code: ErrorCode.INSUFFICIENT_PERMISSION,
+          message: "Session is not shared",
+          severity: ErrorSeverity.High,
+        });
+      }
+
+      const provided = args.code?.trim();
+      if (!provided) {
+        throw createError({
+          code: ErrorCode.INSUFFICIENT_PERMISSION,
+          message: "This session requires a share code",
+          severity: ErrorSeverity.High,
+        });
+      }
+      const providedHash = await hashShareCode(provided);
+      if (providedHash !== session.shareCodeHash) {
+        throw createError({
+          code: ErrorCode.INSUFFICIENT_PERMISSION,
+          message: "Invalid share code",
+          severity: ErrorSeverity.High,
+        });
+      }
     }
 
     return await issueTicket(ctx, {

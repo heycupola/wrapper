@@ -21,11 +21,13 @@ overview.
 
 Two long-lived environments, selected by branch:
 
-```
+```text
 local        your machine       Convex dev + ws://localhost:8080 + localhost:3000
 dev branch   ->  DEV env    ->  Convex dev deployment, wrapper-relay-dev, Vercel Preview
 main branch  ->  PROD env   ->  Convex prod deployment, wrapper-relay-prod, Vercel Production
 ```
+
+{/* TODO(image): Add /images/environment-promotion-flow.webp here. Show local, dev, and production lanes with the branches and their Convex, Fly, and Vercel targets. Do not include secret values. Optional operator asset. */}
 
 ## How each component picks dev vs prod
 

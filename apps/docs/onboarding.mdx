@@ -13,6 +13,8 @@ wrapper auth login
 
 Open the displayed URL, sign in with GitHub/Google, and approve the code.
 
+{/* TODO(image): Add /images/device-auth-approval.webp here. Capture the browser approval page with a sample user code and the signed-in account visible; use test data and redact session cookies or browser extensions. Essential onboarding asset. */}
+
 ## 2) Complete web onboarding
 
 After approving the code, continue to `/onboarding` in the web app.
@@ -23,6 +25,8 @@ Checklist:
 - confirm CLI login is working
 - share your first session
 
+{/* TODO(image): Add /images/web-onboarding-checklist.webp here. Show the onboarding checklist with profile, CLI connection, and first-share progress. Use a test account. Optional. */}
+
 ## 3) Start your host session
 
 ```bash
@@ -31,19 +35,35 @@ wrapper shell-host
 
 This is your owner terminal.
 
+The terminal title shows `host`, the short session id, and the active transport.
+Wrapper prints the controls once the first prompt is idle. Press `Ctrl+\` at any
+time to reveal the context-specific controls in the title without changing the
+terminal screen.
+
 ## 4) Share and attach
 
 In host terminal:
 
-- `Ctrl+\` then `s` to share
-- `Ctrl+\` then `u` to unshare
+- `Ctrl+\` then `s` to share (prints a share code and the join command)
+- `Ctrl+\` then `u` to unshare (revokes access immediately)
 - `Ctrl+\` then `?` for status
 
-From another terminal:
+From another device signed in as you, no code is needed:
 
 ```bash
 wrapper attach --relay --id <sessionId>
 ```
+
+To let someone else in (for example pair-prompting), give them the share code:
+
+```bash
+wrapper attach --relay --id <sessionId> --code <shareCode>
+```
+
+Every viewer who joins can type into the same shell, so only share the code with
+people you want to co-drive the session.
+
+{/* TODO(image): Add /images/share-code-and-viewer.webp here. Show the host after Ctrl+\ then s with a fake share code and exact attach command next to a viewer whose title reports p2p. Redact the real session id and filesystem paths. Essential sharing asset. */}
 
 ## 5) Done
 

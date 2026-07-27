@@ -36,6 +36,42 @@ import { env } from "./env";
 const ESC = "\x1b";
 const BEL = "\x07";
 
+export type SessionHudRole = "host" | "viewer";
+export type SessionTransportStatus = "local" | "connecting" | "relay" | "p2p" | "offline";
+
+export interface SessionHudState {
+  role: SessionHudRole;
+  sessionTag: string;
+  transport: SessionTransportStatus;
+  armed?: boolean;
+  p2pPeerCount?: number;
+}
+
+/**
+ * Build the persistent window title and the context-aware prefix menu.
+ *
+ * We deliberately use the terminal title instead of reserving a bottom row.
+ * Wrapper passes PTY output through unchanged, so a fixed in-terminal status
+ * line would fight alternate-screen apps such as vim, less, htop, and tmux.
+ */
+export function formatSessionHud(state: SessionHudState): string {
+  const transport =
+    state.transport === "p2p" && state.role === "host" && (state.p2pPeerCount ?? 0) > 0
+      ? `p2p x${state.p2pPeerCount}`
+      : state.transport;
+  const identity = `${state.role} • ${state.sessionTag} • ${transport}`;
+  if (!state.armed) return `wrapper • ${identity}`;
+  const commands = state.role === "host" ? "s share • u unshare • ? status" : "d detach • ? status";
+  return `● ${identity} | ${commands}`;
+}
+
+/** One-time discoverability hint printed before the terminal becomes busy. */
+export function formatControlsHint(role: SessionHudRole): string {
+  return role === "host"
+    ? "controls: Ctrl+\\ then s share | u unshare | ? status"
+    : "controls: Ctrl+\\ then d detach | ? status";
+}
+
 /**
  * Set the host terminal's window title via OSC 0. Strips control
  * characters so a malicious or buggy state value can't smuggle a

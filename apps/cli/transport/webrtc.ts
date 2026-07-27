@@ -15,6 +15,7 @@ const ICE_SERVERS = [
   { urls: "stun:global.stun.twilio.com:3478" },
 ];
 const DEFAULT_TIMEOUT_MS = 8000;
+const DISCONNECTED_GRACE_MS = 3000;
 const DATA_CHANNEL_LABEL = "wrapper";
 
 export type SignalKind = SignalMessage["kind"];
@@ -87,29 +88,71 @@ class DataChannelTransport implements Transport {
 export function negotiateWebRtc(opts: NegotiateOptions): Negotiation {
   const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
   let settled = false;
+  let stopped = false;
+  let channelTransport: DataChannelTransport | null = null;
+  let connectionState = "new";
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let disconnectedTimer: ReturnType<typeof setTimeout> | null = null;
+  let remoteDescriptionReady = false;
+  const pendingIce: unknown[] = [];
   let resolveTransport!: (t: Transport | null) => void;
   const transport = new Promise<Transport | null>((resolve) => {
     resolveTransport = resolve;
   });
 
+  const clearTimers = (): void => {
+    if (timer) clearTimeout(timer);
+    if (disconnectedTimer) clearTimeout(disconnectedTimer);
+    timer = null;
+    disconnectedTimer = null;
+  };
+
   const finish = (t: Transport | null): void => {
     if (settled) return;
     settled = true;
+    if (timer) clearTimeout(timer);
+    timer = null;
     resolveTransport(t);
   };
 
-  const timer = setTimeout(() => {
-    if (!settled) {
-      log.debug("webrtc negotiation timed out; falling back to relay", { role: opts.role });
-      finish(null);
-      void pc.close();
-    }
+  const flushPendingIce = async (): Promise<void> => {
+    const candidates = pendingIce.splice(0);
+    await Promise.all(candidates.map((candidate) => pc.addIceCandidate(candidate as never)));
+  };
+
+  const stopPeer = (): void => {
+    if (stopped) return;
+    stopped = true;
+    clearTimers();
+    channelTransport?.markOpen(false);
+    finish(null);
+    void pc.close();
+  };
+
+  const failPeer = (message: string): void => {
+    if (stopped) return;
+    const wasOpen = channelTransport?.isOpen ?? false;
+    stopped = true;
+    clearTimers();
+    channelTransport?.markOpen(false);
+    finish(null);
+    // Before opening, resolving null is enough: callers stay on the relay. Once
+    // open, notify them immediately so input switches back to the relay instead
+    // of being sent into a dead data channel.
+    if (wasOpen) opts.handlers.onError?.({ message });
+    else log.debug("webrtc negotiation failed; using relay fallback", { role: opts.role, message });
+    void pc.close();
+  };
+
+  timer = setTimeout(() => {
+    if (settled || stopped) return;
+    log.debug("webrtc negotiation timed out; falling back to relay", { role: opts.role });
+    stopPeer();
   }, opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   timer.unref?.();
 
   const closePeer = (): void => {
-    clearTimeout(timer);
-    void pc.close();
+    stopPeer();
   };
 
   const wireChannel = (channel: {
@@ -120,18 +163,26 @@ export function negotiateWebRtc(opts: NegotiateOptions): Negotiation {
     onmessage?: ((ev: { data: unknown }) => void) | undefined;
   }): void => {
     const dt = new DataChannelTransport(channel, closePeer, channel.readyState === "open");
+    channelTransport = dt;
     channel.onopen = () => {
+      if (stopped) return;
       dt.markOpen(true);
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
+      timer = null;
       opts.handlers.onOpen?.();
       finish(dt);
     };
     channel.onclose = () => {
       dt.markOpen(false);
+      if (stopped) return;
+      stopped = true;
+      clearTimers();
       opts.handlers.onClose?.({});
       finish(null);
+      void pc.close();
     };
     channel.onmessage = (ev) => {
+      if (stopped) return;
       const d = ev.data;
       if (typeof d === "string") {
         opts.handlers.onMessage?.(d);
@@ -153,9 +204,27 @@ export function negotiateWebRtc(opts: NegotiateOptions): Negotiation {
   });
 
   pc.connectionStateChange.subscribe((state) => {
-    if (state === "failed" || state === "closed") {
-      opts.handlers.onError?.({ message: `peer connection ${state}` });
-      finish(null);
+    connectionState = state;
+    if (state === "connected") {
+      if (disconnectedTimer) clearTimeout(disconnectedTimer);
+      disconnectedTimer = null;
+      return;
+    }
+    if (state === "disconnected") {
+      if (disconnectedTimer) return;
+      disconnectedTimer = setTimeout(() => {
+        disconnectedTimer = null;
+        if (connectionState !== "connected") {
+          failPeer("peer connection disconnected");
+        }
+      }, DISCONNECTED_GRACE_MS);
+      disconnectedTimer.unref?.();
+      return;
+    }
+    if (state === "failed") {
+      failPeer("peer connection failed");
+    } else if (state === "closed" && !stopped) {
+      failPeer("peer connection closed");
     }
   });
 
@@ -169,8 +238,7 @@ export function negotiateWebRtc(opts: NegotiateOptions): Negotiation {
         opts.sendSignal({ kind: "offer", data: JSON.stringify(pc.localDescription) });
       } catch (err) {
         log.warn("failed to create webrtc offer", { error: (err as Error).message });
-        finish(null);
-        void pc.close();
+        failPeer("failed to create WebRTC offer");
       }
     })();
   } else {
@@ -180,23 +248,36 @@ export function negotiateWebRtc(opts: NegotiateOptions): Negotiation {
   }
 
   const acceptSignal = (kind: SignalKind, data: string): void => {
+    if (stopped) return;
     void (async () => {
       try {
         if (kind === "offer") {
           await pc.setRemoteDescription(JSON.parse(data));
+          remoteDescriptionReady = true;
+          await flushPendingIce();
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           opts.sendSignal({ kind: "answer", data: JSON.stringify(pc.localDescription) });
         } else if (kind === "answer") {
           await pc.setRemoteDescription(JSON.parse(data));
+          remoteDescriptionReady = true;
+          await flushPendingIce();
         } else if (kind === "ice") {
-          await pc.addIceCandidate(JSON.parse(data));
+          const candidate: unknown = JSON.parse(data);
+          if (remoteDescriptionReady) {
+            await pc.addIceCandidate(candidate as never);
+          } else {
+            // ICE callbacks may fire before the offer/answer frame is sent. Queue
+            // candidates until the remote description exists instead of dropping
+            // them with an InvalidStateError.
+            pendingIce.push(candidate);
+          }
         } else if (kind === "bye") {
-          finish(null);
-          void pc.close();
+          stopPeer();
         }
       } catch (err) {
         log.warn("failed to apply webrtc signal", { kind, error: (err as Error).message });
+        if (kind !== "ice") failPeer(`failed to apply WebRTC ${kind}`);
       }
     })();
   };
@@ -204,9 +285,6 @@ export function negotiateWebRtc(opts: NegotiateOptions): Negotiation {
   return {
     transport,
     acceptSignal,
-    cancel: () => {
-      finish(null);
-      closePeer();
-    },
+    cancel: stopPeer,
   };
 }

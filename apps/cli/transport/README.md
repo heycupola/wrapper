@@ -7,10 +7,10 @@ are transport-agnostic: they speak `@repo/protocol` frames through a small
 
 Two transports exist:
 
-| Transport                    | File           | Used for                                         |
-| ---------------------------- | -------------- | ------------------------------------------------ |
-| `WebSocketTransport`         | `transport.ts` | Relay path (always). Signaling + fallback.       |
-| `WebRtcDataChannelTransport` | `webrtc.ts`    | Direct P2P fast path (opt-in via `WRAPPER_P2P`). |
+| Transport                    | File           | Used for                                                            |
+| ---------------------------- | -------------- | ------------------------------------------------------------------- |
+| `WebSocketTransport`         | `transport.ts` | Relay path (always). Signaling + fallback.                          |
+| `WebRtcDataChannelTransport` | `webrtc.ts`    | Direct P2P fast path (on by default; opt out with `WRAPPER_P2P=0`). |
 
 ## Why P2P
 
@@ -46,8 +46,9 @@ construction. Encoding/parsing stays in the host/viewer, not the transport.
 - **Signaling rides the relay.** SDP offer/answer and ICE candidates are carried
   as `signal` protocol frames over the existing relay WebSocket (see
   `apps/relay/src/hub.ts`). No extra signaling server.
-- **Discovery:** public STUN servers. The relay is the TURN-equivalent: if ICE
-  can't connect within a timeout, the session transparently stays on the relay.
+- **Discovery:** the existing public Google and Twilio STUN servers. No TURN
+  service or new third-party dependency was added. The authenticated Wrapper
+  relay is the data fallback if ICE cannot establish a direct path.
 - **`negotiateWebRtc()`** returns a `Negotiation` whose `transport` promise
   resolves with a data-channel `Transport` once the channel opens, or `null` on
   timeout/failure (so callers fall back).
@@ -77,15 +78,21 @@ keeps one peer connection per viewer.
   viewers get the relay copy; P2P viewers get the data-channel copy.
 - **Viewer** prefers the data channel for `input`/`resize`, and **dedups**: once
   its data channel is open it ignores the relay's duplicate `output` frames.
-- If the data channel drops, the viewer/host revert to the relay automatically.
+- If the data channel drops or stays disconnected for three seconds, the viewer
+  marks it closed and resumes input/output over the relay immediately.
+- ICE candidates received before the SDP offer/answer are queued until the
+  remote description exists instead of being dropped.
+- If the signaling WebSocket closes after P2P is open, the direct channel keeps
+  the session alive. If that channel later closes too, the attach ends because
+  no fallback remains.
 
 ## Security
 
 - **Encryption:** WebRTC data channels are DTLS-encrypted end-to-end. Frames
   never traverse the relay once P2P is established.
-- **Authorization:** only a viewer that already passed the relay ticket auth
-  (`relay:issueViewerTicket`, which checks ownership/`shared`) can signal, so only
-  authorized peers can form a P2P connection.
+- **Authorization:** only a viewer that already passed relay ticket auth can
+  signal. The owner can join their own session; a non-owner must present the
+  session's share code. Knowing a session id is not enough.
 - **No peer spoofing / cross-session:** the relay assigns an authoritative
   per-viewer `peerId` and stamps the `signal.from` field (ignoring client claims);
   host→viewer signals are routed strictly by `peerId` within the same session.
@@ -96,30 +103,31 @@ keeps one peer connection per viewer.
 
 ## Enabling it
 
-`WRAPPER_P2P` is **off by default**, so the relay WebSocket is the transport and
-behaviour is unchanged. Turn it on per-session:
+`WRAPPER_P2P` is **on by default**, so host and viewer negotiate a direct data
+channel automatically and fall back to the relay if it cannot be formed. Opt out
+per session with `WRAPPER_P2P=0`:
 
 ```bash
-# host
-WRAPPER_P2P=1 bun run index.ts shell-host          # then Ctrl+\ s to share
-# viewer (relay attach)
-WRAPPER_P2P=1 bun run index.ts attach --relay -i <sessionId>
+# force the relay path (no P2P)
+WRAPPER_P2P=0 bun run index.ts shell-host          # then Ctrl+\ s to share
+WRAPPER_P2P=0 bun run index.ts attach --relay -i <sessionId> -c <shareCode>
 ```
 
 Look for `p2p data channel up` in both logs. P2P applies only to **relay**
-attaches; local `127.0.0.1` attaches are already direct.
+attaches; local `127.0.0.1` attaches are already direct. A direct connection
+exposes each peer's IP to the other, which is why the opt-out exists.
 
 ## Testing
 
 - Unit-testable: the transport abstraction and the relay's signal routing
   (`apps/relay/tests/hub.test.ts`).
 - **NAT traversal must be verified on two real machines/networks**, since it cannot be
-  exercised in CI/sandbox. Because the flag defaults off and the relay is the
-  fallback, shipping this cannot regress the working relay path.
+  exercised in CI/sandbox. P2P is default-on, but the authenticated relay remains
+  connected as the working fallback.
 
 ## Files
 
 ```text
 transport.ts    Transport interface + WebSocketTransport (relay/fallback)
-webrtc.ts       WebRtcDataChannelTransport + negotiateWebRtc (werift, opt-in)
+webrtc.ts       WebRtcDataChannelTransport + negotiateWebRtc (werift, default-on)
 ```

@@ -19,6 +19,12 @@ export interface LocalServerOptions {
   hostname?: string;
   sessionId: SessionId;
   pty: PtySession;
+  /**
+   * Secret that a client must present as `?token=` to connect. Loopback ports are
+   * reachable by any local process, so without this any user on the machine could
+   * attach to the shell. When omitted, no token is required (kept for tests).
+   */
+  token?: string;
 }
 
 export interface LocalServerHandle {
@@ -38,6 +44,16 @@ export function startLocalServer(opts: LocalServerOptions): LocalServerHandle {
     port: opts.port,
     hostname: opts.hostname ?? "127.0.0.1",
     fetch(req, srv) {
+      // Loopback ports are reachable by any local process, so gate the upgrade
+      // on the per-session token before touching the PTY. Constant-time compare
+      // is unnecessary here (attacker cannot observe timing across a rejected
+      // WS upgrade), but the token itself is 256-bit and unguessable.
+      if (opts.token) {
+        const presented = new URL(req.url).searchParams.get("token");
+        if (presented !== opts.token) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+      }
       const ok = srv.upgrade(req, { data: { sessionId: opts.sessionId, size: null } });
       if (ok) return undefined;
       return new Response("Expected WebSocket upgrade", { status: 426 });

@@ -2,8 +2,8 @@
  * Transport abstraction for the wrapper wire protocol.
  *
  * Host and viewer speak the same `@repo/protocol` frames; only the underlying
- * channel differs. Today that channel is a WebSocket to the relay; next it will
- * be a WebRTC data channel for direct P2P (with the relay kept as fallback).
+ * channel differs. It can be a WebSocket to the relay or a WebRTC data channel
+ * for direct P2P, with the relay kept as signaling and fallback.
  * Keeping the pipe dumb (opaque string/binary frames in, callbacks out) lets the
  * host/viewer code stay transport-agnostic.
  */
@@ -34,7 +34,7 @@ export class WebSocketTransport implements Transport {
   readonly describe: string;
 
   constructor(url: string, handlers: TransportHandlers) {
-    this.describe = url.replace(/ticket=[^&]+/, "ticket=***");
+    this.describe = url.replace(/ticket=[^&]+/, "ticket=***").replace(/token=[^&]+/, "token=***");
     this.ws = new WebSocket(url);
     this.ws.binaryType = "arraybuffer";
 

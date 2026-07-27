@@ -20,11 +20,14 @@ terminal.
 2. From the same machine, `wrapper attach` connects to that local server and
    mirrors the session. This path needs no account and no network.
 3. When you press `Ctrl+\ s`, the CLI asks the Convex backend for a short-lived
-   host ticket, connects to the relay on Fly.io, and marks the session shared.
-   Another device runs `wrapper attach --relay` to join over the relay.
-4. If `WRAPPER_P2P=1` is set on both ends, the relay is used only to exchange
-   WebRTC signaling, and the actual keystrokes and output move over a direct
-   peer-to-peer data channel for lower latency. The relay stays as the fallback.
+   host ticket, connects to the relay on Fly.io, marks the session shared, and
+   prints a secret share code. You join your own devices with
+   `wrapper attach --relay --id <id>`; anyone else must pass the code with
+   `--code <code>`, so knowing the session id alone is not enough.
+4. By default the relay is used only to exchange WebRTC signaling, and the actual
+   keystrokes and output move over a direct peer-to-peer data channel for lower
+   latency. The relay stays as the fallback, and you can force it with
+   `WRAPPER_P2P=0`.
 
 ## Repository layout
 
@@ -32,7 +35,7 @@ This is a Bun and Turborepo monorepo.
 
 ```
 apps/
-  cli/      Wrapper CLI: shell wrapping, session registry, local + relay attach, device auth, optional P2P
+  cli/      Wrapper CLI: shell wrapping, session registry, local + relay attach, device auth, default-on P2P
   relay/    Relay service: authenticated WebSocket routing for shared sessions, deployed on Fly.io
   web/      Next.js app on Vercel: landing page, device-login approval, onboarding, Pro upgrade
   docs/     Public documentation site (Mintlify)
@@ -50,7 +53,7 @@ tools/
 The CLI is the heart of the project. See
 [`apps/cli/README.md`](./apps/cli/README.md) for how the wrapping flow works
 and what every command does. The transport layer (relay WebSocket and the
-optional direct WebRTC path) is documented in
+default direct WebRTC path) is documented in
 [`apps/cli/transport/README.md`](./apps/cli/transport/README.md).
 
 ## Where to read next
@@ -70,10 +73,12 @@ optional direct WebRTC path) is documented in
 ## Status
 
 The CLI core, the Convex auth and backend, the relay transport, and the web
-onboarding flow are implemented in this repository. Sharing runs over the relay
-with an optional direct WebRTC P2P fast path (`WRAPPER_P2P`, off by default, with
-the relay as the fallback). The next major phase is the mobile app, which lives
-in the `apps/mobile` submodule and is planned in the docs site.
+onboarding flow are implemented in this repository. Sharing attempts a direct
+WebRTC P2P data path by default, with the relay kept online for signaling and
+automatic fallback (`WRAPPER_P2P=0` forces relay-only mode). The terminal title
+shows the role, session, and active transport without reserving a screen row.
+The next major phase is the mobile app, which lives in the `apps/mobile`
+submodule and is planned in the docs site.
 
 The active focus before mobile work is operational hardening and release
 channels:

@@ -9,9 +9,22 @@ import { startRelayHostBridge, type RelayHostBridge } from "../relay/host-bridge
 import { registerSession, setSessionShared, unregisterSession } from "../registry/sessions";
 import { startLocalServer, type LocalServerHandle } from "../server/local";
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
-import { resolveAuthedConvexClient } from "../util/convex-client";
+import {
+  resolveAuthedConvexClient,
+  startAuthAutoRefresh,
+  type AuthAutoRefresh,
+} from "../util/convex-client";
 import { env } from "../util/env";
-import { bell, clearTitle, inlineMessage, notifyOS, setTitle } from "../util/feedback";
+import {
+  bell,
+  clearTitle,
+  formatControlsHint,
+  formatSessionHud,
+  inlineMessage,
+  notifyOS,
+  setTitle,
+  type SessionTransportStatus,
+} from "../util/feedback";
 import { installShutdownHandlers, type ShutdownReason } from "../util/signals";
 
 const log = createLogger("shell-host");
@@ -91,6 +104,39 @@ const createProCheckoutRef = makeFunctionReference<
   { successUrl?: string },
   { checkoutUrl: string }
 >("billing:createProCheckout");
+const setShareCodeRef = makeFunctionReference<
+  "mutation",
+  { sessionId: string; code?: string },
+  { ok: boolean; shared: boolean }
+>("session:setShareCode");
+
+/** 256-bit hex secret gating connections to the local WebSocket server. */
+function createLocalToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  let out = "";
+  for (const byte of bytes) out += byte.toString(16).padStart(2, "0");
+  return out;
+}
+
+// Crockford-style alphabet (no I, L, O, U) so codes are easy to read and type.
+const SHARE_CODE_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+/**
+ * Generate a short, human-friendly share code. The owner gives this to whoever
+ * they want to let in; the backend stores only its hash. Displayed grouped
+ * (XXXX-XXXX) but the backend ignores the dash and case when matching.
+ */
+function generateShareCode(): string {
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  let code = "";
+  for (let i = 0; i < bytes.length; i++) {
+    if (i === 4) code += "-";
+    code += SHARE_CODE_ALPHABET[bytes[i]! % SHARE_CODE_ALPHABET.length];
+  }
+  return code;
+}
 
 export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   // Guard against recursive shell-host re-entry.
@@ -106,6 +152,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   }
 
   const sessionId = createSessionId();
+  const localToken = createLocalToken();
   const initialSize = currentSize();
 
   const session = new PtySession({
@@ -136,6 +183,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       port: opts.port ?? 0,
       sessionId,
       pty: session,
+      token: localToken,
     });
   } catch (err) {
     log.error("failed to start local server", {
@@ -165,6 +213,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shell: resolvedShell,
     createdAt: new Date().toISOString(),
     shared: false,
+    localToken,
   });
 
   const backend = await resolveAuthedConvexClient();
@@ -188,12 +237,42 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     log.warn("backend auth failed; backend sync disabled", { error: backend.error.message });
   }
 
+  // Keep the short-lived Convex JWT fresh for the whole life of the host. Without
+  // this, a session that outlives the initial token starts failing every backend
+  // call (heartbeats, share, close) with an expired-token error.
+  let authRefresh: AuthAutoRefresh | null = null;
+  if (backend.status === "ready") {
+    authRefresh = startAuthAutoRefresh({
+      client: backend.client,
+      convexUrl: backend.convexUrl,
+      sessionToken: backend.sessionToken,
+      jwt: backend.jwt,
+      log,
+    });
+  }
+
   let shared = false;
+  let shareCode: string | null = null;
   let relayBridge: RelayHostBridge | null = null;
+  let relayConnected = false;
+  let p2pPeerCount = 0;
   // Guards against a second `share` press racing the in-flight relay setup
   // (we no longer optimistically flip `shared` to serve as that guard).
   let relayStarting = false;
   const sessionTag = sessionId.slice(0, 6);
+
+  function printShareInvite(): void {
+    if (!shareCode) return;
+    const lines = [
+      `share code: ${shareCode}`,
+      `others join with: wrapper attach --relay --id ${sessionId} --code ${shareCode}`,
+    ];
+    if (session.isIdle) {
+      for (const line of lines) inlineMessage(line);
+    } else {
+      for (const line of lines) log.info(line);
+    }
+  }
   const heartbeat = setInterval(() => {
     if (backend.status !== "ready") return;
     void backend.client
@@ -204,21 +283,39 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       })
       .catch((error: unknown) => {
         const err = error instanceof Error ? error : new Error(String(error));
+        // An expired JWT surfaces here first; kick a refresh so the next tick
+        // (and any share/close call) succeeds instead of looping on the error.
+        if (/InvalidAuthHeader|expired|Unauthenticated/i.test(err.message)) {
+          void authRefresh?.refreshNow();
+        }
         log.warn("session heartbeat failed", { error: err.message });
       });
   }, HEARTBEAT_INTERVAL_MS);
   heartbeat.unref();
 
-  function paintRestingTitle(): void {
-    if (!env.hudEnabled) return;
-    setTitle(shared ? `wrapper • shared • ${sessionTag}` : "");
+  function currentTransport(): SessionTransportStatus {
+    if (!shared) return "local";
+    if (relayStarting) return "connecting";
+    if (!relayBridge) return "local";
+    if (p2pPeerCount > 0) return "p2p";
+    return relayConnected ? "relay" : "offline";
   }
 
-  function announce(title: string, body: string): void {
+  function paintRestingTitle(): void {
+    if (!env.hudEnabled) return;
+    setTitle(
+      formatSessionHud({
+        role: "host",
+        sessionTag,
+        transport: currentTransport(),
+        p2pPeerCount,
+      }),
+    );
+  }
+
+  function announce(_title: string, body: string): void {
     log.info(body);
-    if (env.hudEnabled) {
-      setTitle(title);
-    }
+    paintRestingTitle();
     if (session.isIdle) inlineMessage(body);
     if (env.hudEnabled) {
       notifyOS("wrapper", body);
@@ -248,15 +345,13 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     }
 
     relayStarting = true;
+    paintRestingTitle();
+    const code = generateShareCode();
     try {
-      // Persist the shared flag before issuing the relay ticket so backend
-      // state (e.g. viewer authorization checks) is synchronized rather than
-      // racing the periodic fire-and-forget heartbeat.
-      await backend.client.mutation(sessionHeartbeatRef, {
-        sessionId,
-        shared: true,
-        port: server.port,
-      });
+      // Persist the shared flag and the access-code hash before issuing the relay
+      // ticket so viewer authorization is synchronized rather than racing the
+      // periodic fire-and-forget heartbeat. Only the code hash is stored.
+      await backend.client.mutation(setShareCodeRef, { sessionId, code });
       await backend.client.mutation(setRelayStateRef, { sessionId, relayState: "connecting" });
       const issued = await backend.client.action(issueHostRelayTicketRef, { sessionId });
       relayBridge = startRelayHostBridge({
@@ -265,6 +360,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         sessionId,
         pty: session,
         enableP2P: env.p2pEnabled,
+        onTransportChange: (state) => {
+          relayConnected = state.relayConnected;
+          p2pPeerCount = state.p2pPeerCount;
+          paintRestingTitle();
+        },
         onOpen: () => {
           if (backend.status !== "ready") return;
           void backend.client
@@ -284,8 +384,10 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
             .catch(() => {});
         },
       });
+      shareCode = code;
       commitShared();
       announce(`wrapper • shared • ${sessionTag}`, "session shared via relay");
+      printShareInvite();
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       await backend.client
@@ -298,9 +400,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         // heartbeat we sent before the ticket, and show a clean upgrade prompt
         // (with a retry hint) instead of dumping the raw server error.
         log.debug("relay share denied (Pro required)", { error: err.message });
-        await backend.client
-          .mutation(sessionHeartbeatRef, { sessionId, shared: false, port: server.port })
-          .catch(() => {});
+        await backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
         if (env.hudEnabled) setTitle("");
 
         const checkoutUrl = await fetchProCheckoutUrl(backend.client);
@@ -333,6 +433,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       );
     } finally {
       relayStarting = false;
+      paintRestingTitle();
     }
   };
 
@@ -340,6 +441,9 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     if (!relayBridge) return;
     const bridge = relayBridge;
     relayBridge = null;
+    relayConnected = false;
+    p2pPeerCount = 0;
+    paintRestingTitle();
     await bridge.stop();
     if (backend.status === "ready") {
       await backend.client
@@ -366,12 +470,13 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
           return;
         }
         shared = false;
+        shareCode = null;
         setSessionShared(sessionId, false);
         trackEvent("session_unshared");
         if (backend.status === "ready") {
-          void backend.client
-            .mutation(sessionHeartbeatRef, { sessionId, shared: false, port: server.port })
-            .catch(() => {});
+          // Clears both `shared` and the stored code hash, revoking any
+          // outstanding viewer access immediately.
+          void backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
         }
         void stopRelayBridge();
         announce("", "session unshared");
@@ -379,7 +484,9 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       case "status":
         announce(
           shared ? `wrapper • shared • ${sessionTag}` : `wrapper • idle • ${sessionTag}`,
-          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : "no"}`,
+          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : "no"}${
+            shared && shareCode ? ` code=${shareCode}` : ""
+          }`,
         );
         break;
       case "detach":
@@ -394,24 +501,54 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     onArmedChange: (armed) => {
       if (!env.hudEnabled) return;
       if (armed) {
-        setTitle(`● wrapper armed • ${sessionTag}`);
+        setTitle(
+          formatSessionHud({
+            role: "host",
+            sessionTag,
+            transport: currentTransport(),
+            p2pPeerCount,
+            armed: true,
+          }),
+        );
         bell();
       } else {
         paintRestingTitle();
       }
     },
   });
+  paintRestingTitle();
 
   // Reuse attach-client path so host and viewer go through same protocol.
 
-  const url = `ws://127.0.0.1:${server.port}`;
+  const url = `ws://127.0.0.1:${server.port}?token=${localToken}`;
   const attach: AttachClientHandle = startAttachClient({
     url,
     initialSize,
     connectRetries: 20,
     connectRetryDelayMs: 50,
     interceptStdin: (chunk) => prefixFilter.process(chunk),
+    onTerminalTitle: paintRestingTitle,
   });
+
+  // Print the control discovery hint once the shell reaches an idle prompt. We
+  // never write it while a foreground program owns the terminal, so a slow shell
+  // startup or a full-screen TUI cannot be corrupted.
+  let controlsHintTimer: ReturnType<typeof setTimeout> | null = null;
+  let controlsHintAttempts = 0;
+  const showControlsHint = (): void => {
+    controlsHintTimer = null;
+    if (session.isIdle) {
+      inlineMessage(formatControlsHint("host"));
+      paintRestingTitle();
+      return;
+    }
+    controlsHintAttempts += 1;
+    if (controlsHintAttempts >= 20) return;
+    controlsHintTimer = setTimeout(showControlsHint, 250);
+    controlsHintTimer.unref?.();
+  };
+  controlsHintTimer = setTimeout(showControlsHint, 500);
+  controlsHintTimer.unref?.();
 
   let shuttingDown = false;
   const shutdown = async (reason: ShutdownReason): Promise<number> => {
@@ -419,6 +556,8 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shuttingDown = true;
     log.debug("shell-host shutting down", { sessionId, reason });
     clearInterval(heartbeat);
+    if (controlsHintTimer) clearTimeout(controlsHintTimer);
+    authRefresh?.stop();
     await stopRelayBridge();
     if (backend.status === "ready") {
       try {
