@@ -10,7 +10,8 @@ description: Configure environment variables, run checks, and verify your local 
 - `WRAPPER_CONVEX_URL`: Convex deployment URL
 - `WRAPPER_RELAY_URL`: Relay WebSocket base URL
 - `WRAPPER_AUTH_ORIGIN`: Auth UI origin
-- `WRAPPER_HUD`: `on` by default, set `off` to disable host HUD/title updates
+- `WRAPPER_HUD`: `on` by default. The terminal title shows role, session, active
+  transport, and armed controls; set `off` to disable it.
 - `WRAPPER_P2P`: WebRTC direct path, on by default with automatic relay fallback.
   Set to `0` to force the relay. See [Transports](/transports).
 - `NODE_ENV=development`: local development mode
@@ -34,6 +35,8 @@ description: Configure environment variables, run checks, and verify your local 
 
 For the full per-environment matrix (Convex, Fly, Vercel, and GitHub Actions),
 see [Environments](/environments).
+
+{/* TODO(image): Add /images/local-dev-terminals.webp here. Show the recommended local layout with Convex, relay, web, and CLI running in four labeled terminal panes. Use fake secrets and a development session. Optional developer asset. */}
 
 ## Local quality checks
 
@@ -69,3 +72,5 @@ This validates:
 4. Find id with `wrapper status`
 5. Attach via relay from another terminal
 6. Detach (`Ctrl+\\` then `d`) and unshare (`Ctrl+\\` then `u`)
+7. Confirm the viewer title moves from `relay` to `p2p`, then repeat with
+   `WRAPPER_P2P=0` and confirm it stays on `relay`

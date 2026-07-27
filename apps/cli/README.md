@@ -84,6 +84,8 @@ sequenceDiagram
    - periodic tick -> `session:heartbeat`
    - shutdown -> `session:close`
 8. On `share`, it issues a relay host ticket and starts a relay bridge.
+9. It keeps a non-disruptive session HUD in the terminal title and reveals the
+   context-specific controls when `Ctrl+\` is armed.
 
 Important safety guards:
 
@@ -141,6 +143,12 @@ Full design, security model, and testing steps live in
 [`transport/README.md`](./transport/README.md). P2P applies only to `--relay`
 attaches; local `127.0.0.1` attaches are already direct. A direct connection
 exposes each peer's IP to the other, so opt out if that matters for a session.
+
+The active path is visible in the session HUD as `local`, `connecting`, `relay`,
+`p2p`, or `offline`. If a P2P channel fails or stays disconnected, the viewer
+switches input and output back to the relay immediately. ICE candidates that
+arrive before the SDP offer or answer are queued instead of dropped. A live P2P
+channel can also keep running if the signaling WebSocket closes.
 
 ## Sharing and access
 
@@ -229,6 +237,18 @@ bun run dev:host
 
 ## In-session prefix shortcuts
 
+Wrapper prints a one-time controls hint when a host reaches its first idle
+prompt and when a viewer attaches. The terminal title then stays updated with
+the role, short session id, and active transport. Pressing `Ctrl+\` changes the
+title into a context-aware controls menu for 1.5 seconds.
+
+Wrapper does not reserve a permanent row inside the terminal. A fixed bottom
+bar would conflict with alternate-screen applications such as Vim, Neovim,
+`less`, `htop`, and tmux. The title-based HUD remains visible without changing
+PTY output, shell prompts, or full-screen layouts. If a shell or TUI writes its
+own OSC title, Wrapper repaints the session HUD immediately afterward. Set
+`WRAPPER_HUD=off` to disable title updates.
+
 Inside host shell:
 
 | Keys              | Action                    |
@@ -284,7 +304,7 @@ share code, and enables remote attach with
 | `WRAPPER_TELEMETRY_URL` | telemetry endpoint                           | `https://telemetry.wrapper.sh`               |
 | `WRAPPER_RELAY_URL`     | relay endpoint override                      | dev localhost, prod `wss://relay.wrapper.sh` |
 | `WRAPPER_AUTH_ORIGIN`   | auth callback origin                         | dev localhost, prod `https://wrapper.sh`     |
-| `WRAPPER_HUD`           | HUD (`on/off`)                               | `on`                                         |
+| `WRAPPER_HUD`           | session title + armed controls HUD           | `on`                                         |
 | `WRAPPER_P2P`           | WebRTC P2P fast path; `0/false/off` opts out | on (relay is the fallback)                   |
 | `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend            | falls back to `CONVEX_URL` if set            |
 | `WRAPPER_DISABLE`       | disable hook in one terminal                 | unset                                        |
@@ -318,7 +338,7 @@ relay/
   host-bridge.ts               host relay bridge; per-viewer P2P negotiation
 transport/
   transport.ts                 Transport interface + WebSocketTransport
-  webrtc.ts                    WebRTC P2P transport (werift, opt-in)
+  webrtc.ts                    WebRTC P2P transport (werift, default-on)
   README.md                    transport + P2P design/security/testing
 shell/
   detect.ts                    shell detection

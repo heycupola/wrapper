@@ -35,7 +35,7 @@ This is a Bun and Turborepo monorepo.
 
 ```
 apps/
-  cli/      Wrapper CLI: shell wrapping, session registry, local + relay attach, device auth, optional P2P
+  cli/      Wrapper CLI: shell wrapping, session registry, local + relay attach, device auth, default-on P2P
   relay/    Relay service: authenticated WebSocket routing for shared sessions, deployed on Fly.io
   web/      Next.js app on Vercel: landing page, device-login approval, onboarding, Pro upgrade
   docs/     Public documentation site (Mintlify)
@@ -53,7 +53,7 @@ tools/
 The CLI is the heart of the project. See
 [`apps/cli/README.md`](./apps/cli/README.md) for how the wrapping flow works
 and what every command does. The transport layer (relay WebSocket and the
-optional direct WebRTC path) is documented in
+default direct WebRTC path) is documented in
 [`apps/cli/transport/README.md`](./apps/cli/transport/README.md).
 
 ## Where to read next
@@ -73,10 +73,12 @@ optional direct WebRTC path) is documented in
 ## Status
 
 The CLI core, the Convex auth and backend, the relay transport, and the web
-onboarding flow are implemented in this repository. Sharing runs over the relay
-with an optional direct WebRTC P2P fast path (`WRAPPER_P2P`, off by default, with
-the relay as the fallback). The next major phase is the mobile app, which lives
-in the `apps/mobile` submodule and is planned in the docs site.
+onboarding flow are implemented in this repository. Sharing attempts a direct
+WebRTC P2P data path by default, with the relay kept online for signaling and
+automatic fallback (`WRAPPER_P2P=0` forces relay-only mode). The terminal title
+shows the role, session, and active transport without reserving a screen row.
+The next major phase is the mobile app, which lives in the `apps/mobile`
+submodule and is planned in the docs site.
 
 The active focus before mobile work is operational hardening and release
 channels:

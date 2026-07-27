@@ -5,8 +5,8 @@ description: Understand how CLI, backend, and relay work together.
 
 ## System components
 
-- `apps/cli`: host shell, local attach, auth commands, relay bridge, optional
-  direct WebRTC transport
+- `apps/cli`: host shell, local attach, auth commands, relay bridge, and the
+  default direct WebRTC transport
 - `packages/backend`: Convex auth, session lifecycle, relay tickets, onboarding,
   billing
 - `apps/relay`: authenticated WebSocket router for host and viewers, and the
@@ -29,6 +29,8 @@ flowchart LR
   relay -->|broadcast output and close| viewerCli
 ```
 
+{/* TODO(image): Add /images/wrapper-architecture.webp here. Turn the flow above into a polished diagram with trust boundaries: local PTY/token, Convex auth and share-code gate, Fly relay signaling/fallback, and the encrypted P2P data path. Essential security and architecture asset. */}
+
 ## Session lifecycle
 
 Backend handlers in `convex/session.ts`:
@@ -38,6 +40,7 @@ Backend handlers in `convex/session.ts`:
 - `close`
 - `listActive`
 - `authorizeAttach`
+- `setShareCode`
 - `setRelayState`
 
 Onboarding handlers in `convex/onboarding.ts`:
@@ -74,8 +77,9 @@ Relay routing in `apps/relay/src/hub.ts`:
 Terminal traffic can move over two transports, both abstracted behind the
 `Transport` interface in `apps/cli/transport`:
 
-- **Relay WebSocket** (default): frames travel host to relay to viewer.
-- **Direct WebRTC** (on by default, opt out with `WRAPPER_P2P=0`): the relay
+- **Relay WebSocket** (baseline): frames travel host to relay to viewer. It is
+  always available for signaling and fallback.
+- **Direct WebRTC** (default data path, opt out with `WRAPPER_P2P=0`): the relay
   carries only the offer, answer, and ICE candidates, and the terminal bytes flow
   over a direct peer-to-peer data channel. If negotiation fails, the relay path
   keeps working.
@@ -98,6 +102,16 @@ Once viewers join, control is shared (every viewer can type), the terminal is
 sized to the smallest viewer, and there is one host per session. See the CLI
 README "Sharing and access" section for the full behavior list.
 
+## Session HUD
+
+The CLI uses the terminal window title for persistent role, short session id,
+and transport status (`local`, `connecting`, `relay`, `p2p`, or `offline`).
+Pressing `Ctrl+\` replaces the title with context-specific controls for the
+1.5-second armed window. A fixed bottom row is intentionally avoided because it
+would conflict with alternate-screen applications and change the PTY viewport.
+Wrapper repaints its HUD after a shell or TUI emits an OSC title sequence, so
+the status does not disappear during normal terminal use.
+
 ## Billing
 
 `convex/billing.ts` exposes `createProCheckout`, which returns a Stripe checkout
@@ -109,7 +123,7 @@ cannot break sharing.
 
 ```text
 apps/
-  cli/      shell wrapping, local + relay attach, device auth, optional P2P
+  cli/      shell wrapping, local + relay attach, device auth, default-on P2P
   relay/    authenticated WebSocket router on Fly.io
   web/      Next.js app on Vercel
   docs/     this documentation site (Mintlify)
