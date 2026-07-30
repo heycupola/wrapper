@@ -79,10 +79,10 @@ Terminal traffic can move over two transports, both abstracted behind the
 
 - **Relay WebSocket** (baseline): frames travel host to relay to viewer. It is
   always available for signaling and fallback.
-- **Direct WebRTC** (default data path, opt out with `WRAPPER_P2P=0`): the relay
-  carries only the offer, answer, and ICE candidates, and the terminal bytes flow
-  over a direct peer-to-peer data channel. If negotiation fails, the relay path
-  keeps working.
+- **Direct WebRTC** (default input path, opt out with `WRAPPER_P2P=0`): offer,
+  answer, and ICE travel through the relay; viewer input prefers the direct
+  peer-to-peer channel. The host keeps relay output available for fallback and
+  mixed viewers. If negotiation fails, the relay path keeps working.
 
 See [Transports](/transports) for the negotiation flow and the security model.
 
@@ -93,10 +93,11 @@ Access is capability-based and enforced in the backend:
 - A session that is not shared is owner only.
 - Sharing (`Ctrl+\` `s`) calls `session:setShareCode`, which marks the session
   shared and stores only the hash of a secret code the host prints. A non-owner
-  must pass that code to `relay:issueViewerTicket` (`wrapper attach --relay --id
-  <id> --code <code>`). The owner joins their own session without a code.
-- Non-owner ticket requests are rate limited per user and session, and
-  unsharing clears the code so outstanding tickets stop working.
+  enters that code in a hidden prompt before `relay:issueViewerTicket` succeeds.
+  The owner joins their own session without a code.
+- Non-owner ticket requests are rate limited per user, per hashed target bucket,
+  and globally without revealing whether a target exists. Unsharing clears the
+  code so outstanding tickets stop working.
 
 Once viewers join, control is shared (every viewer can type), the terminal is
 sized to the smallest viewer, and there is one host per session. See the CLI

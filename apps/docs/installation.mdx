@@ -16,7 +16,7 @@ archive for your platform, verifies its checksum, and unpacks it into
 `~/.wrapper`:
 
 ```bash
-curl -fsSL https://wrapper.sh/install.sh | sh
+curl -fsSL https://wrapper.sh/install | bash
 ```
 
 On macOS you can also use the Homebrew tap:
@@ -85,9 +85,12 @@ needed:
 bun run apps/cli/index.ts attach --relay --id <sessionId>
 ```
 
-To join someone else's shared session, pass the share code they printed when they
-shared (`Ctrl+\` then `s`):
+To join someone else's shared session, run attach and enter the share code in the
+hidden prompt:
 
 ```bash
-bun run apps/cli/index.ts attach --relay --id <sessionId> --code <shareCode>
+bun run apps/cli/index.ts attach --relay --id <sessionId>
 ```
+
+`--code` remains available for non-interactive automation, but interactive users
+should avoid putting share codes in process arguments or shell history.

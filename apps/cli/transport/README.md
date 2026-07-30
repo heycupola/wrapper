@@ -65,7 +65,8 @@ sequenceDiagram
   H->>R: signal { kind: answer, to: <peerId> }
   R->>V: signal { kind: answer }
   V-->>H: ICE candidates (trickled via relay, both directions)
-  Note over V,H: data channel opens → protocol frames flow DIRECTLY (P2P)
+  Note over V,H: data channel opens → viewer input prefers P2P
+  Note over H,R: host keeps relay output available for fallback
   Note over V,H: on ICE failure/timeout → stay on the relay WebSocket
 ```
 
@@ -88,8 +89,11 @@ keeps one peer connection per viewer.
 
 ## Security
 
-- **Encryption:** WebRTC data channels are DTLS-encrypted end-to-end. Frames
-  never traverse the relay once P2P is established.
+- **Encryption:** WebRTC data channels are DTLS-encrypted between peers. Viewer
+  input prefers that direct channel, but the host currently keeps a relay output
+  copy available for fallback and mixed relay/P2P viewers. Wrapper is therefore
+  not a zero-knowledge relay service; relay infrastructure can process fallback
+  terminal traffic after TLS termination.
 - **Authorization:** only a viewer that already passed relay ticket auth can
   signal. The owner can join their own session; a non-owner must present the
   session's share code. Knowing a session id is not enough.

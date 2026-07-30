@@ -33,7 +33,8 @@ sequenceDiagram
   H->>R: signal { kind: answer, to: peerId }
   R->>V: signal { kind: answer }
   V-->>H: ICE candidates (trickled via relay, both ways)
-  Note over V,H: data channel opens, frames flow directly
+  Note over V,H: data channel opens, viewer input prefers P2P
+  Note over H,R: host keeps relay output available for fallback
   Note over V,H: on ICE failure or timeout, stay on the relay
 ```
 
@@ -60,8 +61,10 @@ fallback if ICE cannot connect in time.
 
 ## Security
 
-- Data channels are DTLS-encrypted end to end. Once P2P is established, frames
-  never traverse the relay.
+- Data channels are DTLS-encrypted between peers. Viewer input prefers the
+  direct channel, but the host keeps relay output available for fallback and
+  mixed relay/P2P viewers. Relay infrastructure can therefore process fallback
+  terminal output after TLS termination; Wrapper does not claim zero knowledge.
 - Only a viewer that already passed relay ticket auth can signal. The owner is
   allowed; a non-owner must present the session's share code. Knowing the
   session id alone is not enough.

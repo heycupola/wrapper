@@ -22,12 +22,11 @@ terminal.
 3. When you press `Ctrl+\ s`, the CLI asks the Convex backend for a short-lived
    host ticket, connects to the relay on Fly.io, marks the session shared, and
    prints a secret share code. You join your own devices with
-   `wrapper attach --relay --id <id>`; anyone else must pass the code with
-   `--code <code>`, so knowing the session id alone is not enough.
-4. By default the relay is used only to exchange WebRTC signaling, and the actual
-   keystrokes and output move over a direct peer-to-peer data channel for lower
-   latency. The relay stays as the fallback, and you can force it with
-   `WRAPPER_P2P=0`.
+   `wrapper attach --relay --id <id>`; anyone else enters the code in a hidden
+   prompt, so knowing the session id alone is not enough.
+4. By default viewer input prefers a direct WebRTC data channel for lower
+   latency. The host keeps relay output available for fallback and mixed
+   viewers, and you can force relay-only mode with `WRAPPER_P2P=0`.
 
 ## Repository layout
 
@@ -39,7 +38,7 @@ apps/
   relay/    Relay service: authenticated WebSocket routing for shared sessions, deployed on Fly.io
   web/      Next.js app on Vercel: landing page, device-login approval, onboarding, Pro upgrade
   docs/     Public documentation site (Mintlify)
-  mobile/   Git submodule pointer to the external mobile app repository (not built here)
+  mobile/   Git submodule pointer to the native SwiftUI iPhone/iPad viewer repository
 packages/
   protocol/           Zod wire schema shared by every wrapper component (JSON frames + WebRTC signal)
   backend/            Convex backend: Better Auth, session lifecycle, relay tickets, onboarding, billing
@@ -77,8 +76,9 @@ onboarding flow are implemented in this repository. Sharing attempts a direct
 WebRTC P2P data path by default, with the relay kept online for signaling and
 automatic fallback (`WRAPPER_P2P=0` forces relay-only mode). The terminal title
 shows the role, session, and active transport without reserving a screen row.
-The next major phase is the mobile app, which lives in the `apps/mobile`
-submodule and is planned in the docs site.
+The native iPhone/iPad viewer foundation lives in the separate `apps/mobile`
+submodule. It uses Swift 6.2, SwiftUI, SwiftTerm, the official Convex Swift
+client, and native WebRTC package boundaries.
 
 The active focus before mobile work is operational hardening and release
 channels:
@@ -87,6 +87,7 @@ channels:
 - publish CLI release archives and update the Homebrew tap formula
 - keep the critical auth and relay test lanes green in CI
 - verify the P2P fast path on real networks (NAT traversal)
+- finish the native iOS viewer vertical slice and TestFlight setup
 
 ## Local development
 
@@ -131,7 +132,15 @@ list of CLI environment variables, see
 - **Lefthook** for git hooks (pre-commit oxfmt and oxlint, pre-push checks).
 - **Catalog dependencies** so shared packages such as `react`, `next`, `zod`,
   and `typescript` use a single pinned version across the workspace.
+- **`bun run audit`** for advisory checks. Werift's abandoned `ip` dependency is
+  replaced by the tested `packages/ip` compatibility shim backed by
+  `ipaddr.js`; the audit script ignores only the package-name false positive.
 
 ## License
 
-TBD.
+[MIT](./LICENSE) © 2026 Cupola Labs, LLC.
+
+Security issues must be reported privately according to [`SECURITY.md`](./SECURITY.md).
+Hosted-service policies are published at
+[wrapper.sh/privacy-policy](https://wrapper.sh/privacy-policy) and
+[wrapper.sh/terms-of-service](https://wrapper.sh/terms-of-service).

@@ -1,0 +1,110 @@
+---
+title: Security and privacy
+description: Understand Wrapper's authorization model, terminal-data paths, and trust boundaries.
+---
+
+Wrapper treats terminal content as sensitive. A session is local and owner-only
+until its host explicitly shares it.
+
+## Access requirements
+
+### Local attach
+
+- The WebSocket listens only on `127.0.0.1`.
+- Every host generates a random 256-bit local token.
+- The token is stored in the owner's protected session registry.
+- A local connection without the token is rejected before reaching the PTY.
+
+Processes running as the same operating-system account, and root/administrator,
+remain inside the local trust boundary.
+
+### Relay attach
+
+- Every user must authenticate with Better Auth.
+- The owner can join their own active session.
+- A non-owner needs both the session id and share code.
+- Share codes are stored only as hashes.
+- Failed attempts are limited per account, per hashed target bucket, and
+  globally without revealing whether the target exists.
+- Relay tickets are random, hashed at rest, short-lived, and single-use.
+- Ticket consumption rechecks session state, so unsharing invalidates unused
+  viewer tickets.
+
+Unknown, unshared, missing-code, and wrong-code sessions return the same denial
+to avoid revealing whether another user's session exists.
+
+## Terminal-data paths
+
+### Unshared
+
+Input and output stay on the host machine.
+
+### Direct WebRTC
+
+The viewer and host negotiate a DTLS-encrypted data channel through authenticated
+relay signaling. Viewer input prefers the direct channel. WebRTC exposes each
+peer's IP address to the other peer and uses public STUN servers for discovery.
+
+The host currently keeps relay output available for fallback and mixed viewers.
+Wrapper therefore does not claim that the hosted relay is zero knowledge.
+
+### Relay fallback
+
+When P2P is unavailable or disabled, terminal traffic travels through the Fly.io
+relay over WSS. TLS protects traffic in transit, but relay infrastructure
+processes plaintext after TLS termination to route it. The application does not
+intentionally persist terminal payloads.
+
+Use `WRAPPER_P2P=0` to test or force relay-only behavior. Do not share a session
+whose content you are not willing to send through the configured relay.
+
+## Shared-control warning
+
+Every accepted viewer can read output and send input. Wrapper does not currently
+provide a watch-only role or per-command approval. Share codes are capabilities:
+give them only to people you trust, and press `Ctrl+\` then `u` when collaboration
+ends.
+
+Interactive CLI attach asks for the share code in a hidden prompt. `--code` is
+reserved for automation because command-line arguments can be visible in shell
+history and process listings.
+
+## Payload and abuse protection
+
+- Raw wire frames are capped before JSON parsing.
+- Terminal input/output and signaling payloads have explicit size limits.
+- The relay caps messages buffered before authorization.
+- Peer ids are assigned by the relay and cannot be spoofed by clients.
+- Messages with a different session id are rejected.
+
+## Local credentials
+
+The CLI stores its Better Auth session token, local attach token, and logs in
+user-protected files. Run `wrapper auth logout` on a device whose credentials may
+be exposed. Malware running as your operating-system user can access files that
+you can access; Wrapper cannot remove that operating-system trust boundary.
+
+## Telemetry
+
+Anonymous CLI telemetry is disabled by default. Enable it explicitly with:
+
+```bash
+wrapper telemetry enable
+```
+
+Telemetry must never include terminal input/output, share codes, relay tickets,
+or authentication tokens.
+
+## Dependency auditing
+
+Run `bun run audit` from the repository root. The only ignored advisory is the
+name-based false positive for Wrapper's private `ip@2.1.0` workspace shim. The
+shim replaces the abandoned registry implementation used by Werift with
+maintained `ipaddr.js` and has dedicated address/loopback tests.
+
+## Report a vulnerability
+
+Do not publish suspected vulnerabilities. Follow
+[the private reporting policy](https://github.com/heycupola/wrapper/blob/main/SECURITY.md)
+or contact [can@relic.so](mailto:can@relic.so), the current Cupola Labs
+security inbox.

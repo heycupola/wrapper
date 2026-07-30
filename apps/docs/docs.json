@@ -24,6 +24,10 @@
         "href": "https://wrapper.sh"
       },
       {
+        "label": "Support",
+        "href": "https://wrapper.sh/support"
+      },
+      {
         "type": "github",
         "href": "https://github.com/heycupola/wrapper"
       }
@@ -37,7 +41,7 @@
       },
       {
         "group": "Understand",
-        "pages": ["architecture", "transports", "environments"]
+        "pages": ["architecture", "security", "transports", "environments"]
       },
       {
         "group": "Operate",
