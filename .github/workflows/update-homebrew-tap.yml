@@ -84,7 +84,7 @@ jobs:
           PY
 
       - name: Checkout Homebrew tap
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: heycupola/homebrew-tap
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}

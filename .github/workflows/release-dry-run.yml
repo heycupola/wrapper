@@ -32,7 +32,7 @@ jobs:
             helper: wrapper-pty-helper-x86_64-linux-musl
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -46,6 +46,12 @@ jobs:
         run: |
           mkdir -p dist
           bun build --compile --target="${{ matrix.target }}" apps/cli/index.ts --outfile dist/wrapper
+
+      - name: Smoke native release binary
+        if: matrix.platform == 'linux-x64'
+        run: |
+          dist/wrapper --version
+          test "$(dist/wrapper --version)" = "$(node -p "require('./apps/cli/package.json').version")"
 
       - name: Package archive
         run: |
