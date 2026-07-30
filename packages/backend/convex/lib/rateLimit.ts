@@ -1,4 +1,5 @@
 import type { MutationCtx } from "../_generated/server.js";
+import { makeFunctionReference } from "convex/server";
 import { createError, ErrorCode } from "./errors.ts";
 import { ErrorSeverity } from "./types.ts";
 
@@ -8,6 +9,19 @@ export type RateLimitOptions = {
   /** Window length in milliseconds. */
   windowMs: number;
 };
+
+const cleanupRateLimitRef = makeFunctionReference<
+  "mutation",
+  { key: string; expectedResetAt: number },
+  { deleted: boolean }
+>("rateLimitCleanup:remove");
+
+async function scheduleCleanup(ctx: MutationCtx, key: string, resetAt: number): Promise<void> {
+  await ctx.scheduler.runAfter(Math.max(0, resetAt - Date.now()) + 60_000, cleanupRateLimitRef, {
+    key,
+    expectedResetAt: resetAt,
+  });
+}
 
 /**
  * Fixed-window rate limiter for unauthenticated endpoints.
@@ -28,12 +42,16 @@ export async function enforceRateLimit(
     .first();
 
   if (!existing) {
-    await ctx.db.insert("rateLimit", { key, count: 1, resetAt: now + options.windowMs });
+    const resetAt = now + options.windowMs;
+    await ctx.db.insert("rateLimit", { key, count: 1, resetAt });
+    await scheduleCleanup(ctx, key, resetAt);
     return;
   }
 
   if (existing.resetAt <= now) {
-    await ctx.db.patch(existing._id, { count: 1, resetAt: now + options.windowMs });
+    const resetAt = now + options.windowMs;
+    await ctx.db.patch(existing._id, { count: 1, resetAt });
+    await scheduleCleanup(ctx, key, resetAt);
     return;
   }
 

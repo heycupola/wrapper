@@ -1,0 +1,23 @@
+{
+  "name": "ip",
+  "version": "2.1.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "index.cjs",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "bun test",
+    "check-types": "tsc --noEmit",
+    "lint": "oxlint .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "ipaddr.js": "^2.2.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

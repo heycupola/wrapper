@@ -19,6 +19,18 @@ import { startLocalServer } from "../server/local";
  */
 
 const MARKER = "wrapper-e2e-ok";
+const LOCAL_TOKEN = "test-local-token";
+
+async function expectWebSocketRejected(url: string): Promise<void> {
+  const ws = new WebSocket(url);
+  await new Promise<void>((resolve, reject) => {
+    ws.addEventListener("open", () => reject(new Error(`unexpected websocket open: ${url}`)), {
+      once: true,
+    });
+    ws.addEventListener("error", () => resolve(), { once: true });
+    ws.addEventListener("close", () => resolve(), { once: true });
+  });
+}
 
 describe("host attach happy path", () => {
   test("viewer input runs in the shell and output streams back", async () => {
@@ -27,9 +39,12 @@ describe("host attach happy path", () => {
       shell: "/bin/bash",
       size: { cols: 80, rows: 24 },
     });
-    const server = startLocalServer({ port: 0, sessionId, pty });
+    const server = startLocalServer({ port: 0, sessionId, pty, token: LOCAL_TOKEN });
 
-    const ws = new WebSocket(`ws://127.0.0.1:${server.port}`);
+    await expectWebSocketRejected(`ws://127.0.0.1:${server.port}`);
+    await expectWebSocketRejected(`ws://127.0.0.1:${server.port}?token=wrong`);
+
+    const ws = new WebSocket(`ws://127.0.0.1:${server.port}?token=${LOCAL_TOKEN}`);
     let received = "";
     const sawMarker = new Promise<void>((resolve) => {
       ws.addEventListener("message", (event) => {

@@ -200,19 +200,10 @@ export const authorizeAttach = protectedQuery({
       .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
       .first();
 
-    if (!session || session.status !== "active") {
-      throw createError({
-        code: ErrorCode.RESOURCE_NOT_FOUND,
-        message: "Active session not found",
-        severity: ErrorSeverity.Medium,
-      });
-    }
-
-    const isOwner = session.ownerUserId === ctx.userId;
-    if (!isOwner && !session.shared) {
+    if (!session || session.status !== "active" || session.ownerUserId !== ctx.userId) {
       throw createError({
         code: ErrorCode.INSUFFICIENT_PERMISSION,
-        message: "You are not allowed to attach to this session",
+        message: "Session access denied",
         severity: ErrorSeverity.High,
       });
     }
@@ -222,7 +213,7 @@ export const authorizeAttach = protectedQuery({
       sessionId: session.sessionId,
       port: session.port,
       shared: session.shared,
-      isOwner,
+      isOwner: true,
       updatedAt: session.updatedAt,
     };
   },

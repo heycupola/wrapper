@@ -4,6 +4,7 @@ import { existsSync, unlinkSync, writeFileSync } from "node:fs";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { type StoredAuthToken, loadStoredAuthToken, resolveConvexUrl } from "../util/auth-session";
+import { resolveConvexSiteUrl } from "../util/convex-client";
 import { paths } from "../util/paths";
 import { installShutdownHandlers } from "../util/signals";
 
@@ -132,11 +133,37 @@ export async function runAuthLogout(): Promise<void> {
     return;
   }
 
+  let serverRevoked = false;
+  const stored = loadStoredAuthToken();
+  if (stored) {
+    try {
+      const response = await fetch(`${resolveConvexSiteUrl(stored.convexUrl)}/api/auth/sign-out`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${stored.sessionToken}`,
+          "content-type": "application/json",
+        },
+        body: "{}",
+      });
+      serverRevoked = response.ok;
+      if (!response.ok) {
+        log.warn("server session revocation failed during logout", { status: response.status });
+      }
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      log.warn("server session revocation failed during logout", { error: err.message });
+    }
+  }
+
   try {
     unlinkSync(file);
     trackEvent("auth_logout_completed");
     log.info("auth token removed", { file });
-    p.outro("Logged out.");
+    p.outro(
+      serverRevoked
+        ? "Logged out and revoked the server session."
+        : "Local session removed. Server revocation could not be confirmed.",
+    );
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     trackError("auth_logout_failed", err);

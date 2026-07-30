@@ -256,22 +256,28 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   let relayBridge: RelayHostBridge | null = null;
   let relayConnected = false;
   let p2pPeerCount = 0;
+  let shareInviteTimer: ReturnType<typeof setTimeout> | null = null;
   // Guards against a second `share` press racing the in-flight relay setup
   // (we no longer optimistically flip `shared` to serve as that guard).
   let relayStarting = false;
   const sessionTag = sessionId.slice(0, 6);
 
-  function printShareInvite(): void {
+  function printShareInvite(attempt = 0): void {
+    shareInviteTimer = null;
     if (!shareCode) return;
-    const lines = [
-      `share code: ${shareCode}`,
-      `others join with: wrapper attach --relay --id ${sessionId} --code ${shareCode}`,
-    ];
     if (session.isIdle) {
-      for (const line of lines) inlineMessage(line);
-    } else {
-      for (const line of lines) log.info(line);
+      inlineMessage(`share code: ${shareCode}`);
+      inlineMessage(`others join with: wrapper attach --relay --id ${sessionId}`);
+      return;
     }
+    // Never put the capability in logs. If a TUI owns the terminal, wait until
+    // the next idle prompt so the code appears only in the host's terminal.
+    if (attempt >= 120) {
+      notifyOS("wrapper", "Session shared. Return to the shell prompt to view the share code.");
+      return;
+    }
+    shareInviteTimer = setTimeout(() => printShareInvite(attempt + 1), 500);
+    shareInviteTimer.unref?.();
   }
   const heartbeat = setInterval(() => {
     if (backend.status !== "ready") return;
@@ -471,6 +477,8 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         }
         shared = false;
         shareCode = null;
+        if (shareInviteTimer) clearTimeout(shareInviteTimer);
+        shareInviteTimer = null;
         setSessionShared(sessionId, false);
         trackEvent("session_unshared");
         if (backend.status === "ready") {
@@ -484,9 +492,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       case "status":
         announce(
           shared ? `wrapper • shared • ${sessionTag}` : `wrapper • idle • ${sessionTag}`,
-          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : "no"}${
-            shared && shareCode ? ` code=${shareCode}` : ""
-          }`,
+          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : "no"}`,
         );
         break;
       case "detach":
@@ -556,6 +562,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shuttingDown = true;
     log.debug("shell-host shutting down", { sessionId, reason });
     clearInterval(heartbeat);
+    if (shareInviteTimer) clearTimeout(shareInviteTimer);
     if (controlsHintTimer) clearTimeout(controlsHintTimer);
     authRefresh?.stop();
     await stopRelayBridge();

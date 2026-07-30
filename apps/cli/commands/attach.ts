@@ -54,7 +54,7 @@ const authorizeAttachRef = makeFunctionReference<
   AuthorizeAttachResponse
 >("session:authorizeAttach");
 const issueViewerRelayTicketRef = makeFunctionReference<
-  "mutation",
+  "action",
   IssueViewerTicketArgs,
   IssueViewerTicketResponse
 >("relay:issueViewerTicket");
@@ -373,11 +373,42 @@ async function resolveRelayAttachUrl(sessionId: string, code?: string): Promise<
     return null;
   }
 
+  let shareCode = code?.trim();
   try {
-    const issued = await backend.client.mutation(issueViewerRelayTicketRef, { sessionId, code });
+    const issued = await backend.client.action(issueViewerRelayTicketRef, {
+      sessionId,
+      code: shareCode,
+    });
     return buildRelayWsUrl(env.relayUrl, issued.ticket);
-  } catch (error) {
-    const message = normalizeAttachAuthorizationError(error);
+  } catch (initialError) {
+    let failure: unknown = initialError;
+    const errorCode = extractErrorCode(
+      initialError instanceof Error ? initialError.message : String(initialError),
+    );
+    if (!shareCode && errorCode === "INSUFFICIENT_PERMISSION" && process.stdin.isTTY) {
+      const prompted = await p.password({
+        message: "Share code (ask the session owner):",
+        validate(value) {
+          return !value || value.trim().length === 0 ? "Share code is required" : undefined;
+        },
+      });
+      if (p.isCancel(prompted)) {
+        process.stderr.write("[wrapper] relay attach cancelled.\n");
+        return null;
+      }
+      shareCode = String(prompted).trim();
+      try {
+        const issued = await backend.client.action(issueViewerRelayTicketRef, {
+          sessionId,
+          code: shareCode,
+        });
+        return buildRelayWsUrl(env.relayUrl, issued.ticket);
+      } catch (retryError) {
+        failure = retryError;
+      }
+    }
+
+    const message = normalizeAttachAuthorizationError(failure);
     process.stderr.write(`[wrapper] relay attach failed: ${message}\n`);
     return null;
   }
@@ -391,7 +422,7 @@ function normalizeAttachAuthorizationError(error: unknown): string {
     case "UNAUTHORIZED":
       return "Not signed in. Run `wrapper auth login` and try again.";
     case "INSUFFICIENT_PERMISSION":
-      return "Access denied. Ask the session owner for a share code and pass it with `--code <code>`, or attach to your own session.";
+      return "Access denied. Check the session id and share code with the owner.";
     case "RESOURCE_NOT_FOUND":
       return "Session not found or no longer active.";
     default:

@@ -9,22 +9,26 @@
     "format": "oxfmt --ignore-path ../../.oxfmtignore .",
     "format:check": "oxfmt --check --ignore-path ../../.oxfmtignore .",
     "check-types": "tsc --noEmit",
-    "test": "bun test tests",
-    "betterAuth:generate-schema": "cd ./convex/betterAuth && bunx better-auth generate -y --output generatedSchema.ts",
+    "test": "bun test tests/*.test.ts && vitest run",
+    "test:integration": "vitest run",
+    "betterAuth:generate-schema": "cd ./convex/betterAuth && bunx @better-auth/cli@latest generate -y --output generatedSchema.ts",
     "deploy": "bunx convex deploy",
     "deploy:dry-run": "bunx convex deploy --dry-run"
   },
   "dependencies": {
-    "@convex-dev/better-auth": "^0.12.2",
-    "@useautumn/convex": "^0.0.12",
-    "better-auth": "~1.6.9",
-    "convex": "^1.37.0",
-    "convex-helpers": "^0.1.98"
+    "@convex-dev/better-auth": "0.12.5",
+    "@useautumn/convex": "0.0.23",
+    "better-auth": "1.6.25",
+    "convex": "1.42.3",
+    "convex-helpers": "0.1.120"
   },
   "devDependencies": {
-    "@better-auth/cli": "latest",
+    "@edge-runtime/vm": "^5.0.0",
     "@types/bun": "latest",
-    "typescript": "^5"
+    "convex-test": "^0.0.54",
+    "typescript": "^5",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
   },
   "peerDependencies": {
     "typescript": "^5"
