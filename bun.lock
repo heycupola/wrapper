@@ -116,6 +116,17 @@
         "typescript": "catalog:",
       },
     },
+    "packages/js-yaml": {
+      "name": "js-yaml",
+      "version": "4.3.1",
+      "dependencies": {
+        "js-yaml-core": "npm:js-yaml@4.3.0",
+      },
+      "devDependencies": {
+        "@repo/typescript-config": "*",
+        "typescript": "catalog:",
+      },
+    },
     "packages/logger": {
       "name": "@repo/logger",
       "version": "0.0.0",
@@ -179,7 +190,7 @@
     "drizzle-orm": "0.45.2",
     "fast-uri": "3.1.4",
     "form-data": "4.0.6",
-    "js-yaml": "4.3.0",
+    "js-yaml": "4.3.1",
     "lodash": "4.18.1",
     "postcss": "8.5.23",
     "qs": "6.15.3",
@@ -1648,7 +1659,9 @@
 
     "js-tokens": ["js-tokens@4.0.0", "", {}, "sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ=="],
 
-    "js-yaml": ["js-yaml@4.3.0", "", { "dependencies": { "argparse": "^2.0.1" }, "bin": { "js-yaml": "bin/js-yaml.js" } }, "sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q=="],
+    "js-yaml": ["js-yaml@workspace:packages/js-yaml"],
+
+    "js-yaml-core": ["js-yaml@4.3.0", "", { "dependencies": { "argparse": "^2.0.1" }, "bin": { "js-yaml": "bin/js-yaml.js" } }, "sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q=="],
 
     "jsep": ["jsep@1.4.0", "", {}, "sha512-B7qPcEVE3NVkmSJbaYxvv4cHkVW7DQsZz13pUMrfS8z8Q/BuShN+gcTXrUlPiGqM2/t/EEaI030bpxMqY8gMlw=="],
 
