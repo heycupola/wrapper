@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CopyCommand } from "./copy-command";
 import { SectionWrapper } from "./section-wrapper";
+import { SiteFooter } from "./site-footer";
 
 export function HorizontalLanding() {
   return (
@@ -80,7 +81,8 @@ export function HorizontalLanding() {
           <ul className="hList">
             <li>Your host session stays fully local until you explicitly share it</li>
             <li>Relay access uses short-lived, single-use, hashed tickets</li>
-            <li>Every attach is authorized against backend owner / shared state</li>
+            <li>Non-owner viewers need the session id and a secret share code</li>
+            <li>Local attach is protected by a per-session 256-bit token</li>
             <li>Disconnect the host and every viewer is dropped immediately</li>
           </ul>
         </SectionWrapper>
@@ -144,6 +146,7 @@ export function HorizontalLanding() {
           </div>
         </section>
       </main>
+      <SiteFooter />
     </div>
   );
 }

@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -64,10 +65,6 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="color-scheme" content="light dark" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
-          rel="stylesheet"
-        />
       </head>
       <body suppressHydrationWarning>{children}</body>
     </html>

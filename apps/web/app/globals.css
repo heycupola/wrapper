@@ -45,11 +45,7 @@ body {
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-weight: 400;
   line-height: 1.6;
   letter-spacing: -0.02em;
@@ -430,6 +426,149 @@ a {
   opacity: 1;
 }
 
+.siteFooter {
+  border-top: 1px solid var(--color-border);
+  padding: 24px;
+}
+
+.siteFooterGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.siteFooterGroup h2 {
+  margin-bottom: 10px;
+  color: var(--color-text);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.siteFooterGroup nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.siteFooterGroup a,
+.siteFooterMeta {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.siteFooterGroup a:hover {
+  color: var(--color-text);
+}
+
+.siteFooterMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 960px;
+  margin: 24px auto 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.legalShell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.legalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.legalHeader a:hover {
+  color: var(--color-text);
+}
+
+.legalMain {
+  width: min(100%, 880px);
+  margin: 0 auto;
+  padding: 56px 24px 80px;
+}
+
+.legalTitle h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.legalTitle p,
+.legalIntroduction,
+.legalSectionContent {
+  color: var(--color-text-muted);
+}
+
+.legalTitle p {
+  margin-top: 10px;
+  font-size: 0.8125rem;
+}
+
+.legalIntroduction {
+  margin-top: 32px;
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.legalSections {
+  margin-top: 40px;
+  border-top: 1px solid var(--color-border);
+}
+
+.legalSections > section {
+  padding: 32px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.legalSections h2 {
+  margin-bottom: 16px;
+  font-size: 1.125rem;
+}
+
+.legalSectionContent {
+  display: grid;
+  gap: 14px;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+
+.legalSectionContent h3 {
+  margin-top: 8px;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+}
+
+.legalSectionContent ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 20px;
+}
+
+.legalSectionContent a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legalSectionContent code {
+  color: var(--color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 .footer-logo-light {
   display: inline;
 }
@@ -509,5 +648,18 @@ a {
 
   .hNav a:not(:first-child):not(:last-child) {
     display: none;
+  }
+
+  .siteFooterGrid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .siteFooterMeta {
+    flex-direction: column;
+  }
+
+  .legalMain {
+    padding: 40px 18px 56px;
   }
 }
