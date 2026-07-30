@@ -1,5 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
+import { env } from "./env";
 import { paths } from "./paths";
+
+export const PRODUCTION_CONVEX_URL = "https://confident-fox-458.convex.cloud";
 
 export interface StoredAuthToken {
   provider: "convex-device-auth";
@@ -10,8 +13,14 @@ export interface StoredAuthToken {
   expiresAt: string;
 }
 
-export function resolveConvexUrl(): string | null {
-  const raw = process.env.WRAPPER_CONVEX_URL ?? process.env.CONVEX_URL;
+export function resolveConvexUrl(
+  environment: Record<string, string | undefined> = process.env,
+  isProduction = env.isProd,
+): string | null {
+  const raw =
+    environment.WRAPPER_CONVEX_URL ??
+    environment.CONVEX_URL ??
+    (isProduction ? PRODUCTION_CONVEX_URL : undefined);
   if (!raw) return null;
   return raw.trim().replace(/\/+$/, "");
 }

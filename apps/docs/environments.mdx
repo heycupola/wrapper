@@ -1,6 +1,6 @@
 ---
-title: Environments
-description: How local, dev, and prod fit together, and how each component deploys.
+title: "Environments"
+description: "How local, dev, and prod fit together, and how each component deploys."
 ---
 
 Wrapper runs in three settings: your **local** machine, a shared **dev**
@@ -26,6 +26,10 @@ local        your machine       Convex dev + ws://localhost:8080 + localhost:300
 dev branch   ->  DEV env    ->  Convex dev deployment, wrapper-relay-dev, Vercel Preview
 main branch  ->  PROD env   ->  Convex prod deployment, wrapper-relay-prod, Vercel Production
 ```
+
+Released CLI binaries use production when `NODE_ENV` is unset. Development
+requires `NODE_ENV=development` and explicit dev Convex/relay endpoints, keeping
+`wrapper-dev` state separate from installed production state.
 
 {/* TODO(image): Add /images/environment-promotion-flow.webp here. Show local, dev, and production lanes with the branches and their Convex, Fly, and Vercel targets. Do not include secret values. Optional operator asset. */}
 
@@ -76,7 +80,7 @@ cd apps/cli && bun run index.ts auth login && bun run index.ts shell-host
 
 `packages/backend/.env.local` holds your local Convex URL and
 `AUTUMN_SECRET_KEY`. Point the CLI at local by copying `apps/cli/.env.example`
-to `apps/cli/.env`.
+to `apps/cli/.env.local`.
 
 ## Deploy flow
 

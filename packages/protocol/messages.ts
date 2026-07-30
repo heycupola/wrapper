@@ -1,6 +1,14 @@
 import { z } from "zod";
 import { SessionIdSchema, TerminalSizeSchema } from "./session";
 
+/** Maximum terminal payload carried by one input/output protocol frame. */
+export const MAX_TERMINAL_DATA_LENGTH = 64 * 1024;
+/** Maximum human-readable protocol error detail. */
+export const MAX_ERROR_MESSAGE_LENGTH = 1024;
+/** Current backwards-compatible JSON wire version. */
+export const PROTOCOL_VERSION = 1 as const;
+const ProtocolVersionSchema = z.literal(PROTOCOL_VERSION).optional();
+
 /**
  * Wire protocol between Wrapper CLI host (PTY owner) and connected clients
  * (local `wrapper attach`, mobile app, or future relay-routed mobile).
@@ -18,25 +26,29 @@ import { SessionIdSchema, TerminalSizeSchema } from "./session";
 // ────────────────────────────────────────────────────────────────────────────
 
 export const AttachMessageSchema = z.object({
+  protocolVersion: ProtocolVersionSchema,
   type: z.literal("attach"),
   sessionId: SessionIdSchema,
 });
 export type AttachMessage = z.infer<typeof AttachMessageSchema>;
 
 export const DetachMessageSchema = z.object({
+  protocolVersion: ProtocolVersionSchema,
   type: z.literal("detach"),
   sessionId: SessionIdSchema,
 });
 export type DetachMessage = z.infer<typeof DetachMessageSchema>;
 
 export const InputMessageSchema = z.object({
+  protocolVersion: ProtocolVersionSchema,
   type: z.literal("input"),
   sessionId: SessionIdSchema,
-  data: z.string(),
+  data: z.string().max(MAX_TERMINAL_DATA_LENGTH),
 });
 export type InputMessage = z.infer<typeof InputMessageSchema>;
 
 export const ResizeMessageSchema = z.object({
+  protocolVersion: ProtocolVersionSchema,
   type: z.literal("resize"),
   sessionId: SessionIdSchema,
   size: TerminalSizeSchema,
@@ -48,6 +60,7 @@ export type ResizeMessage = z.infer<typeof ResizeMessageSchema>;
 // ────────────────────────────────────────────────────────────────────────────
 
 export const SessionOpenedMessageSchema = z.object({
+  protocolVersion: ProtocolVersionSchema,
   type: z.literal("session.opened"),
   sessionId: SessionIdSchema,
   size: TerminalSizeSchema,
@@ -55,6 +68,7 @@ export const SessionOpenedMessageSchema = z.object({
 export type SessionOpenedMessage = z.infer<typeof SessionOpenedMessageSchema>;
 
 export const SessionClosedMessageSchema = z.object({
+  protocolVersion: ProtocolVersionSchema,
   type: z.literal("session.closed"),
   sessionId: SessionIdSchema,
   exitCode: z.number().int().nullable(),
@@ -62,17 +76,19 @@ export const SessionClosedMessageSchema = z.object({
 export type SessionClosedMessage = z.infer<typeof SessionClosedMessageSchema>;
 
 export const OutputMessageSchema = z.object({
+  protocolVersion: ProtocolVersionSchema,
   type: z.literal("output"),
   sessionId: SessionIdSchema,
-  data: z.string(),
+  data: z.string().max(MAX_TERMINAL_DATA_LENGTH),
 });
 export type OutputMessage = z.infer<typeof OutputMessageSchema>;
 
 export const ErrorMessageSchema = z.object({
+  protocolVersion: ProtocolVersionSchema,
   type: z.literal("error"),
   sessionId: SessionIdSchema.optional(),
   code: z.enum(["bad_message", "wrong_session", "internal"]),
-  message: z.string(),
+  message: z.string().max(MAX_ERROR_MESSAGE_LENGTH),
 });
 export type ErrorMessage = z.infer<typeof ErrorMessageSchema>;
 
@@ -92,6 +108,7 @@ export type ErrorMessage = z.infer<typeof ErrorMessageSchema>;
  * another peer nor reach a different session. `data` is capped to bound memory.
  */
 export const SignalMessageSchema = z.object({
+  protocolVersion: ProtocolVersionSchema,
   type: z.literal("signal"),
   sessionId: SessionIdSchema,
   to: z.string().min(1).max(128),

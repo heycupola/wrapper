@@ -11,8 +11,9 @@ import { dirname, join, resolve } from "node:path";
  *
  * Environment knobs:
  *
- *   NODE_ENV=production      production mode
- *                            (any other value is development mode)
+ *   NODE_ENV=development     isolated development mode
+ *   NODE_ENV=test            isolated test mode
+ *                            (any other value, including unset, is production)
  *   CI                       any value flips CI mode (telemetry off,
  *                            console mirror off)
  *   WRAPPER_LOG              "debug" | "info" | "warn" | "error" | "off"
@@ -23,7 +24,8 @@ import { dirname, join, resolve } from "node:path";
  */
 
 const HOME = process.env.HOME || process.env.USERPROFILE || "~";
-const IS_DEV = (process.env.NODE_ENV ?? "").toLowerCase() !== "production";
+const NODE_ENV = (process.env.NODE_ENV ?? "").toLowerCase();
+const IS_DEV = NODE_ENV === "development" || NODE_ENV === "test";
 const IS_CI = process.env.CI !== undefined && process.env.CI !== "";
 const NS = IS_DEV ? "wrapper-dev" : "wrapper";
 
@@ -87,7 +89,7 @@ function isTelemetryEnabled(): boolean {
   if (preference !== null) return preference;
   // No recorded consent yet. Many users first launch via the rc `shell-host`
   // hook, which never shows the opt-out banner, so default to OFF until an
-  // explicit preference is saved (the first-run banner records consent).
+  // explicit preference is saved.
   return false;
 }
 

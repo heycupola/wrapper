@@ -60,10 +60,10 @@ if (!isQuietEntry && isFirstRun()) {
   );
   console.error();
   console.error(
-    `  ${pc.dim("Wrapper collects anonymous usage data. Run")} ${pc.white("wrapper telemetry disable")} ${pc.dim("to opt out.")}`,
+    `  ${pc.dim("Anonymous telemetry is disabled by default. Run")} ${pc.white("wrapper telemetry enable")} ${pc.dim("to opt in.")}`,
   );
   console.error();
-  saveTelemetryPreference(true);
+  saveTelemetryPreference(false);
 }
 
 const program = new Command();
@@ -134,7 +134,10 @@ program
   .option("-p, --port <number>", "explicit port (skips registry lookup)")
   .option("-H, --host <hostname>", "host running the session", "127.0.0.1")
   .option("-r, --relay", "attach via relay using backend-issued ticket")
-  .option("-c, --code <code>", "share code from the host (required to join someone else's session)")
+  .option(
+    "-c, --code <code>",
+    "share code for non-interactive use (interactive attach prompts securely)",
+  )
   .action(async (raw) => {
     await runAttach({
       id: raw.id,

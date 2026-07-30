@@ -31,6 +31,11 @@ Real Convex URLs:
 | `.cloud` | `https://sleek-echidna-539.convex.cloud` | `https://confident-fox-458.convex.cloud` |
 | `.site` | `https://sleek-echidna-539.convex.site` | `https://confident-fox-458.convex.site` |
 
+Released CLI binaries treat an unset `NODE_ENV` as production and default to
+`https://confident-fox-458.convex.cloud`,
+`wss://wrapper-relay-prod.fly.dev`, and `https://wrapper.sh`. Source development
+must set `NODE_ENV=development` and explicit dev endpoints.
+
 ### How each component picks dev vs prod
 
 - **web (Vercel)**: Vercel's Git integration decides by the **Production Branch**
@@ -160,7 +165,7 @@ bun run index.ts shell-host
 ```
 
 `packages/backend/.env.local` holds your local Convex + `AUTUMN_SECRET_KEY`. Point
-the CLI at local with `apps/cli/.env` (copy from `.env.example`).
+the CLI at local with `apps/cli/.env.local` (copy from `.env.example`).
 
 ### Test the Pro / relay-share gate
 

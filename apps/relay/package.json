@@ -10,15 +10,15 @@
     "start": "bun run src/index.ts",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
-    "format": "oxfmt .",
-    "format:check": "oxfmt --check .",
+    "format": "oxfmt --ignore-path ../../.oxfmtignore .",
+    "format:check": "oxfmt --check --ignore-path ../../.oxfmtignore .",
     "check-types": "tsc --noEmit",
     "test": "bun test",
     "smoke": "bun run scripts/smoke.ts"
   },
   "dependencies": {
-    "convex": "^1.37.0",
-    "hono": "^4.10.6"
+    "convex": "1.42.3",
+    "hono": "4.12.32"
   },
   "devDependencies": {
     "@repo/protocol": "*",

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { components } from "./_generated/api";
-import { mutation, query } from "./_generated/server";
+import { mutation } from "./_generated/server";
 import { protectedMutation } from "./lib/middleware";
 import { enforceRateLimit } from "./lib/rateLimit";
 
@@ -76,11 +76,15 @@ export const pollDeviceToken = mutation({
   },
 });
 
-export const getDeviceCodeInfo = query({
+export const getDeviceCodeInfo = mutation({
   args: {
     user_code: v.string(),
   },
   handler: async (ctx, args) => {
+    await enforceRateLimit(ctx, "getDeviceCodeInfo:global", {
+      limit: 300,
+      windowMs: 60_000,
+    });
     return await ctx.runQuery(components.betterAuth.deviceAuth.getDeviceCodeInfo, {
       user_code: args.user_code,
     });

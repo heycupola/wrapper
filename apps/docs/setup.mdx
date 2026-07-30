@@ -7,14 +7,16 @@ description: Configure environment variables, run checks, and verify your local 
 
 ### CLI
 
-- `WRAPPER_CONVEX_URL`: Convex deployment URL
-- `WRAPPER_RELAY_URL`: Relay WebSocket base URL
+- `WRAPPER_CONVEX_URL`: Convex deployment URL. Released CLI defaults to
+  production; development must set this explicitly.
+- `WRAPPER_RELAY_URL`: Relay WebSocket base URL. Released CLI defaults to the
+  production Fly relay.
 - `WRAPPER_AUTH_ORIGIN`: Auth UI origin
 - `WRAPPER_HUD`: `on` by default. The terminal title shows role, session, active
   transport, and armed controls; set `off` to disable it.
 - `WRAPPER_P2P`: WebRTC direct path, on by default with automatic relay fallback.
   Set to `0` to force the relay. See [Transports](/transports).
-- `NODE_ENV=development`: local development mode
+- `NODE_ENV=development`: isolated local mode. Unset means production.
 
 ### Relay
 
@@ -47,6 +49,7 @@ bun run lint
 bun run format:check
 bun run check-types
 bunx turbo run test
+bun run --cwd packages/backend test:integration
 ```
 
 Note: `@repo/terminal` tests can fail in restricted environments where PTY syscalls are blocked.

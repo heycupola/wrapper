@@ -1,0 +1,22 @@
+{
+  "name": "js-yaml",
+  "version": "4.3.1",
+  "private": true,
+  "type": "commonjs",
+  "main": "index.cjs",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "bun test",
+    "check-types": "tsc --noEmit",
+    "lint": "oxlint .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check ."
+  },
+  "dependencies": {
+    "js-yaml-core": "npm:js-yaml@4.3.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "typescript": "catalog:"
+  }
+}

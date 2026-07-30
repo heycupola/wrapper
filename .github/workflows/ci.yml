@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -65,6 +65,9 @@ jobs:
           NEXT_PUBLIC_CONVEX_URL: https://example.convex.cloud
           NEXT_PUBLIC_CONVEX_SITE_URL: https://example.convex.site
 
+      - name: Docs validation
+        run: bun run --cwd apps/docs build
+
       - name: Backend deploy dry run
         run: |
           if [ -z "$CONVEX_DEPLOY_KEY" ]; then
@@ -81,6 +84,6 @@ jobs:
         run: |
           CONVEX_URL="https://example.convex.cloud" bun run --cwd apps/relay start &
           RELAY_PID=$!
-          trap "kill $RELAY_PID" EXIT
+          trap 'kill "$RELAY_PID"' EXIT
           sleep 3
           RELAY_URL="http://127.0.0.1:8080" bun run --cwd apps/relay smoke

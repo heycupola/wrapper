@@ -4,6 +4,7 @@ import { makeFunctionReference } from "convex/server";
 import { Hono } from "hono";
 import { RelayHub, type RelayRole } from "./hub";
 import { createLogger } from "./logger";
+import { MAX_WIRE_FRAME_BYTES } from "./protocol";
 
 type ConsumeTicketArgs = {
   ticket: string;
@@ -72,6 +73,7 @@ const server = Bun.serve<WsData>({
     return app.fetch(req);
   },
   websocket: {
+    maxPayloadLength: MAX_WIRE_FRAME_BYTES,
     open(ws) {
       sockets.add(ws);
       ws.data.pendingMessages = [];

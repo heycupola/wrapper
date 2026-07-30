@@ -1,6 +1,6 @@
 ---
-title: Onboarding
-description: First-time flow for getting Wrapper ready in minutes.
+title: "Onboarding"
+description: "First-time flow for getting Wrapper ready in minutes."
 ---
 
 ## 1) Sign in
@@ -57,13 +57,14 @@ wrapper attach --relay --id <sessionId>
 To let someone else in (for example pair-prompting), give them the share code:
 
 ```bash
-wrapper attach --relay --id <sessionId> --code <shareCode>
+wrapper attach --relay --id <sessionId>
 ```
 
-Every viewer who joins can type into the same shell, so only share the code with
-people you want to co-drive the session.
+Wrapper asks a non-owner for the code in a hidden prompt. Every viewer who joins
+can type into the same shell, so only share the code with people you want to
+co-drive the session.
 
-{/* TODO(image): Add /images/share-code-and-viewer.webp here. Show the host after Ctrl+\ then s with a fake share code and exact attach command next to a viewer whose title reports p2p. Redact the real session id and filesystem paths. Essential sharing asset. */}
+{/* TODO(image): Add /images/share-code-and-viewer.webp here. Show the host after Ctrl+\ then s with a fake share code and the code-free attach command next to a viewer's hidden share-code prompt whose title later reports p2p. Redact the real session id and filesystem paths. Essential sharing asset. */}
 
 ## 5) Done
 

@@ -23,7 +23,7 @@ type ApproveOrDenyArgs = {
 };
 
 const getDeviceCodeInfoRef = makeFunctionReference<
-  "query",
+  "mutation",
   GetDeviceCodeInfoArgs,
   GetDeviceCodeInfoResponse
 >("deviceAuth:getDeviceCodeInfo");
@@ -94,7 +94,7 @@ export function DeviceAuthorizeClient({ authenticated, initialToken }: DeviceAut
       setError(null);
       setStatus(null);
       try {
-        const info = await client.query(getDeviceCodeInfoRef, { user_code: normalized });
+        const info = await client.mutation(getDeviceCodeInfoRef, { user_code: normalized });
         setDeviceInfo(info);
         if (!info) setError("Code not found or expired");
       } catch (err) {
@@ -140,7 +140,7 @@ export function DeviceAuthorizeClient({ authenticated, initialToken }: DeviceAut
         await client.mutation(denyDeviceCodeRef, { user_code: normalized });
         setStatus("Device code denied");
       }
-      const info = await client.query(getDeviceCodeInfoRef, { user_code: normalized });
+      const info = await client.mutation(getDeviceCodeInfoRef, { user_code: normalized });
       setDeviceInfo(info);
     } catch (err) {
       setError(normalizeError(err));

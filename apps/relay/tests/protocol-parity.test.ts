@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
+  MAX_TERMINAL_DATA_LENGTH,
+  MAX_WIRE_FRAME_BYTES,
   WrapperMessageSchema,
   encodeMessage as repoEncode,
   parseMessage as repoParse,
@@ -40,8 +42,29 @@ describe("relay protocol parity with @repo/protocol", () => {
       const repoWire = repoEncode(message);
       const relayWire = relayEncode(message);
       expect(relayWire).toBe(repoWire);
-      expect(relayParse(repoWire)).toEqual(message);
-      expect(repoParse(relayWire)).toEqual(message);
+      expect(relayParse(repoWire)).toEqual({ ...message, protocolVersion: 1 });
+      expect(repoParse(relayWire)).toEqual({ ...message, protocolVersion: 1 });
     }
+  });
+
+  test("version 1 is emitted while unversioned v0 frames remain readable", () => {
+    const message: RepoMessage = { type: "detach", sessionId: "s1" };
+    expect(JSON.parse(repoEncode(message))).toMatchObject({ protocolVersion: 1 });
+    expect(repoParse(JSON.stringify(message))).toEqual(message);
+    expect(relayParse(JSON.stringify(message))).toEqual(message);
+  });
+
+  test("both implementations reject oversized terminal and raw frames", () => {
+    const oversizedTerminal = JSON.stringify({
+      type: "input",
+      sessionId: "s1",
+      data: "x".repeat(MAX_TERMINAL_DATA_LENGTH + 1),
+    });
+    const oversizedWire = "x".repeat(MAX_WIRE_FRAME_BYTES + 1);
+
+    expect(repoParse(oversizedTerminal)).toBeNull();
+    expect(relayParse(oversizedTerminal)).toBeNull();
+    expect(repoParse(oversizedWire)).toBeNull();
+    expect(relayParse(oversizedWire)).toBeNull();
   });
 });

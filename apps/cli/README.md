@@ -4,7 +4,7 @@ Wrapper CLI is the runtime core of the product.
 
 It wraps every interactive shell session and exposes that live session over a
 local WebSocket endpoint so other clients can attach. It can also publish a
-shared session through the relay for remote viewers, with an optional direct
+shared session through the relay for remote viewers, with a default direct
 WebRTC **P2P fast path** for lower latency (see
 [`transport/README.md`](./transport/README.md)).
 
@@ -98,9 +98,10 @@ Important safety guards:
 
 1. Resolve target session by `--id`, `--port`, or picker from registry.
 2. Local path: run `session:authorizeAttach`, then connect to `ws://127.0.0.1:<port>`.
-3. Relay path (`--relay` or no local match for `--id`): issue `relay:issueViewerTicket`
-   (passing `--code` when joining someone else's session) and connect to
-   `WRAPPER_RELAY_URL/ws?ticket=...`.
+3. Relay path (`--relay` or no local match for `--id`): issue
+   `relay:issueViewerTicket`. The owner proceeds directly; a non-owner is
+   prompted for the share code without echoing it or placing it in shell history.
+   The client then connects to `WRAPPER_RELAY_URL/ws?ticket=...`.
 4. Bridge stdin/stdout via protocol messages.
 5. Support detach without ending host session (`Ctrl+\` then `d`).
 
@@ -136,8 +137,9 @@ be either:
   signaling and is the fallback.
 - **WebRTC data channel** (`WebRtcDataChannelTransport`), a direct P2P connection
   negotiated over the relay. It is **on by default** (opt out with
-  `WRAPPER_P2P=0`). When it opens, session traffic flows directly (SSH-like
-  latency); if ICE can't connect, the session transparently stays on the relay.
+  `WRAPPER_P2P=0`). When it opens, viewer input uses the direct low-latency path;
+  the host keeps relay output available for fallback and other viewers. If ICE
+  cannot connect, the session stays on the relay.
 
 Full design, security model, and testing steps live in
 [`transport/README.md`](./transport/README.md). P2P applies only to `--relay`
@@ -155,11 +157,14 @@ channel can also keep running if the signaling WebSocket closes.
 Sharing is capability-based, so only people you explicitly invite can join:
 
 - Pressing `Ctrl+\` `s` marks the session shared and prints a **share code** plus
-  the exact join command. The backend stores only the hash of that code.
+  the join command. The backend stores only the hash of that code.
 - The owner can attach to their own session from any device with no code.
-- Anyone else must pass the code:
-  `wrapper attach --relay --id <sessionId> --code <code>`. Knowing the session id
-  alone is not enough, and guessing is rate limited.
+- Anyone else runs `wrapper attach --relay --id <sessionId>` and enters the code
+  in a hidden prompt. `--code` exists only for non-interactive automation because
+  command-line arguments can appear in process lists and shell history.
+- Knowing the session id alone is not enough, and guessing is rate limited per
+  account, per hashed target bucket, and globally without exposing whether a
+  target exists.
 - Pressing `Ctrl+\` `u` (or ending the shell) revokes access immediately by
   clearing the stored code and shared flag.
 
@@ -219,7 +224,8 @@ wrapper attach
 wrapper attach --id <sessionId>
 wrapper attach --port <port>
 wrapper attach --relay --id <sessionId>
-wrapper attach --relay --id <sessionId> --code <shareCode>
+# Non-interactive automation only:
+wrapper attach --relay --id <sessionId> --code "$WRAPPER_SHARE_CODE"
 wrapper logs --follow
 ```
 
@@ -268,7 +274,8 @@ Inside attach viewer:
 
 When shared and authenticated, `Ctrl+\` + `s` starts a relay bridge, prints a
 share code, and enables remote attach with
-`wrapper attach --relay --id <sessionId> --code <shareCode>`.
+`wrapper attach --relay --id <sessionId>`. Non-owner viewers receive a hidden
+share-code prompt.
 
 ## Debugging workflow
 
@@ -293,22 +300,22 @@ share code, and enables remote attach with
 
 ## Environment variables
 
-| Variable                | Description                                  | Default                                      |
-| ----------------------- | -------------------------------------------- | -------------------------------------------- |
-| `NODE_ENV`              | runtime mode (`production` or dev)           | unset (treated as dev)                       |
-| `CI`                    | enable CI mode                               | unset                                        |
-| `WRAPPER_LOG`           | `debug/info/warn/error/off`                  | dev=`info`, prod=`warn`                      |
-| `WRAPPER_LOG_FILE`      | override log file path                       | platform default                             |
-| `WRAPPER_TELEMETRY`     | `"false"` disables telemetry                 | enabled after consent                        |
-| `WRAPPER_POSTHOG_KEY`   | PostHog key                                  | empty                                        |
-| `WRAPPER_TELEMETRY_URL` | telemetry endpoint                           | `https://telemetry.wrapper.sh`               |
-| `WRAPPER_RELAY_URL`     | relay endpoint override                      | dev localhost, prod `wss://relay.wrapper.sh` |
-| `WRAPPER_AUTH_ORIGIN`   | auth callback origin                         | dev localhost, prod `https://wrapper.sh`     |
-| `WRAPPER_HUD`           | session title + armed controls HUD           | `on`                                         |
-| `WRAPPER_P2P`           | WebRTC P2P fast path; `0/false/off` opts out | on (relay is the fallback)                   |
-| `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend            | falls back to `CONVEX_URL` if set            |
-| `WRAPPER_DISABLE`       | disable hook in one terminal                 | unset                                        |
-| `WRAPPER_WRAPPED`       | set by `shell-host` in inner shell           | unset                                        |
+| Variable                | Description                                  | Default                                  |
+| ----------------------- | -------------------------------------------- | ---------------------------------------- |
+| `NODE_ENV`              | `development`/`test` enables isolated dev    | unset (production)                       |
+| `CI`                    | enable CI mode                               | unset                                    |
+| `WRAPPER_LOG`           | `debug/info/warn/error/off`                  | dev=`info`, prod=`warn`                  |
+| `WRAPPER_LOG_FILE`      | override log file path                       | platform default                         |
+| `WRAPPER_TELEMETRY`     | explicit telemetry override                  | disabled until user opts in              |
+| `WRAPPER_POSTHOG_KEY`   | PostHog key                                  | empty                                    |
+| `WRAPPER_TELEMETRY_URL` | telemetry endpoint                           | `https://telemetry.wrapper.sh`           |
+| `WRAPPER_RELAY_URL`     | relay endpoint override                      | dev localhost, prod Fly relay            |
+| `WRAPPER_AUTH_ORIGIN`   | auth callback origin                         | dev localhost, prod `https://wrapper.sh` |
+| `WRAPPER_HUD`           | session title + armed controls HUD           | `on`                                     |
+| `WRAPPER_P2P`           | WebRTC P2P fast path; `0/false/off` opts out | on (relay is the fallback)               |
+| `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend            | prod deployment; dev must set it         |
+| `WRAPPER_DISABLE`       | disable hook in one terminal                 | unset                                    |
+| `WRAPPER_WRAPPED`       | set by `shell-host` in inner shell           | unset                                    |
 
 `NODE_ENV=development` redirects state into `wrapper-dev`, uses localhost defaults, and
 mirrors logs to stderr for easier local debugging.

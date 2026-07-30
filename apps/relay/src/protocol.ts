@@ -11,39 +11,47 @@
 export type RawWireData = string | ArrayBuffer | Uint8Array;
 
 type SessionId = string;
+type Versioned = { protocolVersion?: 1 };
 
-export type WrapperMessage =
-  | { type: "attach"; sessionId: SessionId }
-  | { type: "detach"; sessionId: SessionId }
-  | { type: "input"; sessionId: SessionId; data: string }
-  | { type: "resize"; sessionId: SessionId; size: { cols: number; rows: number } }
-  | { type: "session.opened"; sessionId: SessionId; size: { cols: number; rows: number } }
-  | { type: "session.closed"; sessionId: SessionId; exitCode: number | null }
-  | { type: "output"; sessionId: SessionId; data: string }
-  | {
-      type: "error";
-      sessionId?: SessionId;
-      code: "bad_message" | "wrong_session" | "internal";
-      message: string;
-    }
-  | {
-      type: "signal";
-      sessionId: SessionId;
-      to: string;
-      from: string;
-      kind: "offer" | "answer" | "ice" | "bye";
-      data: string;
-    };
+export type WrapperMessage = Versioned &
+  (
+    | { type: "attach"; sessionId: SessionId }
+    | { type: "detach"; sessionId: SessionId }
+    | { type: "input"; sessionId: SessionId; data: string }
+    | { type: "resize"; sessionId: SessionId; size: { cols: number; rows: number } }
+    | { type: "session.opened"; sessionId: SessionId; size: { cols: number; rows: number } }
+    | { type: "session.closed"; sessionId: SessionId; exitCode: number | null }
+    | { type: "output"; sessionId: SessionId; data: string }
+    | {
+        type: "error";
+        sessionId?: SessionId;
+        code: "bad_message" | "wrong_session" | "internal";
+        message: string;
+      }
+    | {
+        type: "signal";
+        sessionId: SessionId;
+        to: string;
+        from: string;
+        kind: "offer" | "answer" | "ice" | "bye";
+        data: string;
+      }
+  );
 
 const SIGNAL_DATA_MAX = 64 * 1024;
 const SIGNAL_ID_MAX = 128;
+const TERMINAL_DATA_MAX = 64 * 1024;
+const ERROR_MESSAGE_MAX = 1024;
+export const MAX_WIRE_FRAME_BYTES = 128 * 1024;
+const PROTOCOL_VERSION = 1;
 const SIGNAL_KINDS = new Set(["offer", "answer", "ice", "bye"]);
 
 export function encodeMessage(msg: WrapperMessage): string {
-  return JSON.stringify(msg);
+  return JSON.stringify({ ...msg, protocolVersion: PROTOCOL_VERSION });
 }
 
 export function parseMessage(raw: RawWireData): WrapperMessage | null {
+  if (wireByteLength(raw) > MAX_WIRE_FRAME_BYTES) return null;
   const text = toText(raw);
   let json: unknown;
   try {
@@ -53,6 +61,11 @@ export function parseMessage(raw: RawWireData): WrapperMessage | null {
   }
   if (!isWrapperMessage(json)) return null;
   return json;
+}
+
+function wireByteLength(raw: RawWireData): number {
+  if (typeof raw === "string") return new TextEncoder().encode(raw).byteLength;
+  return raw.byteLength;
 }
 
 function toText(raw: RawWireData): string {
@@ -77,6 +90,8 @@ function isSize(input: unknown): input is { cols: number; rows: number } {
 
 function isWrapperMessage(input: unknown): input is WrapperMessage {
   if (!isObject(input) || typeof input.type !== "string") return false;
+  if (input.protocolVersion !== undefined && input.protocolVersion !== PROTOCOL_VERSION)
+    return false;
   const { type } = input;
 
   if (type === "error") {
@@ -84,7 +99,8 @@ function isWrapperMessage(input: unknown): input is WrapperMessage {
       (input.sessionId === undefined || typeof input.sessionId === "string") &&
       typeof input.code === "string" &&
       ["bad_message", "wrong_session", "internal"].includes(input.code) &&
-      typeof input.message === "string"
+      typeof input.message === "string" &&
+      input.message.length <= ERROR_MESSAGE_MAX
     );
   }
 
@@ -96,7 +112,7 @@ function isWrapperMessage(input: unknown): input is WrapperMessage {
       return true;
     case "input":
     case "output":
-      return typeof input.data === "string";
+      return typeof input.data === "string" && input.data.length <= TERMINAL_DATA_MAX;
     case "resize":
       return isSize(input.size);
     case "session.opened":

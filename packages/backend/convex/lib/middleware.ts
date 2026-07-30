@@ -99,5 +99,26 @@ export const protectedAction = customAction(action, {
   },
 });
 
+/** Authenticated action without billing-provider context. */
+export const authenticatedAction = customAction(action, {
+  args: {},
+  input: async (
+    ctx: ActionCtx,
+    args: Record<string, unknown>,
+  ): Promise<{
+    ctx: ActionCtx & AuthenticatedCtx;
+    args: Record<string, unknown>;
+  }> => {
+    const identity = await requireIdentity(ctx);
+    return {
+      ctx: {
+        ...ctx,
+        ...identity,
+      },
+      args,
+    };
+  },
+});
+
 export const publicQuery = query;
 export const publicMutation = mutation;

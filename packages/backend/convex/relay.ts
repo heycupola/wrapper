@@ -4,7 +4,7 @@ import { internal } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import { createError, ErrorCode } from "./lib/errors.ts";
-import { protectedAction, protectedMutation, publicMutation } from "./lib/middleware.ts";
+import { authenticatedAction, protectedAction, publicMutation } from "./lib/middleware.ts";
 import {
   getRelayTicketConfig,
   createRelayTicket,
@@ -20,6 +20,16 @@ const issueHostTicketInternalRef = makeFunctionReference<
   { sessionId: string; userId: string },
   { ticket: string; expiresAt: number }
 >("relay:issueHostTicketInternal");
+const recordViewerTicketAttemptRef = makeFunctionReference<
+  "mutation",
+  { sessionId: string; userId: string },
+  { isOwner: boolean }
+>("relay:recordViewerTicketAttempt");
+const issueViewerTicketInternalRef = makeFunctionReference<
+  "mutation",
+  { sessionId: string; userId: string; code?: string },
+  { ticket: string; expiresAt: number }
+>("relay:issueViewerTicketInternal");
 
 export const issueHostTicket = protectedAction({
   args: {
@@ -84,7 +94,7 @@ export const issueHostTicketInternal = internalMutation({
   },
 });
 
-export const issueViewerTicket = protectedMutation({
+export const issueViewerTicket = authenticatedAction({
   args: {
     sessionId: v.string(),
     // Access code shown by the host when it shared. Not required for the owner
@@ -92,28 +102,74 @@ export const issueViewerTicket = protectedMutation({
     code: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const session = await findActiveSession(ctx, args.sessionId);
-    if (!session) {
-      throw createError({
-        code: ErrorCode.RESOURCE_NOT_FOUND,
-        message: "Active session not found",
-        severity: ErrorSeverity.Medium,
-      });
-    }
+    // Rate-limit state must commit even when the subsequent access check fails.
+    // A single mutation would roll the counter back when throwing, so the action
+    // records the attempt in its own transaction before issuing the ticket.
+    await ctx.runMutation(recordViewerTicketAttemptRef, {
+      sessionId: args.sessionId,
+      userId: ctx.userId,
+    });
+    return await ctx.runMutation(issueViewerTicketInternalRef, {
+      sessionId: args.sessionId,
+      userId: ctx.userId,
+      code: args.code,
+    });
+  },
+});
 
-    const isOwner = session.ownerUserId === ctx.userId;
+export const recordViewerTicketAttempt = internalMutation({
+  args: {
+    sessionId: v.string(),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const session = await findActiveSession(ctx, args.sessionId);
+    const isOwner = session?.ownerUserId === args.userId;
     if (!isOwner) {
-      // Throttle non-owner attempts per user+session so a leaked session id can
-      // never be paired with a brute-forced share code.
-      await enforceRateLimit(ctx, `issueViewerTicket:${ctx.userId}:${args.sessionId}`, {
+      // Apply the same limiter path whether the target exists or not so timing
+      // and RATE_LIMIT_EXCEEDED cannot become a session-existence oracle. The
+      // hashed bucket protects a target across accounts without creating an
+      // unbounded row for every attacker-controlled random session id.
+      const targetBucket = (await hashRelayTicket(args.sessionId)).slice(0, 4);
+      await enforceRateLimit(ctx, `issueViewerTicket:user:${args.userId}`, {
         limit: 10,
         windowMs: 60_000,
       });
+      await enforceRateLimit(ctx, `issueViewerTicket:target:${targetBucket}`, {
+        limit: 100,
+        windowMs: 60_000,
+      });
+      await enforceRateLimit(ctx, "issueViewerTicket:global", {
+        limit: 1_000,
+        windowMs: 60_000,
+      });
+    }
+    return { isOwner };
+  },
+});
 
+export const issueViewerTicketInternal = internalMutation({
+  args: {
+    sessionId: v.string(),
+    userId: v.string(),
+    code: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const session = await findActiveSession(ctx, args.sessionId);
+    if (!session) {
+      throw createError({
+        code: ErrorCode.INSUFFICIENT_PERMISSION,
+        message: "Session access denied",
+        severity: ErrorSeverity.High,
+      });
+    }
+
+    const isOwner = session.ownerUserId === args.userId;
+    if (!isOwner) {
       if (!session.shared || !session.shareCodeHash) {
         throw createError({
           code: ErrorCode.INSUFFICIENT_PERMISSION,
-          message: "Session is not shared",
+          message: "Session access denied",
           severity: ErrorSeverity.High,
         });
       }
@@ -122,7 +178,7 @@ export const issueViewerTicket = protectedMutation({
       if (!provided) {
         throw createError({
           code: ErrorCode.INSUFFICIENT_PERMISSION,
-          message: "This session requires a share code",
+          message: "Session access denied",
           severity: ErrorSeverity.High,
         });
       }
@@ -130,7 +186,7 @@ export const issueViewerTicket = protectedMutation({
       if (providedHash !== session.shareCodeHash) {
         throw createError({
           code: ErrorCode.INSUFFICIENT_PERMISSION,
-          message: "Invalid share code",
+          message: "Session access denied",
           severity: ErrorSeverity.High,
         });
       }
@@ -138,7 +194,7 @@ export const issueViewerTicket = protectedMutation({
 
     return await issueTicket(ctx, {
       sessionId: args.sessionId,
-      userId: ctx.userId,
+      userId: args.userId,
       role: "viewer",
       ttlMs: RELAY_TICKET.viewerTtlMs,
     });

@@ -3,8 +3,10 @@
  *
  * Two boolean toggles, read once at module load:
  *
- *   - `NODE_ENV`  → set to `production` for production mode.
- *                   Any other value (or unset) is treated as development.
+ *   - `NODE_ENV`  → set to `development` (or `test`) for isolated local mode.
+ *                   Any other value, including unset, is production. Released
+ *                   binaries therefore fail toward real service endpoints
+ *                   instead of silently trying localhost.
  *                   Switches every server URL to localhost, namespaces all
  *                   on-disk paths under `wrapper-dev`, mirrors logs to
  *                   stderr, and disables telemetry.
@@ -23,8 +25,12 @@
  * worked on either project sees the same environment knobs.
  */
 
-const NODE_ENV = (process.env.NODE_ENV ?? "").toLowerCase();
-const IS_DEV = NODE_ENV !== "production";
+export function isDevelopmentNodeEnv(value: string | undefined): boolean {
+  const normalized = (value ?? "").toLowerCase();
+  return normalized === "development" || normalized === "test";
+}
+
+const IS_DEV = isDevelopmentNodeEnv(process.env.NODE_ENV);
 const IS_CI = process.env.CI !== undefined && process.env.CI !== "";
 const HUD = (process.env.WRAPPER_HUD ?? "").toLowerCase();
 const HUD_ENABLED = HUD !== "0" && HUD !== "false" && HUD !== "off";
@@ -49,7 +55,8 @@ export const env = {
   namespace: IS_DEV ? "wrapper-dev" : "wrapper",
   /** Relay endpoint (real values land with the relay package). */
   relayUrl:
-    process.env.WRAPPER_RELAY_URL ?? (IS_DEV ? "ws://localhost:8080" : "wss://relay.wrapper.sh"),
+    process.env.WRAPPER_RELAY_URL ??
+    (IS_DEV ? "ws://localhost:8080" : "wss://wrapper-relay-prod.fly.dev"),
   /** Auth callback origin used by the Better Auth device login flow. */
   authOrigin:
     process.env.WRAPPER_AUTH_ORIGIN ?? (IS_DEV ? "http://localhost:3000" : "https://wrapper.sh"),

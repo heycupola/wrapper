@@ -53,18 +53,18 @@ who may attach to which session.
 - `pollDeviceToken`: exchange a device code for a session token (globally rate
   limited; per-code pacing enforced by the Better Auth `interval`/`slow_down`
   contract)
-- `getDeviceCodeInfo`: look up a pending code so the web page can show what is
-  being approved
+- `getDeviceCodeInfo`: globally rate-limited mutation that looks up a pending
+  code so the web page can show what is being approved
 - `approveDeviceCode` / `denyDeviceCode`: authenticated approve or deny actions
 
 `convex/relay.ts`:
 
 - `issueHostTicket`: owner-only short-lived ticket for the host relay socket,
   gated by the Autumn sharing entitlement
-- `issueViewerTicket`: short-lived ticket for a viewer socket. The owner is
+- `issueViewerTicket` (action): short-lived ticket for a viewer socket. The owner is
   always allowed on their own devices. A non-owner must present the correct
-  share code, and non-owner attempts are rate limited per user and session to
-  stop code guessing
+  share code, and non-owner attempts are rate limited per user, per hashed target
+  bucket, and globally to stop code guessing without exposing session existence
 - `consumeTicket`: single-use consumption during the relay handshake, called by
   the relay itself without a user identity
 - `cleanupTicket` (internal): scheduled cleanup of used and expired ticket rows
@@ -117,9 +117,12 @@ Access to a session is deliberately narrow:
 - **Revocation:** unsharing (or closing) clears the code hash, and
   `consumeTicket` re-checks the shared state, so outstanding viewer tickets stop
   working the moment the owner unshares.
-- **Anti-guessing:** non-owner `issueViewerTicket` calls are rate limited per
-  user and session, so a leaked session id cannot be paired with a brute-forced
-  code.
+- **Anti-guessing:** non-owner `issueViewerTicket` calls are rate limited in a
+  separate committed mutation before access validation. This prevents Convex
+  transaction rollback from erasing failed-attempt counters.
+
+Unknown, unshared, missing-code, and wrong-code sessions return the same access
+denial so callers cannot use the API to discover another user's active session.
 
 This is a capability model (possession of the code grants access), which suits
 pair-prompting on a shared session. Note that every viewer who joins shares
@@ -170,6 +173,7 @@ bunx tsc --noEmit -p packages/backend/tsconfig.json
 bunx oxlint packages/backend/convex
 cd packages/backend && bunx convex codegen
 bun test packages/backend/tests
+bun run --cwd packages/backend test:integration
 ```
 
 ## Smoke checklist

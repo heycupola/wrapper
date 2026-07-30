@@ -1,24 +1,39 @@
 ---
-title: Mobile Plan
-description: What is locked now so mobile can plug in later.
+title: "iOS and iPadOS plan"
+description: "Native mobile viewer scope, current foundation, and delivery phases."
 ---
 
-Mobile app implementation is intentionally deferred, but the integration contract
-is already defined:
+The native viewer is developed in the separate `wrapper-mobile` repository,
+linked at `apps/mobile` as a git submodule. The initial platform scope is iPhone
+and iPad:
 
 - backend remains source of truth for auth/session entitlement
 - relay ticket flow is reusable for non-CLI clients
-- protocol messages stay versioned in `@repo/protocol`
+- protocol messages use the backwards-compatible version 1 contract
 
-## Current boundary
+## Current foundation
 
-- mobile app is not part of current release phases
-- docs and onboarding are written so users can complete setup without mobile
+- Xcode 26, Swift 6.2, SwiftUI, Observation, strict concurrency
+- iOS 18 minimum deployment target with iPhone and iPad device families
+- XcodeGen project definition and GitHub Actions build/test workflow
+- official Convex Swift, SwiftTerm, and native WebRTC package boundaries
+- versioned Codable protocol models with payload limits
+- Keychain session storage and relay WebSocket actor
+- adaptive `NavigationSplitView` app shell and SwiftTerm terminal surface
+- Swift Testing coverage for environments and wire compatibility
 
-## Next mobile phase
+The mobile app is viewer/controller only. The desktop CLI remains the PTY host.
 
-- repo linkage strategy: submodule under `apps/mobile`
-- auth bootstrapping via Better Auth session handoff
-- relay viewer mode first, host mode later
+## Next vertical slices
+
+1. Complete Better Auth device login with Keychain restore and Convex JWT refresh.
+2. Replace preview repositories with authenticated Convex session subscriptions.
+3. Issue viewer tickets as owner or through the hidden share-code join form.
+4. Connect the relay WebSocket to the SwiftTerm input/output stream.
+5. Port offer/answer/ICE handling to native WebRTC with relay fallback.
+6. Test iPad external keyboards, rotation, split view, and multi-viewer resize.
+7. Add signing, TestFlight, App Store privacy labels, and release automation.
+
+Android and mobile host mode are not part of the current phase.
 
 {/* TODO(image): Add /images/mobile-viewer-wireframes.webp here. Include the signed-in session list, share-code join screen, terminal viewer with role/transport status, and detach controls. Use wireframes until the mobile UI is implemented. Essential before mobile design review. */}

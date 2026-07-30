@@ -20,6 +20,11 @@ login flow.
   created by the Convex `billing:createProCheckout` action.
 - **Auth API** (`app/api/auth/[...all]/route.ts`): the Better Auth handler that
   the client SDK talks to.
+- **Installer** (`app/install/route.ts`): canonical `https://wrapper.sh/install`
+  endpoint, serving the reviewed CLI installer source from the main branch.
+- **Legal and support** (`app/privacy-policy`, `app/terms-of-service`,
+  `app/support`): Wrapper-specific terminal data flow, service terms, support
+  channels, and private vulnerability reporting.
 
 ## How it connects to the rest of Wrapper
 
