@@ -134,7 +134,8 @@ list of CLI environment variables, see
   and `typescript` use a single pinned version across the workspace.
 - **`bun run audit`** for advisory checks. Werift's abandoned `ip` dependency is
   replaced by the tested `packages/ip` compatibility shim backed by
-  `ipaddr.js`; the audit script ignores only the package-name false positive.
+  `ipaddr.js`. The audit script ignores only Bun's name-based false positive for
+  that private shim.
 
 ## License
 

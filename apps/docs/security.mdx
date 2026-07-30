@@ -97,10 +97,11 @@ or authentication tokens.
 
 ## Dependency auditing
 
-Run `bun run audit` from the repository root. The only ignored advisory is the
-name-based false positive for Wrapper's private `ip@2.1.0` workspace shim. The
-shim replaces the abandoned registry implementation used by Werift with
-maintained `ipaddr.js` and has dedicated address/loopback tests.
+Run `bun run audit` from the repository root. One advisory is scoped out:
+
+- Bun identifies Wrapper's private `ip@2.1.0` workspace shim by package name.
+  The vulnerable registry implementation is absent; the tested shim uses
+  maintained `ipaddr.js`.
 
 ## Report a vulnerability
 
