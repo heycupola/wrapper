@@ -1,41 +1,52 @@
 ---
-title: Troubleshooting
-description: Common issues for auth, relay, and shell-host.
+title: "Troubleshooting"
+description: "Fix auth, attach, install, HUD, and relay issues."
 ---
 
-## Social login returns 500
+## Install or PATH problems
 
-Check backend env vars in Convex deployment:
+Symptoms: `wrapper: command not found`, wrong binary.
 
-- `BETTER_AUTH_SECRET`
-- `SITE_URL`
-- `GITHUB_CLIENT_ID`
-- `GITHUB_CLIENT_SECRET`
+1. Confirm install completed and `wrapper --version` works in a new shell.
+2. For the curl installer, ensure `$HOME/.wrapper/bin` (or `WRAPPER_INSTALL_DIR`)
+   is on your `PATH`.
+3. Re-run the installer or `brew reinstall heycupola/tap/wrapper`.
 
-If one social provider is missing env values, only that provider should fail.
+## Shell hook not wrapping
+
+Symptoms: `wrapper status` is empty after install.
+
+1. Run `wrapper install` once (avoid duplicate rc blocks).
+2. Open a **new** terminal window or tab.
+3. Check that `WRAPPER_DISABLE` is unset.
+4. For one-off unwrapped shells use `WRAPPER_DISABLE=1 zsh`, then return to a
+   normal shell for hosting.
+
+## Sign-in fails
+
+Run `wrapper auth login` again. If the browser still cannot complete sign-in,
+contact [support](https://wrapper.sh/support) without including tokens or
+terminal content.
 
 ## `authorization_pending` during `wrapper auth login`
 
-This is expected while waiting for approval in browser. Keep the command running
-until approve/deny happens on the web page.
+Expected while waiting for browser approval. Keep the command running until you
+approve or deny the request.
+
+## Local attach denied
+
+1. Confirm `wrapper auth whoami` matches the host owner.
+2. Confirm `wrapper status` shows a live session.
+3. Prefer `wrapper attach` / `--id` over guessing ports.
+4. Check `wrapper logs --follow` for authorization errors.
+
+Released binaries authorize local attach through production Convex. Being on the
+same machine is not enough if you are not the authenticated owner.
 
 ## Relay share says Pro is required
 
-Sharing via relay is gated by Autumn entitlement (`can_share_relay` by default).
-Upgrade plan or adjust entitlement mapping for your deployment.
-
-## Fly dashboard shows `Pending Sync`
-
-This usually means Fly machines are converging to latest release.
-Check actual state with:
-
-```bash
-fly releases --app <app-name>
-fly machine list --app <app-name>
-fly status --app <app-name>
-```
-
-If image/version is consistent and health checks pass, deploy is generally okay.
+Upgrade to Pro to enable remote sharing. Local attach remains available without
+Pro. See [Pricing](/reference/pricing).
 
 ## P2P does not come up
 
@@ -45,23 +56,39 @@ authenticated Fly relay.
 
 1. Run `wrapper logs --follow` on host and viewer.
 2. Confirm both sides use the same session and current CLI version.
-3. Test from two real networks. CI and local sandbox tests cannot reproduce NAT.
+3. Test from two real networks. CI and local sandboxes often cannot reproduce
+   NAT traversal.
 4. Set `WRAPPER_P2P=0` to force relay-only mode while diagnosing.
 
-If an open P2P channel drops, Wrapper waits three seconds for a transient
-disconnect to recover, then switches input/output back to the relay. Look for
+If an open P2P channel drops, Wrapper waits briefly for a transient disconnect
+to recover, then switches input and output back to the relay. Look for
 `p2p data channel failed; using relay fallback` in the viewer log.
 
 {/* TODO(image): Add /images/transport-fallback-troubleshooting.webp here. Show a sanitized viewer log transitioning from p2p to relay fallback alongside the title changing to `relay`. Optional. */}
 
-## Controls are not visible
+## Session access is denied (relay)
 
-Wrapper prints the available controls once and uses the terminal title as its
-non-disruptive HUD. Press `Ctrl+\` to reveal the role-specific controls. If your
-terminal hides titles, use `Ctrl+\` then `?` for an inline status line. Check
-that `WRAPPER_HUD` is not set to `off`.
+Confirm the session id and enter the current share code when prompted. Codes are
+case-insensitive and expire when the host unshares. Knowing the session id alone
+is not enough. Owners skip the code; guests do not.
 
-## Web hydration mismatch warning
+## Controls or HUD missing
 
-If you see random attributes like `cz-shortcut-listen`, it is usually a browser
-extension mutating DOM before hydration.
+Wrapper prints controls once and uses the terminal title as its HUD. Press
+`Ctrl+\` to reveal role-specific controls. If your terminal hides titles, use
+`Ctrl+\` then `?` for an inline status line. Check that `WRAPPER_HUD` is not
+`off`.
+
+## Still stuck
+
+Gather non-sensitive details only:
+
+```bash
+wrapper --version
+wrapper auth whoami
+wrapper status
+wrapper logs --tail 200
+```
+
+Redact tokens, share codes, paths, and terminal contents before sending anything
+to [support](https://wrapper.sh/support).

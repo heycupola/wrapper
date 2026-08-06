@@ -3,17 +3,23 @@
   "theme": "linden",
   "name": "Wrapper",
   "colors": {
-    "primary": "#6E56CF",
-    "light": "#9B8AE8",
-    "dark": "#6E56CF"
+    "primary": "#2D57F0",
+    "light": "#84A1FF",
+    "dark": "#2D57F0"
   },
   "background": {
     "color": {
-      "light": "#FFFFFF",
-      "dark": "#0A0A0A"
+      "light": "#EEF0F2",
+      "dark": "#0B0D10"
     },
     "decoration": "grid"
   },
+  "logo": {
+    "light": "/assets/logo-light.svg",
+    "dark": "/assets/logo-dark.svg"
+  },
+  "favicon": "/assets/favicon.svg",
+  "css": "/assets/custom.css",
   "appearance": {
     "default": "system"
   },
@@ -24,8 +30,9 @@
         "href": "https://wrapper.sh"
       },
       {
-        "label": "Support",
-        "href": "https://wrapper.sh/support"
+        "type": "discord",
+        "label": "Discord",
+        "href": "https://discord.gg/heycupola"
       },
       {
         "type": "github",
@@ -33,23 +40,45 @@
       }
     ]
   },
+  "feedback": {
+    "suggestEdit": true,
+    "raiseIssue": {
+      "url": "https://github.com/heycupola/wrapper/issues/new"
+    }
+  },
+  "metadata": {
+    "timestamp": true
+  },
   "navigation": {
     "groups": [
       {
-        "group": "Start Here",
-        "pages": ["introduction", "onboarding", "installation", "setup"]
+        "group": "Getting Started",
+        "pages": ["introduction", "troubleshooting"]
       },
       {
-        "group": "Understand",
-        "pages": ["architecture", "security", "transports", "environments"]
-      },
-      {
-        "group": "Operate",
+        "group": "Guides",
         "pages": [
-          "troubleshooting",
-          "release-channels",
-          "mobile-plan",
-          "mobile-integration-contract"
+          "guides/installation",
+          "guides/auth",
+          "guides/local-attach",
+          "guides/remote-share"
+        ]
+      },
+      {
+        "group": "Configuration",
+        "pages": ["configuration/security", "configuration/environment"]
+      },
+      {
+        "group": "Development",
+        "pages": ["development/setup"]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/cli",
+          "reference/architecture",
+          "reference/transports",
+          "reference/pricing"
         ]
       }
     ]

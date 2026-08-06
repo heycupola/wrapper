@@ -1,6 +1,6 @@
 ---
-title: Security and privacy
-description: Understand Wrapper's authorization model, terminal-data paths, and trust boundaries.
+title: "Security and privacy"
+description: "Authorization model, terminal-data paths, and trust boundaries."
 ---
 
 Wrapper treats terminal content as sensitive. A session is local and owner-only
@@ -14,14 +14,15 @@ until its host explicitly shares it.
 - Every host generates a random 256-bit local token.
 - The token is stored in the owner's protected session registry.
 - A local connection without the token is rejected before reaching the PTY.
+- Released binaries authorize local attach against Convex as the session owner.
 
-Processes running as the same operating-system account, and root/administrator,
-remain inside the local trust boundary.
+Processes running as the same operating-system account, and root or
+administrator, remain inside the local trust boundary.
 
 ### Relay attach
 
-- Every user must authenticate with Better Auth.
-- The owner can join their own active session.
+- Every user authenticates with Better Auth.
+- The owner can join their own active shared session without a share code.
 - A non-owner needs both the session id and share code.
 - Share codes are stored only as hashes.
 - Failed attempts are limited per account, per hashed target bucket, and
@@ -31,7 +32,7 @@ remain inside the local trust boundary.
   viewer tickets.
 
 Unknown, unshared, missing-code, and wrong-code sessions return the same denial
-to avoid revealing whether another user's session exists.
+shape so session ids cannot be enumerated from error messages.
 
 ## Terminal-data paths
 
@@ -43,7 +44,10 @@ Input and output stay on the host machine.
 
 The viewer and host negotiate a DTLS-encrypted data channel through authenticated
 relay signaling. Viewer input prefers the direct channel. WebRTC exposes each
-peer's IP address to the other peer and uses public STUN servers for discovery.
+peer's IP address to the other peer and uses public STUN servers for discovery:
+
+- `stun.l.google.com:19302`
+- `global.stun.twilio.com:3478`
 
 The host currently keeps relay output available for fallback and mixed viewers.
 Wrapper therefore does not claim that the hosted relay is zero knowledge.
@@ -55,15 +59,15 @@ relay over WSS. TLS protects traffic in transit, but relay infrastructure
 processes plaintext after TLS termination to route it. The application does not
 intentionally persist terminal payloads.
 
-Use `WRAPPER_P2P=0` to test or force relay-only behavior. Do not share a session
-whose content you are not willing to send through the configured relay.
+Use `WRAPPER_P2P=0` to force relay-only behavior. Do not share a session whose
+content you are not willing to send through the configured relay.
 
 ## Shared-control warning
 
 Every accepted viewer can read output and send input. Wrapper does not currently
 provide a watch-only role or per-command approval. Share codes are capabilities:
-give them only to people you trust, and press `Ctrl+\` then `u` when collaboration
-ends.
+give them only to people you trust, and press `Ctrl+\` then `u` when
+collaboration ends.
 
 Interactive CLI attach asks for the share code in a hidden prompt. `--code` is
 reserved for automation because command-line arguments can be visible in shell
@@ -72,7 +76,7 @@ history and process listings.
 ## Payload and abuse protection
 
 - Raw wire frames are capped before JSON parsing.
-- Terminal input/output and signaling payloads have explicit size limits.
+- Terminal input, output, and signaling payloads have explicit size limits.
 - The relay caps messages buffered before authorization.
 - Peer ids are assigned by the relay and cannot be spoofed by clients.
 - Messages with a different session id are rejected.
@@ -92,16 +96,8 @@ Anonymous CLI telemetry is disabled by default. Enable it explicitly with:
 wrapper telemetry enable
 ```
 
-Telemetry must never include terminal input/output, share codes, relay tickets,
-or authentication tokens.
-
-## Dependency auditing
-
-Run `bun run audit` from the repository root. One advisory is scoped out:
-
-- Bun identifies Wrapper's private `ip@2.1.0` workspace shim by package name.
-  The vulnerable registry implementation is absent; the tested shim uses
-  maintained `ipaddr.js`.
+Telemetry must never include terminal input or output, share codes, relay
+tickets, or authentication tokens.
 
 ## Report a vulnerability
 

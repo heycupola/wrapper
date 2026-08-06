@@ -1,0 +1,115 @@
+---
+title: "Quickstart"
+description: "Install Wrapper, enable the shell hook, sign in, and run your first attach."
+---
+
+Wrapper supports macOS and Linux. On Windows, use WSL.
+
+## Install the CLI
+
+### Homebrew
+
+```bash
+brew install heycupola/tap/wrapper
+```
+
+### Checksum-verified installer
+
+```bash
+curl -fsSL https://wrapper.sh/install | bash
+```
+
+The installer downloads a release tarball from GitHub Releases, verifies
+`checksums.txt`, and installs under `$HOME/.wrapper` (override with
+`WRAPPER_INSTALL_DIR`). Optional pins:
+
+```bash
+WRAPPER_VERSION=v0.1.0 curl -fsSL https://wrapper.sh/install | bash
+```
+
+Confirm:
+
+```bash
+wrapper --version
+```
+
+{/* TODO(image): Add /images/cli-install-success.webp here. Show a clean install followed by `wrapper --version` and the first controls hint in a new terminal. Capture both arm64 macOS and Linux only if the output differs. Optional. */}
+
+## Enable the shell hook
+
+```bash
+wrapper install
+```
+
+Useful variants:
+
+```bash
+wrapper install --all
+wrapper install --shell=zsh,bash
+wrapper install --interactive
+```
+
+`install` writes a managed rc block that runs `exec wrapper shell-host` unless
+`WRAPPER_WRAPPED` or `WRAPPER_DISABLE` is set. Your prompt, history, plugins,
+and dotfiles continue to work.
+
+Open a **new** terminal after install. Nested or duplicated hooks cause hard to
+debug attach failures; prefer one managed block per shell.
+
+Skip wrapping for one shell:
+
+```bash
+WRAPPER_DISABLE=1 zsh
+```
+
+Remove the hook later with `wrapper uninstall`.
+
+## Sign in
+
+Production attach and remote share need a Wrapper account:
+
+```bash
+wrapper auth login
+```
+
+Approve the device code at the printed URL. Check status with
+`wrapper auth whoami`.
+
+See [Authentication](/guides/auth) for token storage and logout.
+
+## Attach locally
+
+From another terminal on the same machine:
+
+```bash
+wrapper status
+wrapper attach
+```
+
+Local attach uses loopback plus a per-session token from your session registry.
+It does **not** use the Fly relay and does **not** require Pro. Released
+binaries still expect you to be logged in as the session owner when talking to
+production Convex.
+
+See [Local attach](/guides/local-attach).
+
+## Share remotely (Pro)
+
+In the host terminal, press `Ctrl+\` then `s`. Wrapper prints a share code and
+join command when the shell is idle.
+
+Owner join from any device:
+
+```bash
+wrapper attach --relay --id <sessionId>
+```
+
+Guest join uses the same command and a hidden share-code prompt. Press
+`Ctrl+\` then `u` to revoke access.
+
+<Warning>
+  Every accepted viewer can read output and send input. There is no watch-only mode.
+</Warning>
+
+See [Remote share](/guides/remote-share) and
+[Security and privacy](/configuration/security).

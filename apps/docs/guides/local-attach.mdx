@@ -1,0 +1,72 @@
+---
+title: "Local attach"
+description: "Join a live host shell on the same machine over loopback."
+---
+
+Local attach connects a second terminal to the host PTY on `127.0.0.1`. Traffic
+never leaves the machine and never uses the Fly relay.
+
+## Before you attach
+
+1. Install the CLI and run `wrapper install`.
+2. Open a wrapped host terminal.
+3. Sign in with `wrapper auth login` when using a released binary.
+4. Confirm a live session:
+
+```bash
+wrapper status
+```
+
+You should see `sessionId`, `pid`, and `port`.
+
+## Attach
+
+Default picker / latest session:
+
+```bash
+wrapper attach
+```
+
+Target a specific session:
+
+```bash
+wrapper attach --id <sessionId>
+wrapper attach --port <port>
+```
+
+Defaults:
+
+| Flag            | Default     |
+| --------------- | ----------- |
+| `--host` / `-H` | `127.0.0.1` |
+
+## How local security works
+
+- The host WebSocket listens only on loopback.
+- Each session generates a random 256-bit token.
+- The token is stored in the owner's session registry under restrictive file
+  modes and required as `?token=` on every local connection.
+- `wrapper attach` reads that registry, so only your OS user (or root) can join.
+
+Processes running as the same OS account remain inside the local trust boundary.
+See [Security and privacy](/configuration/security).
+
+## Detach without ending the host
+
+In the viewer, press `Ctrl+\` then `d`. The host shell keeps running until the
+inner shell exits.
+
+## Common failures
+
+| Symptom                   | Likely cause                    | Fix                                             |
+| ------------------------- | ------------------------------- | ----------------------------------------------- |
+| No sessions listed        | Hook not active                 | Open a new terminal after `wrapper install`     |
+| Access denied             | Not logged in, or not the owner | `wrapper auth login`, confirm `whoami`          |
+| Attach connects then dies | Nested / duplicate hooks        | `wrapper uninstall` then `wrapper install` once |
+| Need an unwrapped shell   | Hook always on                  | `WRAPPER_DISABLE=1 zsh`                         |
+
+Debug with:
+
+```bash
+wrapper logs --follow
+```

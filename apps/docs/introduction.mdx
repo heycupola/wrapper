@@ -1,60 +1,108 @@
 ---
 title: "Introduction"
-description: "Wrapper lets you run one terminal session and reach it from your other devices with authenticated access."
+description: "Keep your real shell on your machine and reach it from an authorized device."
 ---
 
-Wrapper wraps every interactive shell you open so an authenticated device can
-mirror it on demand. Your shell stays local until you choose to share it, and
-the wrapping is invisible: your dotfiles, prompt, plugins, and history behave
-exactly as before.
+Wrapper wraps the interactive shell you already use on macOS or Linux. Your
+prompt, plugins, history, files, and credentials stay on the host. Attach from
+another local terminal, or share one session with an authorized device when you
+choose.
 
 {/* TODO(image): Add /images/wrapper-session-overview.webp here. Show a host terminal pressing Ctrl+\ then s, the generated share code, and a remote viewer connected over P2P. Include both desktop and phone in one composition; redact real usernames, paths, and tokens. Essential product overview asset. */}
 
-## The parts
+## What you get
 
-- **CLI** (`apps/cli`): hosts your shell inside a PTY, runs a local WebSocket
-  server, and bridges to the relay when you share.
-- **Backend** (`packages/backend`, Convex): authentication (Better Auth),
-  session lifecycle, relay join tickets, onboarding, and billing (Autumn).
-- **Relay** (`apps/relay`, Fly.io): an authenticated WebSocket router that
-  connects a host to its viewers, and passes WebRTC signaling for the direct
-  path.
-- **Web** (`apps/web`, Vercel): the landing page, the device-login approval
-  screen, and onboarding.
-- **Protocol** (`packages/protocol`): the shared Zod message schema every part
-  speaks.
+- Your real shell (`zsh`, `bash`, or `fish`) runs on the host machine.
+- Local attach joins that live PTY over loopback with a per-session token.
+- Remote share (Pro) routes through an authenticated Fly.io relay, with a
+  default WebRTC P2P fast path for lower latency.
+- Free covers local wrapping. Pro unlocks relay sharing.
 
-## What Wrapper does
+## Prerequisites
 
-1. You open a terminal and the CLI hosts your real shell locally. Nothing is
-   exposed.
-2. `wrapper attach` mirrors that session from the same machine with no account
-   and no network.
-3. Pressing `Ctrl+\ s` shares the session and prints an access code. Your own
-   devices can join directly; another user must supply that code.
-4. Wrapper attempts a direct WebRTC data channel by default. The relay carries
-   signaling and remains connected as the automatic fallback.
+- macOS or Linux (Windows via WSL)
+- `zsh`, `bash`, or `fish`
+- A Wrapper account for backend auth and remote sharing
 
-## Current status
+## Install
 
-The core platform is implemented and the native iPhone/iPad viewer foundation
-has started in the separate mobile submodule:
+Homebrew:
 
-- CLI host and attach flow (local and relay)
-- Default-on direct WebRTC P2P fast path with relay fallback
-- Device authorization login flow
-- Web onboarding for first-run setup
-- Backend session lifecycle and access control
-- Relay ticket handshake and message routing
-- Billing gate for relay sharing (Autumn Pro plan)
-- CI for lint, format, typecheck, and tests, plus deploy automation
-- Swift 6.2/SwiftUI mobile project, versioned protocol models, Keychain boundary,
-  relay transport, SwiftTerm surface, and iOS CI
+```bash
+brew install heycupola/tap/wrapper
+```
 
-## Where to go next
+Checksum-verified installer:
 
-- [Installation](/installation): install the CLI and run the first attach flow
-- [Setup](/setup): environment variables and local checks
-- [Architecture](/architecture): components and message flow
-- [Transports](/transports): relay and direct WebRTC P2P
-- [Environments](/environments): local, dev, and prod, plus deploy automation
+```bash
+curl -fsSL https://wrapper.sh/install | bash
+```
+
+Supported installer targets today: `darwin-arm64`, `darwin-x86_64`, and
+`linux-x86_64`.
+
+## First session
+
+<Steps>
+  <Step title="Enable the shell hook">
+    ```bash
+    wrapper install
+    ```
+
+    Open a new terminal so `shell-host` wraps your shell.
+
+  </Step>
+  <Step title="Sign in">
+    ```bash
+    wrapper auth login
+    ```
+
+    Approve the device code in the browser. Released binaries expect an owner
+    login for local attach against production Convex.
+
+  </Step>
+  <Step title="Attach locally">
+    From another terminal on the same machine:
+
+    ```bash
+    wrapper attach
+    ```
+
+  </Step>
+  <Step title="Share remotely (Pro)">
+    In the host terminal, press `Ctrl+\` then `s`. Join with:
+
+    ```bash
+    wrapper attach --relay --id <sessionId>
+    ```
+
+    Owners skip the share code. Guests enter it in a hidden prompt.
+
+  </Step>
+</Steps>
+
+<Note>
+  Remote sharing requires Pro. Local attach does not use the relay and does not require Pro.
+</Note>
+
+## Controls and HUD
+
+Wrapper prints controls once, then keeps status in the terminal title so
+full-screen tools like Vim stay intact.
+
+| Keys         | Host    | Viewer |
+| ------------ | ------- | ------ |
+| `Ctrl+\` `s` | Share   |        |
+| `Ctrl+\` `u` | Unshare |        |
+| `Ctrl+\` `d` |         | Detach |
+| `Ctrl+\` `?` | Status  | Status |
+
+HUD transport labels: `local`, `connecting`, `relay`, `p2p`, `offline`.
+
+## Next steps
+
+- [Quickstart](/guides/installation)
+- [Authentication](/guides/auth)
+- [Local attach](/guides/local-attach)
+- [Remote share](/guides/remote-share)
+- [Security and privacy](/configuration/security)
