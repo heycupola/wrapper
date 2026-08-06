@@ -34,7 +34,7 @@ export function LegalPage({ title, lastUpdated, introduction, children }: LegalP
         </Link>
         <Link href="/">Back to Wrapper</Link>
       </header>
-      <main className="legalMain">
+      <main id="main-content" className="legalMain" tabIndex={-1}>
         <div className="legalTitle">
           <h1>{title}</h1>
           {lastUpdated ? <p>Last updated: {lastUpdated}</p> : null}

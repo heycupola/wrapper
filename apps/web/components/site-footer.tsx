@@ -9,7 +9,7 @@ const groups = [
         label: "Docs",
         external: true,
       },
-      { href: "/install", label: "Install" },
+      { href: "/#start", label: "Install" },
       { href: "https://github.com/heycupola/wrapper", label: "GitHub", external: true },
     ],
   },

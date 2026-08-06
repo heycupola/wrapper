@@ -81,7 +81,7 @@ export function DeviceAuthorizeClient({ authenticated, initialToken }: DeviceAut
   const lookupCode = useCallback(
     async (explicitCode?: string): Promise<void> => {
       if (!client) {
-        setError("Missing NEXT_PUBLIC_CONVEX_URL");
+        setError("Wrapper account services are temporarily unavailable.");
         return;
       }
       const normalized = explicitCode ?? normalizeUserCode(userCode);
@@ -116,7 +116,7 @@ export function DeviceAuthorizeClient({ authenticated, initialToken }: DeviceAut
 
   async function performDecision(action: "approve" | "deny"): Promise<void> {
     if (!client) {
-      setError("Missing NEXT_PUBLIC_CONVEX_URL");
+      setError("Wrapper account services are temporarily unavailable.");
       return;
     }
     if (!authenticated || !initialToken) {
@@ -185,9 +185,17 @@ export function DeviceAuthorizeClient({ authenticated, initialToken }: DeviceAut
         id="device-user-code"
         className="authInput"
         value={userCode}
-        onChange={(e) => setUserCode(e.target.value)}
+        onChange={(e) => {
+          setUserCode(e.target.value);
+          setDeviceInfo(null);
+          setStatus(null);
+          setError(null);
+        }}
         placeholder="ABCD-1234"
         autoComplete="off"
+        autoCapitalize="characters"
+        spellCheck={false}
+        maxLength={32}
       />
 
       <div className="authActions">
@@ -197,40 +205,85 @@ export function DeviceAuthorizeClient({ authenticated, initialToken }: DeviceAut
           onClick={() => void lookupCode()}
           disabled={busy}
         >
-          Check code
-        </button>
-        <button
-          type="button"
-          className="social-btn"
-          onClick={() => void performDecision("approve")}
-          disabled={busy || !authenticated}
-        >
-          Approve
-        </button>
-        <button
-          type="button"
-          className="social-btn"
-          onClick={() => void performDecision("deny")}
-          disabled={busy || !authenticated}
-        >
-          Deny
+          {busy ? "Checking…" : "Check code"}
         </button>
       </div>
 
-      {deviceInfo ? <pre className="authInfo">{JSON.stringify(deviceInfo, null, 2)}</pre> : null}
-      {status ? <p className="authSuccess">{status}</p> : null}
+      {deviceInfo ? (
+        <section className="authInfo" aria-label="Device authorization request">
+          <div className="deviceRequestHeader">
+            <strong>Device request found</strong>
+            <span className="deviceStatus" data-status={deviceInfo.status}>
+              {deviceInfo.status}
+            </span>
+          </div>
+          <dl className="deviceRequestDetails">
+            <div>
+              <dt>User code</dt>
+              <dd>
+                <code>{deviceInfo.userCode}</code>
+              </dd>
+            </div>
+            <div>
+              <dt>Client</dt>
+              <dd>{deviceInfo.clientId ?? "Wrapper CLI"}</dd>
+            </div>
+            <div>
+              <dt>Requested access</dt>
+              <dd>{deviceInfo.scope ?? "Wrapper account access"}</dd>
+            </div>
+          </dl>
+          <p className="authHint">
+            Approve only if this code matches the Wrapper CLI request you started.
+          </p>
+        </section>
+      ) : null}
+      {deviceInfo?.status === "pending" ? (
+        <div className="authDecision">
+          <p className="authHint">This grants the Wrapper CLI access to your Wrapper account.</p>
+          <div className="authActions">
+            <button
+              type="button"
+              className="social-btn social-btn-primary"
+              onClick={() => void performDecision("approve")}
+              disabled={busy || !authenticated}
+            >
+              Approve device
+            </button>
+            <button
+              type="button"
+              className="social-btn social-btn-danger"
+              onClick={() => void performDecision("deny")}
+              disabled={busy || !authenticated}
+            >
+              Deny
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {status ? (
+        <p className="authSuccess" role="status" aria-live="polite">
+          {status}
+        </p>
+      ) : null}
       {status === "Device code approved" ? (
-        <Link className="social-btn" href="/onboarding">
+        <Link className="social-btn social-btn-primary" href="/onboarding">
           Continue to onboarding
         </Link>
       ) : null}
-      {error ? <p className="authError">{error}</p> : null}
+      {error ? (
+        <p className="authError" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
 
 function normalizeUserCode(raw: string): string {
-  return raw.trim().toUpperCase();
+  const normalized = raw.trim().toUpperCase().replaceAll(/\s+/g, "-");
+  if (normalized.length < 4 || normalized.length > 32) return "";
+  return /^[A-Z0-9-]+$/.test(normalized) ? normalized : "";
 }
 
 function normalizeError(error: unknown): string {

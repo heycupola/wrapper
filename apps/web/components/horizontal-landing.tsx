@@ -1,114 +1,171 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CopyCommand } from "./copy-command";
-import { SectionWrapper } from "./section-wrapper";
-import { SiteFooter } from "./site-footer";
+import { HorizontalScroll } from "./horizontal-scroll";
+import { ProductDemo } from "./product-demo";
+
+const sectionIds = ["intro", "trust", "transport", "start"] as const;
 
 export function HorizontalLanding() {
   return (
     <div className="horizontalPage">
       <header className="hTopBar">
-        <Link href="/" className="logo-container" aria-label="Wrapper home">
-          <Image
-            src="/wrapper-icon-light.svg"
-            alt="wrapper"
-            width={36}
-            height={36}
-            className="logo logo-light"
-            priority
-          />
-          <Image
-            src="/wrapper-icon-dark.svg"
-            alt="wrapper"
-            width={36}
-            height={36}
-            className="logo logo-dark"
-            priority
-          />
+        <Link href="/" className="brand" aria-label="Wrapper home">
+          <span className="brandMark">
+            <Image
+              src="/wrapper-icon-light.svg"
+              alt=""
+              width={32}
+              height={32}
+              className="logo logo-light"
+              priority
+            />
+            <Image
+              src="/wrapper-icon-dark.svg"
+              alt=""
+              width={32}
+              height={32}
+              className="logo logo-dark"
+              priority
+            />
+          </span>
+          <span className="brandName">wrapper</span>
         </Link>
         <nav className="hNav">
-          <a href="#why">Why</a>
-          <a href="#flow">How it works</a>
-          <a href="#start">Install</a>
+          <a
+            href="https://github.com/heycupola/wrapper/tree/main/apps/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Docs
+          </a>
           <a href="https://github.com/heycupola/wrapper" target="_blank" rel="noopener noreferrer">
             GitHub
+            <span aria-hidden="true">↗</span>
           </a>
         </nav>
       </header>
 
-      <main className="hScroller" aria-label="Wrapper landing sections">
+      <HorizontalScroll sectionIds={sectionIds}>
         <section id="intro" className="hSection hSectionHero">
           <div className="heroCopy">
-            <span className="hSectionEyebrow">Your terminal, everywhere</span>
-            <h1 className="heroTitle">Wrap any shell. Reach it from any device.</h1>
+            <span className="hSectionEyebrow">A live shell, by invitation</span>
+            <h1 className="heroTitle">
+              Your terminal.
+              <br />
+              Still running.
+              <br />
+              <em>Wherever you are.</em>
+            </h1>
             <p className="description">
-              Wrapper keeps your real shell as the source of truth, then lets you share and attach
-              securely over an authenticated relay — only when you choose to.
+              Keep your shell on your machine. Share it with another device only when you choose.
             </p>
-            <CopyCommand
-              command="brew install heycupola/tap/wrapper"
-              label="Copy install command"
-            />
             <div className="hActions">
-              <Link className="social-btn social-btn-primary" href="/oauth/authorize">
-                Get started
-              </Link>
+              <a className="primaryAction" href="#start">
+                Install Wrapper
+                <span aria-hidden="true">→</span>
+              </a>
               <a
-                className="social-btn"
-                href="https://github.com/heycupola/wrapper"
-                target="_blank"
-                rel="noopener noreferrer"
+                className="textAction"
+                href="https://github.com/heycupola/wrapper/blob/main/apps/docs/security.mdx"
               >
-                Star on GitHub
+                Read the security model
               </a>
             </div>
           </div>
           <div className="heroMedia">
-            <video
-              className="heroVideo"
-              autoPlay
-              muted
-              loop
-              playsInline
-              poster="/wrapper-demo-poster.png"
-            >
-              <source src="/wrapper-demo.mp4" type="video/mp4" />
-            </video>
+            <ProductDemo />
           </div>
         </section>
 
-        <SectionWrapper id="why" eyebrow="Secure by default" title="Share only when you choose">
-          <ul className="hList">
-            <li>Your host session stays fully local until you explicitly share it</li>
-            <li>Relay access uses short-lived, single-use, hashed tickets</li>
-            <li>Non-owner viewers need the session id and a secret share code</li>
-            <li>Local attach is protected by a per-session 256-bit token</li>
-            <li>Disconnect the host and every viewer is dropped immediately</li>
-          </ul>
-        </SectionWrapper>
-
-        <SectionWrapper id="flow" eyebrow="How it works" title="Four steps to a shared shell">
-          <ol className="hList hOrdered">
-            <li>
-              Sign in from the CLI: <code>wrapper auth login</code>
-            </li>
-            <li>Finish the quick onboarding checklist in the web app</li>
-            <li>
-              Run <code>wrapper shell-host</code> and share with <code>Ctrl+\</code> then{" "}
-              <code>s</code>
-            </li>
-            <li>
-              Attach from anywhere: <code>wrapper attach --relay --id &lt;id&gt;</code>
-            </li>
-          </ol>
-        </SectionWrapper>
-
-        <section id="start" className="hSection">
-          <div className="hSectionHeader">
-            <span className="hSectionEyebrow">Install</span>
-            <h2 className="hSectionTitle">Get Wrapper in one command</h2>
+        <section id="trust" className="hSection hSectionTrust">
+          <div className="trustStatement">
+            <span className="hSectionEyebrow">Local is the default state</span>
+            <h2 className="displayTitle">
+              Nothing leaves
+              <br />
+              until you say so.
+            </h2>
+            <p>
+              Your process, filesystem, credentials, and terminal stay on the host until you share.
+            </p>
+            <Link href="/privacy-policy" className="inlineLink">
+              How terminal data moves
+              <span aria-hidden="true">↗</span>
+            </Link>
           </div>
-          <div className="hSectionBody installPanel">
+          <div className="trustGrid">
+            <article>
+              <h3>Private on loopback</h3>
+              <p>Local attach uses 127.0.0.1 and a per-session 256-bit token.</p>
+            </article>
+            <article>
+              <h3>Explicit access</h3>
+              <p>Another account needs the session id, share code, and a single-use ticket.</p>
+            </article>
+            <article>
+              <h3>Immediate revoke</h3>
+              <p>Press Ctrl+\ then u to close sharing and invalidate unused access.</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="transport" className="hSection hSectionTransport">
+          <div className="transportCopy">
+            <span className="hSectionEyebrow">Latency without fragility</span>
+            <h2 className="displayTitle">
+              Direct when possible.
+              <br />
+              Available when not.
+            </h2>
+            <p>
+              WebRTC carries interactive traffic directly. The authenticated relay handles signaling
+              and fallback.
+            </p>
+          </div>
+          <div className="transportDiagram" aria-label="P2P and relay transport paths">
+            <div className="networkNode networkViewer">
+              <span>viewer</span>
+              <strong>iPhone / laptop</strong>
+            </div>
+            <div className="networkPaths">
+              <div className="directPath">
+                <span>WebRTC · DTLS</span>
+                <i />
+                <strong>direct input</strong>
+              </div>
+              <div className="relayPath">
+                <span>authenticated WSS</span>
+                <i />
+                <strong>relay fallback</strong>
+              </div>
+            </div>
+            <div className="relayNode">
+              <span>Fly relay</span>
+              <small>signaling + fallback</small>
+            </div>
+            <div className="networkNode networkHost">
+              <span>host</span>
+              <strong>your real shell</strong>
+            </div>
+          </div>
+          <p className="transportDisclosure">
+            Relay fallback is TLS-encrypted in transit and processed while routed. Remote sharing
+            requires Pro.
+          </p>
+        </section>
+
+        <section id="start" className="hSection hSectionStart">
+          <div className="installCopy">
+            <span className="hSectionEyebrow">Start local. Share when ready.</span>
+            <h2 className="displayTitle">
+              Your shell is already
+              <br />
+              the right shell.
+            </h2>
+            <p>Install Wrapper. Remote access stays off until you share.</p>
+          </div>
+          <div className="installPanel">
             <CopyCommand
               command="brew install heycupola/tap/wrapper"
               label="Copy Homebrew command"
@@ -117,36 +174,15 @@ export function HorizontalLanding() {
               command="curl -fsSL https://wrapper.sh/install | bash"
               label="Copy curl command"
             />
-            <div className="social-buttons">
-              <a
-                href="https://x.com/heycupola"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="social-btn"
-              >
-                Follow on X
-              </a>
-              <a
-                href="https://github.com/heycupola"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="social-btn"
-              >
-                GitHub
-              </a>
-              <a
-                href="https://cupo.la"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="social-btn"
-              >
-                Built by Cupola
-              </a>
+            <p className="installSupport">macOS and Linux</p>
+            <div className="installLinks">
+              <Link href="/support">Support</Link>
+              <Link href="/privacy-policy">Privacy</Link>
+              <Link href="/terms-of-service">Terms</Link>
             </div>
           </div>
         </section>
-      </main>
-      <SiteFooter />
+      </HorizontalScroll>
     </div>
   );
 }
