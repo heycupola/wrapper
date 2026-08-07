@@ -7,15 +7,26 @@ login flow.
 ## What it does
 
 - **Landing page** (`app/page.tsx` + `components/horizontal-landing.tsx`): a
-  horizontally scrolling marketing page with a product video and a copyable
-  install command.
+  four-part horizontal desktop product narrative driven continuously by native
+  vertical document scrolling. A sticky viewport maps every scroll pixel to
+  horizontal movement, while scene components reveal with staggered entrance
+  motion. When the gesture ends, the document settles on exactly one adjacent
+  scene, so it never rests between pages. Modern browsers run the track
+  transform through a compositor-backed CSS scroll timeline; other browsers use
+  a `requestAnimationFrame` and `translate3d` fallback. It includes trust and
+  transport diagrams, copyable install commands, and a terminal scene fallback
+  until the optional product video is added. Direct horizontal dragging and
+  section navigation are intentionally disabled. Below 760px it becomes a
+  vertical mobile story.
 - **Device login approval** (`app/oauth/authorize`): the page the CLI sends you
   to during `wrapper auth login`. It reads the `user_code` from the URL,
-  confirms your identity through Better Auth, and approves the device code so the
-  CLI can finish logging in.
-- **Onboarding** (`app/onboarding`): a first-run checklist (complete profile,
-  connect the CLI, share a first session) backed by the Convex `onboarding`
-  handlers. It also hosts the Upgrade to Pro button
+  confirms your identity through Better Auth, presents the request as structured
+  account information, and approves the device code so the CLI can finish
+  logging in.
+- **Onboarding** (`app/onboarding`): a first-run progress flow for confirming
+  the account, connecting the CLI, and reviewing share and revoke controls. It
+  is backed by the Convex `onboarding` handlers and uses constrained optional
+  survey fields instead of arbitrary setup inputs. It also hosts the Upgrade to Pro button
   (`components/upgrade-pro.tsx`), which redirects to a Stripe checkout URL
   created by the Convex `billing:createProCheckout` action.
 - **Auth API** (`app/api/auth/[...all]/route.ts`): the Better Auth handler that
@@ -32,7 +43,9 @@ login flow.
 - **Better Auth** for sessions and the device authorization approval step.
 
 The canonical marketing domain is `wrapper.sh` (see `app/layout.tsx`). The
-landing video assets are described in `public/README.md`.
+landing video assets and their explicit enablement variables are described in
+`public/README.md`. `app/opengraph-image.tsx` generates the large social preview
+from the same visual system as the landing page.
 
 ## Local development
 

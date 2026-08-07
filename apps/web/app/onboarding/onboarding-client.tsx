@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 type OnboardingState = {
   needsOnboarding: boolean;
@@ -39,6 +38,8 @@ const completeOnboardingRef = makeFunctionReference<
   { ok: boolean }
 >("onboarding:complete");
 
+const sourceOptions = new Set(["search", "github", "x", "friend", "other"]);
+
 export function OnboardingClient({
   token,
   initialState,
@@ -46,11 +47,15 @@ export function OnboardingClient({
   token: string;
   initialState: OnboardingState;
 }) {
-  const router = useRouter();
   const [state, setState] = useState<OnboardingState>(initialState);
   const [busy, setBusy] = useState(false);
-  const [source, setSource] = useState(state.source ?? "");
-  const [sourceOther, setSourceOther] = useState(state.sourceOther ?? "");
+  const initialSource = state.source ?? "";
+  const [source, setSource] = useState(
+    sourceOptions.has(initialSource) ? initialSource : initialSource ? "other" : "",
+  );
+  const [sourceOther, setSourceOther] = useState(
+    state.sourceOther ?? (sourceOptions.has(initialSource) ? "" : initialSource),
+  );
   const [teamSize, setTeamSize] = useState(state.teamSize ?? "");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +73,7 @@ export function OnboardingClient({
 
   async function toggleStep(step: CompleteStepArgs["step"], value: boolean): Promise<void> {
     if (!client) {
-      setError("Missing NEXT_PUBLIC_CONVEX_URL");
+      setError("Wrapper account services are temporarily unavailable.");
       return;
     }
     setBusy(true);
@@ -82,11 +87,6 @@ export function OnboardingClient({
         status: next.status,
         needsOnboarding: next.status !== "completed",
       }));
-      emitOnboardingEvent("onboarding_step_updated", {
-        step,
-        value,
-        status: next.status,
-      });
     } catch (err) {
       setError(normalizeError(err));
     } finally {
@@ -96,7 +96,7 @@ export function OnboardingClient({
 
   async function complete(): Promise<void> {
     if (!client) {
-      setError("Missing NEXT_PUBLIC_CONVEX_URL");
+      setError("Wrapper account services are temporarily unavailable.");
       return;
     }
     setBusy(true);
@@ -105,7 +105,7 @@ export function OnboardingClient({
     try {
       await client.mutation(completeOnboardingRef, {
         source: source.trim() || undefined,
-        sourceOther: sourceOther.trim() || undefined,
+        sourceOther: source === "other" ? sourceOther.trim() || undefined : undefined,
         teamSize: teamSize.trim() || undefined,
       });
       setState((prev) => ({
@@ -113,14 +113,7 @@ export function OnboardingClient({
         status: "completed",
         needsOnboarding: false,
       }));
-      emitOnboardingEvent("onboarding_completed", {
-        source: source.trim() || null,
-        teamSize: teamSize.trim() || null,
-      });
       setStatus("Onboarding complete. You can now use Wrapper from the CLI.");
-      setTimeout(() => {
-        router.push("/");
-      }, 500);
     } catch (err) {
       setError(normalizeError(err));
     } finally {
@@ -130,91 +123,148 @@ export function OnboardingClient({
 
   return (
     <div className="authCard">
-      <p className="authHint">Mark each step once you've done it.</p>
-      <p className="authHint">
-        Progress: {completedCount}/3 ({progressPct}%)
-      </p>
-      <label className="onboardingStep">
-        <input
-          type="checkbox"
-          checked={state.completedProfile}
-          disabled={busy}
-          onChange={(e) => void toggleStep("completedProfile", e.target.checked)}
-        />
-        <span>Complete profile setup in web auth</span>
-      </label>
-      <label className="onboardingStep">
-        <input
-          type="checkbox"
-          checked={state.connectedCli}
-          disabled={busy}
-          onChange={(e) => void toggleStep("connectedCli", e.target.checked)}
-        />
-        <span>
-          Run <code>wrapper auth login</code> from CLI successfully
-        </span>
-      </label>
-      <label className="onboardingStep">
-        <input
-          type="checkbox"
-          checked={state.sharedFirstSession}
-          disabled={busy}
-          onChange={(e) => void toggleStep("sharedFirstSession", e.target.checked)}
-        />
-        <span>Share your first session with Ctrl+\\ then s</span>
-      </label>
+      <div className="onboardingProgress">
+        <div>
+          <span>Setup progress</span>
+          <strong>{completedCount} of 3</strong>
+        </div>
+        <progress value={completedCount} max={3} aria-label={`${progressPct}% complete`} />
+      </div>
 
-      <label className="authLabel" htmlFor="onboarding-source">
-        How did you hear about Wrapper?
-      </label>
-      <input
-        id="onboarding-source"
-        className="authInput"
-        value={source}
-        disabled={busy}
-        onChange={(e) => setSource(e.target.value)}
-        placeholder="x, github, friend, other"
-      />
+      <div className="onboardingSteps">
+        <label
+          className="onboardingStep"
+          htmlFor="onboarding-account"
+          aria-label="Confirm your Wrapper account"
+        >
+          <input
+            id="onboarding-account"
+            type="checkbox"
+            checked={state.completedProfile}
+            disabled={busy}
+            onChange={(e) => void toggleStep("completedProfile", e.target.checked)}
+          />
+          <span>
+            <strong>Confirm your Wrapper account</strong>
+            <small>Use the account you want associated with CLI sessions and billing.</small>
+          </span>
+        </label>
+        <label className="onboardingStep" htmlFor="onboarding-cli" aria-label="Connect the CLI">
+          <input
+            id="onboarding-cli"
+            type="checkbox"
+            checked={state.connectedCli}
+            disabled={busy}
+            onChange={(e) => void toggleStep("connectedCli", e.target.checked)}
+          />
+          <span>
+            <strong>Connect the CLI</strong>
+            <small>
+              Run <code>wrapper auth login</code> and finish device authorization.
+            </small>
+          </span>
+        </label>
+        <label
+          className="onboardingStep"
+          htmlFor="onboarding-sharing"
+          aria-label="Review sharing controls"
+        >
+          <input
+            id="onboarding-sharing"
+            type="checkbox"
+            checked={state.sharedFirstSession}
+            disabled={busy}
+            onChange={(e) => void toggleStep("sharedFirstSession", e.target.checked)}
+          />
+          <span>
+            <strong>Review sharing controls</strong>
+            <small>
+              Use <code>Ctrl+\</code> then <code>s</code> to share, and <code>Ctrl+\</code> then{" "}
+              <code>u</code> to revoke.
+            </small>
+          </span>
+        </label>
+      </div>
 
-      <label className="authLabel" htmlFor="onboarding-source-other">
-        Optional details
-      </label>
-      <input
-        id="onboarding-source-other"
-        className="authInput"
-        value={sourceOther}
-        disabled={busy}
-        onChange={(e) => setSourceOther(e.target.value)}
-        placeholder="free text"
-      />
+      <fieldset className="onboardingSurvey">
+        <legend>Optional context</legend>
+        <p className="authHint">This helps us prioritize documentation and product decisions.</p>
 
-      <label className="authLabel" htmlFor="onboarding-team-size">
-        Team size
-      </label>
-      <input
-        id="onboarding-team-size"
-        className="authInput"
-        value={teamSize}
-        disabled={busy}
-        onChange={(e) => setTeamSize(e.target.value)}
-        placeholder="1, 2-5, 6-20"
-      />
+        <label className="authLabel" htmlFor="onboarding-source">
+          How did you hear about Wrapper?
+        </label>
+        <select
+          id="onboarding-source"
+          className="authInput"
+          value={source}
+          disabled={busy}
+          onChange={(e) => setSource(e.target.value)}
+        >
+          <option value="">Select an option</option>
+          <option value="search">Search</option>
+          <option value="github">GitHub</option>
+          <option value="x">X</option>
+          <option value="friend">Friend or colleague</option>
+          <option value="other">Other</option>
+        </select>
+
+        {source === "other" ? (
+          <>
+            <label className="authLabel" htmlFor="onboarding-source-other">
+              Tell us where
+            </label>
+            <input
+              id="onboarding-source-other"
+              className="authInput"
+              value={sourceOther}
+              disabled={busy}
+              onChange={(e) => setSourceOther(e.target.value)}
+              placeholder="Optional"
+            />
+          </>
+        ) : null}
+
+        <label className="authLabel" htmlFor="onboarding-team-size">
+          Team size
+        </label>
+        <select
+          id="onboarding-team-size"
+          className="authInput"
+          value={teamSize}
+          disabled={busy}
+          onChange={(e) => setTeamSize(e.target.value)}
+        >
+          <option value="">Select an option</option>
+          <option value="1">Just me</option>
+          <option value="2-5">2 to 5</option>
+          <option value="6-20">6 to 20</option>
+          <option value="21+">21 or more</option>
+        </select>
+      </fieldset>
 
       <div className="authActions">
         <button
           type="button"
-          className="social-btn"
-          disabled={busy}
+          className="social-btn social-btn-primary"
+          disabled={busy || completedCount < 3}
           onClick={() => void complete()}
         >
-          Finish onboarding
+          {busy ? "Saving…" : "Finish setup"}
         </button>
-        <Link className="social-btn" href="/oauth/authorize">
-          Back to device auth
+        <Link className="social-btn" href="/">
+          Back to Wrapper
         </Link>
       </div>
-      {status ? <p className="authSuccess">{status}</p> : null}
-      {error ? <p className="authError">{error}</p> : null}
+      {status ? (
+        <p className="authSuccess" role="status" aria-live="polite">
+          {status}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="authError" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -222,17 +272,4 @@ export function OnboardingClient({
 function normalizeError(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
   return String(error);
-}
-
-function emitOnboardingEvent(name: string, payload: Record<string, unknown>): void {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(
-    new CustomEvent("wrapper:onboarding", {
-      detail: {
-        name,
-        payload,
-        at: Date.now(),
-      },
-    }),
-  );
 }

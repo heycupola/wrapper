@@ -1,16 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const SITE_NAME = "wrapper";
+const SITE_NAME = "Wrapper";
 const SITE_DESCRIPTION =
-  "Wrap any terminal you open and reach it from your phone or another device. Your shell stays local until you choose to share it.";
+  "Keep your real shell on your machine and reach it from another device only when you explicitly share it.";
 const SITE_URL = "https://wrapper.sh";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: SITE_NAME,
   title: {
-    default: SITE_NAME,
+    default: "Wrapper. Your terminal, wherever you are.",
     template: `%s / ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -27,15 +27,17 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: SITE_NAME,
+    title: "Wrapper. Your terminal, wherever you are.",
     description: SITE_DESCRIPTION,
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: SITE_DESCRIPTION }],
   },
   twitter: {
-    card: "summary",
-    title: SITE_NAME,
+    card: "summary_large_image",
+    title: "Wrapper. Your terminal, wherever you are.",
     description: SITE_DESCRIPTION,
     creator: "@heycupola",
     site: "@heycupola",
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,
@@ -51,8 +53,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#FAFAF9" },
-    { media: "(prefers-color-scheme: dark)", color: "#0E0E0E" },
+    { media: "(prefers-color-scheme: light)", color: "#eef0f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0d10" },
   ],
 };
 
@@ -66,7 +68,12 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="light dark" />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <a className="skipLink" href="#main-content">
+          Skip to main content
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

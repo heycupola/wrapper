@@ -1,0 +1,60 @@
+---
+title: "Environment"
+description: "CLI environment variables, defaults, and on-disk paths."
+---
+
+Released binaries treat an unset `NODE_ENV` as production. Development from
+source should set `NODE_ENV=development` and explicit endpoints.
+
+## End-user variables
+
+| Variable                  | Role                             | Production default                   |
+| ------------------------- | -------------------------------- | ------------------------------------ |
+| `WRAPPER_RELAY_URL`       | Relay WebSocket base             | `wss://wrapper-relay-prod.fly.dev`   |
+| `WRAPPER_AUTH_ORIGIN`     | Device-login web origin          | `https://wrapper.sh`                 |
+| `WRAPPER_CONVEX_URL`      | Convex `.cloud` URL              | production Convex deployment         |
+| `WRAPPER_CONVEX_SITE_URL` | Auth HTTP (`.site`) override     | derived from `.cloud`                |
+| `WRAPPER_P2P`             | WebRTC fast path                 | on (`0`, `false`, or `off` disables) |
+| `WRAPPER_HUD`             | Terminal-title HUD               | on (`off` disables)                  |
+| `WRAPPER_DISABLE`         | Skip shell wrap for one process  | unset                                |
+| `WRAPPER_WRAPPED`         | Set by `shell-host` (do not set) | unset                                |
+| `WRAPPER_LOG`             | Log level                        | `warn` in production                 |
+| `WRAPPER_LOG_FILE`        | Log path override                | platform default                     |
+| `WRAPPER_TELEMETRY`       | Telemetry override               | disabled until opted in              |
+| `WRAPPER_POSTHOG_KEY`     | Telemetry key                    | empty                                |
+| `WRAPPER_TELEMETRY_URL`   | Telemetry endpoint               | `https://telemetry.wrapper.sh`       |
+| `NODE_ENV`                | Isolates dev paths and defaults  | unset = production                   |
+| `CI`                      | Quiet CI mode, no telemetry      | unset                                |
+
+Installer-only:
+
+| Variable               | Role                    | Default             |
+| ---------------------- | ----------------------- | ------------------- |
+| `WRAPPER_INSTALL_DIR`  | Install prefix          | `$HOME/.wrapper`    |
+| `WRAPPER_VERSION`      | Release tag or `latest` | `latest`            |
+| `WRAPPER_RELEASE_REPO` | GitHub repo for assets  | `heycupola/wrapper` |
+
+## On-disk paths
+
+| Kind   | Production                | Development                   |
+| ------ | ------------------------- | ----------------------------- |
+| Config | `~/.config/wrapper/`      | `~/.config/wrapper-dev/`      |
+| State  | `~/.local/state/wrapper/` | `~/.local/state/wrapper-dev/` |
+
+Important files:
+
+- `auth.json` in the config directory
+- `sessions.json` in the state directory
+- log files under the state directory (or `WRAPPER_LOG_FILE`)
+
+## Development defaults
+
+With `NODE_ENV=development`:
+
+- Relay defaults toward `ws://localhost:8080`
+- Auth origin defaults toward `http://localhost:3000`
+- Convex must be set explicitly (`WRAPPER_CONVEX_URL` or `CONVEX_URL`)
+
+See [Setup](/development/setup) and the repository
+[`ENVIRONMENTS.md`](https://github.com/heycupola/wrapper/blob/main/ENVIRONMENTS.md)
+for the full deploy matrix.

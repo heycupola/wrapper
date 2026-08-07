@@ -1,0 +1,73 @@
+---
+title: "Authentication"
+description: "Sign in with device authorization, inspect the session, and log out safely."
+---
+
+Wrapper uses Better Auth device authorization. The CLI opens a browser flow,
+you approve a short code, and the CLI stores a session token locally.
+
+## Sign in
+
+```bash
+wrapper auth login
+```
+
+1. The CLI prints a verification URL and user code.
+2. Sign in with your Wrapper account in the browser.
+3. Approve the device.
+4. The CLI stores credentials and can mint short-lived Convex JWTs for backend
+   calls.
+
+While waiting for approval, the CLI may report `authorization_pending`. Leave
+the command running until you approve or deny the request.
+
+Optional flags for advanced setups:
+
+```bash
+wrapper auth login --client-id <id> --scope <scope>
+```
+
+## Inspect and log out
+
+```bash
+wrapper auth whoami
+wrapper auth logout
+```
+
+Run `wrapper auth logout` on any device whose credentials may be exposed.
+
+## Where credentials live
+
+| Environment                          | Config directory         | Auth file   |
+| ------------------------------------ | ------------------------ | ----------- |
+| Production (`NODE_ENV` unset)        | `~/.config/wrapper/`     | `auth.json` |
+| Development (`NODE_ENV=development`) | `~/.config/wrapper-dev/` | `auth.json` |
+
+Related state:
+
+| Path                                       | Contents                           |
+| ------------------------------------------ | ---------------------------------- |
+| `~/.local/state/wrapper/sessions.json`     | Live local session registry (prod) |
+| `~/.local/state/wrapper-dev/sessions.json` | Live local session registry (dev)  |
+
+Directories use restrictive permissions. Session tokens are redacted from logs.
+
+## Why auth matters for attach
+
+Released CLI binaries default to the production Convex deployment. Local attach
+then calls `session:authorizeAttach` and requires an authenticated **owner**.
+Remote share always requires auth, plus Pro for the relay entitlement.
+
+Development builds with `NODE_ENV=development` and no Convex URL can exercise
+host wrapping without a backend, but that is not the shipped binary path.
+
+## Auth origin
+
+Device approval runs on the web origin from `WRAPPER_AUTH_ORIGIN`:
+
+| Mode        | Default                 |
+| ----------- | ----------------------- |
+| Production  | `https://wrapper.sh`    |
+| Development | `http://localhost:3000` |
+
+See [Environment](/configuration/environment) for overrides.

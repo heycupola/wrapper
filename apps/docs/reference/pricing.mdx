@@ -1,0 +1,33 @@
+---
+title: "Pricing"
+description: "Free local wrapping and Pro remote sharing."
+---
+
+## Plans
+
+| Plan | Price       | Includes                                   |
+| ---- | ----------- | ------------------------------------------ |
+| Free | $0          | Shell wrapping, local attach, account auth |
+| Pro  | $20 / month | Remote relay sharing (`can_share_relay`)   |
+
+Upgrade from the signed-in web onboarding flow at
+[wrapper.sh](https://wrapper.sh).
+
+## What Pro unlocks
+
+- Host can press `Ctrl+\` then `s` to share
+- Viewers can `wrapper attach --relay --id <sessionId>`
+- Default WebRTC P2P fast path with relay fallback
+
+Without Pro, local wrapping and local attach remain available.
+
+## Entitlement id
+
+Billing checks the Autumn feature id `can_share_relay`. Operators can override
+the feature id with `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID` on the Convex
+deployment.
+
+## Related
+
+- [Remote share](/guides/remote-share)
+- [Security and privacy](/configuration/security)

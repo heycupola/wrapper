@@ -1,0 +1,88 @@
+---
+title: "Remote share"
+description: "Share a live host shell with an authorized device over relay and optional P2P."
+---
+
+Remote share publishes a host session through the authenticated Fly.io relay so
+another device can attach. Wrapper negotiates a DTLS WebRTC data channel by
+default and keeps the relay for signaling and fallback.
+
+<Note>Remote sharing requires Pro (`can_share_relay`).</Note>
+
+## Share from the host
+
+1. Sign in on the host: `wrapper auth login`.
+2. Confirm you are in a wrapped shell (`wrapper status`).
+3. Press `Ctrl+\` then `s`.
+4. When the shell is idle, Wrapper prints the share code and join command.
+
+Unshare and revoke access with `Ctrl+\` then `u`, or by ending the host shell.
+
+## Join as the owner
+
+Owners can attach from any signed-in device without the share code:
+
+```bash
+wrapper attach --relay --id <sessionId>
+```
+
+## Join as a guest
+
+Guests need the session id and share code:
+
+```bash
+wrapper attach --relay --id <sessionId>
+```
+
+Enter the code in the hidden prompt. Codes are case-insensitive. Knowing the
+session id alone is not enough.
+
+<Warning>
+  `--code` exists only for non-interactive automation. Command-line arguments can appear in process
+  listings and shell history. Prefer the hidden prompt.
+</Warning>
+
+## What guests can do
+
+- Read all terminal output.
+- Send input into the same shell.
+- Resize; the host uses the smallest connected viewer size.
+
+There is no watch-only role and no per-command approval. Treat share codes as
+capabilities.
+
+## Transport behavior
+
+| State        | Meaning                                        |
+| ------------ | ---------------------------------------------- |
+| `connecting` | Relay or P2P setup in progress                 |
+| `relay`      | Terminal frames on the authenticated WebSocket |
+| `p2p`        | Viewer input prefers the direct WebRTC channel |
+| `offline`    | Paths closed; attach ends                      |
+
+If ICE cannot form a direct channel, the session stays on relay. If an open P2P
+channel drops, Wrapper waits briefly for recovery, then falls back to relay.
+
+Force relay-only:
+
+```bash
+WRAPPER_P2P=0 wrapper attach --relay --id <sessionId>
+```
+
+See [Transports](/reference/transports).
+
+## Access model (summary)
+
+- Backend stores only the SHA-256 of the share code.
+- Relay tickets are random, hashed at rest, short-lived, and single-use.
+- Unsharing clears the hash and invalidates unused viewer tickets.
+- Failed guesses are rate limited without revealing whether a session exists.
+
+Details: [Security and privacy](/configuration/security).
+
+## Upgrade to Pro
+
+Pro is $20 per month and unlocks relay sharing. Upgrade from the web onboarding
+flow at [wrapper.sh](https://wrapper.sh) after sign-in.
+
+See [Pricing](/reference/pricing).

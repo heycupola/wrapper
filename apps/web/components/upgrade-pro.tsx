@@ -24,7 +24,7 @@ export function UpgradePro({ token }: { token: string }) {
 
   async function upgrade(): Promise<void> {
     if (!client) {
-      setError("Missing NEXT_PUBLIC_CONVEX_URL");
+      setError("Wrapper billing services are temporarily unavailable.");
       return;
     }
     setBusy(true);
@@ -40,8 +40,8 @@ export function UpgradePro({ token }: { token: string }) {
         return;
       }
       setError("Could not start checkout");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+    } catch {
+      setError("Checkout could not be started. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -50,7 +50,7 @@ export function UpgradePro({ token }: { token: string }) {
   return (
     <div className="authCard">
       <p className="authHint">
-        Pro unlocks relay sharing — host a session and attach from anywhere.
+        Pro unlocks relay sharing. Host a session and attach from anywhere.
       </p>
       <div className="authActions">
         <button
@@ -62,7 +62,11 @@ export function UpgradePro({ token }: { token: string }) {
           {busy ? "Starting checkout…" : "Upgrade to Pro"}
         </button>
       </div>
-      {error ? <p className="authError">{error}</p> : null}
+      {error ? (
+        <p className="authError" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

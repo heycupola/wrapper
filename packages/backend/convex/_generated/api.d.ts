@@ -22,6 +22,7 @@ import type * as lib_relayTicket from "../lib/relayTicket.js";
 import type * as lib_sessionConfig from "../lib/sessionConfig.js";
 import type * as lib_types from "../lib/types.js";
 import type * as onboarding from "../onboarding.js";
+import type * as rateLimitCleanup from "../rateLimitCleanup.js";
 import type * as relay from "../relay.js";
 import type * as session from "../session.js";
 
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   "lib/sessionConfig": typeof lib_sessionConfig;
   "lib/types": typeof lib_types;
   onboarding: typeof onboarding;
+  rateLimitCleanup: typeof rateLimitCleanup;
   relay: typeof relay;
   session: typeof session;
 }>;

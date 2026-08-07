@@ -1,0 +1,117 @@
+---
+title: "CLI reference"
+description: "Commands, flags, keybindings, and common workflows."
+---
+
+## Commands
+
+### Install and hooks
+
+```bash
+wrapper install
+wrapper install --all
+wrapper install --shell=zsh,bash
+wrapper install --interactive
+wrapper install --yes
+wrapper uninstall
+wrapper uninstall --all
+wrapper init <shell>   # zsh | bash | fish
+```
+
+### Auth
+
+```bash
+wrapper auth login
+wrapper auth login --client-id <id> --scope <scope>
+wrapper auth whoami
+wrapper auth logout
+```
+
+### Sessions
+
+```bash
+wrapper status
+wrapper attach
+wrapper attach --id <sessionId>
+wrapper attach --port <port>
+wrapper attach --host 127.0.0.1
+wrapper attach --relay --id <sessionId>
+# Automation only:
+wrapper attach --relay --id <sessionId> --code "$WRAPPER_SHARE_CODE"
+wrapper logs
+wrapper logs --follow
+wrapper logs --tail 200
+```
+
+### Telemetry
+
+```bash
+wrapper telemetry status
+wrapper telemetry enable
+wrapper telemetry disable
+```
+
+### Internal / development
+
+```bash
+wrapper shell-host
+wrapper shell-host --shell /bin/zsh
+wrapper shell-host --port <number>
+bun run --cwd apps/cli dev:host
+```
+
+### Meta
+
+```bash
+wrapper --help
+wrapper --version
+```
+
+## Keybindings
+
+Prefix is `Ctrl+\` (armed for about 1.5 seconds).
+
+### Host
+
+| Keys              | Action                     |
+| ----------------- | -------------------------- |
+| `Ctrl+\` `s`      | Share and print share code |
+| `Ctrl+\` `u`      | Unshare and revoke access  |
+| `Ctrl+\` `?`      | Status overlay             |
+| `Ctrl+\` `Ctrl+\` | Send literal control byte  |
+| `Ctrl+\` `Esc`    | Cancel prefix mode         |
+
+### Viewer
+
+| Keys         | Action        |
+| ------------ | ------------- |
+| `Ctrl+\` `d` | Detach viewer |
+| `Ctrl+\` `?` | Viewer status |
+
+## HUD
+
+The terminal title shows role, short session id, and transport:
+
+`local` · `connecting` · `relay` · `p2p` · `offline`
+
+Disable with `WRAPPER_HUD=off`. Wrapper does not draw a permanent bottom bar
+because that conflicts with alternate-screen tools.
+
+## Typical flows
+
+Local:
+
+```bash
+wrapper install
+# new terminal
+wrapper auth login
+wrapper status
+wrapper attach
+```
+
+Remote (Pro):
+
+```bash
+# host: Ctrl+\ then s
+wrapper attach --relay --id <sessionId>
+```
