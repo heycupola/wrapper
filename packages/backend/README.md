@@ -151,8 +151,8 @@ step could be layered on later if watch-only viewers are needed.
 
 Session timeouts:
 
-- `WRAPPER_SESSION_STALE_AFTER_MS`: heartbeat timeout window (default `60000`)
-- `WRAPPER_SESSION_STALE_GRACE_MS`: scheduler grace window (default `10000`)
+- `WRAPPER_SESSION_STALE_AFTER_MS`: heartbeat timeout window (default `300000`)
+- `WRAPPER_SESSION_STALE_GRACE_MS`: scheduler grace window (default `30000`)
 
 Total stale-close delay is
 `WRAPPER_SESSION_STALE_AFTER_MS + WRAPPER_SESSION_STALE_GRACE_MS`.
