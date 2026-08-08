@@ -8,7 +8,8 @@ export const prepareDeletion = protectedAction({
   args: {},
   handler: async () => {
     return {
-      billingCleanupSucceeded: true,
+      billingCleanupSucceeded: false,
+      billingCleanupDeferred: true,
     };
   },
 });
