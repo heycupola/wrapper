@@ -5,6 +5,7 @@ import type { DataModel } from "./_generated/dataModel";
 import { betterAuth } from "better-auth";
 import authConfig from "./auth.config";
 import { bearer, deviceAuthorization, lastLoginMethod } from "better-auth/plugins";
+import { makeFunctionReference } from "convex/server";
 import authSchema from "./betterAuth/schema";
 
 const isDevEnvironment = process.env.ENVIRONMENT === "development";
@@ -13,6 +14,11 @@ const siteUrl =
   process.env.SITE_URL || (isDevEnvironment ? "http://localhost:3000" : "https://wrapper.sh");
 
 const DEV_AUTH_SECRET = "wrapper-local-dev-secret-change-me";
+const deleteOwnedDataRef = makeFunctionReference<
+  "mutation",
+  { userId: string },
+  { sessions: number; onboardingRows: number; relayTickets: number }
+>("account:deleteOwnedData");
 
 function resolveBetterAuthSecret(): string {
   const secret = process.env.BETTER_AUTH_SECRET?.trim();
@@ -63,6 +69,12 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
     };
   }
+  if (process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET) {
+    socialProviders.apple = {
+      clientId: process.env.APPLE_CLIENT_ID,
+      clientSecret: process.env.APPLE_CLIENT_SECRET,
+    };
+  }
 
   return betterAuth({
     baseURL: siteUrl,
@@ -71,6 +83,46 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     secret: resolveBetterAuthSecret(),
     database: authComponent.adapter(ctx),
     socialProviders,
+    user: {
+      deleteUser: {
+        enabled: true,
+        beforeDelete: async (user) => {
+          if (!("runMutation" in ctx)) {
+            throw new Error("Account deletion requires an action context");
+          }
+          await ctx.runMutation(deleteOwnedDataRef, { userId: user.id });
+          const paginationOpts = { numItems: 100, cursor: null };
+          await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
+            input: {
+              model: "account",
+              where: [{ field: "userId", operator: "eq", value: user.id }],
+            },
+            paginationOpts,
+          });
+          await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
+            input: {
+              model: "deviceCode",
+              where: [{ field: "userId", operator: "eq", value: user.id }],
+            },
+            paginationOpts,
+          });
+          await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
+            input: {
+              model: "verification",
+              where: [{ field: "value", operator: "eq", value: user.id }],
+            },
+            paginationOpts,
+          });
+          await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
+            input: {
+              model: "verification",
+              where: [{ field: "identifier", operator: "eq", value: user.email }],
+            },
+            paginationOpts,
+          });
+        },
+      },
+    },
     plugins: [
       convex({ authConfig }),
       deviceAuthorization(),

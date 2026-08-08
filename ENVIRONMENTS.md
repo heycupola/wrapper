@@ -66,6 +66,7 @@ Web is **not** in GitHub Actions. Vercel deploys it directly from Git.
 | `SITE_URL` | Vercel dev/preview URL | Vercel production URL |
 | `BETTER_AUTH_SECRET` | dev secret | prod secret |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | dev OAuth app | prod OAuth app |
+| `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET` | dev Services ID + secret | prod Services ID + secret |
 | `AUTUMN_SECRET_KEY` | `am_sk_test_…` (sandbox) | `am_sk_live_…` (production) |
 | `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID` | `can_share_relay` | `can_share_relay` |
 | `WRAPPER_RELAY_HOST_TICKET_TTL_MS` etc. | optional (has defaults) | optional (has defaults) |
