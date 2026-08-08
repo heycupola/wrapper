@@ -66,6 +66,7 @@ Web is **not** in GitHub Actions. Vercel deploys it directly from Git.
 | `SITE_URL` | Vercel dev/preview URL | Vercel production URL |
 | `BETTER_AUTH_SECRET` | dev secret | prod secret |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | dev OAuth app | prod OAuth app |
+| `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET` | dev Services ID + secret | prod Services ID + secret |
 | `AUTUMN_SECRET_KEY` | `am_sk_test_…` (sandbox) | `am_sk_live_…` (production) |
 | `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID` | `can_share_relay` | `can_share_relay` |
 | `WRAPPER_RELAY_HOST_TICKET_TTL_MS` etc. | optional (has defaults) | optional (has defaults) |
@@ -80,13 +81,14 @@ Web is **not** in GitHub Actions. Vercel deploys it directly from Git.
 ### web: Vercel (Project, then Settings, then Environment Variables)
 
 Vercel scopes: **Production** = `main`, **Preview** = `dev` + PRs, **Development**
-= local `vercel dev` only. The web app only needs these two (both are baked at
+= local `vercel dev` only. These values are baked at
 build time):
 
 | Key | Production | Preview | Development |
 |---|---|---|---|
 | `NEXT_PUBLIC_CONVEX_URL` | `…confident-fox-458.convex.cloud` | `…sleek-echidna-539.convex.cloud` | `…sleek-echidna-539.convex.cloud` |
 | `NEXT_PUBLIC_CONVEX_SITE_URL` | `…confident-fox-458.convex.site` | `…sleek-echidna-539.convex.site` | `…sleek-echidna-539.convex.site` |
+| `NEXT_PUBLIC_APPLE_AUTH_ENABLED` | `true` after Apple OAuth is configured | `true` after Apple OAuth is configured | `false` unless testing Apple OAuth |
 
 ### GitHub Environments (`dev`, `production`): backend and relay only
 

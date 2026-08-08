@@ -43,9 +43,14 @@ const denyDeviceCodeRef = makeFunctionReference<
 type DeviceAuthorizeClientProps = {
   authenticated: boolean;
   initialToken: string | null;
+  appleEnabled: boolean;
 };
 
-export function DeviceAuthorizeClient({ authenticated, initialToken }: DeviceAuthorizeClientProps) {
+export function DeviceAuthorizeClient({
+  authenticated,
+  initialToken,
+  appleEnabled,
+}: DeviceAuthorizeClientProps) {
   const searchParams = useSearchParams();
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "";
   const [userCode, setUserCode] = useState("");
@@ -149,7 +154,7 @@ export function DeviceAuthorizeClient({ authenticated, initialToken }: DeviceAut
     }
   }
 
-  async function signInWith(provider: "github" | "google"): Promise<void> {
+  async function signInWith(provider: "apple" | "github" | "google"): Promise<void> {
     setError(null);
     const result = await authClient.signIn.social({
       provider,
@@ -168,6 +173,11 @@ export function DeviceAuthorizeClient({ authenticated, initialToken }: DeviceAut
             Sign in first to approve or deny this CLI device authorization request.
           </p>
           <div className="authActions">
+            {appleEnabled ? (
+              <button type="button" className="social-btn" onClick={() => void signInWith("apple")}>
+                Continue with Apple
+              </button>
+            ) : null}
             <button type="button" className="social-btn" onClick={() => void signInWith("github")}>
               Continue with GitHub
             </button>

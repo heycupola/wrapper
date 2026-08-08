@@ -56,6 +56,7 @@ export default defineSchema({
     usedAt: v.optional(v.number()),
   })
     .index("by_tokenHash", ["tokenHash"])
+    .index("by_user", ["userId"])
     .index("by_session_role", ["sessionId", "role"])
     .index("by_expiresAt", ["expiresAt"]),
   rateLimit: defineTable({

@@ -19,9 +19,9 @@ export default function PrivacyPolicyPage() {
       <LegalSection title="Information we collect">
         <h3>Account information</h3>
         <p>
-          When you sign in with GitHub or Google, we receive the name, email address, profile
-          information, and provider identifier made available by that provider. Wrapper does not
-          create or store a password for social-login accounts.
+          When you sign in with Apple, GitHub, or Google, we receive the name, email address,
+          profile information, and provider identifier made available by that provider. Wrapper does
+          not create or store a password for social-login accounts.
         </p>
 
         <h3>Session metadata</h3>
@@ -87,7 +87,7 @@ export default function PrivacyPolicyPage() {
           <li>Convex for backend functions, authentication data, and session metadata.</li>
           <li>Fly.io for the authenticated WebSocket relay.</li>
           <li>Vercel for the Wrapper website.</li>
-          <li>GitHub and Google for optional social authentication.</li>
+          <li>Apple, GitHub, and Google for optional social authentication.</li>
           <li>Autumn and Stripe for subscriptions and payment processing.</li>
           <li>PostHog for optional anonymous CLI telemetry.</li>
           <li>Google and Twilio STUN servers for WebRTC network discovery.</li>
@@ -117,8 +117,9 @@ export default function PrivacyPolicyPage() {
           records under their own policies and applicable law.
         </p>
         <p>
-          You can remove local CLI credentials with <code>wrapper auth logout</code>. To request
-          access, correction, export, or deletion of account information, contact{" "}
+          You can remove local CLI credentials with <code>wrapper auth logout</code>. Mobile users
+          can permanently delete their account from Settings. To request access, correction, export,
+          or assistance with deletion, contact{" "}
           <a href="mailto:support@relic.so">support@relic.so</a>, the current Cupola Labs support
           inbox.
         </p>
