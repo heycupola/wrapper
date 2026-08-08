@@ -4,9 +4,9 @@ import { getSessionTimeoutConfig, shouldMarkSessionStale } from "../convex/lib/s
 describe("session timeout config", () => {
   test("uses defaults when env is missing", () => {
     const config = getSessionTimeoutConfig({});
-    expect(config.staleAfterMs).toBe(60_000);
-    expect(config.staleGraceMs).toBe(10_000);
-    expect(config.staleScheduleDelayMs).toBe(70_000);
+    expect(config.staleAfterMs).toBe(300_000);
+    expect(config.staleGraceMs).toBe(30_000);
+    expect(config.staleScheduleDelayMs).toBe(330_000);
   });
 
   test("uses custom env values", () => {
@@ -24,9 +24,9 @@ describe("session timeout config", () => {
       WRAPPER_SESSION_STALE_AFTER_MS: "-1",
       WRAPPER_SESSION_STALE_GRACE_MS: "abc",
     });
-    expect(config.staleAfterMs).toBe(60_000);
-    expect(config.staleGraceMs).toBe(10_000);
-    expect(config.staleScheduleDelayMs).toBe(70_000);
+    expect(config.staleAfterMs).toBe(300_000);
+    expect(config.staleGraceMs).toBe(30_000);
+    expect(config.staleScheduleDelayMs).toBe(330_000);
   });
 });
 

@@ -1,5 +1,5 @@
-const DEFAULT_STALE_AFTER_MS = 60_000;
-const DEFAULT_STALE_GRACE_MS = 10_000;
+const DEFAULT_STALE_AFTER_MS = 5 * 60_000;
+const DEFAULT_STALE_GRACE_MS = 30_000;
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
   if (!raw) return fallback;

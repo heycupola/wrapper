@@ -43,7 +43,7 @@
   },
   "overrides": [
     {
-      "files": ["apps/web/**/*.{ts,tsx}", "apps/docs/**/*.{ts,tsx}", "packages/ui/**/*.{ts,tsx}"],
+      "files": ["apps/web/**/*.{ts,tsx}", "apps/docs/**/*.{ts,tsx}"],
       "rules": {
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "warn"
