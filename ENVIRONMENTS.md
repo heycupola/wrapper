@@ -81,13 +81,14 @@ Web is **not** in GitHub Actions. Vercel deploys it directly from Git.
 ### web: Vercel (Project, then Settings, then Environment Variables)
 
 Vercel scopes: **Production** = `main`, **Preview** = `dev` + PRs, **Development**
-= local `vercel dev` only. The web app only needs these two (both are baked at
+= local `vercel dev` only. These values are baked at
 build time):
 
 | Key | Production | Preview | Development |
 |---|---|---|---|
 | `NEXT_PUBLIC_CONVEX_URL` | `…confident-fox-458.convex.cloud` | `…sleek-echidna-539.convex.cloud` | `…sleek-echidna-539.convex.cloud` |
 | `NEXT_PUBLIC_CONVEX_SITE_URL` | `…confident-fox-458.convex.site` | `…sleek-echidna-539.convex.site` | `…sleek-echidna-539.convex.site` |
+| `NEXT_PUBLIC_APPLE_AUTH_ENABLED` | `true` after Apple OAuth is configured | `true` after Apple OAuth is configured | `false` unless testing Apple OAuth |
 
 ### GitHub Environments (`dev`, `production`): backend and relay only
 

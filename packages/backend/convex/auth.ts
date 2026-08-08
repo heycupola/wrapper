@@ -5,7 +5,7 @@ import type { DataModel } from "./_generated/dataModel";
 import { betterAuth } from "better-auth";
 import authConfig from "./auth.config";
 import { bearer, deviceAuthorization, lastLoginMethod } from "better-auth/plugins";
-import { makeFunctionReference } from "convex/server";
+import { type FunctionReference, makeFunctionReference } from "convex/server";
 import authSchema from "./betterAuth/schema";
 
 const isDevEnvironment = process.env.ENVIRONMENT === "development";
@@ -19,6 +19,14 @@ const deleteOwnedDataRef = makeFunctionReference<
   { userId: string },
   { sessions: number; onboardingRows: number; relayTickets: number }
 >("account:deleteOwnedData");
+const deleteBillingCustomerRef = makeFunctionReference<
+  "action",
+  { userId: string; email?: string; name?: string },
+  { succeeded: boolean }
+>("account:deleteBillingCustomer");
+const authOnDeleteRef = makeFunctionReference<"mutation", { doc: unknown; model: string }, null>(
+  "account:onDelete",
+) as unknown as FunctionReference<"mutation", "internal", { doc: unknown; model: string }, null>;
 
 function resolveBetterAuthSecret(): string {
   const secret = process.env.BETTER_AUTH_SECRET?.trim();
@@ -51,6 +59,16 @@ function resolveBetterAuthSecret(): string {
 export const authComponent = createClient<DataModel, typeof authSchema>(components.betterAuth, {
   local: {
     schema: authSchema,
+  },
+  triggers: {
+    user: {
+      onDelete: async (ctx, user) => {
+        await ctx.runMutation(deleteOwnedDataRef, { userId: user._id });
+      },
+    },
+  },
+  authFunctions: {
+    onDelete: authOnDeleteRef,
   },
 }) as ReturnType<typeof createClient<DataModel>>;
 
@@ -87,10 +105,14 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
       deleteUser: {
         enabled: true,
         beforeDelete: async (user) => {
-          if (!("runMutation" in ctx)) {
+          if (!("runAction" in ctx) || !("runMutation" in ctx)) {
             throw new Error("Account deletion requires an action context");
           }
-          await ctx.runMutation(deleteOwnedDataRef, { userId: user.id });
+          await ctx.runAction(deleteBillingCustomerRef, {
+            userId: user.id,
+            email: user.email,
+            name: user.name,
+          });
           const paginationOpts = { numItems: 100, cursor: null };
           await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
             input: {

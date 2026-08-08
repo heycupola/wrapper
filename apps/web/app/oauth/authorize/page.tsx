@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default async function DeviceAuthorizePage() {
   const [authenticated, token] = await Promise.all([isAuthenticated(), getToken()]);
-  const appleEnabled = Boolean(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET);
+  const appleEnabled = process.env.NEXT_PUBLIC_APPLE_AUTH_ENABLED === "true";
 
   return (
     <AuthShell
