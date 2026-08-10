@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as account from "../account.js";
 import type * as auth from "../auth.js";
 import type * as autumn from "../autumn.js";
 import type * as billing from "../billing.js";
@@ -29,6 +30,7 @@ import type * as session from "../session.js";
 import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  account: typeof account;
   auth: typeof auth;
   autumn: typeof autumn;
   billing: typeof billing;
