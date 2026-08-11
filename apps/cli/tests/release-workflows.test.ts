@@ -126,5 +126,6 @@ describe("CLI release workflows", () => {
     expect(homebrewWorkflow).toContain("checksum_digest != asset_digest");
     expect(homebrewWorkflow).toContain("SHA_LINUX_ARM64");
     expect(homebrewWorkflow).toContain("ruby -c Formula/wrapper.rb");
+    expect(homebrewWorkflow).toContain('homepage "https://www.wrapper.sh"');
   });
 });

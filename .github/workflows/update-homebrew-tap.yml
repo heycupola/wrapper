@@ -154,7 +154,7 @@ jobs:
               "# This formula is maintained via the heycupola/wrapper release workflow.",
               "class Wrapper < Formula",
               '  desc "Securely host and attach your terminal sessions across devices"',
-              '  homepage "https://wrapper.sh"',
+              '  homepage "https://www.wrapper.sh"',
               f'  version "{os.environ["VERSION"]}"',
               '  license "MIT"',
               "",
