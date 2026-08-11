@@ -38,7 +38,8 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Setup flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
+        # Immutable commit for the upstream 1.6 tag.
+        uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1
 
       - name: Validate config
         run: |
@@ -48,12 +49,13 @@ jobs:
           fi
 
       - name: Deploy
-        # Pass apps/relay as the build context (WORKDIR positional) so the
-        # Dockerfile's relative COPYs resolve; --config only points at fly.toml.
+        working-directory: apps/relay
+        # Use the relay directory as both the build context and config origin so
+        # flyctl versions cannot reinterpret a repository-relative config path.
         # --ha=false: launch a single machine. The Fly org can't launch the
         # HA second machine yet (needs billing/verification); drop this flag
         # once HA is authorized.
-        run: flyctl deploy apps/relay --remote-only --config apps/relay/fly.toml --app "${{ vars.FLY_APP_NAME }}" --ha=false
+        run: flyctl deploy . --remote-only --config fly.toml --app "${{ vars.FLY_APP_NAME }}" --ha=false
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, LegalSection } from "../../components/legal-page";
 
-// TODO(legal): Have qualified counsel review this policy before public launch.
+// LEGAL REVIEW REQUIRED: Qualified counsel must review this AI-assisted policy before launch.
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "How Wrapper collects, processes, and protects account and terminal-session data.",
@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      lastUpdated="July 27, 2026"
+      lastUpdated="August 11, 2026"
       introduction="Wrapper is a remote terminal sharing service operated by Cupola Labs, LLC. Your terminal stays on your machine until you explicitly share it. This policy explains the metadata Wrapper stores, how terminal traffic moves between peers, which providers help us operate the service, and the controls available to you."
     >
       <LegalSection title="Information we collect">
@@ -117,9 +117,12 @@ export default function PrivacyPolicyPage() {
           records under their own policies and applicable law.
         </p>
         <p>
-          You can remove local CLI credentials with <code>wrapper auth logout</code>. Mobile users
-          can permanently delete their account from Settings. To request access, correction, export,
-          or assistance with deletion, contact{" "}
+          You can remove local CLI credentials with <code>wrapper auth logout</code>. Signed-in
+          users can permanently delete their account from{" "}
+          <Link href="/account">Account settings</Link>. Wrapper asks Autumn to remove the
+          associated billing customer before account deletion completes. If that cleanup fails, the
+          account remains so you can retry or contact support. To request access, correction,
+          export, or assistance with deletion, contact{" "}
           <a href="mailto:support@relic.so">support@relic.so</a>, the current Cupola Labs support
           inbox.
         </p>

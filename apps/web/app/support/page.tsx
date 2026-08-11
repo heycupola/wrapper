@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LegalPage, LegalSection } from "../../components/legal-page";
 
 export const metadata: Metadata = {
@@ -16,18 +17,10 @@ export default function SupportPage() {
       <LegalSection title="Product help">
         <ul>
           <li>
-            Read the{" "}
-            <a href="https://github.com/heycupola/wrapper/tree/main/apps/docs">
-              Wrapper documentation
-            </a>
-            .
+            Read the <a href="https://docs.wrapper.sh">Wrapper documentation</a>.
           </li>
           <li>
-            Review the{" "}
-            <a href="https://github.com/heycupola/wrapper/blob/main/apps/docs/troubleshooting.mdx">
-              troubleshooting guide
-            </a>
-            .
+            Review the <a href="https://docs.wrapper.sh/troubleshooting">troubleshooting guide</a>.
           </li>
           <li>
             Run <code>wrapper status</code> to inspect local session state.
@@ -40,10 +33,16 @@ export default function SupportPage() {
 
       <LegalSection title="Account, billing, and privacy">
         <p>
-          Email <a href="mailto:support@relic.so">support@relic.so</a> (Cupola Labs support) for
-          account access, billing, subscription cancellation, or privacy requests. Include the email
-          address on the account and a description of the issue, but never send authentication
-          tokens or terminal content.
+          Signed-in users can use <Link href="/account">Account settings</Link> to sign out, open
+          Stripe&apos;s portal to manage or cancel a paid plan, and permanently delete their Wrapper
+          account. Account deletion completes only after associated billing-customer cleanup
+          succeeds.
+        </p>
+        <p>
+          If a self-service action is unavailable, or for access, correction, export, and other
+          privacy requests, email <a href="mailto:support@relic.so">support@relic.so</a> (Cupola
+          Labs support). Include the email address on the account and a description of the issue,
+          but never send authentication tokens or terminal content.
         </p>
       </LegalSection>
 

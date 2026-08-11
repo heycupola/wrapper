@@ -9,7 +9,26 @@ description: "Run Wrapper from source and verify the local stack."
 - macOS or Linux
 - A Convex development deployment
 
-From the repository root:
+Clone the repository and initialize its mobile submodule:
+
+```bash
+git clone --recurse-submodules https://github.com/heycupola/wrapper.git
+cd wrapper
+
+# For an existing clone:
+git submodule update --init --recursive
+```
+
+The parent repository tracks only the mobile commit pointer. Mobile commits
+belong in the nested repository first. Mobile bootstrap is optional for CLI,
+backend, relay, and web work. On macOS, after installing the Xcode and XcodeGen
+versions listed in `apps/mobile/README.md`, generate the ignored Xcode project:
+
+```bash
+make -C apps/mobile bootstrap
+```
+
+Then install the Bun workspace from the repository root:
 
 ```bash
 bun install
@@ -48,14 +67,14 @@ NODE_ENV=development \
   bun run --cwd apps/cli dev:host
 ```
 
-Or equivalently:
+For an offline host-only CLI check without the backend or relay:
 
 ```bash
 NODE_ENV=development bun run apps/cli/index.ts shell-host
 ```
 
 Released CLI binaries use production endpoints when `NODE_ENV` is unset.
-Development must set explicit Convex, relay, and auth URLs.
+Connected source development must set explicit Convex, relay, and auth URLs.
 
 The complete environment and deployment matrix lives in
 [`ENVIRONMENTS.md`](https://github.com/heycupola/wrapper/blob/main/ENVIRONMENTS.md).
@@ -66,8 +85,8 @@ The complete environment and deployment matrix lives in
 bun run lint
 bun run format:check
 bun run check-types
+bun run audit
 bunx turbo run test
-bun run --cwd packages/backend test:integration
 ```
 
 Docs:

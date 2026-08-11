@@ -6,12 +6,21 @@ each one deploys. If you only want to test locally, jump to
 
 ## Components
 
-| Component | What it is | Hosting | Code |
-|---|---|---|---|
-| **backend** | Convex functions, auth (Better Auth), billing (Autumn) | Convex | `packages/backend` |
-| **relay** | Bun + Hono WebSocket relay for remote sessions | Fly.io | `apps/relay` |
-| **web** | Next.js site | Vercel | `apps/web` |
-| **cli** | The `wrapper` CLI (host/attach) | GitHub Releases / Homebrew | `apps/cli` |
+| Component   | What it is                                             | Hosting                    | Code               |
+| ----------- | ------------------------------------------------------ | -------------------------- | ------------------ |
+| **backend** | Convex functions, auth (Better Auth), billing (Autumn) | Convex                     | `packages/backend` |
+| **relay**   | Bun + Hono WebSocket relay for remote sessions         | Fly.io                     | `apps/relay`       |
+| **web**     | Next.js site                                           | Vercel                     | `apps/web`         |
+| **cli**     | The `wrapper` CLI (host/attach)                        | GitHub Releases / Homebrew | `apps/cli`         |
+| **docs**    | Mintlify documentation source                          | `docs.wrapper.sh`          | `apps/docs`        |
+| **mobile**  | Native iPhone/iPad viewer MVP                          | TestFlight pre-release     | `apps/mobile`      |
+
+## Public domains
+
+| Domain            | Purpose                                                                  | Current state                     |
+| ----------------- | ------------------------------------------------------------------------ | --------------------------------- |
+| `wrapper.sh`      | Canonical production website, auth, installer, legal, and support origin | Live on the production Vercel app |
+| `docs.wrapper.sh` | Canonical public Mintlify documentation origin                           | Live                              |
 
 ## Environment model
 
@@ -26,10 +35,10 @@ main branch  ->  PROD env    ->   Convex confident-fox-458  · wrapper-relay-pro
 
 Real Convex URLs:
 
-| | dev | prod |
-|---|---|---|
+|          | dev                                      | prod                                     |
+| -------- | ---------------------------------------- | ---------------------------------------- |
 | `.cloud` | `https://sleek-echidna-539.convex.cloud` | `https://confident-fox-458.convex.cloud` |
-| `.site` | `https://sleek-echidna-539.convex.site` | `https://confident-fox-458.convex.site` |
+| `.site`  | `https://sleek-echidna-539.convex.site`  | `https://confident-fox-458.convex.site`  |
 
 Released CLI binaries treat an unset `NODE_ENV` as production and default to
 `https://confident-fox-458.convex.cloud`,
@@ -48,35 +57,36 @@ must set `NODE_ENV=development` and explicit dev endpoints.
   environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'dev' }}
   ```
 
-| Workflow | Trigger | Deploys |
-|---|---|---|
-| `.github/workflows/deploy-backend.yml` | push `dev`/`main` on `packages/backend/**` | Convex (`convex deploy`) |
-| `.github/workflows/deploy-relay.yml` | push `dev`/`main` on `apps/relay/**` | Fly app (`flyctl deploy --app`) |
-| `.github/workflows/ci.yml` | every PR/push | lint, types, tests, web build, relay smoke (no deploy) |
+| Workflow                               | Trigger                                    | Deploys                                                                     |
+| -------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------- |
+| `.github/workflows/deploy-backend.yml` | push `dev`/`main` on `packages/backend/**` | Convex (`convex deploy`)                                                    |
+| `.github/workflows/deploy-relay.yml`   | push `dev`/`main` on `apps/relay/**`       | Fly app (`flyctl deploy --app`)                                             |
+| `.github/workflows/ci.yml`             | every PR/push                              | audit, lint, format, types, tests, web/docs builds, relay smoke (no deploy) |
 
-Web is **not** in GitHub Actions. Vercel deploys it directly from Git.
+Web deployment is **not** in GitHub Actions. CI still builds the web app, while
+Vercel deploys it directly from Git.
 
 ## Env var matrix
 
 ### backend: Convex (set per deployment with `bunx convex env set KEY value`)
 
-| Key | dev (sleek-echidna) | prod (confident-fox) |
-|---|---|---|
-| `ENVIRONMENT` | `development` | `production` |
-| `SITE_URL` | Vercel dev/preview URL | Vercel production URL |
-| `BETTER_AUTH_SECRET` | dev secret | prod secret |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | dev OAuth app | prod OAuth app |
-| `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET` | dev Services ID + secret | prod Services ID + secret |
-| `AUTUMN_SECRET_KEY` | `am_sk_test_…` (sandbox) | `am_sk_live_…` (production) |
-| `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID` | `can_share_relay` | `can_share_relay` |
-| `WRAPPER_RELAY_HOST_TICKET_TTL_MS` etc. | optional (has defaults) | optional (has defaults) |
+| Key                                         | dev (sleek-echidna)      | prod (confident-fox)        |
+| ------------------------------------------- | ------------------------ | --------------------------- |
+| `ENVIRONMENT`                               | `development`            | `production`                |
+| `SITE_URL`                                  | Vercel dev/preview URL   | `https://wrapper.sh`        |
+| `BETTER_AUTH_SECRET`                        | dev secret               | prod secret                 |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | dev OAuth app            | prod OAuth app              |
+| `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET`   | dev Services ID + secret | prod Services ID + secret   |
+| `AUTUMN_SECRET_KEY`                         | `am_sk_test_…` (sandbox) | `am_sk_live_…` (production) |
+| `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID`     | `can_share_relay`        | `can_share_relay`           |
+| `WRAPPER_RELAY_HOST_TICKET_TTL_MS` etc.     | optional (has defaults)  | optional (has defaults)     |
 
 ### relay: Fly secrets (`flyctl secrets set KEY=value --app <app>`)
 
-| Key | wrapper-relay-dev | wrapper-relay-prod |
-|---|---|---|
+| Key          | wrapper-relay-dev                        | wrapper-relay-prod                       |
+| ------------ | ---------------------------------------- | ---------------------------------------- |
 | `CONVEX_URL` | `https://sleek-echidna-539.convex.cloud` | `https://confident-fox-458.convex.cloud` |
-| `PORT` | 8080 (in fly.toml) | 8080 (in fly.toml) |
+| `PORT`       | 8080 (in fly.toml)                       | 8080 (in fly.toml)                       |
 
 ### web: Vercel (Project, then Settings, then Environment Variables)
 
@@ -84,19 +94,19 @@ Vercel scopes: **Production** = `main`, **Preview** = `dev` + PRs, **Development
 = local `vercel dev` only. These values are baked at
 build time):
 
-| Key | Production | Preview | Development |
-|---|---|---|---|
-| `NEXT_PUBLIC_CONVEX_URL` | `…confident-fox-458.convex.cloud` | `…sleek-echidna-539.convex.cloud` | `…sleek-echidna-539.convex.cloud` |
-| `NEXT_PUBLIC_CONVEX_SITE_URL` | `…confident-fox-458.convex.site` | `…sleek-echidna-539.convex.site` | `…sleek-echidna-539.convex.site` |
+| Key                              | Production                             | Preview                                | Development                        |
+| -------------------------------- | -------------------------------------- | -------------------------------------- | ---------------------------------- |
+| `NEXT_PUBLIC_CONVEX_URL`         | `…confident-fox-458.convex.cloud`      | `…sleek-echidna-539.convex.cloud`      | `…sleek-echidna-539.convex.cloud`  |
+| `NEXT_PUBLIC_CONVEX_SITE_URL`    | `…confident-fox-458.convex.site`       | `…sleek-echidna-539.convex.site`       | `…sleek-echidna-539.convex.site`   |
 | `NEXT_PUBLIC_APPLE_AUTH_ENABLED` | `true` after Apple OAuth is configured | `true` after Apple OAuth is configured | `false` unless testing Apple OAuth |
 
 ### GitHub Environments (`dev`, `production`): backend and relay only
 
-| Name | Kind | dev | production |
-|---|---|---|---|
+| Name                | Kind   | dev                      | production               |
+| ------------------- | ------ | ------------------------ | ------------------------ |
 | `CONVEX_DEPLOY_KEY` | secret | sleek-echidna deploy key | confident-fox deploy key |
-| `FLY_API_TOKEN` | secret | ✓ | ✓ |
-| `FLY_APP_NAME` | var | `wrapper-relay-dev` | `wrapper-relay-prod` |
+| `FLY_API_TOKEN`     | secret | ✓                        | ✓                        |
+| `FLY_APP_NAME`      | var    | `wrapper-relay-dev`      | `wrapper-relay-prod`     |
 
 ## One-time setup checklist
 
@@ -114,7 +124,7 @@ build time):
    # dev (against sleek-echidna, e.g. `bunx convex env set --preview-name` or via dashboard)
    bunx convex env set SITE_URL https://<vercel-dev-url>
    # prod (against confident-fox)
-   bunx convex env set SITE_URL https://<vercel-prod-url>
+   bunx convex env set SITE_URL https://wrapper.sh
    ```
 
 3. **Fly (relay)**: two apps plus secrets:
@@ -126,13 +136,14 @@ build time):
    flyctl secrets set CONVEX_URL=https://confident-fox-458.convex.cloud --app wrapper-relay-prod
    # FLY_API_TOKEN: `flyctl tokens create deploy` -> GitHub env secret (both envs)
    ```
-   After the new prod app is verified, delete the old one:
-   `flyctl apps destroy wrapper-dry-pathway-1935`.
+
+   Retire any previous Fly app only after both replacement environments pass
+   their smoke checks and no configuration or traffic references the old app.
 
 4. **GitHub Environments**: create `dev` and `production`, then fill the table above.
 
-5. **OAuth apps**: dev GitHub OAuth app now (callback
-   `https://sleek-echidna-539.convex.site/api/auth/callback/github`), prod later
+5. **OAuth apps**: configure the dev GitHub OAuth app (callback
+   `https://sleek-echidna-539.convex.site/api/auth/callback/github`) and prod
    (`https://confident-fox-458.convex.site/api/auth/callback/github`). Put client
    id/secret in the matching Convex deployment env.
 
@@ -144,8 +155,14 @@ build time):
    bunx atmn push --prod   # production     -> am_sk_live_ key
    ```
 
-Once done: push to `dev` → dev backend/relay deploy + Vercel Preview; merge to
-`main` → prod everything.
+7. **Docs**: `apps/docs` is connected to Mintlify at `https://docs.wrapper.sh`.
+   Keep DNS, TLS, and representative page requests healthy after navigation or
+   domain changes.
+
+Once done, a push to `dev` updates matching dev backend/relay paths and creates a
+Vercel Preview. A merge to `main` updates matching production backend/relay
+paths and Vercel Production. CLI, docs, and mobile releases use their separate
+release or hosting processes.
 
 ## Local development
 
@@ -172,7 +189,7 @@ the CLI at local with `apps/cli/.env.local` (copy from `.env.example`).
 ### Test the Pro / relay-share gate
 
 1. In the host shell, press `Ctrl+\` then `s` to share.
-2. As a **free** user you should see *"Relay sharing requires Pro"* + a checkout
+2. As a **free** user you should see _"Relay sharing requires Pro"_ + a checkout
    URL (URL only if Stripe is connected in the Autumn sandbox; otherwise the
    generic message, still correctly denied).
 3. Grant Pro (Stripe test card `4242 4242 4242 4242`, or attach `pro` in the

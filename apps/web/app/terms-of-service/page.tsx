@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, LegalSection } from "../../components/legal-page";
 
-// TODO(legal): Have qualified counsel review these terms before public launch.
+// LEGAL REVIEW REQUIRED: Qualified counsel must review these AI-assisted terms before launch.
 export const metadata: Metadata = {
   title: "Terms of Service",
   description: "Terms governing access to and use of Wrapper.",
@@ -13,7 +13,7 @@ export default function TermsOfServicePage() {
   return (
     <LegalPage
       title="Terms of Service"
-      lastUpdated="July 27, 2026"
+      lastUpdated="August 11, 2026"
       introduction="These Terms form an agreement between you and Cupola Labs, LLC concerning Wrapper, its CLI, website, backend, relay, documentation, and mobile clients (collectively, the Service). By creating an account or using the Service, you agree to these Terms and the Privacy Policy."
     >
       <LegalSection title="Eligibility and accounts">
@@ -79,9 +79,12 @@ export default function TermsOfServicePage() {
       <LegalSection title="Plans, billing, and cancellation">
         <p>
           Wrapper may provide free and paid plans. Paid subscriptions are billed in advance through
-          Autumn and Stripe. Prices and plan limits may change with reasonable notice. You may
-          cancel at any time and retain paid access until the end of the current billing period.
-          Fees are non-refundable except where required by law or expressly agreed by us.
+          Autumn and Stripe. Prices and plan limits may change with reasonable notice. Signed-in
+          users can open Stripe&apos;s billing portal from{" "}
+          <Link href="/account">Account settings</Link> to manage or cancel a paid plan. The portal
+          shows the effective cancellation date before confirmation. If the portal is unavailable,
+          contact support. Fees are non-refundable except where required by law or expressly agreed
+          by us.
         </p>
       </LegalSection>
 
@@ -121,9 +124,11 @@ export default function TermsOfServicePage() {
 
       <LegalSection title="Suspension and termination">
         <p>
-          You may stop using Wrapper and request account deletion. We may suspend or terminate
-          access to protect users, investigate misuse, comply with law, or enforce these Terms.
-          Provisions concerning ownership, disclaimers, liability, and disputes survive termination.
+          You may stop using Wrapper and permanently delete your account from{" "}
+          <Link href="/account">Account settings</Link>. Contact support if self-service deletion
+          cannot be completed. We may suspend or terminate access to protect users, investigate
+          misuse, comply with law, or enforce these Terms. Provisions concerning ownership,
+          disclaimers, liability, and disputes survive termination.
         </p>
       </LegalSection>
 

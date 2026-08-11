@@ -169,12 +169,18 @@ Relay tickets:
 From the monorepo root:
 
 ```bash
+bun run audit
 bunx tsc --noEmit -p packages/backend/tsconfig.json
 bunx oxlint packages/backend/convex
-cd packages/backend && bunx convex codegen
+(cd packages/backend && bunx convex codegen)
+bun run --cwd packages/backend betterAuth:generate-schema
 bun test packages/backend/tests
 bun run --cwd packages/backend test:integration
 ```
+
+Run `betterAuth:generate-schema` only after changing the Better Auth schema
+configuration; review and commit the generated schema update with the source
+change.
 
 ## Smoke checklist
 

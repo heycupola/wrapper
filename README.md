@@ -18,7 +18,8 @@ terminal.
    your real shell inside a pseudo-terminal (PTY) and starts a tiny local
    WebSocket server bound to `127.0.0.1`. Nothing is exposed yet.
 2. From the same machine, `wrapper attach` connects to that local server and
-   mirrors the session. This path needs no account and no network.
+   mirrors the session. The transport stays on loopback and does not need the
+   relay or Pro; released builds still authorize the signed-in session owner.
 3. When you press `Ctrl+\ s`, the CLI asks the Convex backend for a short-lived
    host ticket, connects to the relay on Fly.io, marks the session shared, and
    prints a secret share code. You join your own devices with
@@ -37,7 +38,7 @@ apps/
   cli/      Wrapper CLI: shell wrapping, session registry, local + relay attach, device auth, default-on P2P
   relay/    Relay service: authenticated WebSocket routing for shared sessions, deployed on Fly.io
   web/      Next.js app on Vercel: landing page, device-login approval, onboarding, Pro upgrade
-  docs/     Public documentation site (Mintlify)
+  docs/     Mintlify documentation source, published at docs.wrapper.sh
   mobile/   Git submodule pointer to the native SwiftUI iPhone/iPad viewer repository
 packages/
   protocol/           Zod wire schema shared by every wrapper component (JSON frames + WebRTC signal)
@@ -57,17 +58,22 @@ default direct WebRTC path) is documented in
 
 ## Where to read next
 
-| Topic | Document |
-| ----- | -------- |
-| CLI commands, keystrokes, env vars | [`apps/cli/README.md`](./apps/cli/README.md) |
-| Relay + direct P2P transports | [`apps/cli/transport/README.md`](./apps/cli/transport/README.md) |
-| Relay service and Fly deploy | [`apps/relay/README.md`](./apps/relay/README.md) |
-| Convex backend (auth, sessions, tickets, billing) | [`packages/backend/README.md`](./packages/backend/README.md) |
-| Wire protocol | [`packages/protocol/README.md`](./packages/protocol/README.md) |
-| PTY internals | [`packages/terminal/README.md`](./packages/terminal/README.md) |
-| Logging and telemetry | [`packages/logger/README.md`](./packages/logger/README.md) |
-| Dev and prod environments, deploy automation | [`ENVIRONMENTS.md`](./ENVIRONMENTS.md) |
-| The full docs site | [`apps/docs`](./apps/docs) (run `bun run --cwd apps/docs dev`) |
+| Topic                                             | Document                                                         |
+| ------------------------------------------------- | ---------------------------------------------------------------- |
+| CLI commands, keystrokes, env vars                | [`apps/cli/README.md`](./apps/cli/README.md)                     |
+| Relay + direct P2P transports                     | [`apps/cli/transport/README.md`](./apps/cli/transport/README.md) |
+| Relay service and Fly deploy                      | [`apps/relay/README.md`](./apps/relay/README.md)                 |
+| Convex backend (auth, sessions, tickets, billing) | [`packages/backend/README.md`](./packages/backend/README.md)     |
+| Wire protocol                                     | [`packages/protocol/README.md`](./packages/protocol/README.md)   |
+| PTY internals                                     | [`packages/terminal/README.md`](./packages/terminal/README.md)   |
+| Logging and telemetry                             | [`packages/logger/README.md`](./packages/logger/README.md)       |
+| Dev and prod environments, deploy automation      | [`ENVIRONMENTS.md`](./ENVIRONMENTS.md)                           |
+| Public documentation                              | [`docs.wrapper.sh`](https://docs.wrapper.sh)                     |
+| Documentation source                              | [`apps/docs`](./apps/docs) (run `bun run --cwd apps/docs dev`)   |
+
+`https://wrapper.sh` is the canonical production website, auth, installer,
+legal, and support origin. `https://docs.wrapper.sh` is the canonical public
+documentation origin.
 
 ## Status
 
@@ -76,18 +82,19 @@ onboarding flow are implemented in this repository. Sharing attempts a direct
 WebRTC P2P data path by default, with the relay kept online for signaling and
 automatic fallback (`WRAPPER_P2P=0` forces relay-only mode). The terminal title
 shows the role, session, and active transport without reserving a screen row.
-The native iPhone/iPad viewer foundation lives in the separate `apps/mobile`
-submodule. It uses Swift 6.2, SwiftUI, SwiftTerm, the official Convex Swift
-client, and native WebRTC package boundaries.
+The separate `apps/mobile` submodule now contains a Simulator-ready native
+iPhone/iPad viewer MVP: device authorization, owner and guest join flows,
+SwiftTerm rendering, relay transport, native WebRTC, and adaptive navigation.
+It uses Swift 6.0 language mode with complete strict concurrency on Xcode 26.
+Signed-device validation, TestFlight, and App Store review remain pre-release
+work.
 
-The active focus before mobile work is operational hardening and release
-channels:
+The active focus is release and operational hardening:
 
-- deploy the relay service (`apps/relay`) through the workflow with smoke checks
 - publish CLI release archives and update the Homebrew tap formula
-- keep the critical auth and relay test lanes green in CI
-- verify the P2P fast path on real networks (NAT traversal)
-- finish the native iOS viewer vertical slice and TestFlight setup
+- keep dependency audit, lint, format, types, auth, and relay checks green
+- verify the P2P fast path and fallback on real networks
+- complete signed iPhone/iPad builds, TestFlight, and physical-device QA
 
 ## Local development
 
@@ -103,6 +110,25 @@ Environment templates are included:
 - `apps/cli/.env.example`
 - `apps/relay/.env.example`
 - `packages/backend/.env.example`
+
+Clone with the mobile submodule:
+
+```sh
+git clone --recurse-submodules https://github.com/heycupola/wrapper.git
+cd wrapper
+
+# For an existing clone:
+git submodule update --init --recursive
+```
+
+The mobile repository has its own git history. The parent repository tracks
+only its commit pointer. For mobile development on macOS, install the
+prerequisites in [`apps/mobile/README.md`](./apps/mobile/README.md), then
+generate the ignored Xcode project:
+
+```sh
+make -C apps/mobile bootstrap
+```
 
 ```sh
 bun install            # one-time
