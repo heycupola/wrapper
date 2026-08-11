@@ -6,8 +6,10 @@ reported privately before public disclosure.
 ## Report a vulnerability
 
 Do not open a public issue or pull request for a suspected security problem.
-Email [can@relic.so](mailto:can@relic.so) (Cupola Labs security) or submit a
-[private GitHub security advisory](https://github.com/heycupola/wrapper/security/advisories/new).
+Use the [hosted security-reporting instructions](https://wrapper.sh/support#security),
+email [can@relic.so](mailto:can@relic.so) (Cupola Labs security), or submit a
+[private GitHub security advisory](https://github.com/heycupola/wrapper/security/advisories/new)
+while signed in to GitHub.
 
 Include:
 

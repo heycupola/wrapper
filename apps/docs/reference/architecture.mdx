@@ -14,7 +14,7 @@ description: "How CLI, Convex, relay, web, and protocol fit together."
 | `packages/protocol` | Shared JSON message schema and codec (`protocolVersion: 1`)             |
 | `packages/terminal` | Bun-native PTY layer via `wrapper-pty-helper`                           |
 | `packages/logger`   | Logging and opt-in telemetry                                            |
-| `apps/mobile`       | Native iOS viewer foundation (not a finished public surface yet)        |
+| `apps/mobile`       | Native iPhone/iPad viewer MVP; pre-TestFlight and physical-device QA    |
 
 ## High-level flow
 
@@ -30,7 +30,7 @@ flowchart LR
   hostCli -.->|optional DTLS data channel| viewerCli
 ```
 
-{/* TODO(image): Add /images/wrapper-architecture.webp here. Turn the flow above into a polished diagram with trust boundaries: local PTY/token, Convex auth and share-code gate, Fly relay signaling/fallback, and the encrypted P2P data path. Essential security and architecture asset. */}
+{/* TODO(image): Add /images/wrapper-architecture.webp here. Turn the flow above into a polished diagram with trust boundaries: local PTY/token, Convex auth and share-code gate, Fly relay signaling/fallback, and the encrypted P2P data path. Priority P2: useful, non-blocking documentation enhancement because the Mermaid diagram and text already carry the required information. */}
 
 ## Session lifecycle
 
