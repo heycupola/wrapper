@@ -106,6 +106,8 @@ describe("CLI release workflows", () => {
     expect(releaseWorkflow).toContain("REQUESTED_VERSION");
     expect(releaseWorkflow).toContain("refs/heads/main");
     expect(releaseWorkflow).toContain("refs/tags/v${CURRENT}");
+    expect(releaseWorkflow).toContain("skipping automatic release");
+    expect(releaseWorkflow).not.toContain('PREVIOUS="0.0.0"');
   });
 
   test("dry run verifies the complete checksum set without publishing", () => {

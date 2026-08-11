@@ -64,7 +64,9 @@ jobs:
             if PREVIOUS_JSON=$(git show "${BEFORE_SHA}:apps/cli/package.json" 2>/dev/null); then
               PREVIOUS=$(node -p "JSON.parse(process.argv[1]).version" "$PREVIOUS_JSON")
             else
-              PREVIOUS="0.0.0"
+              echo "release_needed=false" >> "$GITHUB_OUTPUT"
+              echo "::warning::Could not read apps/cli/package.json from before SHA ${BEFORE_SHA}; skipping automatic release. Use workflow_dispatch for an intentional first release."
+              exit 0
             fi
 
             if [ "$CURRENT" = "$PREVIOUS" ]; then
