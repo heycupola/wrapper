@@ -38,7 +38,8 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Setup flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
+        # Immutable commit for the upstream 1.6 tag.
+        uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1
 
       - name: Validate config
         run: |

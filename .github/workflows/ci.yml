@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   fast:
-    name: Fast lane (lint/format/types)
+    name: Quality gate (audit/lint/format/types)
     runs-on: ubuntu-latest
 
     steps:
@@ -27,6 +27,9 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Audit dependencies
+        run: bun run audit
 
       - name: Lint
         run: bunx turbo run lint
