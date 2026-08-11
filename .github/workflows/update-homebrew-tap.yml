@@ -12,6 +12,9 @@ on:
       sha_darwin_x64:
         required: false
         type: string
+      sha_linux_arm64:
+        required: false
+        type: string
       sha_linux_x64:
         required: false
         type: string
@@ -39,6 +42,7 @@ jobs:
       VERSION: ${{ inputs.version }}
       SHA_DARWIN_ARM64: ${{ inputs.sha_darwin_arm64 }}
       SHA_DARWIN_X64: ${{ inputs.sha_darwin_x64 }}
+      SHA_LINUX_ARM64: ${{ inputs.sha_linux_arm64 }}
       SHA_LINUX_X64: ${{ inputs.sha_linux_x64 }}
 
     steps:
@@ -47,37 +51,83 @@ jobs:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "HOMEBREW_TAP_TOKEN is required"
+            echo "::error::HOMEBREW_TAP_TOKEN is required"
             exit 1
           fi
 
-      - name: Resolve release digests
-        if: env.SHA_DARWIN_ARM64 == '' || env.SHA_DARWIN_X64 == '' || env.SHA_LINUX_X64 == ''
+      - name: Validate release version
+        run: |
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Version must not include v and must look like 0.1.0 (got '${VERSION}')."
+            exit 1
+          fi
+
+      - name: Resolve and verify release digests
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          mkdir -p release-metadata
+          gh release download "v${VERSION}" \
+            --repo heycupola/wrapper \
+            --pattern checksums.txt \
+            --dir release-metadata \
+            --clobber
           RELEASE_JSON=$(gh release view "v${VERSION}" --repo heycupola/wrapper --json assets)
           export RELEASE_JSON
           python3 - <<'PY' >> "$GITHUB_ENV"
           import json
           import os
+          import re
+          from pathlib import Path
 
           assets = {
-              asset["name"]: asset.get("digest", "").replace("sha256:", "")
+              asset["name"]: (asset.get("digest") or "").removeprefix("sha256:")
               for asset in json.loads(os.environ["RELEASE_JSON"])["assets"]
           }
           required = {
               "wrapper-darwin-arm64.tar.gz": "SHA_DARWIN_ARM64",
               "wrapper-darwin-x86_64.tar.gz": "SHA_DARWIN_X64",
+              "wrapper-linux-arm64.tar.gz": "SHA_LINUX_ARM64",
               "wrapper-linux-x86_64.tar.gz": "SHA_LINUX_X64",
           }
+          checksums = {}
+          for line in Path("release-metadata/checksums.txt").read_text(encoding="utf-8").splitlines():
+              parts = line.split()
+              if len(parts) != 2:
+                  raise SystemExit(f"Malformed checksums.txt line: {line!r}")
+              digest, name = parts
+              name = name.removeprefix("*")
+              if name in checksums:
+                  raise SystemExit(f"Duplicate checksum for: {name}")
+              if not re.fullmatch(r"[0-9a-f]{64}", digest):
+                  raise SystemExit(f"Invalid SHA-256 for: {name}")
+              checksums[name] = digest
+
+          unexpected = sorted(set(checksums) - set(required))
+          if unexpected:
+              raise SystemExit(
+                  f"Unexpected entries in checksums.txt: {', '.join(unexpected)}"
+              )
+
           missing = []
           for name, env_name in required.items():
-              digest = assets.get(name, "")
-              if not digest:
+              checksum_digest = checksums.get(name, "")
+              asset_digest = assets.get(name, "")
+              if not checksum_digest or not asset_digest:
                   missing.append(name)
                   continue
-              print(f"{env_name}={digest}")
+              if checksum_digest != asset_digest:
+                  raise SystemExit(
+                      f"Digest mismatch for {name}: checksums.txt={checksum_digest}, "
+                      f"GitHub={asset_digest}"
+                  )
+              provided_digest = os.environ.get(env_name, "")
+              if provided_digest and provided_digest != checksum_digest:
+                  raise SystemExit(
+                      f"Caller digest mismatch for {name}: caller={provided_digest}, "
+                      f"release={checksum_digest}"
+                  )
+              print(f"{env_name}={checksum_digest}")
 
           if missing:
               raise SystemExit(f"Missing release digests for: {', '.join(missing)}")
@@ -119,7 +169,10 @@ jobs:
               "  end",
               "",
               "  on_linux do",
-              "    if Hardware::CPU.intel?",
+              "    if Hardware::CPU.arm?",
+              '      url "https://github.com/heycupola/wrapper/releases/download/v#{version}/wrapper-linux-arm64.tar.gz"',
+              f'      sha256 "{os.environ["SHA_LINUX_ARM64"]}"',
+              "    else",
               '      url "https://github.com/heycupola/wrapper/releases/download/v#{version}/wrapper-linux-x86_64.tar.gz"',
               f'      sha256 "{os.environ["SHA_LINUX_X64"]}"',
               "    end",
@@ -139,6 +192,7 @@ jobs:
 
           Path("Formula/wrapper.rb").write_text("\n".join(lines), encoding="utf-8")
           PY
+          ruby -c Formula/wrapper.rb
 
       - name: Commit and push formula update
         working-directory: homebrew-tap

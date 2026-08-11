@@ -8,44 +8,100 @@ on:
       - ".github/workflows/release-cli.yml"
       - ".github/workflows/update-homebrew-tap.yml"
   workflow_dispatch:
+    inputs:
+      version:
+        description: Expected apps/cli version (without leading v)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-cli-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   check-version:
     name: Check CLI Version Change
     runs-on: ubuntu-latest
     outputs:
-      version-changed: ${{ steps.check.outputs.changed }}
+      release-needed: ${{ steps.check.outputs.release_needed }}
       new-version: ${{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
-      - name: Check if version changed
+      - name: Validate releasable version
         id: check
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          EVENT_NAME: ${{ github.event_name }}
+          REQUESTED_VERSION: ${{ inputs.version }}
         run: |
+          set -euo pipefail
+
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::CLI releases must run from the main branch (got ${GITHUB_REF})."
+            exit 1
+          fi
+
           CURRENT=$(node -p "require('./apps/cli/package.json').version")
           echo "version=$CURRENT" >> "$GITHUB_OUTPUT"
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            exit 0
+          if [[ ! "$CURRENT" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]] || [ "$CURRENT" = "0.0.0" ]; then
+            echo "::error::apps/cli/package.json has invalid release version '${CURRENT}'."
+            exit 1
           fi
 
-          git checkout HEAD~1 -- apps/cli/package.json 2>/dev/null || true
-          PREVIOUS=$(node -p "require('./apps/cli/package.json').version" 2>/dev/null || echo "0.0.0")
-          git checkout HEAD -- apps/cli/package.json
-
-          if [ "$CURRENT" != "$PREVIOUS" ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$REQUESTED_VERSION" != "$CURRENT" ]; then
+              echo "::error::Requested version '${REQUESTED_VERSION}' does not match package version '${CURRENT}'."
+              exit 1
+            fi
           else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+            if PREVIOUS_JSON=$(git show "${BEFORE_SHA}:apps/cli/package.json" 2>/dev/null); then
+              PREVIOUS=$(node -p "JSON.parse(process.argv[1]).version" "$PREVIOUS_JSON")
+            else
+              PREVIOUS="0.0.0"
+            fi
+
+            if [ "$CURRENT" = "$PREVIOUS" ]; then
+              echo "release_needed=false" >> "$GITHUB_OUTPUT"
+              echo "CLI version remains ${CURRENT}; no release requested." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
           fi
+
+          set +e
+          TAG_LOOKUP=$(git ls-remote --exit-code --refs --tags origin "refs/tags/v${CURRENT}" 2>&1)
+          TAG_STATUS=$?
+          set -e
+          case "$TAG_STATUS" in
+            0)
+              echo "::error::Tag v${CURRENT} already exists; bump apps/cli/package.json instead of replacing a release."
+              exit 1
+              ;;
+            2)
+              ;;
+            *)
+              echo "::error::Could not check whether tag v${CURRENT} exists: ${TAG_LOOKUP}"
+              exit "$TAG_STATUS"
+              ;;
+          esac
+
+          echo "release_needed=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "### CLI release candidate"
+            echo "- Version: \`v${CURRENT}\`"
+            echo "- Commit: \`${GITHUB_SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   build-cli:
     name: Build CLI (${{ matrix.platform }})
     needs: check-version
-    if: needs.check-version.outputs.version-changed == 'true'
+    if: needs.check-version.outputs.release-needed == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -65,6 +121,11 @@ jobs:
             target: bun-linux-x64
             archive: wrapper-linux-x86_64.tar.gz
             helper: wrapper-pty-helper-x86_64-linux-musl
+          - os: ubuntu-latest
+            platform: linux-arm64
+            target: bun-linux-arm64
+            archive: wrapper-linux-arm64.tar.gz
+            helper: wrapper-pty-helper-aarch64-linux-musl
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -83,7 +144,7 @@ jobs:
           mkdir -p dist
           bun build --compile --target="${{ matrix.target }}" apps/cli/index.ts --outfile dist/wrapper
 
-      - name: Smoke native release binary
+      - name: Verify native release version
         if: matrix.platform == 'linux-x64'
         run: |
           dist/wrapper --version
@@ -91,11 +152,19 @@ jobs:
 
       - name: Package archive
         run: |
+          test -x "apps/cli/bin/${{ matrix.helper }}"
           mkdir -p staging/bin
           cp dist/wrapper staging/bin/wrapper
           chmod +x staging/bin/wrapper
           cp "apps/cli/bin/${{ matrix.helper }}" "staging/bin/${{ matrix.helper }}"
-          tar -czf "dist/${{ matrix.archive }}" -C staging .
+          COPYFILE_DISABLE=1 tar -czf "dist/${{ matrix.archive }}" -C staging .
+          python3 apps/cli/scripts/verify-release-archive.py \
+            "dist/${{ matrix.archive }}" \
+            "${{ matrix.helper }}"
+
+      - name: Smoke native bundled helper
+        if: matrix.platform == 'linux-x64'
+        run: python3 apps/cli/scripts/smoke-release-binary.py staging/bin/wrapper
 
       - name: Upload archive artifact
         uses: actions/upload-artifact@v4
@@ -107,13 +176,14 @@ jobs:
   release:
     name: Create GitHub Release
     needs: [check-version, build-cli]
-    if: needs.check-version.outputs.version-changed == 'true'
+    if: needs.check-version.outputs.release-needed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     outputs:
       sha_darwin_arm64: ${{ steps.shas.outputs.sha_darwin_arm64 }}
       sha_darwin_x64: ${{ steps.shas.outputs.sha_darwin_x64 }}
+      sha_linux_arm64: ${{ steps.shas.outputs.sha_linux_arm64 }}
       sha_linux_x64: ${{ steps.shas.outputs.sha_linux_x64 }}
     env:
       VERSION: ${{ needs.check-version.outputs.new-version }}
@@ -131,19 +201,37 @@ jobs:
       - name: Compute checksums
         id: shas
         run: |
+          python3 apps/cli/scripts/verify-release-archive.py \
+            dist/wrapper-darwin-arm64.tar.gz \
+            wrapper-pty-helper-aarch64-macos-none
+          python3 apps/cli/scripts/verify-release-archive.py \
+            dist/wrapper-darwin-x86_64.tar.gz \
+            wrapper-pty-helper-x86_64-macos-none
+          python3 apps/cli/scripts/verify-release-archive.py \
+            dist/wrapper-linux-arm64.tar.gz \
+            wrapper-pty-helper-aarch64-linux-musl
+          python3 apps/cli/scripts/verify-release-archive.py \
+            dist/wrapper-linux-x86_64.tar.gz \
+            wrapper-pty-helper-x86_64-linux-musl
           {
             echo "sha_darwin_arm64=$(sha256sum dist/wrapper-darwin-arm64.tar.gz | cut -d' ' -f1)"
             echo "sha_darwin_x64=$(sha256sum dist/wrapper-darwin-x86_64.tar.gz | cut -d' ' -f1)"
+            echo "sha_linux_arm64=$(sha256sum dist/wrapper-linux-arm64.tar.gz | cut -d' ' -f1)"
             echo "sha_linux_x64=$(sha256sum dist/wrapper-linux-x86_64.tar.gz | cut -d' ' -f1)"
           } >> "$GITHUB_OUTPUT"
 
       - name: Write checksums file
         run: |
           cd dist
-          sha256sum wrapper-darwin-arm64.tar.gz wrapper-darwin-x86_64.tar.gz wrapper-linux-x86_64.tar.gz > checksums.txt
+          sha256sum \
+            wrapper-darwin-arm64.tar.gz \
+            wrapper-darwin-x86_64.tar.gz \
+            wrapper-linux-arm64.tar.gz \
+            wrapper-linux-x86_64.tar.gz > checksums.txt
+          sha256sum --check checksums.txt
           cat checksums.txt
 
-      - name: Create or update release
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
@@ -152,18 +240,21 @@ jobs:
           files: |
             dist/wrapper-darwin-arm64.tar.gz
             dist/wrapper-darwin-x86_64.tar.gz
+            dist/wrapper-linux-arm64.tar.gz
             dist/wrapper-linux-x86_64.tar.gz
             dist/checksums.txt
+          fail_on_unmatched_files: true
 
   update-homebrew:
     name: Update Homebrew Tap
     needs: [check-version, release]
-    if: needs.check-version.outputs.version-changed == 'true'
+    if: needs.check-version.outputs.release-needed == 'true'
     uses: ./.github/workflows/update-homebrew-tap.yml
     with:
       version: ${{ needs.check-version.outputs.new-version }}
       sha_darwin_arm64: ${{ needs.release.outputs.sha_darwin_arm64 }}
       sha_darwin_x64: ${{ needs.release.outputs.sha_darwin_x64 }}
+      sha_linux_arm64: ${{ needs.release.outputs.sha_linux_arm64 }}
       sha_linux_x64: ${{ needs.release.outputs.sha_linux_x64 }}
     secrets:
       HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}

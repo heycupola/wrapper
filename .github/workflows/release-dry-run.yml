@@ -5,7 +5,16 @@ on:
   pull_request:
     paths:
       - "apps/cli/**"
+      - ".github/workflows/release-cli.yml"
       - ".github/workflows/release-dry-run.yml"
+      - ".github/workflows/update-homebrew-tap.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-dry-run-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-cli:
@@ -30,6 +39,11 @@ jobs:
             target: bun-linux-x64
             archive: wrapper-linux-x86_64.tar.gz
             helper: wrapper-pty-helper-x86_64-linux-musl
+          - os: ubuntu-latest
+            platform: linux-arm64
+            target: bun-linux-arm64
+            archive: wrapper-linux-arm64.tar.gz
+            helper: wrapper-pty-helper-aarch64-linux-musl
 
     steps:
       - uses: actions/checkout@v5
@@ -47,7 +61,7 @@ jobs:
           mkdir -p dist
           bun build --compile --target="${{ matrix.target }}" apps/cli/index.ts --outfile dist/wrapper
 
-      - name: Smoke native release binary
+      - name: Verify native release version
         if: matrix.platform == 'linux-x64'
         run: |
           dist/wrapper --version
@@ -55,20 +69,69 @@ jobs:
 
       - name: Package archive
         run: |
+          test -x "apps/cli/bin/${{ matrix.helper }}"
           mkdir -p staging/bin
           cp dist/wrapper staging/bin/wrapper
           chmod +x staging/bin/wrapper
           cp "apps/cli/bin/${{ matrix.helper }}" "staging/bin/${{ matrix.helper }}"
-          tar -czf "dist/${{ matrix.archive }}" -C staging .
+          COPYFILE_DISABLE=1 tar -czf "dist/${{ matrix.archive }}" -C staging .
 
       - name: Verify archive layout
         run: |
-          tar -tzf "dist/${{ matrix.archive }}" | grep -E "(^|\./)bin/wrapper$"
-          tar -tzf "dist/${{ matrix.archive }}" | grep -E "(^|\./)bin/wrapper-pty-helper-"
+          python3 apps/cli/scripts/verify-release-archive.py \
+            "dist/${{ matrix.archive }}" \
+            "${{ matrix.helper }}"
+
+      - name: Smoke native bundled helper
+        if: matrix.platform == 'linux-x64'
+        run: python3 apps/cli/scripts/smoke-release-binary.py staging/bin/wrapper
 
       - name: Upload dry-run archive
         uses: actions/upload-artifact@v4
         with:
           name: dry-run-${{ matrix.platform }}
           path: dist/${{ matrix.archive }}
+          if-no-files-found: error
+
+  verify-release-set:
+    name: Verify release asset set
+    needs: build-cli
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download dry-run archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dry-run-*
+          path: dist
+          merge-multiple: true
+
+      - name: Verify archives and checksums
+        run: |
+          python3 apps/cli/scripts/verify-release-archive.py \
+            dist/wrapper-darwin-arm64.tar.gz \
+            wrapper-pty-helper-aarch64-macos-none
+          python3 apps/cli/scripts/verify-release-archive.py \
+            dist/wrapper-darwin-x86_64.tar.gz \
+            wrapper-pty-helper-x86_64-macos-none
+          python3 apps/cli/scripts/verify-release-archive.py \
+            dist/wrapper-linux-arm64.tar.gz \
+            wrapper-pty-helper-aarch64-linux-musl
+          python3 apps/cli/scripts/verify-release-archive.py \
+            dist/wrapper-linux-x86_64.tar.gz \
+            wrapper-pty-helper-x86_64-linux-musl
+          cd dist
+          sha256sum \
+            wrapper-darwin-arm64.tar.gz \
+            wrapper-darwin-x86_64.tar.gz \
+            wrapper-linux-arm64.tar.gz \
+            wrapper-linux-x86_64.tar.gz > checksums.txt
+          sha256sum --check checksums.txt
+
+      - name: Upload dry-run checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: dry-run-checksums
+          path: dist/checksums.txt
           if-no-files-found: error

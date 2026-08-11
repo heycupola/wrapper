@@ -12,7 +12,10 @@ import { runStatus } from "./commands/status";
 import { telemetryDisable, telemetryEnable, telemetryStatus } from "./commands/telemetry";
 import { runUninstall } from "./commands/uninstall";
 import type { SupportedShell } from "./shell/detect";
+import { configureBundledPtyHelper } from "./util/bundled-helper";
 import pkg from "./package.json";
+
+configureBundledPtyHelper();
 
 // Single source of truth: the published package version. Keeping this in sync
 // with package.json ensures `wrapper --version` matches release/Homebrew.
@@ -20,6 +23,9 @@ const VERSION = pkg.version;
 const SUPPORTED_SHELLS: SupportedShell[] = ["zsh", "bash", "fish"];
 
 const subcommand = process.argv[2];
+const isInformationalEntry = process.argv.some((arg) =>
+  ["--help", "-h", "--version", "-V"].includes(arg),
+);
 
 // `wrapper logs` reads the log file — calling `initLogger()` would truncate
 // it in dev mode (debug-log behaviour, see @repo/logger). Skip the boot for
@@ -37,6 +43,7 @@ if (!isLogsRead) {
 // user-initiated invocations. Skip it for `shell-host` (rc hook entry point)
 // and for `init` (dotfile evaluation), neither of which has a user watching.
 const isQuietEntry =
+  isInformationalEntry ||
   subcommand === "shell-host" ||
   subcommand === "init" ||
   subcommand === "logs" ||
