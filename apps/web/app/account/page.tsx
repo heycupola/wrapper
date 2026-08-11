@@ -1,0 +1,28 @@
+import type { Metadata } from "next";
+import { AuthShell } from "../../components/auth-shell";
+import { getToken, isAuthenticated } from "../../lib/auth-server";
+import { AccountClient } from "./account-client";
+
+export const metadata: Metadata = {
+  title: "Account settings",
+  description: "Manage your Wrapper account, billing, and current web session.",
+  robots: { index: false, follow: false },
+};
+
+export default async function AccountPage() {
+  const [authenticated, token] = await Promise.all([isAuthenticated(), getToken()]);
+  const appleEnabled = process.env.NEXT_PUBLIC_APPLE_AUTH_ENABLED === "true";
+
+  return (
+    <AuthShell
+      title="Account settings"
+      description="Manage your signed-in session, open secure billing controls, or permanently delete your account."
+    >
+      <AccountClient
+        authenticated={authenticated}
+        token={token ?? null}
+        appleEnabled={appleEnabled}
+      />
+    </AuthShell>
+  );
+}

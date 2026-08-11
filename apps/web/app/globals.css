@@ -117,6 +117,83 @@ a {
   letter-spacing: -0.03em;
 }
 
+.notFoundShell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.notFoundMain {
+  width: min(100%, 1180px);
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(320px, 0.78fr) minmax(460px, 1.22fr);
+  align-items: center;
+  gap: clamp(48px, 8vw, 120px);
+  margin: 0 auto;
+  padding: clamp(72px, 10vw, 132px) 24px;
+}
+
+.notFoundCopy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.notFoundCopy h1 {
+  max-width: 620px;
+  font-size: clamp(3.2rem, 6vw, 6.4rem);
+  font-weight: 650;
+  line-height: 0.94;
+  letter-spacing: -0.07em;
+  text-wrap: balance;
+}
+
+.notFoundCopy > p {
+  max-width: 520px;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.notFoundActions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.notFoundActions .primaryAction,
+.notFoundActions .textAction {
+  font-size: 0.9375rem;
+}
+
+.notFoundTerminal {
+  min-height: 360px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  background: var(--terminal-bg);
+  color: var(--terminal-text);
+  box-shadow: 14px 14px 0 var(--color-border);
+  transform: rotate(1deg);
+}
+
+.notFoundTerminalBody {
+  display: grid;
+  gap: 14px;
+  padding: clamp(32px, 5vw, 58px);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: clamp(0.78rem, 1.2vw, 1rem);
+  line-height: 1.7;
+}
+
+.notFoundTerminalError {
+  color: #ff9393;
+  font-weight: 750;
+}
+
 .horizontalPage {
   position: relative;
   min-height: 100svh;
@@ -1171,6 +1248,100 @@ a {
   color: #bf3030;
 }
 
+.accountSettings {
+  display: grid;
+  gap: 14px;
+}
+
+.accountPanel {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.accountPanelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.accountPanelLabel {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--color-text-muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.accountPanel h2 {
+  font-size: 1rem;
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+}
+
+.accountPanelCopy {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
+.accountPanelCopy code {
+  color: var(--color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.accountDetails {
+  display: grid;
+  border-top: 1px solid var(--color-border);
+}
+
+.accountDetails > div {
+  display: grid;
+  grid-template-columns: minmax(80px, 0.3fr) minmax(0, 0.7fr);
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.78rem;
+}
+
+.accountDetails dt {
+  color: var(--color-text-muted);
+}
+
+.accountDetails dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.accountDanger {
+  border-color: color-mix(in srgb, #bf3030 46%, var(--color-border));
+  background: color-mix(in srgb, #bf3030 4%, var(--color-surface));
+}
+
+.accountDeleteConfirmation {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.authHint a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.accountSettings > .authInfo {
+  margin-top: 0;
+}
+
 @media (prefers-color-scheme: dark) {
   .deviceStatus[data-status="approved"],
   .authSuccess {
@@ -1683,6 +1854,17 @@ a {
 
   .legalMain {
     padding: 40px 18px 56px;
+  }
+
+  .notFoundMain {
+    grid-template-columns: 1fr;
+    gap: 52px;
+    padding: 72px 20px;
+  }
+
+  .notFoundTerminal {
+    min-height: 300px;
+    transform: none;
   }
 }
 

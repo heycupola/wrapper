@@ -5,7 +5,7 @@ const groups = [
     title: "Product",
     links: [
       {
-        href: "https://github.com/heycupola/wrapper/tree/main/apps/docs",
+        href: "https://docs.wrapper.sh",
         label: "Docs",
         external: true,
       },
@@ -23,6 +23,7 @@ const groups = [
   {
     title: "Support",
     links: [
+      { href: "/account", label: "Account Settings" },
       { href: "/support", label: "Help and Contact" },
       { href: "/support#security", label: "Report a Vulnerability" },
     ],

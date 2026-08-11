@@ -32,11 +32,8 @@ export function HorizontalLanding() {
           <span className="brandName">wrapper</span>
         </Link>
         <nav className="hNav">
-          <a
-            href="https://github.com/heycupola/wrapper/tree/main/apps/docs"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <Link href="/account">Account</Link>
+          <a href="https://docs.wrapper.sh" target="_blank" rel="noopener noreferrer">
             Docs
           </a>
           <a href="https://github.com/heycupola/wrapper" target="_blank" rel="noopener noreferrer">
@@ -65,10 +62,7 @@ export function HorizontalLanding() {
                 Install Wrapper
                 <span aria-hidden="true">→</span>
               </a>
-              <a
-                className="textAction"
-                href="https://github.com/heycupola/wrapper/blob/main/apps/docs/security.mdx"
-              >
+              <a className="textAction" href="https://docs.wrapper.sh/configuration/security">
                 Read the security model
               </a>
             </div>
