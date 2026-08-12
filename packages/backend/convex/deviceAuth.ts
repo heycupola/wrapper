@@ -1,12 +1,27 @@
+import type { FunctionReference } from "convex/server";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
-import { mutation } from "./_generated/server";
+import { internalMutation, mutation } from "./_generated/server";
 import { protectedMutation } from "./lib/middleware";
 import { enforceRateLimit } from "./lib/rateLimit";
 
 const siteUrl =
   process.env.SITE_URL ||
-  (process.env.ENVIRONMENT === "development" ? "http://localhost:3000" : "https://wrapper.sh");
+  (process.env.ENVIRONMENT === "development" ? "http://localhost:3000" : "https://www.wrapper.sh");
+
+const cleanupExpiredDeviceCodesRef = (
+  components.betterAuth as unknown as {
+    deviceAuth: {
+      cleanupExpiredDeviceCodes: FunctionReference<
+        "mutation",
+        "internal",
+        Record<string, never>,
+        { deleted: number; hasMore: boolean },
+        "betterAuth"
+      >;
+    };
+  }
+).deviceAuth.cleanupExpiredDeviceCodes;
 
 export const requestDeviceCode = mutation({
   args: {
@@ -55,17 +70,11 @@ export const pollDeviceToken = mutation({
       windowMs: 60_000,
     });
 
-    let result: {
-      expires_in: number;
-      session_token: string;
-      token_type: string;
-    };
-    try {
-      result = await ctx.runMutation(components.betterAuth.deviceAuth.pollDeviceToken, {
-        device_code: args.device_code,
-      });
-    } catch (error: unknown) {
-      throw new Error(normalizeDeviceAuthError(error), { cause: error });
+    const result = await ctx.runMutation(components.betterAuth.deviceAuth.pollDeviceToken, {
+      device_code: args.device_code,
+    });
+    if ("error" in result) {
+      return { error: result.error };
     }
 
     return {
@@ -118,17 +127,9 @@ export const denyDeviceCode = protectedMutation({
   },
 });
 
-function normalizeDeviceAuthError(error: unknown): string {
-  const raw = error instanceof Error ? error.message : String(error);
-  const known = [
-    "authorization_pending",
-    "slow_down",
-    "access_denied",
-    "expired_token",
-    "invalid_request",
-  ];
-  for (const code of known) {
-    if (raw.includes(code)) return code;
-  }
-  return raw;
-}
+export const cleanupExpiredDeviceCodes = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.runMutation(cleanupExpiredDeviceCodesRef, {});
+  },
+});

@@ -33,6 +33,7 @@
     "format:check": "turbo run format:check",
     "check-types": "turbo run check-types",
     "audit": "bun audit --ignore GHSA-2p57-rm9w-gvfp",
+    "apple:client-secret": "bun run tools/generate-apple-client-secret.ts",
     "prepare": "lefthook install"
   },
   "devDependencies": {

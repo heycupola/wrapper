@@ -1490,6 +1490,38 @@ a {
   background-color: color-mix(in srgb, var(--color-text) 4%, transparent);
 }
 
+.appleSignInButton {
+  min-height: 44px;
+  border-color: #000;
+  background: #000;
+  color: #fff;
+  font-weight: 600;
+}
+
+.appleSignInButton:hover {
+  border-color: #1f1f1f;
+  background: #1f1f1f;
+}
+
+.social-btn.appleSignInButton svg {
+  width: 15px;
+  height: 20px;
+  fill: currentColor;
+}
+
+@media (prefers-color-scheme: dark) {
+  .appleSignInButton {
+    border-color: #fff;
+    background: #fff;
+    color: #000;
+  }
+
+  .appleSignInButton:hover {
+    border-color: #e6e6e6;
+    background: #e6e6e6;
+  }
+}
+
 .social-btn-primary {
   border-color: var(--color-accent-pop);
   background: var(--color-accent-pop);

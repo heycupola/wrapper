@@ -7,11 +7,15 @@ import authConfig from "./auth.config";
 import { bearer, deviceAuthorization, lastLoginMethod } from "better-auth/plugins";
 import { type FunctionReference, makeFunctionReference } from "convex/server";
 import authSchema from "./betterAuth/schema";
+import { deleteAuthRecordsForUser } from "./lib/accountDeletion.ts";
+import { revokeAppleCredential } from "./lib/appleRevocation.ts";
+import { createLogger } from "./lib/logger.ts";
 
 const isDevEnvironment = process.env.ENVIRONMENT === "development";
+const log = createLogger("auth");
 
 const siteUrl =
-  process.env.SITE_URL || (isDevEnvironment ? "http://localhost:3000" : "https://wrapper.sh");
+  process.env.SITE_URL || (isDevEnvironment ? "http://localhost:3000" : "https://www.wrapper.sh");
 
 const DEV_AUTH_SECRET = "wrapper-local-dev-secret-change-me";
 const deleteOwnedDataRef = makeFunctionReference<
@@ -19,11 +23,11 @@ const deleteOwnedDataRef = makeFunctionReference<
   { userId: string },
   { sessions: number; onboardingRows: number; relayTickets: number }
 >("account:deleteOwnedData");
-const deleteBillingCustomerRef = makeFunctionReference<
-  "action",
-  { userId: string; email?: string; name?: string },
-  { succeeded: boolean }
->("account:deleteBillingCustomer");
+const queueBillingCustomerDeletionRef = makeFunctionReference<
+  "mutation",
+  { userId: string },
+  { queued: boolean }
+>("account:queueBillingCustomerDeletion");
 const authOnDeleteRef = makeFunctionReference<"mutation", { doc: unknown; model: string }, null>(
   "account:onDelete",
 ) as unknown as FunctionReference<"mutation", "internal", { doc: unknown; model: string }, null>;
@@ -64,6 +68,22 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
     user: {
       onDelete: async (ctx, user) => {
         await ctx.runMutation(deleteOwnedDataRef, { userId: user._id });
+        try {
+          const billingCleanup = await ctx.runMutation(queueBillingCustomerDeletionRef, {
+            userId: user._id,
+          });
+          if (!billingCleanup.queued) {
+            log.error(
+              "Billing customer deletion was not queued; local account deletion will continue",
+              { errorCode: "billing_cleanup_queue_failed" },
+            );
+          }
+        } catch {
+          log.error(
+            "Billing customer deletion could not be queued; local account deletion will continue",
+            { errorCode: "billing_cleanup_queue_failed" },
+          );
+        }
       },
     },
   },
@@ -101,47 +121,52 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     secret: resolveBetterAuthSecret(),
     database: authComponent.adapter(ctx),
     socialProviders,
+    trustedOrigins: socialProviders.apple ? ["https://appleid.apple.com"] : [],
     user: {
       deleteUser: {
         enabled: true,
         beforeDelete: async (user) => {
-          if (!("runAction" in ctx) || !("runMutation" in ctx)) {
+          if (!("runMutation" in ctx) || !("runQuery" in ctx)) {
             throw new Error("Account deletion requires an action context");
           }
-          await ctx.runAction(deleteBillingCustomerRef, {
-            userId: user.id,
+          const appleAccount = (await ctx.runQuery(components.betterAuth.adapter.findOne, {
+            model: "account",
+            where: [
+              { field: "userId", operator: "eq", value: user.id },
+              { field: "providerId", operator: "eq", value: "apple" },
+            ],
+          })) as {
+            accessToken?: string | null;
+            refreshToken?: string | null;
+          } | null;
+          await deleteAuthRecordsForUser({
+            deletePage: async (request, paginationOpts) =>
+              await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
+                input: request,
+                paginationOpts,
+              }),
             email: user.email,
-            name: user.name,
+            userId: user.id,
           });
-          const paginationOpts = { numItems: 100, cursor: null };
-          await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
-            input: {
-              model: "account",
-              where: [{ field: "userId", operator: "eq", value: user.id }],
-            },
-            paginationOpts,
-          });
-          await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
-            input: {
-              model: "deviceCode",
-              where: [{ field: "userId", operator: "eq", value: user.id }],
-            },
-            paginationOpts,
-          });
-          await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
-            input: {
-              model: "verification",
-              where: [{ field: "value", operator: "eq", value: user.id }],
-            },
-            paginationOpts,
-          });
-          await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
-            input: {
-              model: "verification",
-              where: [{ field: "identifier", operator: "eq", value: user.email }],
-            },
-            paginationOpts,
-          });
+          if (appleAccount) {
+            try {
+              const result = await revokeAppleCredential({
+                accessToken: appleAccount.accessToken,
+                clientId: process.env.APPLE_CLIENT_ID ?? "",
+                clientSecret: process.env.APPLE_CLIENT_SECRET ?? "",
+                refreshToken: appleAccount.refreshToken,
+              });
+              if (result.status === "missing_token") {
+                log.warn(
+                  "[auth] Apple account has no revocable token; continuing local account deletion",
+                );
+              }
+            } catch {
+              log.error("Apple token revocation failed; local deletion will continue", {
+                errorCode: "apple_revocation_failed",
+              });
+            }
+          }
         },
       },
     },

@@ -4,6 +4,7 @@ import { convexTest } from "convex-test";
 import { makeFunctionReference } from "convex/server";
 import { describe, expect, test } from "vitest";
 import schema from "../convex/schema";
+import { rateLimitKeys } from "../convex/lib/rateLimit";
 
 const modules = import.meta.glob("../convex/**/*.ts");
 const deleteOwnedDataRef = makeFunctionReference<
@@ -48,8 +49,58 @@ describe("account deletion cleanup", () => {
         createdAt: now,
         expiresAt: now + 60_000,
       });
+      await ctx.db.insert("relayTicket", {
+        tokenHash: "owned-session-viewer-ticket",
+        sessionId: "DELETESESSION",
+        role: "viewer",
+        userId: "keep-user",
+        createdAt: now,
+        expiresAt: now + 60_000,
+      });
+      await ctx.db.insert("hostSession", {
+        sessionId: "KEEPSESSION",
+        ownerUserId: "keep-user",
+        shell: "/bin/zsh",
+        cwd: "/public",
+        shared: true,
+        shareCodeHash: "keep-hash",
+        relayState: "online",
+        status: "active",
+        createdAt: now,
+        updatedAt: now,
+        lastHeartbeatAt: now,
+      });
+      await ctx.db.insert("relayTicket", {
+        tokenHash: "deleting-user-viewer-ticket",
+        sessionId: "KEEPSESSION",
+        role: "viewer",
+        userId: "delete-user",
+        createdAt: now,
+        expiresAt: now + 60_000,
+      });
+      await ctx.db.insert("relayTicket", {
+        tokenHash: "keep-ticket",
+        sessionId: "KEEPSESSION",
+        role: "host",
+        userId: "keep-user",
+        createdAt: now,
+        expiresAt: now + 60_000,
+      });
+      const userRateLimitKey = rateLimitKeys.issueViewerTicketForUser("delete-user");
       await ctx.db.insert("rateLimit", {
-        key: "issueViewerTicket:user:delete-user",
+        key: userRateLimitKey,
+        count: 1,
+        resetAt: now + 60_000,
+      });
+      // Defensive cleanup removes duplicate exact-key rows without scanning the
+      // table, while deliberately preserving keys that merely share a prefix.
+      await ctx.db.insert("rateLimit", {
+        key: userRateLimitKey,
+        count: 1,
+        resetAt: now + 60_000,
+      });
+      await ctx.db.insert("rateLimit", {
+        key: rateLimitKeys.issueViewerTicketForUser("delete-user-extra"),
         count: 1,
         resetAt: now + 60_000,
       });
@@ -64,8 +115,22 @@ describe("account deletion cleanup", () => {
       });
     });
 
-    await t.mutation(deleteOwnedDataRef, {
+    const firstDeletion = await t.mutation(deleteOwnedDataRef, {
       userId: "delete-user",
+    });
+    const repeatedDeletion = await t.mutation(deleteOwnedDataRef, {
+      userId: "delete-user",
+    });
+
+    expect(firstDeletion).toEqual({
+      onboardingRows: 1,
+      relayTickets: 3,
+      sessions: 1,
+    });
+    expect(repeatedDeletion).toEqual({
+      onboardingRows: 0,
+      relayTickets: 0,
+      sessions: 0,
     });
 
     await t.run(async (ctx) => {
@@ -88,8 +153,34 @@ describe("account deletion cleanup", () => {
           .collect(),
       ).toEqual([]);
       expect(
-        (await ctx.db.query("rateLimit").collect()).some((row) => row.key.includes("delete-user")),
-      ).toBe(false);
+        await ctx.db
+          .query("rateLimit")
+          .withIndex("by_key", (query) =>
+            query.eq("key", rateLimitKeys.issueViewerTicketForUser("delete-user")),
+          )
+          .collect(),
+      ).toEqual([]);
+      expect(
+        await ctx.db
+          .query("rateLimit")
+          .withIndex("by_key", (query) =>
+            query.eq("key", rateLimitKeys.issueViewerTicketForUser("delete-user-extra")),
+          )
+          .first(),
+      ).not.toBeNull();
+      expect(
+        await ctx.db
+          .query("hostSession")
+          .withIndex("by_owner", (query) => query.eq("ownerUserId", "keep-user"))
+          .first(),
+      ).not.toBeNull();
+      const keptSessionTickets = await ctx.db
+        .query("relayTicket")
+        .withIndex("by_session_role", (query) =>
+          query.eq("sessionId", "KEEPSESSION").eq("role", "host"),
+        )
+        .collect();
+      expect(keptSessionTickets.map((ticket) => ticket.tokenHash)).toEqual(["keep-ticket"]);
       expect(
         await ctx.db
           .query("onboarding")
