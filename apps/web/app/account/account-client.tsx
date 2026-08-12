@@ -4,26 +4,17 @@ import { useMemo, useState } from "react";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import Link from "next/link";
+import { AppleSignInButton } from "../../components/apple-sign-in-button";
 import { authClient } from "../../lib/auth-client";
+import { getSafeBillingPortalUrl } from "../../lib/billing-url";
 
 type PendingAction = "billing" | "delete" | "sign-in" | "sign-out" | null;
-
-type BillingPortalResponse = {
-  data: {
-    url: string;
-    customer_id?: string;
-  } | null;
-  error: {
-    message?: string;
-  } | null;
-  statusCode?: number;
-};
 
 const billingPortalRef = makeFunctionReference<
   "action",
   { returnUrl?: string },
-  BillingPortalResponse
->("autumn:billingPortal");
+  { portalUrl: string }
+>("billing:createBillingPortal");
 
 export function AccountClient({
   authenticated,
@@ -78,18 +69,11 @@ export function AccountClient({
     try {
       const returnUrl = new URL("/account", window.location.origin).toString();
       const result = await convexClient.action(billingPortalRef, { returnUrl });
-      if (result.error || !result.data?.url) {
-        throw new Error(
-          result.error?.message ??
-            "No billing portal is available for this account. Free accounts may not have one.",
-        );
-      }
-
-      const portalUrl = new URL(result.data.url);
-      if (portalUrl.protocol !== "https:" || portalUrl.hostname !== "billing.stripe.com") {
+      const portalUrl = getSafeBillingPortalUrl(result.portalUrl);
+      if (!portalUrl) {
         throw new Error("The billing provider returned an unexpected portal address.");
       }
-      window.location.assign(portalUrl.toString());
+      window.location.assign(portalUrl);
     } catch (caught) {
       setError(
         normalizeError(
@@ -153,14 +137,10 @@ export function AccountClient({
         </p>
         <div className="authActions">
           {appleEnabled ? (
-            <button
-              type="button"
-              className="social-btn"
+            <AppleSignInButton
               disabled={pending !== null}
               onClick={() => void signInWith("apple")}
-            >
-              Continue with Apple
-            </button>
+            />
           ) : null}
           <button
             type="button"
