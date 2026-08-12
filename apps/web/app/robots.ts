@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: ["/", "/privacy-policy", "/terms-of-service", "/support"],
       disallow: ["/account", "/onboarding", "/oauth/authorize"],
     },
-    sitemap: "https://wrapper.sh/sitemap.xml",
+    sitemap: "https://www.wrapper.sh/sitemap.xml",
   };
 }

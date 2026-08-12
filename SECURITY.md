@@ -23,6 +23,15 @@ Do not access another user's terminal, retain terminal data, or disrupt
 production while investigating. We will acknowledge valid reports as soon as
 practical and coordinate disclosure after affected users are protected.
 
+## Operational security
+
+Suspected credential exposure, unauthorized relay access, or production-data
+loss is a security incident even when no software vulnerability is confirmed.
+Report it through the private channels above. Operators follow the incident,
+backup/restore, and secret-rotation procedures in
+[`OPERATIONS.md`](./OPERATIONS.md); production backups and secret values must
+never be attached to a public GitHub issue.
+
 ## Security boundaries
 
 - A session is local and owner-only until the host explicitly shares it.

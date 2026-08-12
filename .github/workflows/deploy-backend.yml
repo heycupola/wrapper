@@ -16,6 +16,9 @@ on:
       - ".github/workflows/deploy-backend.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-backend-${{ github.ref }}
   cancel-in-progress: false
@@ -24,6 +27,7 @@ jobs:
   deploy:
     name: Deploy Convex
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'dev' }}
     steps:
       - name: Checkout

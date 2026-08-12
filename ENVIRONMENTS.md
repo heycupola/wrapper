@@ -57,14 +57,18 @@ must set `NODE_ENV=development` and explicit dev endpoints.
   environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'dev' }}
   ```
 
-| Workflow                               | Trigger                                    | Deploys                                                                     |
-| -------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------- |
-| `.github/workflows/deploy-backend.yml` | push `dev`/`main` on `packages/backend/**` | Convex (`convex deploy`)                                                    |
-| `.github/workflows/deploy-relay.yml`   | push `dev`/`main` on `apps/relay/**`       | Fly app (`flyctl deploy --app`)                                             |
-| `.github/workflows/ci.yml`             | every PR/push                              | audit, lint, format, types, tests, web/docs builds, relay smoke (no deploy) |
+| Workflow                                 | Trigger                                    | Purpose                                                                     |
+| ---------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------- |
+| `.github/workflows/deploy-backend.yml`   | push `dev`/`main` on `packages/backend/**` | Convex (`convex deploy`)                                                    |
+| `.github/workflows/deploy-relay.yml`     | push `dev`/`main` on `apps/relay/**`       | Fly app (`flyctl deploy --app`)                                             |
+| `.github/workflows/ci.yml`               | every PR/push                              | audit, lint, format, types, tests, web/docs builds, relay smoke (no deploy) |
+| `.github/workflows/synthetic-health.yml` | schedule/manual                            | canonical web/legal/docs and dev/prod relay health                          |
 
 Web deployment is **not** in GitHub Actions. CI still builds the web app, while
 Vercel deploys it directly from Git.
+
+Operational ownership, SLO alerts, backup/restore, secret rotation, and the
+recommended branch protection settings are in [`OPERATIONS.md`](./OPERATIONS.md).
 
 ## Env var matrix
 
@@ -73,7 +77,7 @@ Vercel deploys it directly from Git.
 | Key                                         | dev (sleek-echidna)      | prod (confident-fox)        |
 | ------------------------------------------- | ------------------------ | --------------------------- |
 | `ENVIRONMENT`                               | `development`            | `production`                |
-| `SITE_URL`                                  | Vercel dev/preview URL   | `https://wrapper.sh`        |
+| `SITE_URL`                                  | Vercel dev/preview URL   | `https://www.wrapper.sh`    |
 | `BETTER_AUTH_SECRET`                        | dev secret               | prod secret                 |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | dev OAuth app            | prod OAuth app              |
 | `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET`   | dev Services ID + secret | prod Services ID + secret   |
@@ -124,7 +128,7 @@ build time):
    # dev (against sleek-echidna, e.g. `bunx convex env set --preview-name` or via dashboard)
    bunx convex env set SITE_URL https://<vercel-dev-url>
    # prod (against confident-fox)
-   bunx convex env set SITE_URL https://wrapper.sh
+   bunx convex env set SITE_URL https://www.wrapper.sh
    ```
 
 3. **Fly (relay)**: two apps plus secrets:
@@ -141,11 +145,41 @@ build time):
    their smoke checks and no configuration or traffic references the old app.
 
 4. **GitHub Environments**: create `dev` and `production`, then fill the table above.
+   Restrict `dev` deployments to the `dev` branch and production deployments to
+   `main`; apply the repository ruleset specified in
+   [`OPERATIONS.md`](./OPERATIONS.md#github-branch-protection-assessment).
 
-5. **OAuth apps**: configure the dev GitHub OAuth app (callback
-   `https://sleek-echidna-539.convex.site/api/auth/callback/github`) and prod
-   (`https://confident-fox-458.convex.site/api/auth/callback/github`). Put client
-   id/secret in the matching Convex deployment env.
+5. **OAuth apps**: configure each provider callback against the matching web
+   `SITE_URL`. Production callbacks are:
+   - `https://www.wrapper.sh/api/auth/callback/github`
+   - `https://www.wrapper.sh/api/auth/callback/google`
+   - `https://www.wrapper.sh/api/auth/callback/apple`
+
+   Put each provider client id/secret in the matching Convex deployment env.
+   For Apple, create a Sign in with Apple-enabled primary App ID
+   (`sh.wrapper.mobile`), associate a Services ID with `www.wrapper.sh`, register
+   the exact Apple return URL above, and generate `APPLE_CLIENT_SECRET` as
+   Apple's signed client-secret JWT. Rotate that JWT before its configured
+   expiration. Never commit the `.p8` key or paste it into chat.
+
+   Generate and pipe the Apple client secret without placing it in shell
+   history:
+
+   ```bash
+   export APPLE_TEAM_ID="<10-character-team-id>"
+   export APPLE_CLIENT_ID="<services-id>"
+   export APPLE_KEY_ID="<sign-in-with-apple-key-id>"
+   export APPLE_PRIVATE_KEY_PATH="$HOME/secure/AuthKey_<key-id>.p8"
+
+   bun run apple:client-secret |
+     (cd packages/backend && bunx convex env set --prod APPLE_CLIENT_SECRET)
+   cd packages/backend
+   bunx convex env set --prod APPLE_CLIENT_ID "$APPLE_CLIENT_ID"
+   ```
+
+   Repeat against the intended development deployment before enabling the
+   Vercel Preview Apple flag. The generator caps client-secret lifetime at 180
+   days; schedule rotation before expiry.
 
 6. **Autumn**: push config to both (not automatic, the key decides the env):
 
