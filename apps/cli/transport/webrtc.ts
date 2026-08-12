@@ -5,6 +5,7 @@ import { createLogger } from "@repo/logger";
 import type { SignalMessage } from "@repo/protocol";
 import { RTCPeerConnection } from "werift";
 import type { Transport, TransportHandlers } from "./transport";
+import { DataChannelTransport, decodeDataChannelPayload } from "./webrtc-helpers";
 
 const log = createLogger("webrtc");
 
@@ -41,42 +42,6 @@ export interface Negotiation {
   acceptSignal: (kind: SignalKind, data: string) => void;
   /** Abort negotiation and tear down the peer connection. */
   cancel: () => void;
-}
-
-/** A `Transport` backed by a werift RTCDataChannel. */
-class DataChannelTransport implements Transport {
-  readonly describe = "webrtc";
-  private open: boolean;
-
-  constructor(
-    private readonly channel: { readyState: string; send: (d: string) => void; onclose?: unknown },
-    private readonly closePeer: () => void,
-    initiallyOpen: boolean,
-  ) {
-    this.open = initiallyOpen;
-  }
-
-  markOpen(v: boolean): void {
-    this.open = v;
-  }
-
-  get isOpen(): boolean {
-    return this.open;
-  }
-
-  send(frame: string): void {
-    if (!this.open) return;
-    try {
-      this.channel.send(frame);
-    } catch {
-      // close handler reports the disconnect
-    }
-  }
-
-  close(): void {
-    this.open = false;
-    this.closePeer();
-  }
 }
 
 /**
@@ -183,17 +148,8 @@ export function negotiateWebRtc(opts: NegotiateOptions): Negotiation {
     };
     channel.onmessage = (ev) => {
       if (stopped) return;
-      const d = ev.data;
-      if (typeof d === "string") {
-        opts.handlers.onMessage?.(d);
-        return;
-      }
-      if (d instanceof ArrayBuffer) {
-        opts.handlers.onMessage?.(d);
-        return;
-      }
-      // Buffer / Uint8Array (werift): decode to text — our frames are JSON.
-      opts.handlers.onMessage?.(new TextDecoder().decode(d as Uint8Array));
+      const payload = decodeDataChannelPayload(ev.data);
+      if (payload !== null) opts.handlers.onMessage?.(payload);
     };
     if (channel.readyState === "open") channel.onopen?.();
   };
