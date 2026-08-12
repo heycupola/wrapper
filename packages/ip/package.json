@@ -13,7 +13,7 @@
     "format:check": "oxfmt --check ."
   },
   "dependencies": {
-    "ipaddr.js": "^2.2.0"
+    "ipaddr.js": "^2.5.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
