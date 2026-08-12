@@ -23,6 +23,24 @@ Do not access another user's terminal, retain terminal data, or disrupt
 production while investigating. We will acknowledge valid reports as soon as
 practical and coordinate disclosure after affected users are protected.
 
+## Operational security
+
+Suspected credential exposure, unauthorized relay access, or production-data
+loss is a security incident even when no software vulnerability is confirmed.
+Report it through the private channels above. Operators follow the incident,
+backup/restore, and secret-rotation procedures in
+[`OPERATIONS.md`](./OPERATIONS.md); production backups and secret values must
+never be attached to a public GitHub issue.
+
+## Audited dependency exceptions
+
+`GHSA-jmr9-qjv8-65gv` has no fixed upstream `extract-zip` release. Wrapper only
+receives it through Mint's development-time Puppeteer toolchain and applies
+[`patches/extract-zip@2.0.1.patch`](./patches/extract-zip@2.0.1.patch) to reject
+symlink targets outside the extraction root. CI regression-tests that patch
+before allowing the advisory-specific audit exception. Remove the exception
+when Mint no longer resolves the affected package.
+
 ## Security boundaries
 
 - A session is local and owner-only until the host explicitly shares it.

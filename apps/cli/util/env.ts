@@ -59,7 +59,8 @@ export const env = {
     (IS_DEV ? "ws://localhost:8080" : "wss://wrapper-relay-prod.fly.dev"),
   /** Auth callback origin used by the Better Auth device login flow. */
   authOrigin:
-    process.env.WRAPPER_AUTH_ORIGIN ?? (IS_DEV ? "http://localhost:3000" : "https://wrapper.sh"),
+    process.env.WRAPPER_AUTH_ORIGIN ??
+    (IS_DEV ? "http://localhost:3000" : "https://www.wrapper.sh"),
   /** CLI HUD toggle: on by default, set WRAPPER_HUD=off to disable. */
   hudEnabled: HUD_ENABLED,
   /**

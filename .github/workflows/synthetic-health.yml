@@ -1,0 +1,135 @@
+name: Synthetic health
+
+on:
+  schedule:
+    # Offset from the top of the hour to reduce GitHub scheduler contention.
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: synthetic-health
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: Public endpoint probes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check canonical pages and relay health
+        shell: bash
+        env:
+          TARGETS: |
+            html|Canonical web|https://www.wrapper.sh/|www.wrapper.sh
+            html|Privacy policy|https://www.wrapper.sh/privacy-policy|www.wrapper.sh
+            html|Terms of service|https://www.wrapper.sh/terms-of-service|www.wrapper.sh
+            html|Public docs|https://docs.wrapper.sh/|docs.wrapper.sh
+            relay|Development relay|https://wrapper-relay-dev.fly.dev/healthz|wrapper-relay-dev.fly.dev
+            relay|Production relay|https://wrapper-relay-prod.fly.dev/healthz|wrapper-relay-prod.fly.dev
+        run: |
+          set -uo pipefail
+
+          failures=0
+          probe_index=0
+          workdir="$(mktemp -d)"
+          trap 'rm -rf "$workdir"' EXIT
+
+          {
+            echo "### Synthetic health results"
+            echo
+            echo "| Target | Result | HTTP | Duration | Final URL |"
+            echo "| --- | --- | ---: | ---: | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          while IFS="|" read -r kind name url expected_host; do
+            if [[ -z "$kind" ]]; then
+              continue
+            fi
+
+            probe_index=$((probe_index + 1))
+            body="${workdir}/body-${probe_index}"
+            curl_error="${workdir}/curl-${probe_index}.log"
+
+            metrics="$(
+              curl \
+                --silent \
+                --show-error \
+                --location \
+                --max-redirs 3 \
+                --max-filesize 5242880 \
+                --connect-timeout 5 \
+                --max-time 15 \
+                --retry 1 \
+                --retry-all-errors \
+                --retry-delay 1 \
+                --retry-max-time 31 \
+                --user-agent "wrapper-synthetic-health/1.0" \
+                --output "$body" \
+                --write-out "%{http_code}|%{url_effective}|%{time_total}|%{content_type}" \
+                "$url" 2> "$curl_error"
+            )"
+            curl_status=$?
+
+            if ((curl_status != 0)); then
+              echo "::error title=${name} probe failed::curl exited ${curl_status}; see the step log"
+              printf "FAIL %s (%s): " "$name" "$url"
+              tr "\n" " " < "$curl_error"
+              echo
+              printf "| %s | FAIL (curl %s) | - | - | %s |\n" \
+                "$name" "$curl_status" "$url" >> "$GITHUB_STEP_SUMMARY"
+              failures=$((failures + 1))
+              continue
+            fi
+
+            IFS="|" read -r http_code final_url duration content_type <<< "$metrics"
+            failure_reason=""
+
+            if [[ "$http_code" != "200" ]]; then
+              failure_reason="expected HTTP 200, received ${http_code}"
+            elif [[ "$final_url" != "https://${expected_host}" && "$final_url" != "https://${expected_host}/"* ]]; then
+              failure_reason="redirected outside the expected HTTPS host ${expected_host}: ${final_url}"
+            elif [[ ! -s "$body" ]]; then
+              failure_reason="response body was empty"
+            elif [[ "$kind" == "html" ]]; then
+              if [[ "$content_type" != text/html* ]]; then
+                failure_reason="expected text/html, received ${content_type:-no content type}"
+              elif ! grep -qi "<html" "$body"; then
+                failure_reason="response did not contain an HTML document"
+              fi
+            elif ! python3 - "$body" <<'PY'
+          import json
+          import pathlib
+          import sys
+
+          try:
+              payload = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+          except (OSError, UnicodeError, json.JSONDecodeError) as error:
+              raise SystemExit(f"invalid relay health JSON: {error}")
+
+          if payload.get("ok") is not True or payload.get("service") != "relay":
+              raise SystemExit(f"unexpected relay health payload: {payload!r}")
+          PY
+            then
+              failure_reason="relay health payload was invalid; see the parser error above"
+            fi
+
+            if [[ -n "$failure_reason" ]]; then
+              echo "::error title=${name} probe failed::${failure_reason} (${url})"
+              printf "FAIL %s (%s): %s\n" "$name" "$url" "$failure_reason"
+              printf "| %s | FAIL | %s | %ss | %s |\n" \
+                "$name" "$http_code" "$duration" "$final_url" >> "$GITHUB_STEP_SUMMARY"
+              failures=$((failures + 1))
+            else
+              printf "PASS %s: HTTP %s in %ss (%s)\n" \
+                "$name" "$http_code" "$duration" "$final_url"
+              printf "| %s | PASS | %s | %ss | %s |\n" \
+                "$name" "$http_code" "$duration" "$final_url" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done <<< "$TARGETS"
+
+          if ((failures > 0)); then
+            echo "::error title=Synthetic health failed::${failures} endpoint probe(s) failed"
+            exit 1
+          fi

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
+import { getSafeCheckoutUrl } from "../lib/billing-url";
 
 const createProCheckoutRef = makeFunctionReference<
   "action",
@@ -35,11 +36,12 @@ export function UpgradePro({ token }: { token: string }) {
           ? `${window.location.origin}/onboarding?upgraded=1`
           : undefined;
       const result = await client.action(createProCheckoutRef, { successUrl });
-      if (result.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
+      const checkoutUrl = getSafeCheckoutUrl(result.checkoutUrl);
+      if (checkoutUrl) {
+        window.location.assign(checkoutUrl);
         return;
       }
-      setError("Could not start checkout");
+      setError("The billing provider returned an unexpected checkout address.");
     } catch {
       setError("Checkout could not be started. Please try again.");
     } finally {

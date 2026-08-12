@@ -5,6 +5,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { AppleSignInButton } from "../../../components/apple-sign-in-button";
 import { authClient } from "../../../lib/auth-client";
 
 type GetDeviceCodeInfoArgs = {
@@ -173,11 +174,7 @@ export function DeviceAuthorizeClient({
             Sign in first to approve or deny this CLI device authorization request.
           </p>
           <div className="authActions">
-            {appleEnabled ? (
-              <button type="button" className="social-btn" onClick={() => void signInWith("apple")}>
-                Continue with Apple
-              </button>
-            ) : null}
+            {appleEnabled ? <AppleSignInButton onClick={() => void signInWith("apple")} /> : null}
             <button type="button" className="social-btn" onClick={() => void signInWith("github")}>
               Continue with GitHub
             </button>

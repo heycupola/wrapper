@@ -77,8 +77,10 @@ The smoke script checks:
 
 - Deploy relay only from `apps/relay/fly.toml`.
 - Keep `RELAY_CONVEX_URL` secret configured in Fly.
+- Validate the config with `fly config validate --config apps/relay/fly.toml`.
 - Verify app health after deploy:
   - `fly status --app <app-name>`
+  - `fly checks list --app <app-name>`
   - `fly machine list --app <app-name>`
   - `RELAY_URL=\"https://<app-name>.fly.dev\" bun run --cwd apps/relay smoke`
 
@@ -87,8 +89,12 @@ The smoke script checks:
 `Pending Sync` usually means machine state is converging toward the latest release.
 `min_machines_running = 1` keeps one machine always warm (so WebSocket upgrades
 never hit a cold start, which would drop live shares); `auto_stop_machines = \"stop\"`
-still stops any extra machines. `primary_region = \"otp\"` (Bucharest) is the closest
-Fly region to Turkey. Adjust as the user base spreads.
+still stops any extra machines. The service-level `/healthz` check controls routing but
+does not restart an unhealthy machine. `primary_region = \"otp\"` (Bucharest) is the
+closest Fly region to Turkey. Adjust as the user base spreads.
+
+The deploy intentionally uses `--ha=false`. Do not add a second Machine without explicit
+budget approval because Fly HA can incur additional cost.
 
 If you see `Pending Sync`, run:
 

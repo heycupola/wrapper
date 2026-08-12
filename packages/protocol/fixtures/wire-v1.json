@@ -1,0 +1,90 @@
+{
+  "fixtureFormatVersion": 1,
+  "protocolVersion": 1,
+  "valid": [
+    {
+      "name": "legacy-attach-without-version",
+      "direction": "client-to-host",
+      "expectedType": "attach",
+      "wire": "{\"type\":\"attach\",\"sessionId\":\"ABCDEFGHJKLM\"}"
+    },
+    {
+      "name": "detach",
+      "direction": "client-to-host",
+      "expectedType": "detach",
+      "wire": "{\"protocolVersion\":1,\"type\":\"detach\",\"sessionId\":\"ABCDEFGHJKLM\"}"
+    },
+    {
+      "name": "terminal-input",
+      "direction": "client-to-host",
+      "expectedType": "input",
+      "wire": "{\"protocolVersion\":1,\"type\":\"input\",\"sessionId\":\"ABCDEFGHJKLM\",\"data\":\"echo hello\\n\"}"
+    },
+    {
+      "name": "terminal-resize",
+      "direction": "client-to-host",
+      "expectedType": "resize",
+      "wire": "{\"protocolVersion\":1,\"type\":\"resize\",\"sessionId\":\"ABCDEFGHJKLM\",\"size\":{\"cols\":120,\"rows\":40}}"
+    },
+    {
+      "name": "session-opened",
+      "direction": "host-to-client",
+      "expectedType": "session.opened",
+      "wire": "{\"protocolVersion\":1,\"type\":\"session.opened\",\"sessionId\":\"ABCDEFGHJKLM\",\"size\":{\"cols\":80,\"rows\":24}}"
+    },
+    {
+      "name": "session-closed",
+      "direction": "host-to-client",
+      "expectedType": "session.closed",
+      "wire": "{\"protocolVersion\":1,\"type\":\"session.closed\",\"sessionId\":\"ABCDEFGHJKLM\",\"exitCode\":0}"
+    },
+    {
+      "name": "terminal-output-unicode",
+      "direction": "host-to-client",
+      "expectedType": "output",
+      "wire": "{\"protocolVersion\":1,\"type\":\"output\",\"sessionId\":\"ABCDEFGHJKLM\",\"data\":\"ready ✓\\r\\n\"}"
+    },
+    {
+      "name": "protocol-error-without-session",
+      "direction": "host-to-client",
+      "expectedType": "error",
+      "wire": "{\"protocolVersion\":1,\"type\":\"error\",\"code\":\"bad_message\",\"message\":\"Malformed frame\"}"
+    },
+    {
+      "name": "webrtc-offer-signal",
+      "direction": "bidirectional",
+      "expectedType": "signal",
+      "wire": "{\"protocolVersion\":1,\"type\":\"signal\",\"sessionId\":\"ABCDEFGHJKLM\",\"to\":\"host\",\"from\":\"viewer-1\",\"kind\":\"offer\",\"data\":\"{\\\"type\\\":\\\"offer\\\",\\\"sdp\\\":\\\"v=0\\\"}\"}"
+    }
+  ],
+  "invalid": [
+    {
+      "name": "malformed-json",
+      "wire": "{"
+    },
+    {
+      "name": "unknown-message-type",
+      "wire": "{\"protocolVersion\":1,\"type\":\"ping\",\"sessionId\":\"ABCDEFGHJKLM\"}"
+    },
+    {
+      "name": "unsupported-future-version",
+      "wire": "{\"protocolVersion\":2,\"type\":\"attach\",\"sessionId\":\"ABCDEFGHJKLM\"}"
+    },
+    {
+      "name": "empty-session-id",
+      "wire": "{\"protocolVersion\":1,\"type\":\"attach\",\"sessionId\":\"\"}"
+    },
+    {
+      "name": "non-positive-terminal-size",
+      "wire": "{\"protocolVersion\":1,\"type\":\"resize\",\"sessionId\":\"ABCDEFGHJKLM\",\"size\":{\"cols\":0,\"rows\":24}}"
+    },
+    {
+      "name": "unknown-error-code",
+      "wire": "{\"protocolVersion\":1,\"type\":\"error\",\"code\":\"unauthorized\",\"message\":\"No\"}"
+    },
+    {
+      "name": "unknown-signal-kind",
+      "wire": "{\"protocolVersion\":1,\"type\":\"signal\",\"sessionId\":\"ABCDEFGHJKLM\",\"to\":\"host\",\"from\":\"viewer-1\",\"kind\":\"candidate\",\"data\":\"{}\"}"
+    }
+  ]
+}

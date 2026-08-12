@@ -16,6 +16,9 @@ on:
       - ".github/workflows/deploy-relay.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-relay-${{ github.ref }}
   cancel-in-progress: false
@@ -24,6 +27,7 @@ jobs:
   deploy:
     name: Deploy relay
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'dev' }}
     steps:
       - name: Checkout

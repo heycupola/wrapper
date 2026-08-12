@@ -11,7 +11,7 @@ import {
   hashRelayTicket,
   hashShareCode,
 } from "./lib/relayTicket.ts";
-import { enforceRateLimit } from "./lib/rateLimit.ts";
+import { enforceRateLimit, rateLimitKeys } from "./lib/rateLimit.ts";
 import { ErrorSeverity } from "./lib/types.ts";
 
 const RELAY_TICKET = getRelayTicketConfig();
@@ -131,7 +131,7 @@ export const recordViewerTicketAttempt = internalMutation({
       // hashed bucket protects a target across accounts without creating an
       // unbounded row for every attacker-controlled random session id.
       const targetBucket = (await hashRelayTicket(args.sessionId)).slice(0, 4);
-      await enforceRateLimit(ctx, `issueViewerTicket:user:${args.userId}`, {
+      await enforceRateLimit(ctx, rateLimitKeys.issueViewerTicketForUser(args.userId), {
         limit: 10,
         windowMs: 60_000,
       });

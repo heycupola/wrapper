@@ -68,6 +68,7 @@ default direct WebRTC path) is documented in
 | PTY internals                                     | [`packages/terminal/README.md`](./packages/terminal/README.md)   |
 | Logging and telemetry                             | [`packages/logger/README.md`](./packages/logger/README.md)       |
 | Dev and prod environments, deploy automation      | [`ENVIRONMENTS.md`](./ENVIRONMENTS.md)                           |
+| Production operations, incidents, backups, SLOs   | [`OPERATIONS.md`](./OPERATIONS.md)                               |
 | Public documentation                              | [`docs.wrapper.sh`](https://docs.wrapper.sh)                     |
 | Documentation source                              | [`apps/docs`](./apps/docs) (run `bun run --cwd apps/docs dev`)   |
 

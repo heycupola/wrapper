@@ -1,6 +1,8 @@
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
+
+const DEVICE_CODE_CLEANUP_BATCH_SIZE = 500;
 
 function generateSecureDeviceCode(): string {
   const bytes = new Uint8Array(32);
@@ -26,6 +28,22 @@ function generateSecureUserCode(length: number = 8): string {
 
   return code.match(/.{1,4}/g)?.join("-") ?? code;
 }
+
+export const cleanupExpiredDeviceCodes = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const expired = await ctx.db
+      .query("deviceCode")
+      .withIndex("by_expiresAt", (q) => q.lte("expiresAt", Date.now()))
+      .take(DEVICE_CODE_CLEANUP_BATCH_SIZE);
+
+    await Promise.all(expired.map((deviceCode) => ctx.db.delete(deviceCode._id)));
+    return {
+      deleted: expired.length,
+      hasMore: expired.length === DEVICE_CODE_CLEANUP_BATCH_SIZE,
+    };
+  },
+});
 
 export const requestDeviceCode = mutation({
   args: {
@@ -68,31 +86,36 @@ export const pollDeviceToken = mutation({
       .withIndex("by_deviceCode", (q) => q.eq("deviceCode", args.device_code))
       .first();
 
-    if (!deviceCodeEntry) throw new Error("invalid_request");
+    if (!deviceCodeEntry) return { error: "invalid_request" as const };
 
     const now = Date.now();
     if (now > deviceCodeEntry.expiresAt) {
       await ctx.db.delete(deviceCodeEntry._id);
-      throw new Error("expired_token");
+      return { error: "expired_token" as const };
     }
 
     if (deviceCodeEntry.lastPolledAt) {
       const elapsed = now - deviceCodeEntry.lastPolledAt;
       const interval = deviceCodeEntry.pollingInterval ?? 5_000;
-      if (elapsed < interval) throw new Error("slow_down");
+      if (elapsed < interval) {
+        await ctx.db.patch(deviceCodeEntry._id, { lastPolledAt: now });
+        return { error: "slow_down" as const };
+      }
     }
 
     await ctx.db.patch(deviceCodeEntry._id, { lastPolledAt: now });
 
-    if (deviceCodeEntry.status === "pending") throw new Error("authorization_pending");
+    if (deviceCodeEntry.status === "pending") {
+      return { error: "authorization_pending" as const };
+    }
     if (deviceCodeEntry.status === "denied") {
       await ctx.db.delete(deviceCodeEntry._id);
-      throw new Error("access_denied");
+      return { error: "access_denied" as const };
     }
-    if (!deviceCodeEntry.userId) throw new Error("invalid_request");
+    if (!deviceCodeEntry.userId) return { error: "invalid_request" as const };
 
     const user = await ctx.db.get(deviceCodeEntry.userId as Id<"user">);
-    if (!user) throw new Error("invalid_request");
+    if (!user) return { error: "invalid_request" as const };
 
     await ctx.db.delete(deviceCodeEntry._id);
 

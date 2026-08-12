@@ -9,7 +9,7 @@
     "format": "oxfmt --ignore-path ../../.oxfmtignore .",
     "format:check": "oxfmt --check --ignore-path ../../.oxfmtignore .",
     "check-types": "tsc --noEmit",
-    "test": "bun test tests/*.test.ts && vitest run",
+    "test": "bun test ./tests && vitest run",
     "test:integration": "vitest run",
     "betterAuth:generate-schema": "cd ./convex/betterAuth && bunx @better-auth/cli@latest generate -y --output generatedSchema.ts",
     "deploy": "bunx convex deploy",

@@ -10,6 +10,16 @@ export type RateLimitOptions = {
   windowMs: number;
 };
 
+export const rateLimitKeys = {
+  issueViewerTicketForUser(userId: string): string {
+    return `issueViewerTicket:user:${userId}`;
+  },
+};
+
+export function getUserRateLimitKeys(userId: string): string[] {
+  return [rateLimitKeys.issueViewerTicketForUser(userId)];
+}
+
 const cleanupRateLimitRef = makeFunctionReference<
   "mutation",
   { key: string; expectedResetAt: number },

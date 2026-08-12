@@ -4,7 +4,7 @@ import "./globals.css";
 const SITE_NAME = "Wrapper";
 const SITE_DESCRIPTION =
   "Keep your real shell on your machine and reach it from another device only when you explicitly share it.";
-const SITE_URL = "https://wrapper.sh";
+const SITE_URL = "https://www.wrapper.sh";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

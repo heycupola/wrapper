@@ -5,6 +5,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { type StoredAuthToken, loadStoredAuthToken, resolveConvexUrl } from "../util/auth-session";
 import { resolveConvexSiteUrl } from "../util/convex-client";
+import { DeviceAuthPollingCancelledError, pollForDeviceToken } from "../util/device-auth-poll";
 import { paths } from "../util/paths";
 import { installShutdownHandlers } from "../util/signals";
 
@@ -28,11 +29,12 @@ type PollDeviceTokenArgs = {
   device_code: string;
 };
 
-type PollDeviceTokenResponse = {
+type PollDeviceTokenSuccess = {
   session_token: string;
   token_type: string;
   expires_in: number;
 };
+type PollDeviceTokenResponse = PollDeviceTokenSuccess | { error: string };
 
 const requestDeviceCodeRef = makeFunctionReference<
   "mutation",
@@ -175,10 +177,7 @@ export async function runAuthLogout(): Promise<void> {
 async function waitForDeviceToken(
   client: ConvexHttpClient,
   deviceCode: RequestDeviceCodeResponse,
-): Promise<PollDeviceTokenResponse> {
-  const startedAt = Date.now();
-  const expiresAt = startedAt + deviceCode.expires_in * 1_000;
-  let intervalMs = Math.max(1_000, deviceCode.interval * 1_000);
+): Promise<PollDeviceTokenSuccess> {
   let cancelled = false;
   const signals = installShutdownHandlers({
     onShutdown: () => {
@@ -188,46 +187,33 @@ async function waitForDeviceToken(
 
   process.stderr.write("[wrapper] waiting for device approval...\n");
   try {
-    while (Date.now() < expiresAt) {
-      if (cancelled) {
+    try {
+      return await pollForDeviceToken({
+        expiresInSeconds: deviceCode.expires_in,
+        intervalSeconds: deviceCode.interval,
+        isCancelled: () => cancelled,
+        // pollForDeviceToken awaits each call before scheduling the next one.
+        poll: async () => {
+          const result = await client.mutation(pollDeviceTokenRef, {
+            device_code: deviceCode.device_code,
+          });
+          if ("error" in result) throw new Error(result.error);
+          return result;
+        },
+      });
+    } catch (error) {
+      if (error instanceof DeviceAuthPollingCancelledError) {
         process.stderr.write("[wrapper] cancelled.\n");
         process.exit(130);
       }
-      // Polling must be sequential to respect device auth interval limits.
-      // eslint-disable-next-line no-await-in-loop
-      await sleep(intervalMs);
-      if (Date.now() >= expiresAt) break;
-
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        const token = await client.mutation(pollDeviceTokenRef, {
-          device_code: deviceCode.device_code,
-        });
-        return token;
-      } catch (error) {
-        const message = normalizeErrorMessage(error);
-        if (message === "authorization_pending") continue;
-        if (message === "slow_down") {
-          intervalMs = Math.min(intervalMs + 1_000, 15_000);
-          continue;
-        }
-        if (message === "access_denied") {
-          throw new Error("Device authorization was denied.", { cause: error });
-        }
-        if (message === "expired_token") {
-          throw new Error("Device code expired. Run `wrapper auth login` again.", { cause: error });
-        }
-        throw new Error(`Token polling failed: ${message}`, { cause: error });
-      }
+      throw error;
     }
   } finally {
     signals.dispose();
   }
-
-  throw new Error("Device authorization timed out. Run `wrapper auth login` again.");
 }
 
-function persistAuthToken(convexUrl: string, token: PollDeviceTokenResponse): void {
+function persistAuthToken(convexUrl: string, token: PollDeviceTokenSuccess): void {
   const now = Date.now();
   const payload: StoredAuthToken = {
     provider: "convex-device-auth",
@@ -239,29 +225,4 @@ function persistAuthToken(convexUrl: string, token: PollDeviceTokenResponse): vo
   };
   const file = paths.authFile();
   writeFileSync(file, `${JSON.stringify(payload, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
-}
-
-function normalizeErrorMessage(error: unknown): string {
-  const raw =
-    error instanceof Error && error.message.length > 0
-      ? error.message
-      : typeof error === "string" && error.length > 0
-        ? error
-        : "unknown_error";
-
-  const knownCodes = [
-    "authorization_pending",
-    "slow_down",
-    "access_denied",
-    "expired_token",
-    "invalid_request",
-  ] as const;
-  for (const code of knownCodes) {
-    if (raw.includes(code)) return code;
-  }
-  return raw;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

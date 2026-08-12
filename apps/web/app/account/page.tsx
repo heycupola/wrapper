@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AuthShell } from "../../components/auth-shell";
+import { getAuthProviderAvailability } from "../../lib/auth-providers";
 import { getToken, isAuthenticated } from "../../lib/auth-server";
 import { AccountClient } from "./account-client";
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function AccountPage() {
   const [authenticated, token] = await Promise.all([isAuthenticated(), getToken()]);
-  const appleEnabled = process.env.NEXT_PUBLIC_APPLE_AUTH_ENABLED === "true";
+  const providers = getAuthProviderAvailability(process.env);
 
   return (
     <AuthShell
@@ -21,7 +22,7 @@ export default async function AccountPage() {
       <AccountClient
         authenticated={authenticated}
         token={token ?? null}
-        appleEnabled={appleEnabled}
+        appleEnabled={providers.apple}
       />
     </AuthShell>
   );

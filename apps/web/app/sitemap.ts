@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const baseUrl = "https://wrapper.sh";
+const baseUrl = "https://www.wrapper.sh";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return ["", "/privacy-policy", "/terms-of-service", "/support"].map((path) => ({
