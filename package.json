@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "atmn": "1.1.15",
-    "lefthook": "^1.13.0",
+    "lefthook": "^2.1.10",
     "oxfmt": "^0.45.0",
     "oxlint": "^1.60.0",
     "turbo": "2.10.7",
