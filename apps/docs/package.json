@@ -6,12 +6,14 @@
   "scripts": {
     "dev": "mint dev --port 3001",
     "build": "mint validate",
+    "test": "bun test ./tests",
     "lint": "oxlint . --no-error-on-unmatched-pattern",
     "lint:fix": "oxlint . --fix --no-error-on-unmatched-pattern",
     "format": "oxfmt .",
     "format:check": "oxfmt --check ."
   },
   "devDependencies": {
+    "extract-zip": "2.0.1",
     "mint": "4.2.742"
   }
 }
