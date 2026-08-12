@@ -2,8 +2,7 @@ diff --git a/index.js b/index.js
 index 00105fe..ec8f5f2 100644
 --- a/index.js
 +++ b/index.js
-@@ -126,6 +126,17 @@ class Extractor {
- 
+@@ -127,5 +127,16 @@ class Extractor {
      if (symlink) {
        const link = await getStream(readStream)
 +      const resolvedLink = path.resolve(path.dirname(dest), link)
