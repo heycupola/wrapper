@@ -107,4 +107,5 @@ Preference lives at `<config>/wrapper/telemetry.json` (or
 
 ```sh
 bun run log:watch    # tail the active log file
+wrapper logs -f      # same thing via the Wrapper CLI
 ```

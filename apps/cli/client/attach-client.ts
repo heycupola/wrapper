@@ -347,7 +347,3 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
     },
   };
 }
-
-export async function runAttachClient(opts: AttachClientOptions): Promise<AttachResult> {
-  return startAttachClient(opts).done;
-}

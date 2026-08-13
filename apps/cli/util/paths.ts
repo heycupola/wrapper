@@ -35,16 +35,8 @@ function stateRoot(): string {
   return xdg("XDG_STATE_HOME", join(HOME, ".local", "state"));
 }
 
-function cacheRoot(): string {
-  if (PLATFORM === "win32") {
-    return resolve(HOME, "AppData", "Local", "Cache");
-  }
-  return xdg("XDG_CACHE_HOME", join(HOME, ".cache"));
-}
-
 const APP_STATE = join(stateRoot(), env.namespace);
 const APP_CONFIG = join(configRoot(), env.namespace);
-const APP_CACHE = join(cacheRoot(), env.namespace);
 
 function ensureDir(dir: string): string {
   try {
@@ -60,22 +52,9 @@ export const paths = {
   state: (): string => ensureDir(APP_STATE),
   /** User config, auth tokens. */
   config: (): string => ensureDir(APP_CONFIG),
-  /** Disposable artefacts. */
-  cache: (): string => ensureDir(APP_CACHE),
 
   /** `${state}/sessions.json` */
   sessionsRegistry: (): string => join(paths.state(), "sessions.json"),
-  /** `${state}/wrapper.log` */
-  logFile: (): string => join(paths.state(), "wrapper.log"),
   /** `${config}/auth.json` */
   authFile: (): string => join(paths.config(), "auth.json"),
-  /** `${config}/telemetry.json` */
-  telemetryFile: (): string => join(paths.config(), "telemetry.json"),
-} as const;
-
-export const platformInfo = {
-  isMac: PLATFORM === "darwin",
-  isLinux: PLATFORM === "linux",
-  isWindows: PLATFORM === "win32",
-  raw: PLATFORM,
 } as const;

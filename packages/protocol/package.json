@@ -5,11 +5,7 @@
   "type": "module",
   "module": "index.ts",
   "exports": {
-    ".": "./index.ts",
-    "./messages": "./messages.ts",
-    "./session": "./session.ts",
-    "./codec": "./codec.ts",
-    "./id": "./id.ts"
+    ".": "./index.ts"
   },
   "scripts": {
     "lint": "oxlint .",
@@ -28,8 +24,5 @@
     "@types/bun": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:"
-  },
-  "peerDependencies": {
-    "typescript": "catalog:"
   }
 }
