@@ -10,8 +10,6 @@ const KNOWN_DEVICE_AUTH_ERRORS = [
   "invalid_request",
 ] as const;
 
-export type DeviceAuthErrorCode = (typeof KNOWN_DEVICE_AUTH_ERRORS)[number];
-
 export class DeviceAuthPollingCancelledError extends Error {
   constructor() {
     super("Device authorization was cancelled.");

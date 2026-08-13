@@ -44,8 +44,5 @@
     "@types/bun": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:"
-  },
-  "peerDependencies": {
-    "typescript": "catalog:"
   }
 }

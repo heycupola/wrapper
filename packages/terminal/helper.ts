@@ -14,7 +14,7 @@
  */
 
 import { existsSync, statSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 type Triple =
@@ -72,10 +72,3 @@ export function resolveHelperPath(): string {
       `Build it with \`make\` in tools/pty-helper/.`,
   );
 }
-
-/**
- * Re-exports a stable representation of `dirname()` so callers in the
- * monorepo can derive their own helper directory paths if they need
- * to (e.g. when bundling the helper next to a compiled CLI).
- */
-export { dirname };

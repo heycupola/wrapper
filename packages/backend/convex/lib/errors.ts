@@ -9,7 +9,6 @@ export enum ErrorCode {
   INVALID_OPERATION = "INVALID_OPERATION",
   RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED",
   EXTERNAL_SERVICE_ERROR = "EXTERNAL_SERVICE_ERROR",
-  SERVER_ERROR = "SERVER_ERROR",
 }
 
 const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
@@ -20,7 +19,6 @@ const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   [ErrorCode.INVALID_OPERATION]: "Invalid operation",
   [ErrorCode.RATE_LIMIT_EXCEEDED]: "Rate limit exceeded. Please slow down",
   [ErrorCode.EXTERNAL_SERVICE_ERROR]: "External service error",
-  [ErrorCode.SERVER_ERROR]: "An internal server error occurred",
 };
 
 export interface ErrorOptions {
