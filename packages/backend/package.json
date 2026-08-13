@@ -18,16 +18,16 @@
   "dependencies": {
     "@convex-dev/better-auth": "0.12.5",
     "@useautumn/convex": "0.0.23",
-    "better-auth": "1.6.25",
-    "convex": "1.42.3",
-    "convex-helpers": "0.1.120"
+    "better-auth": "1.6.26",
+    "convex": "1.43.0",
+    "convex-helpers": "0.1.122"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
     "@types/bun": "latest",
-    "convex-test": "^0.0.54",
+    "convex-test": "^0.0.55",
     "typescript": "^5",
-    "vite": "^8.1.5",
+    "vite": "^8.2.1",
     "vitest": "^4.1.10"
   }
 }

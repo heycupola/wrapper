@@ -17,8 +17,8 @@
     "smoke": "bun run scripts/smoke.ts"
   },
   "dependencies": {
-    "convex": "1.42.3",
-    "hono": "4.13.0"
+    "convex": "1.43.0",
+    "hono": "4.13.1"
   },
   "devDependencies": {
     "@repo/protocol": "*",
