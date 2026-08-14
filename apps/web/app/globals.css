@@ -1168,6 +1168,7 @@ a {
 }
 
 .authInfo {
+  display: block;
   margin-top: 6px;
   padding: 13px;
   font-size: 0.75rem;
@@ -1239,6 +1240,7 @@ a {
 }
 
 .authSuccess {
+  display: block;
   font-size: 0.8125rem;
   color: #2d7a32;
 }

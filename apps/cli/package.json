@@ -35,9 +35,9 @@
     "@repo/protocol": "*",
     "@repo/terminal": "*",
     "commander": "^14.0.3",
-    "convex": "1.42.3",
+    "convex": "1.43.0",
     "picocolors": "catalog:",
-    "werift": "0.24.1"
+    "werift": "0.24.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",

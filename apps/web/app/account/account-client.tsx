@@ -316,9 +316,9 @@ export function AccountClient({
       </section>
 
       {status ? (
-        <p className="authInfo" role="status" aria-live="polite">
+        <output className="authInfo" aria-live="polite">
           {status}
-        </p>
+        </output>
       ) : null}
       {error ? (
         <p className="authError" role="alert">
