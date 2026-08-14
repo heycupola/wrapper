@@ -11,5 +11,11 @@ crons.interval(
   internal.deviceAuth.cleanupExpiredDeviceCodes,
   {},
 );
+crons.daily(
+  "cleanup Apple notification replay records",
+  { hourUTC: 3, minuteUTC: 17 },
+  internal.appleNotifications.cleanupProcessedEvents,
+  {},
+);
 
 export default crons;

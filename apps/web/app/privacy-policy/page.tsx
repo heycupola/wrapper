@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      lastUpdated="August 11, 2026"
+      lastUpdated="August 13, 2026"
       introduction="Wrapper is a remote terminal sharing service operated by Cupola Labs, LLC. Your terminal stays on your machine until you explicitly share it. This policy explains the metadata Wrapper stores, how terminal traffic moves between peers, which providers help us operate the service, and the controls available to you."
     >
       <LegalSection title="Information we collect">
@@ -22,6 +22,12 @@ export default function PrivacyPolicyPage() {
           When you sign in with Apple, GitHub, or Google, we receive the name, email address,
           profile information, and provider identifier made available by that provider. Wrapper does
           not create or store a password for social-login accounts.
+        </p>
+        <p>
+          Apple may send cryptographically signed account-change notifications when an Apple user
+          changes email forwarding, revokes consent, or deletes the Apple Account. Wrapper stores
+          hashes of the notification id and Apple subject for up to 90 days to prevent replay. It
+          does not store the raw Apple subject in that replay record.
         </p>
 
         <h3>Session metadata</h3>
@@ -119,12 +125,12 @@ export default function PrivacyPolicyPage() {
         <p>
           You can remove local CLI credentials with <code>wrapper auth logout</code>. Signed-in
           users can permanently delete their account from{" "}
-          <Link href="/account">Account settings</Link>. Wrapper asks Autumn to remove the
-          associated billing customer before account deletion completes. If that cleanup fails, the
-          account remains so you can retry or contact support. To request access, correction,
-          export, or assistance with deletion, contact{" "}
-          <a href="mailto:support@relic.so">support@relic.so</a>, the current Cupola Labs support
-          inbox.
+          <Link href="/account">Account settings</Link>. Wrapper deletes local account data and
+          queues removal of the associated billing customer. Temporary billing-provider failures do
+          not keep the local account active; bounded background retries continue and operators can
+          investigate exhausted cleanup attempts. To request access, correction, export, or
+          assistance with deletion, contact <a href="mailto:support@relic.so">support@relic.so</a>,
+          the current Cupola Labs support inbox.
         </p>
       </LegalSection>
 

@@ -9,6 +9,8 @@
  */
 
 import type * as account from "../account.js";
+import type * as appleNotifications from "../appleNotifications.js";
+import type * as appleNotificationsHttp from "../appleNotificationsHttp.js";
 import type * as auth from "../auth.js";
 import type * as autumn from "../autumn.js";
 import type * as billing from "../billing.js";
@@ -16,6 +18,7 @@ import type * as crons from "../crons.js";
 import type * as deviceAuth from "../deviceAuth.js";
 import type * as http from "../http.js";
 import type * as lib_accountDeletion from "../lib/accountDeletion.js";
+import type * as lib_appleNotification from "../lib/appleNotification.js";
 import type * as lib_appleRevocation from "../lib/appleRevocation.js";
 import type * as lib_errors from "../lib/errors.js";
 import type * as lib_logger from "../lib/logger.js";
@@ -34,6 +37,8 @@ import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server
 
 declare const fullApi: ApiFromModules<{
   account: typeof account;
+  appleNotifications: typeof appleNotifications;
+  appleNotificationsHttp: typeof appleNotificationsHttp;
   auth: typeof auth;
   autumn: typeof autumn;
   billing: typeof billing;
@@ -41,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   deviceAuth: typeof deviceAuth;
   http: typeof http;
   "lib/accountDeletion": typeof lib_accountDeletion;
+  "lib/appleNotification": typeof lib_appleNotification;
   "lib/appleRevocation": typeof lib_appleRevocation;
   "lib/errors": typeof lib_errors;
   "lib/logger": typeof lib_logger;
