@@ -37,6 +37,7 @@ describe("Apple account-change processing", () => {
     });
     await createSession(t, userId, "session-one");
     await createSession(t, userId, "session-two");
+    await createApprovedDeviceCode(t, userId, "revoked-device-code");
 
     await expect(
       t.action(processAccountEventRef, {
@@ -58,6 +59,7 @@ describe("Apple account-change processing", () => {
       refreshToken: null,
     });
     expect(await findSessions(t, userId)).toEqual([]);
+    expect(await findDeviceCodes(t, userId)).toEqual([]);
     expect(await findUser(t, userId)).not.toBeNull();
   });
 
@@ -74,6 +76,7 @@ describe("Apple account-change processing", () => {
       userId,
     });
     await createSession(t, userId, "linked-session");
+    await createApprovedDeviceCode(t, userId, "linked-device-code");
 
     await expect(
       t.action(processAccountEventRef, {
@@ -87,6 +90,7 @@ describe("Apple account-change processing", () => {
       accountId: "github-linked",
     });
     expect(await findSessions(t, userId)).toEqual([]);
+    expect(await findDeviceCodes(t, userId)).toEqual([]);
     expect(await findUser(t, userId)).not.toBeNull();
   });
 
@@ -267,6 +271,25 @@ async function createSession(
   });
 }
 
+async function createApprovedDeviceCode(
+  t: TestConvex<typeof schema>,
+  userId: string,
+  deviceCode: string,
+): Promise<void> {
+  await t.mutation(components.betterAuth.adapter.create, {
+    input: {
+      data: {
+        deviceCode,
+        expiresAt: Date.now() + 60_000,
+        status: "approved",
+        userCode: deviceCode.toUpperCase(),
+        userId,
+      },
+      model: "deviceCode",
+    },
+  });
+}
+
 async function findAccount(
   t: TestConvex<typeof schema>,
   userId: string,
@@ -290,6 +313,18 @@ async function findSessions(
     paginationOpts: { cursor: null, numItems: 100 },
     where: [{ field: "userId", operator: "eq", value: userId }],
   })) as { page: Array<{ token: string }> };
+  return result.page;
+}
+
+async function findDeviceCodes(
+  t: TestConvex<typeof schema>,
+  userId: string,
+): Promise<Array<{ deviceCode: string }>> {
+  const result = (await t.query(components.betterAuth.adapter.findMany, {
+    model: "deviceCode",
+    paginationOpts: { cursor: null, numItems: 100 },
+    where: [{ field: "userId", operator: "eq", value: userId }],
+  })) as { page: Array<{ deviceCode: string }> };
   return result.page;
 }
 

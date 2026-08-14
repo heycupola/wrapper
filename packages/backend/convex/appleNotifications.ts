@@ -268,10 +268,18 @@ async function executeDisposition(
 ): Promise<void> {
   switch (disposition) {
     case "invalidate_apple":
-      await Promise.all([deleteSessionsForUser(ctx, userId), clearAppleTokens(ctx, userId)]);
+      await Promise.all([
+        deleteSessionsForUser(ctx, userId),
+        deleteDeviceCodesForUser(ctx, userId),
+        clearAppleTokens(ctx, userId),
+      ]);
       return;
     case "unlink_apple":
-      await Promise.all([deleteSessionsForUser(ctx, userId), deleteAppleAccounts(ctx, userId)]);
+      await Promise.all([
+        deleteSessionsForUser(ctx, userId),
+        deleteDeviceCodesForUser(ctx, userId),
+        deleteAppleAccounts(ctx, userId),
+      ]);
       return;
     case "delete_user":
       await deleteAppleOnlyUser(ctx, userId);
@@ -308,6 +316,18 @@ async function deleteSessionsForUser(ctx: ActionCtx, userId: string): Promise<nu
     ctx.runMutation(components.betterAuth.adapter.deleteMany, {
       input: {
         model: "session",
+        where: [{ field: "userId", operator: "eq", value: userId }],
+      },
+      paginationOpts,
+    }),
+  );
+}
+
+async function deleteDeviceCodesForUser(ctx: ActionCtx, userId: string): Promise<number> {
+  return await deleteAllPaginated((paginationOpts) =>
+    ctx.runMutation(components.betterAuth.adapter.deleteMany, {
+      input: {
+        model: "deviceCode",
         where: [{ field: "userId", operator: "eq", value: userId }],
       },
       paginationOpts,

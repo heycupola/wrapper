@@ -145,7 +145,9 @@ function parseEvent(value: unknown): AppleAccountEvent {
   if (email !== undefined && (typeof email !== "string" || email.length > 320)) {
     throw new Error("Apple notification email is invalid");
   }
-  const isPrivateEmail = event.is_private_email;
+  const privateEmailValue = event.is_private_email;
+  const isPrivateEmail =
+    privateEmailValue === "true" ? true : privateEmailValue === "false" ? false : privateEmailValue;
   if (isPrivateEmail !== undefined && typeof isPrivateEmail !== "boolean") {
     throw new Error("Apple notification private-email flag is invalid");
   }

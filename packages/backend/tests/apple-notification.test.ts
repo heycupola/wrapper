@@ -57,7 +57,7 @@ describe("Apple account-change notifications", () => {
       events: [
         {
           email: "relay@privaterelay.appleid.com",
-          is_private_email: true,
+          is_private_email: "true",
           sub: "apple-user-123",
           type: "email-disabled",
         },
