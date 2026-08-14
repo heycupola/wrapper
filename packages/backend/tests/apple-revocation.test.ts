@@ -2,6 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { revokeAppleCredential } from "../convex/lib/appleRevocation";
 
 const unavailableFetcher = async () => new Response(null, { status: 503 });
+const accessTokenFetcher = async (_input: string | URL | Request, init?: RequestInit) => {
+  const body = new URLSearchParams(String(init?.body));
+  expect(body.get("token")).toBe("access-token");
+  expect(body.get("token_type_hint")).toBe("access_token");
+  return new Response(null, { status: 200 });
+};
 
 describe("Apple credential revocation", () => {
   test("prefers the refresh token and sends Apple's required form fields", async () => {
@@ -32,18 +38,11 @@ describe("Apple credential revocation", () => {
   });
 
   test("falls back to the access token", async () => {
-    const fetcher = async (_input: string | URL | Request, init?: RequestInit) => {
-      const body = new URLSearchParams(String(init?.body));
-      expect(body.get("token")).toBe("access-token");
-      expect(body.get("token_type_hint")).toBe("access_token");
-      return new Response(null, { status: 200 });
-    };
-
     const result = await revokeAppleCredential({
       accessToken: "access-token",
       clientId: "sh.wrapper.web",
       clientSecret: "client-secret",
-      fetcher,
+      fetcher: accessTokenFetcher,
     });
 
     expect(result).toEqual({ status: "revoked", tokenType: "access_token" });

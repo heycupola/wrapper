@@ -81,6 +81,7 @@ recommended branch protection settings are in [`OPERATIONS.md`](./OPERATIONS.md)
 | `BETTER_AUTH_SECRET`                        | dev secret               | prod secret                 |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | dev OAuth app            | prod OAuth app              |
 | `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET`   | dev Services ID + secret | prod Services ID + secret   |
+| `APPLE_NOTIFICATION_AUDIENCES`              | primary dev App ID       | `sh.wrapper.mobile`         |
 | `AUTUMN_SECRET_KEY`                         | `am_sk_test_…` (sandbox) | `am_sk_live_…` (production) |
 | `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID`     | `can_share_relay`        | `can_share_relay`           |
 | `WRAPPER_RELAY_HOST_TICKET_TTL_MS` etc.     | optional (has defaults)  | optional (has defaults)     |
@@ -162,6 +163,19 @@ build time):
    Apple's signed client-secret JWT. Rotate that JWT before its configured
    expiration. Never commit the `.p8` key or paste it into chat.
 
+   Register this production server-to-server notification URL on the primary
+   App ID:
+
+   ```text
+   https://confident-fox-458.convex.site/api/auth/apple/notifications
+   ```
+
+   Set `APPLE_NOTIFICATION_AUDIENCES=sh.wrapper.mobile` on the matching Convex
+   deployment. If Apple's tested notification token uses both the primary App
+   ID and Services ID as audiences, provide both as a comma-separated allowlist.
+   The endpoint verifies Apple's RS256 signature, issuer, audience, expiry, and
+   replay id before invalidating sessions or deleting Apple-only accounts.
+
    Generate and pipe the Apple client secret without placing it in shell
    history:
 
@@ -175,6 +189,7 @@ build time):
      (cd packages/backend && bunx convex env set --prod APPLE_CLIENT_SECRET)
    cd packages/backend
    bunx convex env set --prod APPLE_CLIENT_ID "$APPLE_CLIENT_ID"
+   bunx convex env set --prod APPLE_NOTIFICATION_AUDIENCES sh.wrapper.mobile
    ```
 
    Repeat against the intended development deployment before enabling the

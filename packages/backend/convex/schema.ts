@@ -64,4 +64,25 @@ export default defineSchema({
     count: v.number(),
     resetAt: v.number(),
   }).index("by_key", ["key"]),
+  appleAccountEvent: defineTable({
+    eventIdHash: v.string(),
+    subjectHash: v.string(),
+    eventType: v.string(),
+    status: v.union(v.literal("pending"), v.literal("processed")),
+    disposition: v.optional(
+      v.union(
+        v.literal("ignored"),
+        v.literal("account_not_found"),
+        v.literal("invalidate_apple"),
+        v.literal("unlink_apple"),
+        v.literal("delete_user"),
+      ),
+    ),
+    userId: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    processedAt: v.optional(v.number()),
+  })
+    .index("by_event_id", ["eventIdHash"])
+    .index("by_created_at", ["createdAt"]),
 });

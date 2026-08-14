@@ -1,0 +1,134 @@
+---
+title: "Mobile viewer"
+description: "Connect to a shared Wrapper terminal from iPhone or iPad."
+---
+
+Wrapper Mobile is a viewer and controller for sessions hosted by the Wrapper
+CLI. The shell, files, processes, and credentials remain on the Mac or Linux
+host. Commands entered on mobile execute on that host.
+
+<Warning>
+  Every connected viewer can read terminal output and send input. Use a dedicated host for
+  demonstrations and never share a session containing production credentials.
+</Warning>
+
+## Requirements
+
+- iOS or iPadOS 18 or later
+- a Wrapper account
+- the Wrapper CLI installed on a Mac or Linux host
+- an active wrapped shell
+- Pro relay access for remote sharing
+
+See [Installation](/guides/installation) and
+[Authentication](/guides/auth) before continuing.
+
+## Prepare the desktop host
+
+Sign in and start a wrapped shell:
+
+```bash
+wrapper auth login
+wrapper install
+# Open a new shell after installation.
+wrapper status
+```
+
+Press `Ctrl+\` and then `s` to share the current session. Wrapper prints the
+session ID and share code. Unshare at any time with `Ctrl+\` and then `u`.
+
+## Sign in on mobile
+
+1. Open Wrapper and choose **Sign in**.
+2. Complete the browser-based device approval.
+3. Return to Wrapper after approval.
+4. Pull to refresh if the session list was already open.
+
+Authentication credentials are stored in Keychain on physical devices. The app
+returns to the signed-out state if the backend reports that authentication has
+expired.
+
+## Open your own session
+
+A shared session owned by the signed-in account appears in the session list.
+Select it to request a fresh, single-use viewer ticket and open the terminal.
+
+Sessions that are offline or not shared cannot be opened. Share them from the
+host first.
+
+## Join a guest session
+
+Choose **Join**, then enter the session ID and share code supplied by the host.
+Share codes are case-insensitive.
+
+The mobile app does not retain the share code for reconnect. If the guest
+connection closes, return to Join and enter the code again.
+
+## Terminal controls
+
+The bottom control bar stays inside the device safe area and provides common
+terminal keys:
+
+- show or hide the software keyboard
+- Control modifier
+- Escape
+- Tab
+- arrow keys
+- explicit paste
+- detach
+
+Remote terminal escape sequences cannot read from or write to the device
+clipboard implicitly. Native text selection and explicit copy remain available.
+
+## P2P and relay status
+
+Wrapper keeps an authenticated WebSocket relay for signaling and fallback, then
+attempts an encrypted WebRTC data channel.
+
+| Status       | Meaning                                                 |
+| ------------ | ------------------------------------------------------- |
+| `connecting` | Secure ticket, relay, or host setup is in progress      |
+| `p2p`        | Terminal traffic prefers the direct WebRTC data channel |
+| `relay`      | Terminal traffic uses the authenticated relay           |
+| `offline`    | No usable transport remains                             |
+
+If relay or P2P connectivity drops, owner sessions request fresh one-time
+tickets with bounded retries. A failed P2P negotiation does not prevent relay
+fallback.
+
+Direct P2P exposes peer IP addresses. Relay fallback is encrypted in transit,
+but the relay processes terminal frames after TLS termination. See
+[Security and privacy](/configuration/security) and
+[Transports](/reference/transports).
+
+## Privacy lock
+
+Terminal content is covered when the app is inactive or captured. Returning
+after a longer background interruption requires Face ID, Touch ID, or the device
+passcode. Canceling authentication keeps the terminal locked.
+
+If device-owner authentication is unavailable, Wrapper keeps content covered
+and offers safe sign-out rather than revealing the terminal.
+
+## Account controls
+
+Settings includes:
+
+- Privacy Policy, Terms, and Support
+- Sign out
+- permanent account deletion
+
+Account deletion removes Wrapper-owned session metadata and authentication
+records, and queues billing cleanup. It cannot be undone.
+
+## Troubleshooting
+
+If the app remains on **Connecting securely**:
+
+1. Confirm the host still reports the session as shared.
+2. Refresh the mobile session list.
+3. Check whether the host or mobile network changed.
+4. Close the terminal and open it again to request a fresh ticket.
+5. For a guest session, re-enter the original share code.
+
+For additional diagnostics, see [Troubleshooting](/troubleshooting).

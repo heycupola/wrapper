@@ -16,8 +16,8 @@
   },
   "dependencies": {
     "@convex-dev/better-auth": "0.12.5",
-    "better-auth": "1.6.25",
-    "convex": "1.42.3",
+    "better-auth": "1.6.26",
+    "convex": "1.43.0",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"

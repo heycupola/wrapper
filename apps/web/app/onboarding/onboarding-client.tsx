@@ -256,9 +256,9 @@ export function OnboardingClient({
         </Link>
       </div>
       {status ? (
-        <p className="authSuccess" role="status" aria-live="polite">
+        <output className="authSuccess" aria-live="polite">
           {status}
-        </p>
+        </output>
       ) : null}
       {error ? (
         <p className="authError" role="alert">

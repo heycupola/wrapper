@@ -269,9 +269,9 @@ export function DeviceAuthorizeClient({
         </div>
       ) : null}
       {status ? (
-        <p className="authSuccess" role="status" aria-live="polite">
+        <output className="authSuccess" aria-live="polite">
           {status}
-        </p>
+        </output>
       ) : null}
       {status === "Device code approved" ? (
         <Link className="social-btn social-btn-primary" href="/onboarding">
