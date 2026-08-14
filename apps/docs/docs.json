@@ -65,7 +65,8 @@
           "guides/installation",
           "guides/auth",
           "guides/local-attach",
-          "guides/remote-share"
+          "guides/remote-share",
+          "guides/mobile-viewer"
         ]
       },
       {
