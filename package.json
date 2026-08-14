@@ -37,9 +37,9 @@
     "prepare": "lefthook install"
   },
   "devDependencies": {
-    "atmn": "1.1.17",
+    "atmn": "1.1.18",
     "lefthook": "^1.13.0",
-    "oxfmt": "^0.62.0",
+    "oxfmt": "^0.63.0",
     "oxlint": "^1.77.0",
     "turbo": "2.10.9",
     "typescript": "5.9.3"
