@@ -18,10 +18,10 @@
   "dependencies": {
     "@convex-dev/better-auth": "0.12.5",
     "@useautumn/convex": "0.0.23",
-    "better-auth": "1.6.26",
-    "convex": "1.43.0",
-    "convex-helpers": "0.1.122",
-    "jose": "^6.2.8"
+    "better-auth": "1.6.29",
+    "convex": "1.44.0",
+    "convex-helpers": "0.1.123",
+    "jose": "^6.2.9"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
