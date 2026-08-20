@@ -629,6 +629,11 @@ a {
   color: #fff;
 }
 
+.textAction {
+  background: #e5e5e5;
+  color: #000;
+}
+
 /* In dark mode the secondary pills go dark too, otherwise every button on the
    page is a light capsule and the primary CTA loses its rank. */
 @media (prefers-color-scheme: dark) {
@@ -640,11 +645,6 @@ a {
     background: #1c1c20;
     color: var(--color-text);
   }
-}
-
-.textAction {
-  background: #e5e5e5;
-  color: #000;
 }
 
 .primaryAction:hover,
