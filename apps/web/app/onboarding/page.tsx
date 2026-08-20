@@ -4,7 +4,6 @@ import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { getToken, isAuthenticated } from "../../lib/auth-server";
 import { AuthShell } from "../../components/auth-shell";
-import { UpgradePro } from "../../components/upgrade-pro";
 import { OnboardingClient } from "./onboarding-client";
 
 export const metadata: Metadata = {
@@ -39,10 +38,12 @@ export default async function OnboardingPage() {
     return (
       <AuthShell
         title="Get started"
-        description="Connect the Wrapper CLI and prepare your first private terminal session."
+        description="Answer a few quick questions to continue."
+        showHeaderAction={false}
+        showFooter={false}
       >
         <p className="authError" role="alert">
-          Wrapper account services are temporarily unavailable.
+          Wrapper services are temporarily unavailable.
         </p>
       </AuthShell>
     );
@@ -55,10 +56,11 @@ export default async function OnboardingPage() {
   return (
     <AuthShell
       title="Welcome to Wrapper"
-      description="Connect the CLI, verify your local session, and share only when you are ready."
+      description="Answer a few quick questions to continue."
+      showHeaderAction={false}
+      showFooter={false}
     >
       <OnboardingClient token={token} initialState={state} />
-      <UpgradePro token={token} />
     </AuthShell>
   );
 }

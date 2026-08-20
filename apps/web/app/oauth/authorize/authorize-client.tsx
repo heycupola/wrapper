@@ -87,7 +87,7 @@ export function DeviceAuthorizeClient({
   const lookupCode = useCallback(
     async (explicitCode?: string): Promise<void> => {
       if (!client) {
-        setError("Wrapper account services are temporarily unavailable.");
+        setError("Wrapper services are temporarily unavailable.");
         return;
       }
       const normalized = explicitCode ?? normalizeUserCode(userCode);
@@ -122,7 +122,7 @@ export function DeviceAuthorizeClient({
 
   async function performDecision(action: "approve" | "deny"): Promise<void> {
     if (!client) {
-      setError("Wrapper account services are temporarily unavailable.");
+      setError("Wrapper services are temporarily unavailable.");
       return;
     }
     if (!authenticated || !initialToken) {
@@ -190,7 +190,7 @@ export function DeviceAuthorizeClient({
       </label>
       <input
         id="device-user-code"
-        className="authInput"
+        className="authInput authCodeInput"
         value={userCode}
         onChange={(e) => {
           setUserCode(e.target.value);
@@ -237,7 +237,7 @@ export function DeviceAuthorizeClient({
             </div>
             <div>
               <dt>Requested access</dt>
-              <dd>{deviceInfo.scope ?? "Wrapper account access"}</dd>
+              <dd>{deviceInfo.scope ?? "Wrapper access"}</dd>
             </div>
           </dl>
           <p className="authHint">
@@ -247,7 +247,7 @@ export function DeviceAuthorizeClient({
       ) : null}
       {deviceInfo?.status === "pending" ? (
         <div className="authDecision">
-          <p className="authHint">This grants the Wrapper CLI access to your Wrapper account.</p>
+          <p className="authHint">This grants the Wrapper CLI access to your Wrapper profile.</p>
           <div className="authActions">
             <button
               type="button"

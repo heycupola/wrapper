@@ -16,7 +16,7 @@ export default async function DeviceAuthorizePage() {
   return (
     <AuthShell
       title="Authorize a device"
-      description="Enter the code shown by the Wrapper CLI, inspect the request, then decide whether this device may access your account."
+      description="Enter the code shown by the Wrapper CLI, inspect the request, then decide whether this device may access your Wrapper profile."
     >
       <DeviceAuthorizeClient
         authenticated={authenticated}

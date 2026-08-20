@@ -1,6 +1,5 @@
-import Image from "next/image";
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { SiteHeader } from "./landing-header";
 import { SiteFooter } from "./site-footer";
 
 interface LegalPageProps {
@@ -13,27 +12,7 @@ interface LegalPageProps {
 export function LegalPage({ title, lastUpdated, introduction, children }: LegalPageProps) {
   return (
     <div className="legalShell">
-      <header className="legalHeader">
-        <Link href="/" className="logo-container" aria-label="Wrapper home">
-          <Image
-            src="/wrapper-icon-light.svg"
-            alt="Wrapper"
-            width={36}
-            height={36}
-            className="logo logo-light"
-            priority
-          />
-          <Image
-            src="/wrapper-icon-dark.svg"
-            alt="Wrapper"
-            width={36}
-            height={36}
-            className="logo logo-dark"
-            priority
-          />
-        </Link>
-        <Link href="/">Back to Wrapper</Link>
-      </header>
+      <SiteHeader />
       <main id="main-content" className="legalMain" tabIndex={-1}>
         <div className="legalTitle">
           <h1>{title}</h1>

@@ -80,11 +80,10 @@ export default function TermsOfServicePage() {
         <p>
           Wrapper may provide free and paid plans. Paid subscriptions are billed in advance through
           Autumn and Stripe. Prices and plan limits may change with reasonable notice. Signed-in
-          users can open Stripe&apos;s billing portal from{" "}
-          <Link href="/account">Account settings</Link> to manage or cancel a paid plan. The portal
-          shows the effective cancellation date before confirmation. If the portal is unavailable,
-          contact support. Fees are non-refundable except where required by law or expressly agreed
-          by us.
+          users can open Stripe&apos;s billing portal from the{" "}
+          <Link href="/dashboard">Dashboard</Link> to manage or cancel a paid plan. The portal shows
+          the effective cancellation date before confirmation. If the portal is unavailable, contact
+          support. Fees are non-refundable except where required by law or expressly agreed by us.
         </p>
       </LegalSection>
 
@@ -124,11 +123,11 @@ export default function TermsOfServicePage() {
 
       <LegalSection title="Suspension and termination">
         <p>
-          You may stop using Wrapper and permanently delete your account from{" "}
-          <Link href="/account">Account settings</Link>. Contact support if self-service deletion
-          cannot be completed. We may suspend or terminate access to protect users, investigate
-          misuse, comply with law, or enforce these Terms. Provisions concerning ownership,
-          disclaimers, liability, and disputes survive termination.
+          You may stop using Wrapper and permanently delete your account from the{" "}
+          <Link href="/dashboard">Dashboard</Link>. Contact support if self-service deletion cannot
+          be completed. We may suspend or terminate access to protect users, investigate misuse,
+          comply with law, or enforce these Terms. Provisions concerning ownership, disclaimers,
+          liability, and disputes survive termination.
         </p>
       </LegalSection>
 
