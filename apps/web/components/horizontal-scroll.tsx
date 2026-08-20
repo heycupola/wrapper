@@ -1,39 +1,32 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import {
+  clampHorizontalOffset,
+  horizontalStoryHeight,
+  nearestSectionIndex,
+  sectionScrollTarget,
+  type SectionMetric,
+} from "./horizontal-scroll-math";
 
-const emptySectionIds: readonly string[] = [];
-const desktopHeaderHeight = 68;
-const pageSnapThreshold = 12;
-const pageSnapIdleMs = 140;
+const desktopQueryString = "(min-width: 1024px)";
+const reducedMotionQueryString = "(prefers-reduced-motion: reduce)";
 
-type SectionMetric = {
+type MeasuredSection = SectionMetric & {
   element: HTMLElement;
-  left: number;
-  center: number;
 };
 
-function nearestSectionIndex(
-  horizontalOffset: number,
-  viewportWidth: number,
-  sections: readonly SectionMetric[],
-): number {
-  const center = horizontalOffset + viewportWidth / 2;
-  let nearestIndex = 0;
-  let nearestDistance = Number.POSITIVE_INFINITY;
-  for (const [index, section] of sections.entries()) {
-    const distance = Math.abs(section.center - center);
-    if (distance < nearestDistance) {
-      nearestIndex = index;
-      nearestDistance = distance;
-    }
-  }
-  return nearestIndex;
-}
+type LenisController = {
+  destroy: () => void;
+  scrollTo: (
+    target: number,
+    options?: { duration?: number; force?: boolean; immediate?: boolean },
+  ) => void;
+};
 
 export function HorizontalScroll({
   children,
-  sectionIds = emptySectionIds,
+  sectionIds,
 }: {
   children: ReactNode;
   sectionIds: readonly string[];
@@ -41,7 +34,6 @@ export function HorizontalScroll({
   const experienceRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const frameRef = useRef<number | null>(null);
 
   useEffect(() => {
     const experience = experienceRef.current;
@@ -49,156 +41,203 @@ export function HorizontalScroll({
     const track = trackRef.current;
     if (!experience || !scroller || !track) return;
 
-    const mobileQuery = window.matchMedia("(max-width: 760px)");
-    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const supportsScrollTimeline = CSS.supports("animation-timeline: scroll(root block)");
-    const supportsScrollEnd = "onscrollend" in window;
-    let revealsReady = reducedMotionQuery.matches;
-    let revealFrame: number | null = null;
-    let revealPaintFrame: number | null = null;
-    let snapTimer: ReturnType<typeof setTimeout> | null = null;
-    let horizontalDistance = 0;
-    let scrollStart = 0;
+    const desktopQuery = window.matchMedia(desktopQueryString);
+    const reducedMotionQuery = window.matchMedia(reducedMotionQueryString);
+    let measuredSections: MeasuredSection[] = [];
+    let maxTranslate = 0;
+    let storyStart = 0;
     let viewportWidth = 0;
-    let activeIndex = -1;
-    let settledIndex = 0;
-    let revealedCount = 0;
-    let renderedOffset = Number.NaN;
-    let sectionMetrics: SectionMetric[] = [];
-    let snapPoints: number[] = [];
+    let activeSection = -1;
+    let horizontalActive = false;
+    let renderFrame: number | null = null;
+    let measureFrame: number | null = null;
+    let verticalObserver: IntersectionObserver | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    let lenis: LenisController | null = null;
+    let lenisGeneration = 0;
+    let initialHashApplied = false;
 
-    const markSections = (horizontalOffset: number) => {
-      const nearestIndex = nearestSectionIndex(horizontalOffset, viewportWidth, sectionMetrics);
-      if (nearestIndex !== activeIndex) {
-        sectionMetrics[activeIndex]?.element.classList.remove("isActive");
-        sectionMetrics[nearestIndex]?.element.classList.add("isActive");
-        activeIndex = nearestIndex;
-      }
-
-      if (revealsReady) {
-        const revealPoint = horizontalOffset + viewportWidth * 0.84;
-        while (revealedCount < sectionMetrics.length) {
-          const section = sectionMetrics[revealedCount];
-          if (!section || (revealedCount > 0 && section.left > revealPoint)) break;
-          section.element.classList.add("hasEntered");
-          revealedCount += 1;
-        }
-      }
-    };
-
-    const updateScroll = () => {
-      frameRef.current = null;
-      if (mobileQuery.matches) return;
-
-      const progress =
-        horizontalDistance === 0
-          ? 0
-          : Math.min(1, Math.max(0, (window.scrollY - scrollStart) / horizontalDistance));
-      const horizontalOffset = Math.round(progress * horizontalDistance * 100) / 100;
-      if (horizontalOffset === renderedOffset) return;
-      renderedOffset = horizontalOffset;
-      if (!supportsScrollTimeline) {
-        track.style.transform = `translate3d(${-horizontalOffset}px, 0, 0)`;
-      }
-      markSections(horizontalOffset);
-    };
-
-    const scheduleUpdate = () => {
-      if (frameRef.current !== null) return;
-      frameRef.current = requestAnimationFrame(updateScroll);
-    };
-
-    const updateLayout = () => {
-      if (mobileQuery.matches) {
-        experience.style.removeProperty("--horizontal-distance");
-        track.style.removeProperty("transform");
-        track.classList.remove("usesScrollTimeline");
-        renderedOffset = Number.NaN;
-        return;
-      }
-      sectionMetrics = sectionIds.flatMap((sectionId) => {
-        const element = document.getElementById(sectionId);
-        return element
-          ? [
-              {
-                element,
-                left: element.offsetLeft,
-                center: element.offsetLeft + element.clientWidth / 2,
-              },
-            ]
-          : [];
+    const sectionElements = () =>
+      sectionIds.flatMap((id) => {
+        const element = document.getElementById(id);
+        return element ? [element] : [];
       });
-      viewportWidth = scroller.clientWidth;
-      revealedCount = sectionMetrics.findIndex(
-        (section) => !section.element.classList.contains("hasEntered"),
-      );
-      if (revealedCount < 0) revealedCount = sectionMetrics.length;
-      horizontalDistance = Math.max(0, track.scrollWidth - viewportWidth);
-      scrollStart = window.scrollY + experience.getBoundingClientRect().top - desktopHeaderHeight;
-      snapPoints = sectionMetrics.map((section) => Math.min(horizontalDistance, section.left));
-      const currentOffset = Math.min(horizontalDistance, Math.max(0, window.scrollY - scrollStart));
-      settledIndex = nearestSectionIndex(currentOffset, viewportWidth, sectionMetrics);
-      experience.style.setProperty("--horizontal-distance", `${Math.ceil(horizontalDistance)}px`);
-      scroller.classList.add("isEnhanced");
-      track.classList.toggle("usesScrollTimeline", supportsScrollTimeline);
-      if (supportsScrollTimeline) track.style.removeProperty("transform");
-      renderedOffset = Number.NaN;
-      updateScroll();
+
+    const updateActiveSection = (horizontalOffset: number) => {
+      if (measuredSections.length === 0) return;
+      const nextIndex = nearestSectionIndex(horizontalOffset, viewportWidth, measuredSections);
+      if (nextIndex === activeSection) return;
+
+      measuredSections[activeSection]?.element.classList.remove("isActive");
+      const nextSection = measuredSections[nextIndex];
+      nextSection?.element.classList.add("isActive", "hasEntered");
+      activeSection = nextIndex;
     };
 
-    const settleOnPage = () => {
-      snapTimer = null;
-      if (mobileQuery.matches || snapPoints.length === 0) return;
-      const currentOffset = Math.min(horizontalDistance, Math.max(0, window.scrollY - scrollStart));
-      const settledPoint = snapPoints[settledIndex] ?? 0;
-      const delta = currentOffset - settledPoint;
-      if (Math.abs(delta) < pageSnapThreshold) {
-        if (Math.abs(delta) > 0.5) window.scrollTo({ top: scrollStart + settledPoint });
-        return;
+    const render = () => {
+      renderFrame = null;
+      if (!horizontalActive) return;
+
+      const offset = clampHorizontalOffset(window.scrollY, storyStart, maxTranslate);
+      const roundedOffset = Math.round(offset * 1000) / 1000;
+      track.style.transform = `translate3d(${-roundedOffset}px, 0, 0)`;
+
+      const revealPoint = offset + viewportWidth * 0.82;
+      for (const section of measuredSections) {
+        if (section.left <= revealPoint) section.element.classList.add("hasEntered");
       }
-
-      const targetIndex = Math.min(
-        snapPoints.length - 1,
-        Math.max(0, settledIndex + (delta > 0 ? 1 : -1)),
-      );
-      const targetPoint = snapPoints[targetIndex];
-      if (targetPoint === undefined || targetIndex === settledIndex) return;
-      settledIndex = targetIndex;
-      window.scrollTo({
-        top: scrollStart + targetPoint,
-        behavior: reducedMotionQuery.matches ? "auto" : "smooth",
-      });
+      updateActiveSection(offset);
     };
 
-    const scheduleSnap = () => {
-      if (snapTimer !== null) clearTimeout(snapTimer);
-      snapTimer = setTimeout(settleOnPage, pageSnapIdleMs);
-    };
-
-    const onScroll = () => {
-      scheduleUpdate();
-      if (!supportsScrollEnd) scheduleSnap();
+    const scheduleRender = () => {
+      if (renderFrame !== null) return;
+      renderFrame = requestAnimationFrame(render);
     };
 
     const scrollToSection = (section: HTMLElement, updateHistory: boolean) => {
-      if (mobileQuery.matches) return;
-      const targetIndex = sectionMetrics.findIndex((metric) => metric.element === section);
-      if (targetIndex >= 0) settledIndex = targetIndex;
-      if (snapTimer !== null) {
-        clearTimeout(snapTimer);
-        snapTimer = null;
-      }
+      if (!horizontalActive) return;
+      const target = sectionScrollTarget(storyStart, section.offsetLeft, maxTranslate);
       if (updateHistory) history.pushState(null, "", `#${section.id}`);
-      window.scrollTo({
-        top: scrollStart + Math.min(horizontalDistance, section.offsetLeft),
-        behavior: reducedMotionQuery.matches ? "auto" : "smooth",
+
+      if (lenis) {
+        lenis.scrollTo(target, { duration: 0.9, force: true });
+      } else {
+        window.scrollTo({ top: target, behavior: "smooth" });
+      }
+    };
+
+    const navigateToHash = (updateHistory = false) => {
+      const sectionId = decodeURIComponent(window.location.hash.slice(1));
+      if (!sectionId || !sectionIds.includes(sectionId)) return;
+      const section = document.getElementById(sectionId);
+      if (section) scrollToSection(section, updateHistory);
+    };
+
+    const measure = () => {
+      measureFrame = null;
+      if (!horizontalActive) return;
+
+      viewportWidth = scroller.clientWidth || window.innerWidth;
+      const viewportHeight = scroller.clientHeight || window.innerHeight;
+      maxTranslate = Math.max(0, track.scrollWidth - viewportWidth);
+      storyStart = window.scrollY + experience.getBoundingClientRect().top;
+      measuredSections = sectionElements().map((element) => ({
+        element,
+        left: element.offsetLeft,
+        center: element.offsetLeft + element.clientWidth / 2,
+      }));
+
+      experience.style.height = `${Math.ceil(horizontalStoryHeight(viewportHeight, maxTranslate))}px`;
+      render();
+
+      if (!initialHashApplied && window.location.hash) {
+        initialHashApplied = true;
+        requestAnimationFrame(() => navigateToHash());
+      }
+    };
+
+    const scheduleMeasure = () => {
+      if (measureFrame !== null) cancelAnimationFrame(measureFrame);
+      measureFrame = requestAnimationFrame(measure);
+    };
+
+    const stopVerticalObserver = () => {
+      verticalObserver?.disconnect();
+      verticalObserver = null;
+    };
+
+    const startVerticalObserver = () => {
+      if (verticalObserver) return;
+      verticalObserver = new IntersectionObserver(
+        (entries) => {
+          let mostVisible: IntersectionObserverEntry | undefined;
+          for (const entry of entries) {
+            entry.target.classList.toggle("isActive", entry.isIntersecting);
+            if (entry.isIntersecting) entry.target.classList.add("hasEntered");
+            if (
+              entry.isIntersecting &&
+              (!mostVisible || entry.intersectionRatio > mostVisible.intersectionRatio)
+            ) {
+              mostVisible = entry;
+            }
+          }
+
+          const visible = mostVisible?.target;
+          if (!(visible instanceof HTMLElement)) return;
+          const nextIndex = sectionIds.indexOf(visible.id);
+          if (nextIndex >= 0) activeSection = nextIndex;
+        },
+        { threshold: [0.15, 0.35, 0.6] },
+      );
+      for (const section of sectionElements()) verticalObserver.observe(section);
+    };
+
+    const destroyLenis = () => {
+      lenisGeneration += 1;
+      lenis?.destroy();
+      lenis = null;
+    };
+
+    const startLenis = async () => {
+      const generation = ++lenisGeneration;
+      const { default: Lenis } = await import("lenis");
+      if (generation !== lenisGeneration || !horizontalActive) return;
+      lenis = new Lenis({
+        autoRaf: true,
+        gestureOrientation: "vertical",
+        lerp: 0.12,
+        overscroll: false,
+        smoothWheel: true,
+        wheelMultiplier: 1,
       });
     };
 
-    const onClick = (event: MouseEvent) => {
-      if (mobileQuery.matches || !(event.target instanceof Element)) return;
+    const clearHorizontalLayout = () => {
+      experience.style.removeProperty("height");
+      track.style.removeProperty("transform");
+      measuredSections = [];
+      maxTranslate = 0;
+      storyStart = 0;
+      viewportWidth = 0;
+    };
+
+    const syncMode = () => {
+      const nextHorizontal = desktopQuery.matches && !reducedMotionQuery.matches;
+      if (nextHorizontal === horizontalActive) {
+        if (horizontalActive) scheduleMeasure();
+        return;
+      }
+
+      horizontalActive = nextHorizontal;
+      experience.classList.toggle("isHorizontal", horizontalActive);
+      scroller.classList.toggle("isHorizontal", horizontalActive);
+
+      if (horizontalActive) {
+        stopVerticalObserver();
+        void startLenis();
+        scheduleMeasure();
+      } else {
+        destroyLenis();
+        clearHorizontalLayout();
+        startVerticalObserver();
+      }
+    };
+
+    const onDocumentClick = (event: MouseEvent) => {
+      if (!horizontalActive || event.defaultPrevented || !(event.target instanceof Element)) return;
       const anchor = event.target.closest<HTMLAnchorElement>('a[href^="#"]');
-      const sectionId = anchor?.getAttribute("href")?.slice(1);
+      if (
+        !anchor ||
+        anchor.target ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      const sectionId = anchor.getAttribute("href")?.slice(1);
       if (!sectionId || !sectionIds.includes(sectionId)) return;
       const section = document.getElementById(sectionId);
       if (!section) return;
@@ -206,73 +245,64 @@ export function HorizontalScroll({
       scrollToSection(section, true);
     };
 
-    const onHashNavigation = () => {
-      const sectionId = decodeURIComponent(window.location.hash.slice(1));
-      if (!sectionId || !sectionIds.includes(sectionId)) return;
-      const section = document.getElementById(sectionId);
-      if (section) scrollToSection(section, false);
+    const onFocusIn = (event: FocusEvent) => {
+      if (!horizontalActive || !(event.target instanceof Element)) return;
+      const section = event.target.closest<HTMLElement>(".landingSection");
+      if (section && !section.classList.contains("isActive")) scrollToSection(section, false);
     };
 
-    const observer = new ResizeObserver(updateLayout);
-    observer.observe(scroller);
-    observer.observe(track);
-    for (const sectionId of sectionIds) {
-      const section = document.getElementById(sectionId);
-      if (section) observer.observe(section);
-    }
+    const onHashChange = () => {
+      if (horizontalActive) navigateToHash();
+    };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    if (supportsScrollEnd) window.addEventListener("scrollend", settleOnPage);
-    window.addEventListener("resize", updateLayout, { passive: true });
-    window.addEventListener("hashchange", onHashNavigation);
-    experience.addEventListener("click", onClick);
-    mobileQuery.addEventListener("change", updateLayout);
-    updateLayout();
-    if (!revealsReady) {
-      revealFrame = requestAnimationFrame(() => {
-        revealPaintFrame = requestAnimationFrame(() => {
-          revealsReady = true;
-          markSections(Number.isFinite(renderedOffset) ? renderedOffset : 0);
-        });
-      });
-    }
-    requestAnimationFrame(onHashNavigation);
+    resizeObserver = new ResizeObserver(scheduleMeasure);
+    resizeObserver.observe(scroller);
+    resizeObserver.observe(track);
+    for (const section of sectionElements()) resizeObserver.observe(section);
+
+    window.addEventListener("scroll", scheduleRender, { passive: true });
+    window.addEventListener("resize", scheduleMeasure, { passive: true });
+    window.addEventListener("orientationchange", scheduleMeasure);
+    window.addEventListener("hashchange", onHashChange);
+    document.addEventListener("click", onDocumentClick);
+    experience.addEventListener("focusin", onFocusIn);
+    desktopQuery.addEventListener("change", syncMode);
+    reducedMotionQuery.addEventListener("change", syncMode);
+    syncMode();
+
+    if (!horizontalActive) startVerticalObserver();
 
     return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      if (supportsScrollEnd) window.removeEventListener("scrollend", settleOnPage);
-      window.removeEventListener("resize", updateLayout);
-      window.removeEventListener("hashchange", onHashNavigation);
-      experience.removeEventListener("click", onClick);
-      mobileQuery.removeEventListener("change", updateLayout);
-      experience.style.removeProperty("--horizontal-distance");
-      track.style.removeProperty("transform");
-      track.classList.remove("usesScrollTimeline");
-      if (snapTimer !== null) clearTimeout(snapTimer);
-      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-      if (revealFrame !== null) cancelAnimationFrame(revealFrame);
-      if (revealPaintFrame !== null) cancelAnimationFrame(revealPaintFrame);
+      resizeObserver?.disconnect();
+      stopVerticalObserver();
+      destroyLenis();
+      window.removeEventListener("scroll", scheduleRender);
+      window.removeEventListener("resize", scheduleMeasure);
+      window.removeEventListener("orientationchange", scheduleMeasure);
+      window.removeEventListener("hashchange", onHashChange);
+      document.removeEventListener("click", onDocumentClick);
+      experience.removeEventListener("focusin", onFocusIn);
+      desktopQuery.removeEventListener("change", syncMode);
+      reducedMotionQuery.removeEventListener("change", syncMode);
+      if (renderFrame !== null) cancelAnimationFrame(renderFrame);
+      if (measureFrame !== null) cancelAnimationFrame(measureFrame);
+      clearHorizontalLayout();
     };
   }, [sectionIds]);
 
   return (
-    <div ref={experienceRef} className="horizontalExperience">
+    <div ref={experienceRef} className="landingExperience">
       <main
         id="main-content"
         ref={scrollerRef}
-        className="hScroller"
+        className="landingScroller"
         aria-label="Wrapper product story"
-        aria-roledescription="horizontal story controlled by vertical page scrolling"
         tabIndex={-1}
       >
-        <div ref={trackRef} className="hTrack">
+        <div ref={trackRef} className="landingTrack">
           {children}
         </div>
       </main>
-      <footer className="landingFooterBar">
-        <span>© {new Date().getFullYear()} Wrapper by Cupola Labs, LLC</span>
-      </footer>
     </div>
   );
 }

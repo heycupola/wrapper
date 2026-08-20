@@ -1,5 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./surfaces.css";
+import "./landing.css";
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+});
 
 const SITE_NAME = "Wrapper";
 const SITE_DESCRIPTION =
@@ -53,8 +61,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#eef0f2" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0d10" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f6f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d0f12" },
   ],
 };
 
@@ -64,7 +72,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={geistMono.variable}>
       <head>
         <meta name="color-scheme" content="light dark" />
       </head>

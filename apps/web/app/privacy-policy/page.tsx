@@ -124,10 +124,10 @@ export default function PrivacyPolicyPage() {
         </p>
         <p>
           You can remove local CLI credentials with <code>wrapper auth logout</code>. Signed-in
-          users can permanently delete their account from{" "}
-          <Link href="/account">Account settings</Link>. Wrapper deletes local account data and
-          queues removal of the associated billing customer. Temporary billing-provider failures do
-          not keep the local account active; bounded background retries continue and operators can
+          users can permanently delete their account from the{" "}
+          <Link href="/dashboard">Dashboard</Link>. Wrapper deletes local account data and queues
+          removal of the associated billing customer. Temporary billing-provider failures do not
+          keep the local account active; bounded background retries continue and operators can
           investigate exhausted cleanup attempts. To request access, correction, export, or
           assistance with deletion, contact <a href="mailto:support@relic.so">support@relic.so</a>,
           the current Cupola Labs support inbox.

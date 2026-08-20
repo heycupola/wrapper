@@ -27,7 +27,7 @@ export function CopyCommand({ command, label }: { command: string; label?: strin
   return (
     <button
       type="button"
-      className="copyCommand"
+      className={copied ? "copyCommand isCopied" : "copyCommand"}
       onClick={() => void copy()}
       aria-label={label ?? "Copy command"}
     >

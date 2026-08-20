@@ -1,0 +1,47 @@
+export function ConnectionFlow() {
+  return (
+    <div className="connectionFlow" data-live aria-hidden="true">
+      <div className="connectionStatus">
+        <span />
+        direct · DTLS · 14 ms
+      </div>
+
+      <svg className="connectionRoutes" viewBox="0 0 800 360" preserveAspectRatio="none">
+        <path className="connectionRouteBase" d="M126 148 C 276 148, 520 148, 674 148" />
+        <path className="connectionRouteLive" d="M126 148 C 276 148, 520 148, 674 148" />
+        <path className="connectionRouteFallback" d="M126 155 C 286 185, 274 288, 400 288" />
+        <path className="connectionRouteFallback" d="M400 288 C 526 288, 514 185, 674 155" />
+        <circle className="connectionPacket" r="5">
+          <animateMotion
+            dur="2.8s"
+            repeatCount="indefinite"
+            path="M126 148 C 276 148, 520 148, 674 148"
+          />
+        </circle>
+      </svg>
+
+      <div className="connectionNode connectionViewer">
+        <span className="connectionDevice connectionPhone">
+          <i />
+        </span>
+        <small>viewer</small>
+        <strong>your iPhone</strong>
+      </div>
+
+      <div className="connectionNode connectionHost">
+        <span className="connectionDevice connectionLaptop">
+          <i />
+        </span>
+        <small>host</small>
+        <strong>your shell</strong>
+      </div>
+
+      <div className="connectionRelay">
+        <strong>Fly relay</strong>
+        <span>authenticated WSS · TLS</span>
+      </div>
+
+      <span className="connectionDirectLabel">WebRTC · DTLS</span>
+    </div>
+  );
+}

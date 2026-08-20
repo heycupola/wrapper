@@ -1,39 +1,113 @@
 :root {
-  --color-bg: #eef0f2;
-  --color-text: #14171c;
-  --color-text-muted: #666c75;
-  --color-border: rgba(20, 23, 28, 0.28);
-  --color-accent: #14171c;
-  --color-accent-pop: #2d57f0;
-  --color-accent-soft: rgba(49, 94, 251, 0.1);
-  --color-surface: #f4f5f6;
-  --color-surface-strong: #fafbfc;
-  --color-selection-bg: #14171c;
-  --color-selection-text: #f6f7f8;
-  --terminal-bg: #0c0e12;
-  --terminal-surface: #14171a;
-  --terminal-text: #f2f4f7;
-  --terminal-muted: #858d99;
-  --radius-xs: 0;
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 18px;
+  color-scheme: light;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --brand-canvas: #f6f6f2;
+  --brand-surface: #ffffff;
+  --brand-surface-muted: #ecede8;
+  --brand-ink: #121316;
+  --brand-ink-muted: #62666e;
+  --brand-border: #dcddda;
+  --brand-blue: #356de8;
+  --brand-blue-hover: #2f64d8;
+  --brand-blue-bright: #477ff5;
+  --brand-blue-soft: #e8efff;
+  --brand-success: #277a4b;
+  --brand-warning: #9a6414;
+  --brand-danger: #b63838;
+  --color-bg: var(--brand-canvas);
+  --color-text: var(--brand-ink);
+  --color-text-muted: var(--brand-ink-muted);
+  --color-border: color-mix(in srgb, var(--brand-ink) 11%, transparent);
+  --color-accent: var(--brand-ink);
+  --color-accent-pop: var(--brand-blue);
+  --color-accent-from: var(--brand-blue-bright);
+  --color-accent-to: var(--brand-blue);
+  --color-accent-soft: var(--brand-blue-soft);
+  --color-surface: var(--brand-surface-muted);
+  --color-surface-strong: var(--brand-surface);
+  --color-nav: var(--brand-ink);
+  --color-nav-to: #24262b;
+  --color-selection-bg: var(--brand-ink);
+  --color-selection-text: #f8f8f4;
+  --color-shadow: 0 24px 64px -44px rgba(18, 19, 22, 0.38);
+  --terminal-bg: #0b0d10;
+  --terminal-surface: #15181d;
+  --terminal-text: #f5f7fa;
+  --terminal-muted: #9298a2;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+  --radius-xs: 8px;
+  --radius-sm: 14px;
+  --radius-md: 24px;
+  --radius-lg: 32px;
   --radius-pill: 999px;
+  --page-pad: clamp(20px, 5.5vw, 80px);
+  --content-max: 1280px;
+  --header-h: 72px;
+  --footer-h: 52px;
+  /* One accent, used only where something is alive: a packet in flight, a link
+     that just opened, a ticket still counting down. Everything structural is
+     drawn from the text colour so the page stays quiet. */
+  --accent-soft: color-mix(in srgb, var(--color-accent-pop) 16%, transparent);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-fast: 160ms;
+  --motion-mid: 320ms;
+  --motion-slow: 640ms;
+}
+
+/* Short windows: the chrome keeps the same rhythm but gives its slack to the
+   scene, otherwise the devices shrink out of proportion. */
+@media (max-height: 820px) {
+  :root {
+    --header-h: 64px;
+    --footer-h: 44px;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #0b0d10;
-    --color-text: #f1f3f5;
-    --color-text-muted: #979da7;
-    --color-border: rgba(241, 243, 245, 0.28);
-    --color-accent: #f1f3f5;
-    --color-accent-pop: #84a1ff;
-    --color-accent-soft: rgba(132, 161, 255, 0.11);
-    --color-surface: #111419;
-    --color-surface-strong: #171a20;
-    --color-selection-bg: #f1f3f5;
-    --color-selection-text: #0b0d10;
+    color-scheme: dark;
+    --brand-canvas: #0d0f12;
+    --brand-surface: #15181d;
+    --brand-surface-muted: #1c2026;
+    --brand-ink: #f6f7f9;
+    --brand-ink-muted: #a8adb5;
+    --brand-border: #2b3038;
+    --brand-blue: #7aa7ff;
+    --brand-blue-hover: #8db4ff;
+    --brand-blue-bright: #477ff5;
+    --brand-blue-soft: rgba(122, 167, 255, 0.14);
+    --brand-success: #72cf98;
+    --brand-warning: #e3ae5d;
+    --brand-danger: #ff9292;
+    --color-bg: var(--brand-canvas);
+    --color-text: var(--brand-ink);
+    --color-text-muted: var(--brand-ink-muted);
+    --color-border: color-mix(in srgb, var(--brand-ink) 12%, transparent);
+    --color-accent: var(--brand-ink);
+    --color-accent-pop: var(--brand-blue);
+    --color-accent-from: var(--brand-blue-bright);
+    --color-accent-to: #356de8;
+    --color-accent-soft: var(--brand-blue-soft);
+    --color-surface: var(--brand-surface-muted);
+    --color-surface-strong: var(--brand-surface);
+    --color-nav: #f4f5f7;
+    --color-nav-to: #e4e7eb;
+    --color-selection-bg: var(--brand-ink);
+    --color-selection-text: var(--brand-canvas);
+    --color-shadow: 0 0 24px rgba(0, 0, 0, 0.45);
+    --accent-soft: color-mix(in srgb, var(--color-accent-pop) 22%, transparent);
   }
 }
 
@@ -58,10 +132,10 @@ body {
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   font-weight: 400;
-  line-height: 1.6;
-  letter-spacing: -0.02em;
+  line-height: 1.45;
+  letter-spacing: -0.018em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -76,12 +150,12 @@ a {
   top: 10px;
   left: 10px;
   z-index: 100;
-  padding: 9px 12px;
-  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  border-radius: var(--radius-pill);
   background: var(--color-text);
   color: var(--color-bg);
-  font-size: 0.8125rem;
-  font-weight: 650;
+  font-size: 0.875rem;
+  font-weight: 600;
   transform: translateY(-160%);
   transition: transform 140ms ease;
 }
@@ -105,16 +179,6 @@ a {
   display: grid;
   place-items: center;
   padding: clamp(48px, 8vw, 96px) 24px;
-}
-
-.authBrand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--color-text);
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
 }
 
 .notFoundShell {
@@ -143,18 +207,18 @@ a {
 
 .notFoundCopy h1 {
   max-width: 620px;
-  font-size: clamp(3.2rem, 6vw, 6.4rem);
-  font-weight: 650;
-  line-height: 0.94;
-  letter-spacing: -0.07em;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 590;
+  line-height: 1;
+  letter-spacing: -0.01em;
   text-wrap: balance;
 }
 
 .notFoundCopy > p {
-  max-width: 520px;
+  max-width: 335px;
   color: var(--color-text-muted);
   font-size: 1rem;
-  line-height: 1.75;
+  line-height: 1.3;
 }
 
 .notFoundActions {
@@ -172,12 +236,11 @@ a {
 .notFoundTerminal {
   min-height: 360px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-md);
+  border: 0;
+  border-radius: 42px;
   background: var(--terminal-bg);
   color: var(--terminal-text);
-  box-shadow: 14px 14px 0 var(--color-border);
-  transform: rotate(1deg);
+  box-shadow: var(--color-shadow);
 }
 
 .notFoundTerminalBody {
@@ -194,306 +257,416 @@ a {
   font-weight: 750;
 }
 
-.horizontalPage {
-  position: relative;
-  min-height: 100svh;
-  overflow: clip;
-  isolation: isolate;
-}
-
-.hTopBar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 68px;
-  padding: 0 clamp(20px, 3vw, 48px);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg);
-}
-
-.brand,
-.brandMark,
-.hNav,
 .primaryAction,
-.inlineLink,
-.statusLive {
+.inlineLink {
   display: inline-flex;
   align-items: center;
 }
 
-.brand {
-  gap: 10px;
-}
-
-.brandMark {
+.logo-container {
   position: relative;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-xs);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
-.brandName {
-  font-size: 1rem;
-  font-weight: 720;
-  letter-spacing: -0.04em;
-}
-
-.hNav {
-  gap: clamp(12px, 2vw, 28px);
-  font-size: 0.75rem;
-  font-weight: 540;
-  letter-spacing: 0.01em;
-  color: var(--color-text-muted);
-}
-
-.hNav a {
-  transition:
-    color 160ms ease,
-    background-color 160ms ease,
-    border-color 160ms ease;
-}
-
-.hNav a:hover,
-.hNav a:focus-visible {
-  color: var(--color-text);
-}
-
-.horizontalExperience {
-  --horizontal-distance: 0px;
-  position: relative;
-  min-height: calc(100svh - 68px);
-  height: calc(var(--horizontal-distance) + 100svh - 68px);
-}
-
-.hScroller {
-  position: sticky;
-  top: 68px;
-  height: calc(100svh - 114px);
-  min-height: 0;
-  display: block;
-  overflow: clip;
-  contain: paint;
-}
-
-.hTrack {
-  width: max-content;
-  height: 100%;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: max-content;
-  transform: translate3d(0, 0, 0);
-  transform-origin: 0 0;
-  backface-visibility: hidden;
-  will-change: transform;
-}
-
-@keyframes horizontalTrackScroll {
+/* Motion primitives. A blurred rise for anything that arrives, a spring pop for
+   confirmations, a breath for live indicators. Every scene and page reuses these
+   three so the whole site moves with one accent. */
+@keyframes riseIn {
   from {
-    transform: translate3d(0, 0, 0);
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(7px);
   }
 
   to {
-    transform: translate3d(calc(var(--horizontal-distance) * -1), 0, 0);
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
   }
 }
 
-@media (min-width: 761px) {
-  @supports (animation-timeline: scroll(root block)) {
-    .hTrack.usesScrollTimeline {
-      animation-name: horizontalTrackScroll;
-      animation-duration: 1ms;
-      animation-timing-function: linear;
-      animation-fill-mode: both;
-      animation-timeline: scroll(root block);
-    }
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.07);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
-.hScroller:focus-visible {
-  outline: 1px solid var(--color-accent-pop);
-  outline-offset: -1px;
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
 }
 
-.hSection {
-  position: relative;
-  min-height: 0;
-  height: 100%;
-  border-right: 1px solid var(--color-border);
-  padding: clamp(52px, 6vh, 88px) clamp(32px, 5vw, 76px);
-  overflow: hidden;
-  contain: layout paint;
+/* Idle loops belong to the scene the reader is on; everywhere else they stay
+   parked so an off-screen diagram never costs a frame. */
+/* Scoped through .hSection so these outrank the `animation` shorthands further
+   down the sheet, which would otherwise reset play state back to running. */
+.hSection [data-live],
+.hSection [data-live] *,
+.hSection [data-live]::before,
+.hSection [data-live]::after,
+.hSection [data-live] *::before,
+.hSection [data-live] *::after {
+  animation-play-state: paused;
 }
 
-@media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
-  .hScroller.isEnhanced .hSection > * {
+.hSection.isActive [data-live],
+.hSection.isActive [data-live] *,
+.hSection.isActive [data-live]::before,
+.hSection.isActive [data-live]::after,
+.hSection.isActive [data-live] *::before,
+.hSection.isActive [data-live] *::after {
+  animation-play-state: running;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hScroller.motionReady .hSection > * {
     opacity: 0;
     transform: translateY(30px) scale(0.985);
     transition:
-      opacity 580ms cubic-bezier(0.22, 1, 0.36, 1),
-      transform 760ms cubic-bezier(0.22, 1, 0.36, 1);
+      opacity var(--motion-slow) var(--ease-out-quint),
+      transform 760ms var(--ease-out-quint);
   }
 
-  .hScroller.isEnhanced .hSection.hasEntered > * {
+  .hScroller.motionReady .hSection.hasEntered > * {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 
-  .hScroller.isEnhanced .hSection.hasEntered:not(.isActive) > * {
-    opacity: 0.42;
-    transform: translateY(8px) scale(0.992);
-  }
-
-  .hScroller.isEnhanced .hSection.hasEntered.isActive > * {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-
-  .hScroller.isEnhanced .hSection.hasEntered > :nth-child(2) {
+  .hScroller.motionReady .hSection.hasEntered > :nth-child(2) {
     transition-delay: 80ms;
   }
 
-  .hScroller.isEnhanced .hSection.hasEntered > :nth-child(3) {
+  .hScroller.motionReady .hSection.hasEntered > :nth-child(3) {
     transition-delay: 150ms;
   }
 
-  .hScroller.isEnhanced .trustGrid article,
-  .hScroller.isEnhanced .installPanel > * {
+  /* Leaf-level rise: headlines, copy, cards and diagram parts land one after
+     another instead of the whole column appearing at once. */
+  .hScroller.motionReady .revealItem {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(7px);
+    transition:
+      opacity var(--motion-slow) var(--ease-out-quint) var(--reveal-delay, 0ms),
+      transform 720ms var(--ease-out-quint) var(--reveal-delay, 0ms),
+      filter var(--motion-slow) var(--ease-out-quint) var(--reveal-delay, 0ms);
+  }
+
+  .hScroller.motionReady .hSection.hasEntered .revealItem {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+
+  /* The hero copy hands its entrance to its own children, so the column itself
+     only carries the active/inactive dimming. */
+  .hScroller.motionReady .hSectionHero > .heroCopy {
+    opacity: 1;
+  }
+
+  .hScroller.motionReady .trustGrid article {
+    opacity: 0;
+    transform: translateY(20px);
+    filter: blur(6px);
+    transition:
+      opacity 500ms var(--ease-out-quint),
+      transform 680ms var(--ease-out-quint),
+      filter 500ms var(--ease-out-quint),
+      background-color 220ms var(--ease-out-soft),
+      box-shadow 220ms var(--ease-out-soft),
+      translate 260ms var(--ease-out-soft);
+  }
+
+  /* The install panel skips the blur: its rows carry a brightness hover that
+     would otherwise have to share the slow filter timing. */
+  .hScroller.motionReady .installPanel > * {
     opacity: 0;
     transform: translateY(20px);
     transition:
-      opacity 500ms cubic-bezier(0.22, 1, 0.36, 1),
-      transform 680ms cubic-bezier(0.22, 1, 0.36, 1);
+      opacity 500ms var(--ease-out-quint),
+      transform 680ms var(--ease-out-quint),
+      filter var(--motion-fast) ease,
+      box-shadow 240ms var(--ease-out-soft),
+      translate 240ms var(--ease-spring),
+      scale 240ms var(--ease-spring);
   }
 
-  .hScroller.isEnhanced .hSection.hasEntered .trustGrid article,
-  .hScroller.isEnhanced .hSection.hasEntered .installPanel > * {
+  .hScroller.motionReady .hSection.hasEntered .trustGrid article {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+
+  .hScroller.motionReady .hSection.hasEntered .installPanel > * {
     opacity: 1;
     transform: translateY(0);
   }
 
-  .hScroller.isEnhanced .hSection.hasEntered .trustGrid article:nth-child(2),
-  .hScroller.isEnhanced .hSection.hasEntered .installPanel > :nth-child(2) {
+  .hScroller.motionReady .hSection.hasEntered .trustGrid article:nth-child(2),
+  .hScroller.motionReady .hSection.hasEntered .installPanel > :nth-child(2) {
     transition-delay: 100ms;
   }
 
-  .hScroller.isEnhanced .hSection.hasEntered .trustGrid article:nth-child(3),
-  .hScroller.isEnhanced .hSection.hasEntered .installPanel > :nth-child(3) {
+  .hScroller.motionReady .hSection.hasEntered .trustGrid article:nth-child(3),
+  .hScroller.motionReady .hSection.hasEntered .installPanel > :nth-child(3) {
     transition-delay: 180ms;
   }
 
-  .hScroller.isEnhanced .productStage .hostTerminal,
-  .hScroller.isEnhanced .productStage .viewerTerminal,
-  .hScroller.isEnhanced .productStage .connectionPath {
-    opacity: 0;
-    transition: opacity 560ms cubic-bezier(0.22, 1, 0.36, 1);
+  .hScroller.motionReady .hSection.hasEntered .trustGrid article:nth-child(4),
+  .hScroller.motionReady .hSection.hasEntered .installPanel > :nth-child(4) {
+    transition-delay: 250ms;
   }
 
-  .hScroller.isEnhanced .hSection.hasEntered .productStage .hostTerminal {
+  .hScroller.motionReady .hSection.hasEntered .trustGrid article:nth-child(5),
+  .hScroller.motionReady .hSection.hasEntered .installPanel > :nth-child(5) {
+    transition-delay: 320ms;
+  }
+
+  .hScroller.motionReady .productStage .macbook,
+  .hScroller.motionReady .productStage .iphone {
+    opacity: 0;
+    transition: opacity var(--motion-slow) var(--ease-out-quint);
+  }
+
+  .hScroller.motionReady .hSection.hasEntered .productStage .macbook {
     opacity: 1;
     transition-delay: 140ms;
   }
 
-  .hScroller.isEnhanced .hSection.hasEntered .productStage .connectionPath {
+  .hScroller.motionReady .hSection.hasEntered .productStage .iphone {
     opacity: 1;
-    transition-delay: 240ms;
-  }
-
-  .hScroller.isEnhanced .hSection.hasEntered .productStage .viewerTerminal {
-    opacity: 1;
-    transition-delay: 320ms;
+    transition-delay: 280ms;
   }
 }
 
-.hSectionHero {
-  width: max(100vw, 1180px);
-  display: grid;
-  grid-template-columns: minmax(420px, 0.86fr) minmax(600px, 1.14fr);
-  align-items: center;
-  gap: clamp(46px, 6vw, 96px);
-  padding-left: clamp(48px, 7vw, 112px);
-  padding-right: clamp(48px, 6vw, 96px);
+/* Only the horizontal story dims the scenes it has left behind; stacked mobile
+   scenes stay fully lit once they have arrived. */
+@media (min-width: 761px) and (prefers-reduced-motion: no-preference) {
+  .hScroller.motionReady .hSection.hasEntered:not(.isActive) > * {
+    opacity: 0.42;
+    transform: translateY(8px) scale(0.992);
+  }
+
+  .hScroller.motionReady .hSection.hasEntered.isActive > * {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.heroCopy {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20px;
-  min-width: 0;
+/* Stagger. A scene reads top to bottom, so each item starts a beat after the
+   one above it. */
+.revealStack > .revealItem:nth-child(2) {
+  --reveal-delay: 70ms;
 }
 
-.hSectionEyebrow {
-  color: var(--color-text-muted);
-  font-size: 0.6875rem;
-  font-weight: 650;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+.revealStack > .revealItem:nth-child(3) {
+  --reveal-delay: 140ms;
+}
+
+.revealStack > .revealItem:nth-child(4) {
+  --reveal-delay: 210ms;
 }
 
 .heroTitle {
-  max-width: 760px;
-  font-size: clamp(3.8rem, 6vw, 7.3rem);
-  font-weight: 660;
-  line-height: 0.88;
-  letter-spacing: -0.075em;
-  text-wrap: balance;
+  --reveal-delay: 40ms;
 }
 
-.heroTitle em {
-  color: var(--color-accent-pop);
-  font-family: Georgia, "Times New Roman", serif;
-  font-weight: 400;
-  letter-spacing: -0.06em;
+.heroIntro .description {
+  --reveal-delay: 130ms;
 }
 
-.heroMedia {
+.hActions {
+  --reveal-delay: 220ms;
+}
+
+/* First paint: the chrome arrives with the same rise as the scenes, just without
+   waiting for a scroll position. `backwards` rather than `both` so hover
+   transforms still own the element once it has landed. */
+@media (prefers-reduced-motion: no-preference) {
+  .legalMain > :nth-child(-n + 3),
+  .notFoundCopy > *,
+  .notFoundTerminal {
+    animation: riseIn var(--motion-slow) var(--ease-out-quint) backwards;
+  }
+
+  .legalMain > :nth-child(1),
+  .notFoundCopy > :nth-child(1) {
+    animation-delay: 40ms;
+  }
+
+  .legalMain > :nth-child(2),
+  .notFoundCopy > :nth-child(2),
+  .notFoundTerminal {
+    animation-delay: 110ms;
+  }
+
+  .legalMain > :nth-child(3),
+  .notFoundCopy > :nth-child(3) {
+    animation-delay: 180ms;
+  }
+}
+
+/* Copy and devices are separate rows so the devices can never climb into the
+   headline band; whatever height is left after the copy belongs to the media. */
+.hSectionHero {
+  --hero-gap: clamp(16px, 2.4vh, 32px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  align-items: start;
+  row-gap: var(--hero-gap);
+  padding-top: clamp(24px, calc(26vh - 175px), 80px);
+  padding-bottom: 0;
+}
+
+.heroCopy {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 32px;
+  max-width: 744px;
   min-width: 0;
 }
 
+.heroIntro {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.heroTitle {
+  max-width: 744px;
+  font-size: clamp(2.5rem, min(4.5vw, 7.2vh), 4rem);
+  font-weight: 590;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.heroMedia {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  align-self: stretch;
+  margin: 0 calc(-1 * var(--page-pad));
+  pointer-events: none;
+}
+
 .description {
-  max-width: 590px;
   color: var(--color-text-muted);
-  font-size: clamp(1rem, 1.25vw, 1.2rem);
-  line-height: 1.7;
-  letter-spacing: -0.025em;
+  font-size: 1rem;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.heroIntro .description {
+  max-width: 335px;
 }
 
 .hActions {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-.primaryAction {
-  gap: 18px;
-  min-height: 48px;
+.primaryAction,
+.navAction,
+.textAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   padding: 0 18px;
-  border: 1px solid var(--color-text);
-  border-radius: var(--radius-sm);
-  background: var(--color-text);
-  color: var(--color-bg);
-  font-size: 0.8125rem;
-  font-weight: 650;
+  border: 0;
+  border-radius: var(--radius-pill);
+  font-size: 0.875rem;
+  font-weight: 510;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+  /* Hover and press move the button with the standalone translate/scale
+     properties so a scene reveal can keep transform to itself. */
   transition:
-    transform 160ms ease,
-    background-color 160ms ease;
+    filter var(--motion-fast) ease,
+    translate 240ms var(--ease-spring),
+    scale 240ms var(--ease-spring),
+    opacity var(--motion-fast) ease;
 }
 
-.primaryAction:hover {
-  transform: translateY(-2px);
+.primaryAction {
+  background: var(--color-accent-to);
+  color: #fff;
 }
 
-.textAction,
+.navAction {
+  background: var(--color-nav);
+  color: #fff;
+}
+
+.textAction {
+  background: #e5e5e5;
+  color: #000;
+}
+
+/* In dark mode the secondary pills go dark too, otherwise every button on the
+   page is a light capsule and the primary CTA loses its rank. */
+@media (prefers-color-scheme: dark) {
+  .navAction {
+    color: #0e0e10;
+  }
+
+  .textAction {
+    background: #1c1c20;
+    color: var(--color-text);
+  }
+}
+
+.primaryAction:hover,
+.navAction:hover,
+.textAction:hover {
+  filter: brightness(0.97);
+  translate: 0 -1px;
+}
+
+.primaryAction:active,
+.navAction:active,
+.textAction:active,
+.copyCommand:active {
+  translate: 0 0;
+  scale: 0.985;
+}
+
 .inlineLink {
   color: var(--color-text);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 510;
+  letter-spacing: -0.02em;
   text-decoration: underline;
   text-decoration-color: var(--color-border);
   text-underline-offset: 5px;
@@ -509,44 +682,565 @@ a {
   text-decoration-color: var(--color-accent-pop);
 }
 
+/* --dw is the lid width the whole composition is derived from. Figma sizes it
+   at 98.333% of the stage and lets 37.96% of it rise above the fold (30.2% for
+   the lid, the phone starting 7.76% earlier). When the stage is too short for
+   that band the second term shrinks the pair instead of cropping them, so the
+   Figma proportions survive. Shrinking is the last resort though: the pair is
+   pinned to the top of the stage first and cropped deeper at the fold, so a
+   short window loses the bottom of the scene instead of the whole scale. */
 .productStage {
+  --dw: min(98.333cqw, 408.3cqh);
   position: relative;
-  min-height: 540px;
-  aspect-ratio: 1.25;
+  width: 100%;
+  height: 100%;
+  container: stage / size;
 }
 
-.hostTerminal,
-.viewerTerminal {
+.macbook {
   position: absolute;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: var(--terminal-bg);
-  color: var(--terminal-text);
-  box-shadow: 12px 12px 0 rgba(20, 23, 28, 0.2);
+  top: max(calc(var(--dw) * 0.0776), calc(100% - var(--dw) * 0.302));
+  left: 50%;
+  z-index: 1;
+  width: var(--dw);
+  aspect-ratio: 1416 / 855.306;
+  container: macbook / size;
+  transform: translateX(-50%);
 }
 
-.hostTerminal {
-  inset: 8% 16% 12% 0;
-  border-radius: var(--radius-md);
-  transform: perspective(1000px) rotateY(3deg) rotateX(1deg);
+/* Figma stacks three rings around the display: a 2px aluminium edge, a 2px
+   graphite ring, then the black bezel the screen sits in. */
+.macbookLid {
+  position: absolute;
+  inset: 0 8.84% 6.74% 8.88%;
+  border-radius: 2.47cqw 2.47cqw 0 0;
+  background: #7d7d7f;
+  box-shadow: 0 2.2cqw 5.6cqw rgba(0, 0, 0, 0.22);
+}
+
+.macbookLid::before,
+.macbookLid::after {
+  position: absolute;
+  content: "";
+}
+
+.macbookLid::before {
+  inset: 0.167cqw;
+  border-radius: 2.3cqw 2.3cqw 0 0;
+  background: #201f24;
+}
+
+.macbookLid::after {
+  inset: 0.334cqw;
+  border-radius: 2.13cqw 2.13cqw 0 0;
+  background: #000;
+}
+
+.macbookScreen {
+  position: absolute;
+  inset: 2.45% 10.27% 12.05% 10.21%;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: 0.99cqw;
+  background: #0b0b0c;
+  container: macscreen / size;
+}
+
+.macbookNotch {
+  position: absolute;
+  inset: 2.45% 44.78% 94.66% 44.78%;
+  z-index: 2;
+  border-radius: 0 0 0.7cqw 0.7cqw;
+  background: #000;
+}
+
+/* Figma's camera is a near-black lens with a faintly blue iris a third of its
+   width, not the light grey dot it used to be. */
+.macbookCamera {
+  position: absolute;
+  inset: 2.812% 49.657% 96.054% 49.657%;
+  z-index: 3;
+  border-radius: 50%;
+  background: #131720;
+}
+
+.macWallpaper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.macMenuBar {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 1.9cqw;
+  height: 2.93cqw;
+  padding: 0 0.86cqw 0 1.4cqw;
+  overflow: hidden;
+  backdrop-filter: blur(2.58cqw);
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 1.12cqw;
+  font-weight: 590;
+  line-height: 1;
+}
+
+.macApple {
+  width: 1.23cqw;
+  height: 1.5cqw;
+  flex-shrink: 0;
+}
+
+.macMenuApp {
+  font-weight: 700;
+}
+
+.macMenuBar strong {
+  margin-left: auto;
+  font-weight: 590;
+}
+
+.macWindow {
+  position: absolute;
+  top: 13.84%;
+  left: 7.49%;
+  z-index: 3;
+  display: flex;
+  width: 43.24%;
+  height: 47.74%;
+  overflow: hidden;
+  flex-direction: column;
+  gap: 0.69cqw;
+  border-radius: 1.42cqw;
+  background: #fff;
+  box-shadow:
+    0 0 0 0.09cqw rgba(0, 0, 0, 0.23),
+    0 1.38cqw 4.13cqw rgba(0, 0, 0, 0.35);
+}
+
+.macTitlebar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 1.21cqw;
+  height: 2.76cqw;
+  padding: 0.69cqw 0.69cqw 0;
+}
+
+.macTraffic {
+  display: flex;
+  align-items: center;
+  gap: 0.78cqw;
+}
+
+.macTraffic i {
+  width: 1.21cqw;
+  height: 1.21cqw;
+  border: 0.04cqw solid rgba(0, 0, 0, 0.1);
+  border-radius: 100px;
+}
+
+.macTraffic i:first-child {
+  background: #ff736a;
+}
+
+.macTraffic i:nth-child(2) {
+  background: #febc2e;
+}
+
+.macTraffic i:last-child {
+  background: #19c332;
+}
+
+.macTitlebar h3 {
+  color: rgba(0, 0, 0, 0.85);
+  font-size: 1.29cqw;
+  font-weight: 700;
+  line-height: 1.38cqw;
+}
+
+.macContent {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 1.72cqw;
+  overflow: hidden;
+  color: #000;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 1.03cqw;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.macContent .isMuted {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.iphone {
+  position: absolute;
+  top: max(0px, calc(100% - var(--dw) * 0.3796));
+  right: calc(50% - var(--dw) * 0.424);
+  z-index: 4;
+  width: calc(var(--dw) * 0.27966);
+  overflow: hidden;
+  aspect-ratio: 402 / 600;
+  container: iphone / size;
+  filter: drop-shadow(0 0 24px rgba(0, 0, 0, 0.15));
+}
+
+/* The bezel is drawn rather than shipped as a bitmap so it stays sharp on
+   retina screens. Every ring width, radius and colour below is sampled from
+   the Figma frame, expressed against its 402x600 box: 5 units of titanium,
+   3.5 of graphite, 5.5 of black around a 359 unit wide display. */
+.iphoneShell {
+  position: absolute;
+  top: 1.62cqw;
+  right: 1.99cqw;
+  bottom: -6cqw;
+  left: 1.99cqw;
+  z-index: 1;
+  padding: 1.24cqw;
+  border-radius: 17.66cqw;
+  background: #b9b9bd;
+  box-shadow:
+    inset 0 0 0 0.12cqw rgba(94, 94, 102, 0.55),
+    0 1.2cqw 3cqw rgba(0, 0, 0, 0.22);
+}
+
+.iphoneRing {
+  height: 100%;
+  padding: 0.87cqw;
+  border-radius: 16.42cqw;
+  background: #1d1d21;
+  box-shadow: 0 0 0 0.3cqw #ececef;
+}
+
+.iphoneBezel {
+  height: 100%;
+  padding: 1.37cqw;
+  border-radius: 15.55cqw;
+  background: #000;
+}
+
+.iphoneKey {
+  position: absolute;
+  z-index: 0;
+  width: 1.12cqw;
+  border-radius: 0.56cqw;
+}
+
+.iphoneKey.isLeft {
+  left: 1.24cqw;
+  background: #a4a4a9;
+}
+
+.iphoneKey.isRight {
+  right: 1.24cqw;
+  background: #a4a4a9;
+}
+
+.iphoneKey.isAction {
+  top: 43.03cqw;
+  height: 9.2cqw;
+}
+
+.iphoneKey.isVolumeUp {
+  top: 58.96cqw;
+  height: 15.17cqw;
+}
+
+.iphoneKey.isVolumeDown {
+  top: 78.11cqw;
+  height: 14.68cqw;
+}
+
+.iphoneKey.isPower {
+  top: 64.18cqw;
+  height: 23.88cqw;
+}
+
+.iphoneScreen {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  flex-direction: column;
+  border-radius: 14.18cqw;
+  background: #fff;
+  color: #000;
+  container: iosscreen / size;
+}
+
+/* Height is twice the island's centre line, so flex centring drops the clock
+   and the indicators on exactly the same axis as the island. */
+.iosStatus {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  height: 15.88cqw;
+  padding: 0 10cqw 0 13cqw;
+  color: #000;
+  font-size: 4.6cqw;
+  font-weight: 590;
+}
+
+.iosIsland {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30.65cqw;
+  height: 8.64cqw;
+  border-radius: 4.32cqw;
+  background: #000;
+  transform: translate(-50%, -50%);
+}
+
+.iosIsland::after {
+  position: absolute;
+  top: 50%;
+  right: 9.8%;
+  width: 8.6%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #131720;
+  content: "";
+  transform: translateY(-50%);
+}
+
+.iosStatusIcons {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.9cqw;
+}
+
+/* Widths follow the iOS point sizes of each glyph (1pt = 0.29cqw of the screen). */
+.iosStatusIcons svg {
+  display: block;
+  height: auto;
+}
+
+.iosSignal {
+  width: 5.08cqw;
+}
+
+.iosWifi {
+  width: 4.47cqw;
+}
+
+.iosBattery {
+  width: 7.16cqw;
+}
+
+.iosTopBar {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  height: 21.65cqw;
+  padding: 0 3.98cqw;
+}
+
+.iosGlass,
+.iosBack,
+.iosName,
+.iosRound,
+.iosField {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 100px;
+  backdrop-filter: blur(5cqw);
+  background: rgba(247, 247, 247, 0.92);
+  box-shadow: 0 1.5cqw 4cqw rgba(0, 0, 0, 0.1);
+}
+
+.iosBack {
+  z-index: 1;
+  gap: 1.7cqw;
+  height: 9.95cqw;
+  padding: 0 1.9cqw 0 2.8cqw;
+  color: #3a3a3c;
+}
+
+.iosBack svg {
+  width: 3.1cqw;
+  height: 5.6cqw;
+}
+
+.iosBack b {
+  display: grid;
+  place-items: center;
+  width: 6cqw;
+  height: 6cqw;
+  border-radius: 50%;
+  background: #3a3a3c;
+  color: #fff;
+  font-size: 3.4cqw;
+  font-weight: 700;
+}
+
+.iosIdentity {
+  position: absolute;
+  left: 50%;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+}
+
+.iosAvatar {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  overflow: hidden;
+  width: 14.93cqw;
+  height: 14.93cqw;
+  border-radius: 50%;
+  background: #0e0e10;
+  box-shadow: 0 0.62cqw 0.5cqw rgba(0, 0, 0, 0.1);
+  place-items: center;
+}
+
+.iosAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.iosName {
+  gap: 1cqw;
+  height: 7.96cqw;
+  margin-top: -1.28cqw;
+  padding: 0 1.7cqw 0 3.4cqw;
+  color: #000;
+  font-size: 4.23cqw;
+  font-weight: 700;
+}
+
+.iosName svg {
+  width: 1.9cqw;
+  height: 3.4cqw;
+  color: rgba(60, 60, 67, 0.6);
+}
+
+.iosRound {
+  z-index: 1;
+  width: 9.95cqw;
+  height: 9.95cqw;
+  color: #3a3a3c;
+}
+
+.iosRound svg {
+  width: 4.5cqw;
+  height: 4.5cqw;
+}
+
+.iosTopBar .iosRound svg {
+  width: 7.3cqw;
+  height: 4.7cqw;
+}
+
+.iosTranscript {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1cqw;
+  padding: 1cqw 3.98cqw 0;
+}
+
+.iosTime {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1cqw;
+  color: rgba(60, 60, 67, 0.6);
+  font-size: 2.74cqw;
+  line-height: 5.5cqw;
+}
+
+.iosTime strong {
+  font-weight: 510;
+}
+
+.iosBubble {
+  max-width: 75.7%;
+  padding: 2.24cqw 2.99cqw;
+  border-radius: 4.6cqw;
+  font-size: 4.24cqw;
+  line-height: 1.294;
+}
+
+.iosBubble.isIn {
+  align-self: flex-start;
+  background: rgba(120, 120, 128, 0.16);
+}
+
+.iosBubble.isOut {
+  align-self: flex-end;
+  background: #0088ff;
+  color: #fff;
+}
+
+.iosCompose {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2.99cqw;
+  padding: 1cqw 6.98cqw 6.98cqw;
+}
+
+.iosField {
+  flex: 1;
+  justify-content: flex-start;
+  height: 9.95cqw;
+  padding: 0 4.48cqw;
+  color: #d9d9d9;
+  font-size: 4.24cqw;
+  font-weight: 510;
+}
+
+.heroVideo {
+  position: absolute;
+  inset: 8% 18% 18% 9%;
+  z-index: 5;
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 18px;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 500ms ease;
+}
+
+.heroVideo.isReady {
+  opacity: 1;
 }
 
 .terminalChrome,
-.terminalStatus,
-.viewerHeader,
-.viewerKeyBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.notFoundTerminalBody {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 .terminalChrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   height: 42px;
-  padding: 0 14px;
+  padding: 0 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: var(--terminal-surface);
   color: var(--terminal-muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.68rem;
 }
 
@@ -578,90 +1272,13 @@ a {
   color: #78c695;
 }
 
-.terminalBody,
-.viewerBody {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-.terminalBody {
-  padding: 28px 30px;
-  font-size: clamp(0.72rem, 1vw, 0.9rem);
-  line-height: 1.85;
-}
-
-.prompt,
-.terminalAccent {
-  color: #8eabff;
-}
-
 .prompt {
   margin-right: 8px;
+  color: #8eabff;
 }
 
 .terminalMuted {
   color: var(--terminal-muted);
-}
-
-.keycap {
-  padding: 2px 6px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: var(--radius-xs);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.terminalStatus {
-  position: absolute;
-  inset: auto 0 0;
-  height: 34px;
-  padding: 0 14px;
-  background: var(--color-accent-pop);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.65rem;
-}
-
-.statusLive {
-  gap: 6px;
-}
-
-.statusLive i {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #69d58a;
-  box-shadow: 0 0 0 3px rgba(105, 213, 138, 0.14);
-}
-
-.viewerTerminal {
-  top: 18%;
-  right: 0;
-  bottom: 2%;
-  width: 31%;
-  min-width: 210px;
-  border-width: 5px;
-  border-color: #1d2026;
-  border-radius: var(--radius-lg);
-  transform: rotate(2deg);
-}
-
-.viewerNotch {
-  width: 32%;
-  height: 14px;
-  margin: 7px auto 2px;
-  border-radius: var(--radius-pill);
-  background: #020304;
-}
-
-.viewerHeader {
-  padding: 10px 14px;
-  color: var(--terminal-muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.62rem;
-}
-
-.viewerBody {
-  padding: 22px 17px;
-  font-size: 0.68rem;
-  line-height: 1.8;
 }
 
 .terminalCursor {
@@ -673,82 +1290,27 @@ a {
   animation: cursorBlink 1.1s steps(1) infinite;
 }
 
-.viewerKeyBar {
-  position: absolute;
-  inset: auto 0 0;
-  gap: 4px;
-  padding: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
-  background: var(--terminal-surface);
-}
-
-.viewerKeyBar span {
-  padding: 4px 6px;
-  border-radius: var(--radius-xs);
-  background: rgba(255, 255, 255, 0.07);
-  color: var(--terminal-muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.52rem;
-}
-
-.connectionPath {
-  position: absolute;
-  top: 50%;
-  right: 25%;
-  width: 18%;
-  height: 1px;
-  overflow: hidden;
-  background: rgba(110, 86, 207, 0.3);
-}
-
-.connectionPulse {
-  position: absolute;
-  width: 30%;
-  height: 100%;
-  background: #8eabff;
-  box-shadow: 0 0 12px rgba(142, 171, 255, 0.7);
-  animation: connectionMove 2s ease-in-out infinite;
-}
-
-.heroVideo {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  width: 100%;
-  height: 100%;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  object-fit: cover;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 500ms ease;
-}
-
-.heroVideo.isReady {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 .displayTitle {
-  font-size: clamp(3rem, 4.8vw, 6rem);
-  font-weight: 640;
-  line-height: 0.96;
-  letter-spacing: -0.065em;
+  font-size: clamp(2.4rem, 4vw, 3.5rem);
+  font-weight: 590;
+  line-height: 1;
+  letter-spacing: -0.01em;
   text-wrap: balance;
 }
 
 .hSectionTrust {
-  width: max(1120px, 100vw);
   display: grid;
-  grid-template-columns: minmax(420px, 0.8fr) minmax(560px, 1.2fr);
+  grid-template-columns: minmax(320px, 0.78fr) minmax(480px, 1.22fr);
+  /* An explicit row keeps the scene height definite, which is what lets the bento
+     resolve its own percentage height and shrink instead of spilling. */
+  grid-template-rows: minmax(0, 1fr);
   align-items: center;
-  gap: clamp(60px, 8vw, 140px);
-  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  gap: clamp(40px, 6vw, 96px);
 }
 
 .trustStatement,
-.transportCopy,
-.installCopy {
+.installCopy,
+.pricingCopy {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -756,233 +1318,969 @@ a {
 }
 
 .trustStatement p,
-.transportCopy p,
-.installCopy p {
-  max-width: 560px;
+.installCopy p,
+.pricingCopy p {
+  max-width: 420px;
   color: var(--color-text-muted);
   font-size: 1rem;
-  line-height: 1.75;
+  line-height: 1.3;
 }
 
+/* Bento: two tall cards per row, then a wide row that carries the shell line.
+   The grid owns the full scene height and the two card rows share whatever is
+   left, so a short window compresses the cards instead of pushing the wide row
+   under the footer. */
 .trustGrid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: 12px;
+  align-self: stretch;
+  height: 100%;
+  /* Capped so a tall window gets calmer cards rather than one huge grid, with the
+     margins centring whatever the cap leaves over. */
+  max-height: 700px;
+  margin-block: auto;
 }
 
-.trustGrid article {
+.featureCard {
   position: relative;
-  min-height: 220px;
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  /* Padding is the gap the inner radius is derived from, so it stays at 16px on
+     every viewport and the corners keep looking concentric. */
+  padding: 16px;
+  overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
   transition:
-    background-color 180ms ease,
-    transform 180ms ease;
+    border-color 220ms var(--ease-out-soft),
+    box-shadow 220ms var(--ease-out-soft),
+    translate 260ms var(--ease-out-soft);
 }
 
-.trustGrid article:hover {
+.featureCard:hover {
   z-index: 1;
-  background: var(--color-surface-strong);
-  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--color-text) 16%, transparent);
+  translate: 0 -3px;
+  box-shadow: 0 20px 40px -26px rgba(0, 0, 0, 0.45);
+}
+
+.featureCardWide {
+  grid-column: span 2;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+}
+
+.cardWideBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.featureCard code,
+.stepList code {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82em;
+}
+
+/* Illustrations. The drawing takes whatever height the card can spare, so a tall
+   window gets a bigger diagram instead of more empty card. */
+.cardArt {
+  width: 100%;
+  /* Small floor, generous stretch: the drawing gives up height first so a short
+     window still fits five cards between header and footer. */
+  min-height: 54px;
+  flex: 1;
+  padding: 10px;
+  /* Concentric with the card: 28px outer radius minus 16px of padding. */
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-bg) 78%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 5%, transparent);
+  color: var(--color-text);
+  overflow: hidden;
+}
+
+.cardArtWide {
+  width: 180px;
+  max-width: 42%;
+  min-height: 0;
+  flex: none;
+  align-self: stretch;
+  max-height: 96px;
+}
+
+/* Shared SVG shadow filter, declared once off-layout. */
+.artDefs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Shared drawing vocabulary. Faces are filled panels with a hairline edge,
+   structure is drawn in the text colour at low opacity, and hairlines keep a true
+   1px weight at any size so the small drawings stay crisp. The reset is wrapped
+   in :where() so every class below it wins without needing extra weight. */
+:where(.cardArt) path,
+:where(.cardArt) rect,
+:where(.cardArt) circle {
+  fill: none;
+  stroke: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.artFace {
+  fill: color-mix(in srgb, var(--color-text) 7%, var(--color-bg));
+  stroke: var(--color-text);
+  stroke-opacity: 0.16;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.artHair,
+.artKeyholeStem {
+  stroke: var(--color-text);
+  stroke-opacity: 0.16;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.artBoundary,
+.artPerf {
+  stroke: var(--color-text);
+  stroke-opacity: 0.2;
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.artTraffic {
+  fill: var(--color-text);
+  fill-opacity: 0.18;
+}
+
+/* Real window lights, the same ones the hero MacBook wears. */
+.artLightRed {
+  fill: #ff5f57;
+}
+
+.artLightAmber {
+  fill: #febc2e;
+}
+
+.artLightGreen {
+  fill: #28c840;
+}
+
+:where(.cardArt) text {
+  fill: var(--color-text);
+  stroke: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: -0.02em;
+}
+
+.artMono {
+  fill-opacity: 0.5;
+  font-size: 11px;
+}
+
+.artMicro {
+  fill-opacity: 0.32;
+  font-size: 7.5px;
+  letter-spacing: 0.04em;
+}
+
+.artWindowTitle {
+  fill-opacity: 0.38;
+  font-size: 8px;
+  font-weight: 590;
+}
+
+/* Keycaps: a cap on a slightly taller edge, so pressing the cap down closes the
+   gap the way a real key does. */
+.artKeyEdge {
+  fill: var(--color-text);
+  fill-opacity: 0.14;
+}
+
+.artKeyCap {
+  fill: var(--color-bg);
+  stroke: var(--color-text);
+  stroke-opacity: 0.2;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.artKeyLabel {
+  fill-opacity: 0.68;
+  font-size: 10px;
+  font-weight: 590;
+}
+
+.artKeyPress {
+  animation: artKeyPress 5.2s var(--ease-out-soft) infinite;
+}
+
+.artKeySecond .artKeyPress {
+  animation-delay: 260ms;
+}
+
+@keyframes artKeyPress {
+  0%,
+  4% {
+    transform: translateY(0);
+  }
+
+  9% {
+    transform: translateY(2.6px);
+  }
+
+  20%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+/* Loopback: traffic leaves the socket, turns straight around, and comes back. */
+.artLoopTrack {
+  stroke: var(--color-text);
+  stroke-opacity: 0.18;
+  stroke-width: 2.4;
+}
+
+.artPort {
+  fill: var(--color-text);
+  fill-opacity: 0.28;
+}
+
+/* Same path, same weight as the pipe, so the packet sits in it rather than on
+   top of it. The glow is only a soft halo around that same segment. */
+.artLoopGlow,
+.artLoopFlow {
+  stroke: var(--color-accent-pop);
+  stroke-dasharray: 17 57;
+  animation: artLoopFlow 2.4s linear infinite;
+}
+
+.artLoopFlow {
+  stroke-width: 2.4;
+}
+
+.artLoopGlow {
+  stroke-width: 4;
+  opacity: 0.22;
+  filter: blur(2.5px);
+}
+
+@keyframes artLoopFlow {
+  to {
+    stroke-dashoffset: -74;
+  }
+}
+
+/* Pointing at a card makes its traffic pick up. */
+.featureCard:hover .artLoopFlow,
+.featureCard:hover .artLoopGlow {
+  animation-duration: 1.5s;
+}
+
+.artBlocked {
+  stroke: var(--color-text);
+  stroke-opacity: 0.24;
+  stroke-width: 1.4;
+}
+
+.artBlocked path {
+  stroke: inherit;
+  stroke-opacity: inherit;
+  stroke-width: inherit;
+}
+
+/* Share: two keys go down and the code lands under them. */
+.artChipFace {
+  fill: color-mix(in srgb, var(--color-accent-pop) 14%, var(--color-bg));
+  stroke: var(--color-accent-pop);
+  stroke-opacity: 0.35;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.artChipGlow {
+  fill: var(--color-accent-pop);
+  opacity: 0.18;
+  filter: blur(4px);
+}
+
+.artChipText {
+  fill: color-mix(in srgb, var(--color-accent-pop) 78%, var(--color-text));
+  font-size: 11px;
+  font-weight: 590;
+  letter-spacing: 0.06em;
+}
+
+.artCodeChip {
+  transform-box: view-box;
+  transform-origin: 100px 75px;
+  animation: artChipLand 5.2s var(--ease-spring) infinite;
+}
+
+@keyframes artChipLand {
+  0%,
+  20% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+    filter: blur(4px);
+  }
+
+  32%,
+  86% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+
+  96%,
+  100% {
+    opacity: 0;
+    transform: translateY(0) scale(1);
+    filter: blur(3px);
+  }
+}
+
+/* Revoke: the lock snaps shut, the open link sparks and pulls back. */
+.artShackle {
+  stroke: color-mix(in srgb, var(--color-text) 38%, transparent);
+  stroke-width: 4.5;
+  stroke-linecap: butt;
+  transform-box: view-box;
+  transform-origin: 111px 30px;
+  animation: artShackleShut 5.2s var(--ease-spring) infinite;
+}
+
+@keyframes artShackleShut {
+  0%,
+  10% {
+    transform: translateY(-5px) rotate(-14deg);
+  }
+
+  22% {
+    transform: translateY(0) rotate(3deg);
+  }
+
+  30%,
+  90% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  98%,
+  100% {
+    transform: translateY(-5px) rotate(-14deg);
+  }
+}
+
+.artLockBody {
+  fill: color-mix(in srgb, var(--color-text) 7%, var(--color-bg));
+  stroke: var(--color-text);
+  stroke-opacity: 0.22;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.artKeyhole {
+  fill: var(--color-text);
+  fill-opacity: 0.28;
+}
+
+.artLinkTrack {
+  stroke: var(--color-text);
+  stroke-opacity: 0.14;
+  stroke-width: 2;
+  stroke-dasharray: 2 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.artLinkLive {
+  stroke: var(--color-accent-pop);
+  stroke-width: 2.6;
+  transform-box: view-box;
+  animation: artLinkPull 5.2s var(--ease-out-quint) infinite;
+}
+
+.artLinkLeft {
+  transform-origin: 52px 64px;
+}
+
+.artLinkRight {
+  transform-origin: 154px 64px;
+}
+
+.artPhoneNotch {
+  fill: var(--color-text);
+  fill-opacity: 0.16;
+  stroke: none;
+}
+
+@keyframes artLinkPull {
+  0%,
+  22% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  44%,
+  90% {
+    opacity: 0.16;
+    transform: scaleX(0.62);
+  }
+
+  98%,
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.artSpark {
+  fill: var(--color-accent-pop);
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 103px 64px;
+  animation: artSpark 5.2s var(--ease-out-quint) infinite;
+}
+
+@keyframes artSpark {
+  0%,
+  22% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+
+  26% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+
+  38%,
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+/* Ticket: a stub with a barcode, sixty seconds of life, then it is spent and the
+   next one drops in. */
+.artTicket {
+  transform-box: view-box;
+  transform-origin: 100px 51px;
+  animation: artTicketCycle 6s var(--ease-out-quint) infinite;
+}
+
+@keyframes artTicketCycle {
+  0% {
+    opacity: 0;
+    transform: translateY(-7px);
+  }
+
+  5%,
+  88% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  96%,
+  100% {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+}
+
+.artTicketSerial {
+  animation: artTicketSpend 6s var(--ease-out-soft) infinite;
+}
+
+@keyframes artTicketSpend {
+  0%,
+  62% {
+    fill-opacity: 0.5;
+  }
+
+  72%,
+  100% {
+    fill-opacity: 0.18;
+  }
+}
+
+.artBars path {
+  stroke: var(--color-text);
+  stroke-opacity: 0.26;
+  stroke-width: 1.6;
+}
+
+.artMeterTrack {
+  stroke: var(--color-text);
+  stroke-opacity: 0.12;
+  stroke-width: 3;
+}
+
+.artMeter {
+  stroke: var(--color-accent-pop);
+  stroke-width: 3;
+  stroke-dasharray: 62;
+  animation: artMeterDrain 6s linear infinite;
+}
+
+@keyframes artMeterDrain {
+  0%,
+  4% {
+    stroke-dashoffset: 0;
+  }
+
+  62%,
+  100% {
+    stroke-dashoffset: 62;
+  }
+}
+
+.artStamp {
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 81px 51px;
+  animation: artStampIn 6s var(--ease-spring) infinite;
+}
+
+.artStamp rect {
+  stroke: var(--color-text);
+  stroke-opacity: 0.5;
+  stroke-width: 1.6;
+}
+
+.artStamp text {
+  fill-opacity: 0.55;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+@keyframes artStampIn {
+  0%,
+  62% {
+    opacity: 0;
+    transform: rotate(-9deg) scale(1.45);
+  }
+
+  70%,
+  90% {
+    opacity: 0.62;
+    transform: rotate(-9deg) scale(1);
+  }
+
+  96%,
+  100% {
+    opacity: 0;
+    transform: rotate(-9deg) scale(1);
+  }
+}
+
+/* Shell: the same command typed at three different prompts. */
+.artShellPrompt {
+  fill: color-mix(in srgb, var(--color-accent-pop) 70%, var(--color-text));
+  font-size: 11px;
+  font-weight: 590;
+  opacity: 0;
+  animation: artShellCycle 7.2s var(--ease-out-soft) infinite;
+}
+
+.artShellZsh {
+  opacity: 1;
+}
+
+.artShellBash {
+  animation-delay: 2.4s;
+}
+
+.artShellFish {
+  animation-delay: 4.8s;
+}
+
+@keyframes artShellCycle {
+  0% {
+    opacity: 0;
+  }
+
+  4%,
+  29% {
+    opacity: 1;
+  }
+
+  33%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.artCommand {
+  fill-opacity: 0.62;
+  font-size: 11px;
+}
+
+.artTypeMask {
+  animation: artTypeLine 2.4s steps(14, end) infinite;
+}
+
+@keyframes artTypeLine {
+  0% {
+    width: 0;
+  }
+
+  58%,
+  100% {
+    width: 88px;
+  }
+}
+
+.artCaret {
+  fill: var(--color-accent-pop);
+  transform-box: view-box;
+  animation:
+    artCaretMove 2.4s steps(14, end) infinite,
+    artCaretBlink 1.06s steps(1) infinite;
+}
+
+@keyframes artCaretMove {
+  0% {
+    transform: translateX(0);
+  }
+
+  58%,
+  100% {
+    transform: translateX(88px);
+  }
+}
+
+@keyframes artCaretBlink {
+  0%,
+  55% {
+    opacity: 1;
+  }
+
+  56%,
+  100% {
+    opacity: 0.12;
+  }
+}
+
+.artOutput {
+  animation: artOutputLine 2.4s var(--ease-out-soft) infinite;
+}
+
+@keyframes artOutputLine {
+  0%,
+  58% {
+    fill-opacity: 0;
+    transform: translateY(2px);
+  }
+
+  68%,
+  90% {
+    fill-opacity: 0.38;
+    transform: translateY(0);
+  }
+
+  98%,
+  100% {
+    fill-opacity: 0;
+    transform: translateY(0);
+  }
 }
 
 .trustGrid h3 {
   margin-top: 0;
-  font-size: 1.25rem;
-  letter-spacing: -0.04em;
+  font-size: 1.125rem;
+  font-weight: 590;
+  letter-spacing: -0.03em;
 }
 
 .trustGrid p {
-  margin-top: 12px;
+  margin-top: 0;
   color: var(--color-text-muted);
-  font-size: 0.82rem;
-  line-height: 1.65;
+  font-size: 0.875rem;
+  line-height: 1.35;
 }
 
-.hSectionTransport {
-  width: max(1140px, 100vw);
+/* Pricing replaces the old transport scene: two quiet cards, one for what is
+   already yours, one for what you pay when the session has to leave the LAN. */
+.hSectionPricing,
+.hSectionStart {
   display: grid;
-  grid-template-columns: minmax(430px, 0.8fr) minmax(640px, 1.2fr);
+  grid-template-columns: minmax(320px, 0.78fr) minmax(480px, 1.22fr);
   align-items: center;
-  gap: clamp(56px, 8vw, 120px);
+  gap: clamp(40px, 6vw, 96px);
 }
 
-.transportDiagram {
-  position: relative;
-  min-height: 400px;
+.priceGrid {
   display: grid;
-  grid-template-columns: 180px 1fr 180px;
-  align-items: center;
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-self: center;
+  width: 100%;
+  max-width: 620px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  box-shadow: 0 24px 60px -52px color-mix(in srgb, var(--color-text) 42%, transparent);
 }
 
-.networkNode,
-.relayNode {
-  position: relative;
-  z-index: 2;
+.priceCard {
   display: flex;
   flex-direction: column;
+  min-height: 480px;
+  padding: 24px;
+  background: var(--color-bg);
+}
+
+.priceCard + .priceCard {
+  border-left: 1px solid var(--color-border);
+}
+
+.priceCardPro {
+  background: color-mix(in srgb, var(--color-accent-pop) 5%, var(--color-bg));
+}
+
+.priceHead {
+  display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  min-height: 130px;
-  padding: 20px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-strong);
-  box-shadow: 5px 5px 0 var(--color-border);
+  gap: 12px;
 }
 
-.networkNode span,
-.relayNode span {
+.priceHead h3 {
+  font-size: 1rem;
+  font-weight: 590;
+  letter-spacing: -0.03em;
+}
+
+.priceAmount {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 18px;
   color: var(--color-text-muted);
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
-.networkNode strong {
-  font-size: 0.9rem;
+.priceAmount strong {
+  color: var(--color-text);
+  font-size: 2.5rem;
+  font-weight: 590;
+  line-height: 1;
+  letter-spacing: -0.06em;
 }
 
-.relayNode {
-  position: absolute;
-  right: calc(50% - 80px);
-  bottom: 16px;
-  width: 160px;
-  min-height: 86px;
-  border-radius: var(--radius-sm);
-  border-style: dashed;
-  box-shadow: none;
+.priceAmount small {
+  font-size: 0.6875rem;
+  letter-spacing: -0.01em;
 }
 
-.relayNode small {
+.priceCardPro .priceAmount strong {
+  color: var(--color-accent-pop);
+}
+
+.priceLead {
+  min-height: 44px;
+  max-width: 230px;
+  margin-top: 12px;
   color: var(--color-text-muted);
-  font-size: 0.64rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }
 
-.networkPaths {
+.priceList {
   display: grid;
-  gap: 70px;
+  gap: 11px;
+  margin: 20px 0 0;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--color-border);
+  list-style: none;
 }
 
-.directPath,
-.relayPath {
-  position: relative;
+.priceList li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.priceList li::before {
+  content: "✓";
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin-top: 1px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 14%, transparent);
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  font-size: 0.5rem;
+  font-weight: 700;
+}
+
+.priceCardPro .priceList li::before {
+  border-color: color-mix(in srgb, var(--color-accent-pop) 28%, transparent);
+  background: color-mix(in srgb, var(--color-accent-pop) 8%, transparent);
+  color: var(--color-accent-pop);
+}
+
+.priceCta {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 2px;
-  background: var(--color-border);
+  width: 100%;
+  min-height: 40px;
+  margin-top: auto;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  font-weight: 510;
+  letter-spacing: -0.02em;
 }
 
-.directPath {
-  background: color-mix(in srgb, var(--color-accent-pop) 65%, transparent);
+.priceCardPro .priceCta {
+  border-color: transparent;
+  background: var(--color-accent-to);
+  color: #fff;
 }
 
-.directPath span,
-.relayPath span,
-.directPath strong,
-.relayPath strong {
-  position: absolute;
-  padding: 3px 7px;
-  border-radius: var(--radius-xs);
-  background: var(--color-bg);
-  font-size: 0.6rem;
-  white-space: nowrap;
+.priceCta:hover {
+  filter: brightness(0.97);
 }
 
-.directPath span,
-.relayPath span {
-  top: -28px;
-  color: var(--color-text-muted);
-}
-
-.directPath strong,
-.relayPath strong {
-  bottom: -28px;
-  font-weight: 650;
-}
-
-.directPath i,
-.relayPath i {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-accent-pop);
-}
-
-.relayPath i {
-  background: var(--color-text-muted);
-}
-
-.transportDisclosure {
-  position: absolute;
-  right: clamp(32px, 5vw, 76px);
-  bottom: 20px;
-  max-width: 600px;
-  color: var(--color-text-muted);
-  font-size: 0.68rem;
-  text-align: right;
-}
-
-.hSectionStart {
-  width: max(1040px, 92vw);
+.stepList {
   display: grid;
-  grid-template-columns: minmax(420px, 0.8fr) minmax(520px, 1.2fr);
+  gap: 12px;
+  max-width: 460px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stepList strong {
+  font-size: 0.875rem;
+  font-weight: 590;
+  letter-spacing: -0.02em;
+}
+
+.stepList li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.stepList li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.stepList span:not(.stepIndex) {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.stepIndex {
+  display: inline-flex;
   align-items: center;
-  gap: 80px;
-  background: var(--color-surface-strong);
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
+  font-size: 0.72rem;
+  font-weight: 590;
 }
 
 .installPanel {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-width: 680px;
+  gap: 10px;
+  max-width: 560px;
 }
 
 .copyCommand {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
-  min-height: 58px;
-  padding: 0 16px;
+  min-height: 52px;
+  padding: 14px 16px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  background: transparent;
   color: var(--color-text);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.82rem;
+  font-size: 0.8125rem;
   text-align: left;
   cursor: pointer;
   transition:
-    border-color 160ms ease,
-    background-color 160ms ease,
-    transform 160ms ease;
+    border-color 200ms var(--ease-out-soft),
+    box-shadow 240ms var(--ease-out-soft),
+    background-color 200ms var(--ease-out-soft);
 }
 
 .copyCommand:hover {
-  border-color: color-mix(in srgb, var(--color-accent-pop) 58%, var(--color-border));
-  background: var(--color-accent-soft);
-  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-text) 16%, transparent);
+}
+
+.copyCommand.isCopied {
+  box-shadow: 0 0 0 2px var(--color-accent-soft);
+}
+
+.copyCommand.isCopied .copyCommandIcon {
+  animation: popIn 420ms var(--ease-spring);
 }
 
 .copyCommand:focus-visible,
+.priceCta:focus-visible,
 .primaryAction:focus-visible,
+.navAction:focus-visible,
 .social-btn:focus-visible,
 .textAction:focus-visible,
 .inlineLink:focus-visible,
-.legalHeader a:focus-visible,
-.siteFooterGroup a:focus-visible {
+.navText:focus-visible,
+.siteFooterGroup a:focus-visible,
+.landingFooterBar a:focus-visible {
   outline: 2px solid var(--color-accent-pop);
   outline-offset: 3px;
 }
 
 .copyCommandPrompt {
-  color: var(--color-accent-pop);
+  color: var(--color-text-muted);
   user-select: none;
+  transition: color 200ms var(--ease-out-soft);
+}
+
+.copyCommand:hover .copyCommandPrompt,
+.copyCommand:focus-visible .copyCommandPrompt,
+.copyCommand.isCopied .copyCommandPrompt {
+  color: var(--color-accent-pop);
 }
 
 .copyCommandText {
@@ -999,6 +2297,18 @@ a {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   user-select: none;
+  opacity: 0;
+  translate: 8px 0;
+  transition:
+    opacity 200ms var(--ease-out-soft),
+    translate 240ms var(--ease-out-soft);
+}
+
+.copyCommand:hover .copyCommandHint,
+.copyCommand:focus-visible .copyCommandHint,
+.copyCommand.isCopied .copyCommandHint {
+  opacity: 1;
+  translate: 0 0;
 }
 
 .copyCommandIcon {
@@ -1009,51 +2319,94 @@ a {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.35;
+  opacity: 0.38;
+  transition:
+    opacity 200ms var(--ease-out-soft),
+    color 200ms var(--ease-out-soft);
 }
 
-.installSupport {
-  margin-top: 8px;
-  color: var(--color-text-muted);
-  font-size: 0.72rem;
+.copyCommand:hover .copyCommandIcon,
+.copyCommand:focus-visible .copyCommandIcon {
+  opacity: 0.75;
 }
 
-.installLinks {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin-top: 16px;
-  color: var(--color-text-muted);
-  font-size: 0.72rem;
+.copyCommand.isCopied .copyCommandIcon {
+  color: var(--color-accent-pop);
+  opacity: 1;
 }
 
-.installLinks a:hover {
-  color: var(--color-text);
-}
-
+/* Hairline above the bar so the sliding scenes never bleed into the chrome.
+   Relic keeps the bar quiet and lets the stroke do the separation. */
 .landingFooterBar {
   position: fixed;
   right: 0;
   bottom: 0;
   left: 0;
   z-index: 10;
-  height: 46px;
+  height: var(--footer-h);
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 20px;
-  padding: 0 clamp(20px, 3vw, 48px);
+  padding: 0 var(--page-pad);
   border-top: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text-muted);
-  font-size: 0.66rem;
-  letter-spacing: 0.02em;
+  font-size: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.landingFooterMeta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.builtBy {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+}
+
+.builtBy:hover {
+  color: var(--color-text);
+}
+
+.cupolaMark {
+  display: block;
+  height: 13px;
+  width: auto;
+  opacity: 0.55;
+}
+
+.builtBy:hover .cupolaMark {
+  opacity: 0.9;
+}
+
+.cupolaMark-light {
+  display: block;
+}
+
+.cupolaMark-dark {
+  display: none;
+}
+
+.landingFooterBar nav {
+  display: flex;
+  gap: 16px;
+}
+
+.landingFooterBar a:hover {
+  color: var(--color-text);
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
 }
 
 .logo {
@@ -1073,11 +2426,13 @@ a {
 }
 
 @media (prefers-color-scheme: dark) {
-  .logo-light {
+  .logo-light,
+  .cupolaMark-light {
     display: none;
   }
 
-  .logo-dark {
+  .logo-dark,
+  .cupolaMark-dark {
     display: block;
   }
 }
@@ -1088,32 +2443,11 @@ a {
   }
 }
 
-@keyframes connectionMove {
-  from {
-    transform: translateX(-110%);
-  }
-  to {
-    transform: translateX(440%);
-  }
-}
-
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  width: min(100%, 560px);
-  padding: clamp(24px, 4vw, 38px);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-strong);
-  box-shadow: 8px 8px 0 var(--color-border);
-}
-
 .authTitle {
-  font-size: clamp(1.8rem, 5vw, 2.7rem);
-  font-weight: 650;
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  font-weight: 590;
   line-height: 1.05;
-  letter-spacing: -0.055em;
+  letter-spacing: -0.02em;
 }
 
 .authCard {
@@ -1132,9 +2466,9 @@ a {
 .authInput {
   width: 100%;
   height: 46px;
-  padding: 0 13px;
+  padding: 0 16px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-text);
   font: inherit;
@@ -1172,8 +2506,8 @@ a {
   margin-top: 6px;
   padding: 13px;
   font-size: 0.75rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border: 0;
+  border-radius: var(--radius-md);
   background: var(--color-surface);
 }
 
@@ -1250,98 +2584,10 @@ a {
   color: #bf3030;
 }
 
-.accountSettings {
-  display: grid;
-  gap: 14px;
-}
-
-.accountPanel {
-  display: grid;
-  gap: 16px;
-  padding: 18px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-}
-
-.accountPanelHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.accountPanelLabel {
-  display: block;
-  margin-bottom: 3px;
-  color: var(--color-text-muted);
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-.accountPanel h2 {
-  font-size: 1rem;
-  line-height: 1.25;
-  letter-spacing: -0.035em;
-}
-
-.accountPanelCopy {
-  color: var(--color-text-muted);
-  font-size: 0.78rem;
-  line-height: 1.65;
-}
-
-.accountPanelCopy code {
-  color: var(--color-text);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-.accountDetails {
-  display: grid;
-  border-top: 1px solid var(--color-border);
-}
-
-.accountDetails > div {
-  display: grid;
-  grid-template-columns: minmax(80px, 0.3fr) minmax(0, 0.7fr);
-  gap: 16px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 0.78rem;
-}
-
-.accountDetails dt {
-  color: var(--color-text-muted);
-}
-
-.accountDetails dd {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  text-align: right;
-}
-
-.accountDanger {
-  border-color: color-mix(in srgb, #bf3030 46%, var(--color-border));
-  background: color-mix(in srgb, #bf3030 4%, var(--color-surface));
-}
-
-.accountDeleteConfirmation {
-  display: grid;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border);
-}
-
 .authHint a {
   color: var(--color-text);
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-.accountSettings > .authInfo {
-  margin-top: 0;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1354,106 +2600,6 @@ a {
   .authError {
     color: #ff9393;
   }
-}
-
-.onboardingProgress {
-  display: grid;
-  gap: 8px;
-}
-
-.onboardingProgress > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-}
-
-.onboardingProgress strong {
-  color: var(--color-text);
-  font-weight: 650;
-}
-
-.onboardingProgress progress {
-  width: 100%;
-  height: 5px;
-  overflow: hidden;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: var(--color-border);
-  appearance: none;
-}
-
-.onboardingProgress progress::-webkit-progress-bar {
-  background: var(--color-border);
-}
-
-.onboardingProgress progress::-webkit-progress-value {
-  background: var(--color-accent-pop);
-}
-
-.onboardingProgress progress::-moz-progress-bar {
-  background: var(--color-accent-pop);
-}
-
-.onboardingSteps {
-  display: grid;
-  gap: 8px;
-}
-
-.onboardingStep {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  min-height: 64px;
-  padding: 13px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  font-size: 0.875rem;
-  color: var(--color-text);
-}
-
-.onboardingStep input {
-  margin-top: 4px;
-  accent-color: var(--color-accent-pop);
-}
-
-.onboardingStep > span {
-  display: grid;
-  gap: 3px;
-}
-
-.onboardingStep strong {
-  font-size: 0.8125rem;
-  font-weight: 650;
-}
-
-.onboardingStep small {
-  color: var(--color-text-muted);
-  font-size: 0.72rem;
-  line-height: 1.5;
-}
-
-.onboardingStep code {
-  color: var(--color-text);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-.onboardingSurvey {
-  display: grid;
-  gap: 10px;
-  margin: 4px 0 0;
-  padding: 18px 0 0;
-  border: 0;
-  border-top: 1px solid var(--color-border);
-}
-
-.onboardingSurvey legend {
-  padding: 0;
-  color: var(--color-text);
-  font-size: 0.8125rem;
-  font-weight: 650;
 }
 
 .social-btn:disabled {
@@ -1471,38 +2617,45 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  min-height: 44px;
+  padding: 0 18px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 510;
   font-family: inherit;
-  letter-spacing: -0.01em;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: #e5e5e5;
+  color: #000;
   cursor: pointer;
   transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease;
+    filter var(--motion-fast) ease,
+    translate 240ms var(--ease-spring),
+    scale 240ms var(--ease-spring),
+    opacity var(--motion-fast) ease;
   text-decoration: none;
 }
 
 .social-btn:hover {
-  border-color: var(--color-text-muted);
-  background-color: color-mix(in srgb, var(--color-text) 4%, transparent);
+  filter: brightness(0.97);
+  translate: 0 -1px;
+}
+
+.social-btn:active {
+  translate: 0 0;
+  scale: 0.985;
 }
 
 .appleSignInButton {
   min-height: 44px;
-  border-color: #000;
   background: #000;
   color: #fff;
   font-weight: 600;
 }
 
 .appleSignInButton:hover {
-  border-color: #1f1f1f;
-  background: #1f1f1f;
+  filter: brightness(1.15);
 }
 
 .social-btn.appleSignInButton svg {
@@ -1512,6 +2665,11 @@ a {
 }
 
 @media (prefers-color-scheme: dark) {
+  .social-btn:not(.social-btn-primary):not(.appleSignInButton) {
+    background: #1c1c20;
+    color: var(--color-text);
+  }
+
   .appleSignInButton {
     border-color: #fff;
     background: #fff;
@@ -1525,14 +2683,12 @@ a {
 }
 
 .social-btn-primary {
-  border-color: var(--color-accent-pop);
-  background: var(--color-accent-pop);
+  background: var(--color-accent-to);
   color: #fff;
 }
 
 .social-btn-primary:hover {
-  border-color: color-mix(in srgb, var(--color-accent-pop) 84%, #000);
-  background: color-mix(in srgb, var(--color-accent-pop) 84%, #000);
+  filter: brightness(0.97);
 }
 
 .social-btn-danger {
@@ -1540,8 +2696,7 @@ a {
 }
 
 .social-btn-danger:hover {
-  border-color: rgba(191, 48, 48, 0.45);
-  background: rgba(191, 48, 48, 0.08);
+  background: rgba(191, 48, 48, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1558,7 +2713,6 @@ a {
 }
 
 .siteFooter {
-  border-top: 1px solid var(--color-border);
   padding: 42px 24px 26px;
   background: var(--color-surface);
 }
@@ -1574,10 +2728,10 @@ a {
 .siteFooterGroup h2 {
   margin-bottom: 10px;
   color: var(--color-text);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 510;
+  letter-spacing: -0.02em;
+  text-transform: none;
 }
 
 .siteFooterGroup nav {
@@ -1613,20 +2767,6 @@ a {
   flex-direction: column;
 }
 
-.legalHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
-}
-
-.legalHeader a:hover {
-  color: var(--color-text);
-}
-
 .legalMain {
   width: min(100%, 880px);
   margin: 0 auto;
@@ -1634,9 +2774,10 @@ a {
 }
 
 .legalTitle h1 {
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 590;
   line-height: 1.05;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.02em;
 }
 
 .legalTitle p,
@@ -1702,16 +2843,41 @@ a {
 }
 
 @media (max-width: 1100px) {
-  .hSectionHero {
-    grid-template-columns: 420px 650px;
-  }
-
   .heroTitle {
-    font-size: 4.7rem;
+    font-size: clamp(2.4rem, 5vw, 3.25rem);
   }
 
-  .productStage {
-    min-height: 490px;
+  .macMenuBar span:nth-child(n + 5):not(strong) {
+    display: none;
+  }
+}
+
+/* Short windows: cards trade padding and type scale for the room their diagrams
+   need, so the bento still fits between header and footer. */
+@media (min-width: 761px) and (max-height: 820px) {
+  .featureCard {
+    gap: 8px;
+  }
+
+  .cardArt {
+    min-height: 38px;
+    padding: 4px;
+  }
+
+  .cardArtWide {
+    max-height: 74px;
+  }
+
+  .trustGrid h3 {
+    font-size: 1rem;
+  }
+
+  .trustGrid p {
+    font-size: 0.8125rem;
+  }
+
+  .stepList {
+    gap: 10px;
   }
 }
 
@@ -1725,12 +2891,12 @@ a {
   .hTopBar {
     position: sticky;
     top: 0;
-    min-height: 60px;
+    min-height: 64px;
     padding: 0 16px;
   }
 
-  .hNav {
-    gap: 8px;
+  .navText {
+    display: none;
   }
 
   .horizontalExperience {
@@ -1759,113 +2925,121 @@ a {
   .hSection,
   .hSectionHero,
   .hSectionTrust,
-  .hSectionTransport,
+  .hSectionPricing,
   .hSectionStart {
     width: 100%;
     height: auto;
     min-height: 0;
     display: grid;
     grid-template-columns: 1fr;
-    gap: 48px;
-    padding: 88px 20px 72px;
-    border-right: 0;
-    border-bottom: 1px solid var(--color-border);
+    gap: 40px;
+    padding: 64px 20px 56px;
     overflow: hidden;
   }
 
   .hSectionHero {
-    padding-top: 72px;
+    padding-top: 36px;
+    padding-bottom: 0;
+    gap: 12px;
   }
 
   .heroCopy {
-    gap: 18px;
+    gap: 24px;
   }
 
   .heroTitle {
-    font-size: clamp(3.35rem, 17vw, 5.4rem);
-    line-height: 0.92;
+    font-size: clamp(2.25rem, 10vw, 3rem);
+    line-height: 1.02;
   }
 
   .description {
-    font-size: 0.98rem;
+    max-width: 100%;
+    font-size: 1rem;
+  }
+
+  .heroMedia {
+    position: relative;
+    inset: auto;
+    height: 320px;
+    margin: 0;
   }
 
   .productStage {
-    min-height: 460px;
-    aspect-ratio: auto;
+    width: 100%;
   }
 
-  .hostTerminal {
-    inset: 0 11% 8% 0;
-    transform: none;
+  .macbook {
+    top: 100%;
+    left: 58%;
+    width: 150%;
+    margin-top: -51%;
   }
 
-  .viewerTerminal {
-    top: 17%;
-    right: -2%;
-    bottom: 0;
-    width: 34%;
-    min-width: 150px;
+  .iphone {
+    top: 100%;
+    right: 3%;
+    width: 48%;
+    margin-top: -68%;
   }
 
-  .terminalBody {
-    padding: 24px 18px;
-    font-size: 0.68rem;
-  }
-
-  .viewerBody {
-    padding: 18px 12px;
-    font-size: 0.58rem;
-  }
-
-  .viewerKeyBar span:nth-child(2),
-  .viewerKeyBar span:nth-child(3) {
-    display: none;
+  .macWindow {
+    top: 11%;
+    left: 6%;
+    width: 62%;
+    height: 56%;
   }
 
   .displayTitle {
-    font-size: clamp(2.8rem, 13vw, 4.8rem);
+    font-size: clamp(2rem, 9vw, 2.75rem);
   }
 
   .trustGrid {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
+    height: auto;
+    max-height: none;
   }
 
-  .trustGrid article {
-    min-height: 200px;
+  .featureCardWide {
+    grid-column: auto;
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .trustGrid h3 {
-    margin-top: 28px;
+  .cardArt {
+    min-height: 96px;
   }
 
-  .transportDiagram {
-    grid-template-columns: 110px 1fr 110px;
-    min-height: 330px;
-    gap: 10px;
-  }
-
-  .networkNode {
-    min-height: 105px;
-    padding: 14px;
-  }
-
-  .networkNode strong {
-    font-size: 0.7rem;
-  }
-
-  .relayNode {
-    right: calc(50% - 65px);
-    width: 130px;
-  }
-
-  .transportDisclosure {
-    position: static;
+  .cardArtWide {
+    width: 100%;
     max-width: none;
-    text-align: left;
+    max-height: 104px;
   }
 
-  .hSectionStart {
+  .priceGrid {
+    grid-template-columns: 1fr;
+    max-width: none;
+  }
+
+  .priceCard {
+    min-height: 430px;
+  }
+
+  .priceCard + .priceCard {
+    border-top: 1px solid var(--color-border);
+    border-left: 0;
+  }
+
+  .priceLead {
+    max-width: none;
+  }
+
+  .stepList {
+    max-width: none;
+  }
+
+  .hSectionStart,
+  .hSectionPricing {
     padding-bottom: 40px;
   }
 
@@ -1875,6 +3049,11 @@ a {
     align-items: flex-start;
     flex-direction: column;
     padding: 18px 20px;
+  }
+
+  .landingFooterMeta {
+    flex-wrap: wrap;
+    gap: 10px 16px;
   }
 
   .siteFooterGrid {
@@ -1898,57 +3077,26 @@ a {
 
   .notFoundTerminal {
     min-height: 300px;
-    transform: none;
   }
 }
 
 @media (max-width: 480px) {
-  .brandName {
-    font-size: 0.9rem;
+  .hNav .textAction,
+  .hNav .navAction {
+    padding: 10px 12px;
+    font-size: 0.8125rem;
   }
 
-  .hActions {
-    align-items: flex-start;
-    flex-direction: column;
+  .iphone {
+    width: 52%;
+    margin-top: -74%;
   }
 
-  .productStage {
-    min-height: 410px;
-  }
-
-  .hostTerminal {
-    right: 6%;
-  }
-
-  .viewerTerminal {
-    min-width: 126px;
-  }
-
-  .terminalChrome > span:nth-child(2) {
+  .macMenuBar span:not(strong) {
     display: none;
   }
 
-  .transportDiagram {
-    grid-template-columns: 88px 1fr 88px;
-  }
-
-  .networkNode {
-    padding: 10px;
-  }
-
-  .networkNode strong {
-    font-size: 0.62rem;
-  }
-
-  .directPath span,
-  .relayPath span,
-  .directPath strong,
-  .relayPath strong {
-    font-size: 0.5rem;
-  }
-
   .copyCommand {
-    min-height: 54px;
     font-size: 0.68rem;
   }
 
@@ -1975,5 +3123,20 @@ a {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* Dropping the animations entirely leaves each illustration in its authored
+     state, which is the one that tells the story: link open, lock shut, ticket
+     full. Only the typed line needs a resting length of its own. */
+  .cardArt * {
+    animation: none;
+  }
+
+  .artTypeMask {
+    width: 88px;
+  }
+
+  .artCaret {
+    transform: translateX(88px);
   }
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
+import { SiteHeader } from "../components/landing-header";
 import { SiteFooter } from "../components/site-footer";
 
 export const metadata: Metadata = {
@@ -12,34 +12,10 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <div className="notFoundShell">
-      <header className="legalHeader">
-        <Link href="/" className="authBrand" aria-label="Wrapper home">
-          <span className="logo-container">
-            <Image
-              src="/wrapper-icon-light.svg"
-              alt=""
-              width={36}
-              height={36}
-              className="logo logo-light"
-              priority
-            />
-            <Image
-              src="/wrapper-icon-dark.svg"
-              alt=""
-              width={36}
-              height={36}
-              className="logo logo-dark"
-              priority
-            />
-          </span>
-          <span>Wrapper</span>
-        </Link>
-        <Link href="/support">Support</Link>
-      </header>
+      <SiteHeader actionHref="/support" actionLabel="Support" />
 
       <main id="main-content" className="notFoundMain" tabIndex={-1}>
         <section className="notFoundCopy" aria-labelledby="not-found-title">
-          <span className="hSectionEyebrow">Error 404</span>
           <h1 id="not-found-title">That route is not connected.</h1>
           <p>
             The page may have moved, or the address may be incomplete. Your terminal sessions are
@@ -48,7 +24,6 @@ export default function NotFound() {
           <nav className="notFoundActions" aria-label="Page recovery">
             <Link className="primaryAction" href="/">
               Back to Wrapper
-              <span aria-hidden="true">→</span>
             </Link>
             <Link className="textAction" href="/support">
               Visit support

@@ -23,6 +23,13 @@ export default function SupportPage() {
             Review the <a href="https://docs.wrapper.sh/troubleshooting">troubleshooting guide</a>.
           </li>
           <li>
+            Send a private DM to{" "}
+            <a href="https://x.com/heycupola" target="_blank" rel="noopener noreferrer">
+              @heycupola on X
+            </a>
+            . DMs are open.
+          </li>
+          <li>
             Run <code>wrapper status</code> to inspect local session state.
           </li>
           <li>
@@ -31,12 +38,11 @@ export default function SupportPage() {
         </ul>
       </LegalSection>
 
-      <LegalSection title="Account, billing, and privacy">
+      <LegalSection title="Dashboard, billing, and privacy">
         <p>
-          Signed-in users can use <Link href="/account">Account settings</Link> to sign out, open
+          Signed-in users can use the <Link href="/dashboard">Dashboard</Link> to sign out, open
           Stripe&apos;s portal to manage or cancel a paid plan, and permanently delete their Wrapper
-          account. Account deletion completes only after associated billing-customer cleanup
-          succeeds.
+          account. Deletion completes only after associated billing-customer cleanup succeeds.
         </p>
         <p>
           If a self-service action is unavailable, or for access, correction, export, and other

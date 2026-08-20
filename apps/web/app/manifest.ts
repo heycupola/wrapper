@@ -7,11 +7,11 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Reach an explicitly shared terminal from another device.",
     start_url: "/",
     display: "standalone",
-    background_color: "#eef0f2",
-    theme_color: "#14171c",
+    background_color: "#f6f6f2",
+    theme_color: "#f6f6f2",
     icons: [
       {
-        src: "/wrapper-icon-dark.svg",
+        src: "/wrapper-icon-light.svg",
         sizes: "any",
         type: "image/svg+xml",
       },
