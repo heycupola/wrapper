@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CupolaMark } from "./cupola-mark";
 
 const groups = [
   {
@@ -23,14 +24,42 @@ const groups = [
   {
     title: "Support",
     links: [
-      { href: "/account", label: "Account Settings" },
+      { href: "/dashboard", label: "Dashboard" },
       { href: "/support", label: "Help and Contact" },
       { href: "/support#security", label: "Report a Vulnerability" },
     ],
   },
 ] as const;
 
-export function SiteFooter() {
+export function SiteFooter({ compact = false }: { compact?: boolean }) {
+  if (compact) {
+    return (
+      <footer className="landingFinalFooter">
+        <div className="landingFooterMeta">
+          <span>© {new Date().getFullYear()} Wrapper</span>
+          <a
+            className="builtBy"
+            href="https://cupo.la"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Built by Cupola"
+          >
+            <span>Built by</span>
+            <CupolaMark />
+          </a>
+        </div>
+        <nav aria-label="Footer">
+          <Link href="/dashboard">Dashboard</Link>
+          <a href="https://github.com/heycupola/wrapper" target="_blank" rel="noopener noreferrer">
+            GitHub
+          </a>
+          <Link href="/privacy-policy">Privacy</Link>
+          <Link href="/terms-of-service">Terms</Link>
+        </nav>
+      </footer>
+    );
+  }
+
   return (
     <footer className="siteFooter">
       <div className="siteFooterGrid">
@@ -54,7 +83,19 @@ export function SiteFooter() {
         ))}
       </div>
       <div className="siteFooterMeta">
-        <span>© {new Date().getFullYear()} Wrapper by Cupola Labs, LLC</span>
+        <div className="landingFooterMeta">
+          <span>© {new Date().getFullYear()} Wrapper</span>
+          <a
+            className="builtBy"
+            href="https://cupo.la"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Built by Cupola"
+          >
+            <span>Built by</span>
+            <CupolaMark />
+          </a>
+        </div>
         <span>Terminal sharing is always opt-in.</span>
       </div>
     </footer>

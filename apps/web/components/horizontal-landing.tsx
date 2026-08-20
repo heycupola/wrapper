@@ -1,182 +1,296 @@
-import Image from "next/image";
 import Link from "next/link";
+import { ArtDefs, LoopbackArt, RevokeArt, ShareArt, ShellArt, TicketArt } from "./card-art";
+import { ConnectionFlow } from "./connection-flow";
 import { CopyCommand } from "./copy-command";
 import { HorizontalScroll } from "./horizontal-scroll";
+import { LandingHeader } from "./landing-header";
 import { ProductDemo } from "./product-demo";
+import { SiteFooter } from "./site-footer";
 
-const sectionIds = ["intro", "trust", "transport", "start"] as const;
+const storySectionIds = ["intro", "connection", "trust", "pricing", "start"] as const;
 
 export function HorizontalLanding() {
   return (
-    <div className="horizontalPage">
-      <header className="hTopBar">
-        <Link href="/" className="brand" aria-label="Wrapper home">
-          <span className="brandMark">
-            <Image
-              src="/wrapper-icon-light.svg"
-              alt=""
-              width={32}
-              height={32}
-              className="logo logo-light"
-              priority
-            />
-            <Image
-              src="/wrapper-icon-dark.svg"
-              alt=""
-              width={32}
-              height={32}
-              className="logo logo-dark"
-              priority
-            />
-          </span>
-          <span className="brandName">wrapper</span>
-        </Link>
-        <nav className="hNav">
-          <Link href="/account">Account</Link>
-          <a href="https://docs.wrapper.sh" target="_blank" rel="noopener noreferrer">
-            Docs
-          </a>
-          <a href="https://github.com/heycupola/wrapper" target="_blank" rel="noopener noreferrer">
-            GitHub
-            <span aria-hidden="true">↗</span>
-          </a>
-        </nav>
-      </header>
+    <div className="landingPage">
+      <ArtDefs />
+      <LandingHeader />
 
-      <HorizontalScroll sectionIds={sectionIds}>
-        <section id="intro" className="hSection hSectionHero">
-          <div className="heroCopy">
-            <span className="hSectionEyebrow">A live shell, by invitation</span>
-            <h1 className="heroTitle">
-              Your terminal.
-              <br />
-              Still running.
-              <br />
-              <em>Wherever you are.</em>
-            </h1>
-            <p className="description">
-              Keep your shell on your machine. Share it with another device only when you choose.
-            </p>
-            <div className="hActions">
-              <a className="primaryAction" href="#start">
-                Install Wrapper
-                <span aria-hidden="true">→</span>
-              </a>
-              <a className="textAction" href="https://docs.wrapper.sh/configuration/security">
-                Read the security model
-              </a>
-            </div>
-          </div>
-          <div className="heroMedia">
-            <ProductDemo />
-          </div>
-        </section>
-
-        <section id="trust" className="hSection hSectionTrust">
-          <div className="trustStatement">
-            <span className="hSectionEyebrow">Local is the default state</span>
-            <h2 className="displayTitle">
-              Nothing leaves
-              <br />
-              until you say so.
-            </h2>
-            <p>
-              Your process, filesystem, credentials, and terminal stay on the host until you share.
-            </p>
-            <Link href="/privacy-policy" className="inlineLink">
-              How terminal data moves
-              <span aria-hidden="true">↗</span>
-            </Link>
-          </div>
-          <div className="trustGrid">
-            <article>
-              <h3>Private on loopback</h3>
-              <p>Local attach uses 127.0.0.1 and a per-session 256-bit token.</p>
-            </article>
-            <article>
-              <h3>Explicit access</h3>
-              <p>Another account needs the session id, share code, and a single-use ticket.</p>
-            </article>
-            <article>
-              <h3>Immediate revoke</h3>
-              <p>Press Ctrl+\ then u to close sharing and invalidate unused access.</p>
-            </article>
-          </div>
-        </section>
-
-        <section id="transport" className="hSection hSectionTransport">
-          <div className="transportCopy">
-            <span className="hSectionEyebrow">Latency without fragility</span>
-            <h2 className="displayTitle">
-              Direct when possible.
-              <br />
-              Available when not.
-            </h2>
-            <p>
-              WebRTC carries interactive traffic directly. The authenticated relay handles signaling
-              and fallback.
-            </p>
-          </div>
-          <div className="transportDiagram" aria-label="P2P and relay transport paths">
-            <div className="networkNode networkViewer">
-              <span>viewer</span>
-              <strong>iPhone / laptop</strong>
-            </div>
-            <div className="networkPaths">
-              <div className="directPath">
-                <span>WebRTC · DTLS</span>
-                <i />
-                <strong>direct input</strong>
+      <HorizontalScroll sectionIds={storySectionIds}>
+        <section id="intro" className="landingSection landingHero">
+          <div className="landingSectionInner landingHeroInner">
+            <div className="landingHeroCopy revealStack">
+              <h1 className="landingHeroTitle revealItem">
+                Your terminal,
+                <br />
+                still running.
+                <br />
+                Wherever you are.
+              </h1>
+              <p className="landingLead revealItem">
+                Keep your real shell on your machine. Reach it from another device only when you
+                explicitly share it.
+              </p>
+              <div className="landingActions revealItem">
+                <a className="primaryAction landingButtonLarge" href="#start">
+                  Install Wrapper
+                </a>
+                <a
+                  className="textAction landingButtonLarge"
+                  href="https://docs.wrapper.sh"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  See docs
+                </a>
               </div>
-              <div className="relayPath">
-                <span>authenticated WSS</span>
-                <i />
-                <strong>relay fallback</strong>
-              </div>
+              <p className="landingMicrocopy revealItem">macOS and Linux · zsh, bash, and fish</p>
             </div>
-            <div className="relayNode">
-              <span>Fly relay</span>
-              <small>signaling + fallback</small>
-            </div>
-            <div className="networkNode networkHost">
-              <span>host</span>
-              <strong>your real shell</strong>
+
+            <div className="landingHeroMedia revealItem">
+              <ProductDemo />
             </div>
           </div>
-          <p className="transportDisclosure">
-            Relay fallback is TLS-encrypted in transit and processed while routed. Remote sharing
-            requires Pro.
-          </p>
         </section>
 
-        <section id="start" className="hSection hSectionStart">
-          <div className="installCopy">
-            <span className="hSectionEyebrow">Start local. Share when ready.</span>
-            <h2 className="displayTitle">
-              Your shell is already
-              <br />
-              the right shell.
-            </h2>
-            <p>Install Wrapper. Remote access stays off until you share.</p>
-          </div>
-          <div className="installPanel">
-            <CopyCommand
-              command="brew install heycupola/tap/wrapper"
-              label="Copy Homebrew command"
-            />
-            <CopyCommand
-              command="curl -fsSL https://wrapper.sh/install | bash"
-              label="Copy curl command"
-            />
-            <p className="installSupport">macOS and Linux</p>
-            <div className="installLinks">
-              <Link href="/support">Support</Link>
-              <Link href="/privacy-policy">Privacy</Link>
-              <Link href="/terms-of-service">Terms</Link>
+        <section id="connection" className="landingSection landingConnection">
+          <div className="landingSectionInner landingSplit">
+            <div className="landingSectionCopy revealStack">
+              <h2 className="landingSectionTitle revealItem">
+                Direct when possible.
+                <br />
+                Available when not.
+              </h2>
+              <p className="landingBody revealItem">
+                Interactive traffic takes the shortest secure path. Signaling and fallback remain
+                authenticated end to end.
+              </p>
+              <ol className="connectionSteps revealItem">
+                <li>
+                  <span />
+                  <div>
+                    <strong>Discover</strong>
+                    <small>Each ticket is checked before a byte moves.</small>
+                  </div>
+                </li>
+                <li>
+                  <span />
+                  <div>
+                    <strong>Connect directly</strong>
+                    <small>WebRTC data channel, DTLS encrypted.</small>
+                  </div>
+                </li>
+                <li>
+                  <span />
+                  <div>
+                    <strong>Fall back safely</strong>
+                    <small>Authenticated WSS through the relay, TLS in transit.</small>
+                  </div>
+                </li>
+              </ol>
+              <Link href="/privacy-policy" className="landingTextLink revealItem">
+                Read the data-flow details
+              </Link>
+            </div>
+
+            <div className="landingConnectionVisual revealItem">
+              <ConnectionFlow />
             </div>
           </div>
+        </section>
+
+        <section id="trust" className="landingSection landingTrust">
+          <div className="landingSectionInner landingTrustInner">
+            <div className="landingSectionCopy revealStack">
+              <h2 className="landingSectionTitle revealItem">
+                Nothing leaves
+                <br />
+                until you say so.
+              </h2>
+              <p className="landingBody revealItem">
+                Your process, filesystem, credentials, and history stay on the host. Sharing takes
+                two keys and ends with two more.
+              </p>
+              <Link href="/privacy-policy" className="landingTextLink revealItem">
+                How terminal data moves
+              </Link>
+            </div>
+
+            <div className="landingTrustGrid">
+              <article className="landingFeatureCard">
+                <LoopbackArt />
+                <div>
+                  <h3>Local by default</h3>
+                  <p>Loopback only, with a per-session token. No relay or account required.</p>
+                </div>
+              </article>
+              <article className="landingFeatureCard">
+                <ShareArt />
+                <div>
+                  <h3>Two keys to share</h3>
+                  <p>
+                    <code>Ctrl+\</code> then <code>s</code> opens the tunnel and prints a code.
+                  </p>
+                </div>
+              </article>
+              <article className="landingFeatureCard">
+                <RevokeArt />
+                <div>
+                  <h3>Revoke instantly</h3>
+                  <p>
+                    <code>Ctrl+\</code> then <code>u</code> closes the share and unused tickets.
+                  </p>
+                </div>
+              </article>
+              <article className="landingFeatureCard">
+                <TicketArt />
+                <div>
+                  <h3>Single-use tickets</h3>
+                  <p>Viewer tickets are random, stored hashed, and expire after 60 seconds.</p>
+                </div>
+              </article>
+              <article className="landingFeatureCard landingFeatureCardWide">
+                <ShellArt />
+                <div>
+                  <h3>Your shell, unchanged</h3>
+                  <p>Dotfiles, prompt, plugins, and history behave exactly as before.</p>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="pricing" className="landingSection landingPricing">
+          <div className="landingSectionInner landingSplit">
+            <div className="landingSectionCopy revealStack">
+              <h2 className="landingSectionTitle revealItem">
+                Local is free.
+                <br />
+                Remote is Pro.
+              </h2>
+              <p className="landingBody revealItem">
+                Use Wrapper on this machine for free. Upgrade only when a session needs to cross
+                networks.
+              </p>
+              <a className="landingTextLink revealItem" href="#start">
+                Install the free CLI
+              </a>
+            </div>
+
+            <div className="landingPriceGrid">
+              <article className="landingPriceCard">
+                <header>
+                  <div>
+                    <span>Free</span>
+                    <p>Your shell, on this machine.</p>
+                  </div>
+                  <p className="landingPrice">
+                    <strong>$0</strong>
+                    <span>forever</span>
+                  </p>
+                </header>
+                <ul>
+                  <li>Wrapper for zsh, bash, and fish</li>
+                  <li>Attach from the same computer</li>
+                  <li>Share and revoke controls</li>
+                  <li>Per-session secure tokens</li>
+                  <li>No account required</li>
+                </ul>
+                <a className="landingPriceCta" href="#start">
+                  Install Wrapper
+                </a>
+              </article>
+
+              <article className="landingPriceCard landingPriceCardPro">
+                <header>
+                  <div>
+                    <span>
+                      Pro <small>Remote access</small>
+                    </span>
+                    <p>Your shell, from another device.</p>
+                  </div>
+                  <p className="landingPrice">
+                    <strong>$20</strong>
+                    <span>/ month</span>
+                  </p>
+                </header>
+                <ul>
+                  <li>Everything included in Free</li>
+                  <li>Attach from another device</li>
+                  <li>Direct WebRTC when available</li>
+                  <li>Authenticated relay fallback</li>
+                  <li>iOS viewer in beta</li>
+                </ul>
+                <Link className="landingPriceCta landingPriceCtaPrimary" href="/dashboard">
+                  Choose Pro
+                </Link>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="start" className="landingSection landingStart">
+          <div className="landingSectionInner landingStartInner">
+            <div className="landingSectionCopy revealStack">
+              <h2 className="landingSectionTitle revealItem">
+                Your shell is already
+                <br />
+                the right shell.
+              </h2>
+              <p className="landingBody revealItem">
+                Install once. Remote access remains off until you explicitly share.
+              </p>
+              <ol className="landingStepList revealItem">
+                <li>
+                  <span>1</span>
+                  <div>
+                    <strong>Install</strong>
+                    <small>macOS or Linux. zsh, bash, or fish.</small>
+                  </div>
+                </li>
+                <li>
+                  <span>2</span>
+                  <div>
+                    <strong>Open a terminal</strong>
+                    <small>Every interactive shell is wrapped invisibly.</small>
+                  </div>
+                </li>
+                <li>
+                  <span>3</span>
+                  <div>
+                    <strong>Share when you choose</strong>
+                    <small>
+                      <code>Ctrl+\ s</code> to open, <code>Ctrl+\ u</code> to close.
+                    </small>
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+            <div className="landingInstallPanel revealStack">
+              <p className="landingInstallLabel revealItem">Choose an install method</p>
+              <div className="landingCommands revealItem">
+                <CopyCommand
+                  command="brew install heycupola/tap/wrapper"
+                  label="Copy Homebrew command"
+                />
+                <CopyCommand
+                  command="curl -fsSL https://wrapper.sh/install | bash"
+                  label="Copy curl command"
+                />
+              </div>
+              <p className="landingInstallNote revealItem">
+                Remote access is opt-in and stays disabled until you share.
+              </p>
+            </div>
+          </div>
+
+          <SiteFooter compact />
         </section>
       </HorizontalScroll>
+
+      <div className="landingMobileFooter">
+        <SiteFooter />
+      </div>
     </div>
   );
 }
