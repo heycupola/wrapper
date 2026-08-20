@@ -188,13 +188,13 @@ describe("billing portal entry point", () => {
 
     await expect(
       t.action(api.billing.createBillingPortal, {
-        returnUrl: "https://www.wrapper.sh/account",
+        returnUrl: "https://www.wrapper.sh/dashboard",
       }),
     ).resolves.toEqual({
       portalUrl: "https://billing.stripe.com/p/session/test_123",
     });
     expect(billingPortal).toHaveBeenCalledWith("billing-user", {
-      return_url: "https://www.wrapper.sh/account",
+      return_url: "https://www.wrapper.sh/dashboard",
     });
   });
 
@@ -205,7 +205,7 @@ describe("billing portal entry point", () => {
     await expectConvexError(
       () =>
         t.action(api.billing.createBillingPortal, {
-          returnUrl: "https://attacker.example/account",
+          returnUrl: "https://attacker.example/dashboard",
         }),
       ErrorCode.INVALID_ARGUMENTS,
     );

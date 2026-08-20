@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: ["/", "/privacy-policy", "/terms-of-service", "/support"],
-      disallow: ["/account", "/onboarding", "/oauth/authorize"],
+      disallow: ["/dashboard", "/onboarding", "/oauth/authorize"],
     },
     sitemap: "https://www.wrapper.sh/sitemap.xml",
   };
