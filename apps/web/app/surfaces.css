@@ -237,17 +237,20 @@
 
 .dashboardSignIn {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 .dashboardSignIn .authActions {
   display: grid;
-  gap: 10px;
+  width: 100%;
+  gap: 8px;
 }
 
-.dashboardSignIn .social-btn {
+.dashboardSignIn .authActions .social-btn {
   width: 100%;
-  justify-content: center;
+  min-height: 48px;
+  justify-content: flex-start;
+  padding-inline: 16px;
 }
 
 .dashboardPanel {
@@ -676,6 +679,26 @@
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--color-surface-strong) 88%, transparent);
   box-shadow: var(--color-shadow);
+}
+
+.authSurfaceNarrow {
+  width: min(100%, 384px);
+  gap: 22px;
+  padding: 28px 28px 24px;
+}
+
+.authSurfaceNarrow .authPageHeader {
+  gap: 8px;
+  padding-bottom: 0;
+}
+
+.authSurfaceNarrow .authTitle {
+  font-size: clamp(1.7rem, 5vw, 2.05rem);
+}
+
+.authSurfaceNarrow .authDescription {
+  max-width: none;
+  font-size: 0.875rem;
 }
 
 .authSurfaceWide {

@@ -13,18 +13,18 @@ export function AuthShell({
   title?: string;
   description?: string;
   children: ReactNode;
-  size?: "compact" | "wide";
+  size?: "narrow" | "compact" | "wide";
   showHeaderAction?: boolean;
   showFooter?: boolean;
 }) {
+  const surfaceClass =
+    size === "wide" ? "authSurfaceWide" : size === "narrow" ? "authSurfaceNarrow" : "";
+
   return (
     <div className={`authShell authShell-${size}`}>
       <SiteHeader showAction={showHeaderAction} />
       <main id="main-content" className="authMain" tabIndex={-1}>
-        <section
-          className={`authSurface ${size === "wide" ? "authSurfaceWide" : ""}`}
-          aria-labelledby="auth-page-title"
-        >
+        <section className={`authSurface ${surfaceClass}`.trim()} aria-labelledby="auth-page-title">
           {title ? (
             <header className="authPageHeader">
               <h1 id="auth-page-title" className="authTitle">
