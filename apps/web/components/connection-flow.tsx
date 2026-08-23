@@ -25,7 +25,7 @@ export function ConnectionFlow() {
           <i />
         </span>
         <small>viewer</small>
-        <strong>your iPhone</strong>
+        <strong>your viewer</strong>
       </div>
 
       <div className="connectionNode connectionHost">
