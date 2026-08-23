@@ -3,7 +3,29 @@
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+
+type Screen = "cli" | "sharing" | "context";
+
+const SCREEN_COPY: Record<Screen, { title: string; description: ReactNode }> = {
+  cli: {
+    title: "Connect the CLI",
+    description: "Run this in your terminal and finish device authorization.",
+  },
+  sharing: {
+    title: "How to stop sharing",
+    description: (
+      <>
+        Use <code>Ctrl+\ s</code> to share and <code>Ctrl+\ u</code> to revoke access from the host
+        shell.
+      </>
+    ),
+  },
+  context: {
+    title: "A couple of optional questions",
+    description: "You can leave either answer blank.",
+  },
+};
 
 type OnboardingState = {
   needsOnboarding: boolean;
@@ -15,15 +37,6 @@ type OnboardingState = {
   sourceOther?: string | null;
   teamSize?: string | null;
 };
-
-type RequiredStep = "completedProfile" | "connectedCli" | "sharedFirstSession";
-type Screen = "cli" | "sharing" | "context";
-
-const completeStepRef = makeFunctionReference<
-  "mutation",
-  { step: RequiredStep; value?: boolean },
-  { ok: boolean; status: "in_progress" | "completed" }
->("onboarding:completeStep");
 
 const completeOnboardingRef = makeFunctionReference<
   "mutation",
@@ -45,7 +58,6 @@ export function OnboardingClient({
   initialState: OnboardingState;
 }) {
   const router = useRouter();
-  const [state, setState] = useState(initialState);
   const [screen, setScreen] = useState<Screen>(() => getInitialScreen(initialState));
   const initialSource = initialState.source ?? "";
   const [source, setSource] = useState(
@@ -66,18 +78,19 @@ export function OnboardingClient({
     return instance;
   }, [token]);
 
-  async function markComplete(step: RequiredStep): Promise<void> {
-    if (!client) throw new Error("Wrapper services are temporarily unavailable.");
-    const result = await client.mutation(completeStepRef, { step, value: true });
-    setState((previous) => ({
-      ...previous,
-      [step]: true,
-      status: result.status,
-      needsOnboarding: result.status !== "completed",
-    }));
-  }
-
   async function advance(): Promise<void> {
+    if (screen === "cli") {
+      setError(null);
+      setScreen("sharing");
+      return;
+    }
+
+    if (screen === "sharing") {
+      setError(null);
+      setScreen("context");
+      return;
+    }
+
     if (!client) {
       setError("Wrapper services are temporarily unavailable.");
       return;
@@ -86,20 +99,6 @@ export function OnboardingClient({
     setBusy(true);
     setError(null);
     try {
-      if (!state.completedProfile) await markComplete("completedProfile");
-
-      if (screen === "cli") {
-        if (!state.connectedCli) await markComplete("connectedCli");
-        setScreen("sharing");
-        return;
-      }
-
-      if (screen === "sharing") {
-        if (!state.sharedFirstSession) await markComplete("sharedFirstSession");
-        setScreen("context");
-        return;
-      }
-
       await client.mutation(completeOnboardingRef, {
         source: source.trim() || undefined,
         sourceOther: source === "other" ? sourceOther.trim() || undefined : undefined,
@@ -114,84 +113,72 @@ export function OnboardingClient({
     }
   }
 
+  const copy = SCREEN_COPY[screen];
+
   return (
     <div className="onboardingSimple">
-      {screen === "cli" ? (
-        <section className="onboardingQuestion" aria-labelledby="onboarding-cli-title">
-          <h2 id="onboarding-cli-title">Have you connected the Wrapper CLI?</h2>
-          <p>Run this command in your terminal and finish device authorization.</p>
-          <code className="onboardingCommand">wrapper auth login</code>
-        </section>
-      ) : null}
+      <header className="authPageHeader">
+        <h1 id="auth-page-title" className="authTitle">
+          {copy.title}
+        </h1>
+        <p className="authDescription">{copy.description}</p>
+      </header>
 
-      {screen === "sharing" ? (
-        <section className="onboardingQuestion" aria-labelledby="onboarding-sharing-title">
-          <h2 id="onboarding-sharing-title">Do you know how to stop sharing?</h2>
-          <p>
-            Use <code>Ctrl+\ s</code> to share and <code>Ctrl+\ u</code> to revoke access from the
-            host shell.
-          </p>
-        </section>
-      ) : null}
+      {screen === "cli" ? <code className="onboardingCommand">wrapper auth login</code> : null}
 
       {screen === "context" ? (
-        <section className="onboardingQuestion" aria-labelledby="onboarding-context-title">
-          <h2 id="onboarding-context-title">A couple of optional questions</h2>
-          <p>You can leave either answer blank.</p>
+        <div className="onboardingFields">
+          <label className="authLabel" htmlFor="onboarding-source">
+            How did you hear about Wrapper?
+          </label>
+          <select
+            id="onboarding-source"
+            className="authInput"
+            value={source}
+            disabled={busy}
+            onChange={(event) => setSource(event.target.value)}
+          >
+            <option value="">Select an option</option>
+            <option value="search">Search</option>
+            <option value="github">GitHub</option>
+            <option value="x">X</option>
+            <option value="friend">Friend or colleague</option>
+            <option value="other">Other</option>
+          </select>
 
-          <div className="onboardingFields">
-            <label className="authLabel" htmlFor="onboarding-source">
-              How did you hear about Wrapper?
-            </label>
-            <select
-              id="onboarding-source"
-              className="authInput"
-              value={source}
-              disabled={busy}
-              onChange={(event) => setSource(event.target.value)}
-            >
-              <option value="">Select an option</option>
-              <option value="search">Search</option>
-              <option value="github">GitHub</option>
-              <option value="x">X</option>
-              <option value="friend">Friend or colleague</option>
-              <option value="other">Other</option>
-            </select>
+          {source === "other" ? (
+            <>
+              <label className="authLabel" htmlFor="onboarding-source-other">
+                Tell us where
+              </label>
+              <input
+                id="onboarding-source-other"
+                className="authInput"
+                value={sourceOther}
+                disabled={busy}
+                onChange={(event) => setSourceOther(event.target.value)}
+                placeholder="Optional"
+              />
+            </>
+          ) : null}
 
-            {source === "other" ? (
-              <>
-                <label className="authLabel" htmlFor="onboarding-source-other">
-                  Tell us where
-                </label>
-                <input
-                  id="onboarding-source-other"
-                  className="authInput"
-                  value={sourceOther}
-                  disabled={busy}
-                  onChange={(event) => setSourceOther(event.target.value)}
-                  placeholder="Optional"
-                />
-              </>
-            ) : null}
-
-            <label className="authLabel" htmlFor="onboarding-team-size">
-              Team size
-            </label>
-            <select
-              id="onboarding-team-size"
-              className="authInput"
-              value={teamSize}
-              disabled={busy}
-              onChange={(event) => setTeamSize(event.target.value)}
-            >
-              <option value="">Select an option</option>
-              <option value="1">Just me</option>
-              <option value="2-5">2 to 5</option>
-              <option value="6-20">6 to 20</option>
-              <option value="21+">21 or more</option>
-            </select>
-          </div>
-        </section>
+          <label className="authLabel" htmlFor="onboarding-team-size">
+            Team size
+          </label>
+          <select
+            id="onboarding-team-size"
+            className="authInput"
+            value={teamSize}
+            disabled={busy}
+            onChange={(event) => setTeamSize(event.target.value)}
+          >
+            <option value="">Select an option</option>
+            <option value="1">Just me</option>
+            <option value="2-5">2 to 5</option>
+            <option value="6-20">6 to 20</option>
+            <option value="21+">21 or more</option>
+          </select>
+        </div>
       ) : null}
 
       <button

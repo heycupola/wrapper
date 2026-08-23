@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { SiteHeader } from "../../components/landing-header";
-import { SiteFooter } from "../../components/site-footer";
 import { getAuthProviderAvailability } from "../../lib/auth-providers";
 import { getToken, isAuthenticated } from "../../lib/auth-server";
 import { getDashboardOnboardingState } from "../../lib/dashboard-server";
@@ -34,15 +33,14 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           ) : (
             <>
               <DashboardPageHeader
-                title="Dashboard"
-                description="Manage your profile, sessions, billing, and Wrapper data."
+                title="Sign in"
+                description="Use the provider linked to your Wrapper profile."
               />
               <DashboardSignIn appleEnabled={providers.apple} />
             </>
           )}
         </section>
       </main>
-      <SiteFooter />
     </div>
   );
 }

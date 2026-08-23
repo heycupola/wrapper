@@ -27,18 +27,14 @@ export function DashboardSignIn({ appleEnabled }: { appleEnabled: boolean }) {
   }
 
   return (
-    <section className="dashboardSignIn" aria-labelledby="dashboard-sign-in-title">
-      <div>
-        <h2 id="dashboard-sign-in-title">Sign in to continue</h2>
-        <p>Use the provider linked to your Wrapper profile to open the dashboard.</p>
-      </div>
+    <section className="dashboardSignIn" aria-label="Sign in">
       <SocialSignInButtons
         appleEnabled={appleEnabled}
         disabled={pending}
         onSignIn={(provider) => void signInWith(provider)}
       />
       <p className="authHint">
-        Need help opening the dashboard? <Link href="/support">Visit support</Link>.
+        Need help? <Link href="/support">Visit support</Link>.
       </p>
       {error ? (
         <p className="authError" role="alert">

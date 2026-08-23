@@ -54,12 +54,7 @@ export default async function OnboardingPage() {
   const state = await client.query(getOnboardingStateRef, {});
 
   return (
-    <AuthShell
-      title="Welcome to Wrapper"
-      description="Answer a few quick questions to continue."
-      showHeaderAction={false}
-      showFooter={false}
-    >
+    <AuthShell showHeaderAction={false} showFooter={false}>
       <OnboardingClient token={token} initialState={state} />
     </AuthShell>
   );

@@ -14,11 +14,7 @@ export function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="dashboardSidebar" aria-label="Dashboard navigation">
-      <div className="dashboardSidebarTitle">
-        <span>Workspace</span>
-        <strong>Dashboard</strong>
-      </div>
+    <aside className="dashboardSidebar" aria-label="Account">
       <nav>
         {items.map((item) => {
           const active =

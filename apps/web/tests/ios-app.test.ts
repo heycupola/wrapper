@@ -6,7 +6,7 @@ describe("iOS app target", () => {
   test("falls back to the mobile viewer guide when no URL is set", () => {
     assert.deepEqual(getIosAppTarget({}), {
       href: IOS_VIEWER_DOCS_URL,
-      label: "iOS viewer guide",
+      label: "Get the iOS viewer",
       kind: "docs",
       external: true,
     });

@@ -147,11 +147,11 @@
   display: grid;
   width: min(100%, var(--content-max));
   flex: 1;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: clamp(48px, 6vw, 88px);
+  grid-template-columns: 196px minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 64px);
   align-items: start;
   margin: 0 auto;
-  padding: clamp(52px, 7vw, 88px) var(--page-pad) 96px;
+  padding: clamp(36px, 5vw, 56px) var(--page-pad) 72px;
 }
 
 .dashboardMainSignedOut {
@@ -160,34 +160,13 @@
 
 .dashboardSidebar {
   position: sticky;
-  top: calc(var(--header-h) + 32px);
-  display: grid;
-  gap: 28px;
+  top: calc(var(--header-h) + 28px);
   align-self: start;
-}
-
-.dashboardSidebarTitle {
-  display: grid;
-  gap: 4px;
-}
-
-.dashboardSidebarTitle span {
-  color: var(--color-text-muted);
-  font-size: 0.68rem;
-  font-weight: 590;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.dashboardSidebarTitle strong {
-  font-size: 1.25rem;
-  font-weight: 590;
-  letter-spacing: -0.035em;
 }
 
 .dashboardSidebar nav {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .dashboardSidebar nav a {
@@ -230,27 +209,27 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
-  margin-bottom: 40px;
+  margin-bottom: 28px;
   scroll-margin-top: calc(var(--header-h) + 24px);
 }
 
 .dashboardPageHeader > div:first-child {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .dashboardPageHeader h1 {
-  font-size: clamp(2.75rem, 5vw, 4.75rem);
+  font-size: clamp(1.7rem, 3vw, 2.15rem);
   font-weight: 590;
-  line-height: 0.98;
-  letter-spacing: -0.055em;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
 }
 
 .dashboardPageHeader p {
-  max-width: 560px;
+  max-width: 520px;
   color: var(--color-text-muted);
-  font-size: 1rem;
-  line-height: 1.55;
+  font-size: 0.9375rem;
+  line-height: 1.5;
 }
 
 .dashboardPageActions {
@@ -262,26 +241,18 @@
 
 .dashboardSignIn {
   display: grid;
-  max-width: 720px;
-  gap: 24px;
-  padding-top: 8px;
+  max-width: 360px;
+  gap: 16px;
 }
 
-.dashboardSignIn > div:first-child {
+.dashboardSignIn .authActions {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
-.dashboardSignIn h2 {
-  font-size: 1.25rem;
-  font-weight: 590;
-  letter-spacing: -0.03em;
-}
-
-.dashboardSignIn > div:first-child p {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-  line-height: 1.55;
+.dashboardSignIn .social-btn {
+  width: 100%;
+  justify-content: center;
 }
 
 .dashboardPanel {
@@ -934,27 +905,7 @@
   gap: 24px;
 }
 
-.onboardingQuestion {
-  display: grid;
-  gap: 12px;
-}
-
-.onboardingQuestion h2 {
-  max-width: 520px;
-  font-size: clamp(1.45rem, 4vw, 2rem);
-  font-weight: 590;
-  line-height: 1.15;
-  letter-spacing: -0.04em;
-}
-
-.onboardingQuestion > p {
-  max-width: 520px;
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-  line-height: 1.55;
-}
-
-.onboardingQuestion p code {
+.authDescription code {
   padding: 2px 5px;
   border-radius: 5px;
   background: var(--color-surface);
@@ -980,7 +931,6 @@
 .onboardingFields {
   display: grid;
   gap: 10px;
-  margin-top: 8px;
 }
 
 .onboardingFields .authLabel:not(:first-child) {
@@ -1205,7 +1155,6 @@
 
   .dashboardSidebar {
     position: static;
-    gap: 16px;
   }
 
   .dashboardSidebar nav {
@@ -1265,11 +1214,11 @@
   .dashboardPageHeader {
     align-items: flex-start;
     flex-direction: column;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
   }
 
   .dashboardPageHeader h1 {
-    font-size: clamp(2.75rem, 14vw, 4rem);
+    font-size: clamp(1.7rem, 8vw, 2.15rem);
   }
 
   .dashboardPanel {
