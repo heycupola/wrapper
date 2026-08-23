@@ -59,7 +59,7 @@ jobs:
       - name: Build standalone binary
         run: |
           mkdir -p dist
-          bun build --compile --target="${{ matrix.target }}" apps/cli/index.ts --outfile dist/wrapper
+          bun build --compile --env=disable --target="${{ matrix.target }}" apps/cli/index.ts --outfile dist/wrapper
 
       - name: Verify native release version
         if: matrix.platform == 'linux-x64'

@@ -22,10 +22,10 @@ def main() -> None:
         env = {
             **os.environ,
             "HOME": home,
-            "NODE_ENV": "production",
             "SHELL": "/bin/sh",
             "WRAPPER_LOG": "off",
         }
+        env.pop("NODE_ENV", None)
         process = subprocess.Popen(
             [str(binary), "shell-host", "--shell", "/bin/sh"],
             env=env,
@@ -51,7 +51,18 @@ def main() -> None:
                 os.killpg(process.pid, signal.SIGKILL)
                 process.wait(timeout=5)
 
-    print(f"verified native PTY startup: {binary}")
+        production_registry = (
+            Path(home) / ".local" / "state" / "wrapper" / "sessions.json"
+        )
+        development_registry = (
+            Path(home) / ".local" / "state" / "wrapper-dev" / "sessions.json"
+        )
+        if not production_registry.is_file() or development_registry.exists():
+            raise SystemExit(
+                "release binary did not use production defaults with NODE_ENV unset"
+            )
+
+    print(f"verified native PTY startup and production defaults: {binary}")
 
 
 if __name__ == "__main__":
