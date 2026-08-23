@@ -3,6 +3,7 @@ import { ArtDefs, LoopbackArt, RevokeArt, ShareArt, ShellArt, TicketArt } from "
 import { ConnectionFlow } from "./connection-flow";
 import { CopyCommand } from "./copy-command";
 import { HorizontalScroll } from "./horizontal-scroll";
+import { IosViewerCta } from "./ios-viewer-cta";
 import { LandingHeader } from "./landing-header";
 import { ProductDemo } from "./product-demo";
 import { SiteFooter } from "./site-footer";
@@ -31,8 +32,12 @@ export function HorizontalLanding() {
                 explicitly share it.
               </p>
               <div className="landingActions revealItem">
-                <a className="primaryAction landingButtonLarge" href="#start">
+                <a className="primaryAction landingButtonLarge landingHostDesktop" href="#start">
                   Install Wrapper
+                </a>
+                <IosViewerCta variant="primary" className="landingViewerMobile" />
+                <a className="textAction landingButtonLarge landingHostMobile" href="#start">
+                  Install the CLI
                 </a>
                 <a
                   className="textAction landingButtonLarge"
@@ -43,7 +48,12 @@ export function HorizontalLanding() {
                   See docs
                 </a>
               </div>
-              <p className="landingMicrocopy revealItem">macOS and Linux · zsh, bash, and fish</p>
+              <p className="landingMicrocopy landingMicrocopyDesktop revealItem">
+                macOS and Linux · zsh, bash, and fish
+              </p>
+              <p className="landingMicrocopy landingMicrocopyMobile revealItem">
+                iOS 18+ · needs a shared host session
+              </p>
             </div>
 
             <div className="landingHeroMedia revealItem">
@@ -218,7 +228,9 @@ export function HorizontalLanding() {
                   <li>Attach from another device</li>
                   <li>Direct WebRTC when available</li>
                   <li>Authenticated relay fallback</li>
-                  <li>iOS viewer in beta</li>
+                  <li>
+                    <IosViewerCta variant="text" />
+                  </li>
                 </ul>
                 <Link className="landingPriceCta landingPriceCtaPrimary" href="/dashboard">
                   Choose Pro
@@ -267,16 +279,24 @@ export function HorizontalLanding() {
             </div>
 
             <div className="landingInstallPanel revealStack">
-              <p className="landingInstallLabel revealItem">Choose an install method</p>
-              <div className="landingCommands revealItem">
-                <CopyCommand
-                  command="brew install heycupola/tap/wrapper"
-                  label="Copy Homebrew command"
-                />
-                <CopyCommand
-                  command="curl -fsSL https://wrapper.sh/install | bash"
-                  label="Copy curl command"
-                />
+              <div className="landingInstallMethods">
+                <div className="landingInstallMethod revealItem">
+                  <p className="landingInstallLabel">Host · Mac or Linux</p>
+                  <div className="landingCommands">
+                    <CopyCommand
+                      command="brew install heycupola/tap/wrapper"
+                      label="Copy Homebrew command"
+                    />
+                    <CopyCommand
+                      command="curl -fsSL https://wrapper.sh/install | bash"
+                      label="Copy curl command"
+                    />
+                  </div>
+                </div>
+                <div className="landingInstallMethod revealItem">
+                  <p className="landingInstallLabel">Viewer · iPhone or iPad</p>
+                  <IosViewerCta variant="badge" note />
+                </div>
               </div>
               <p className="landingInstallNote revealItem">
                 Remote access is opt-in and stays disabled until you share.

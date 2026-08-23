@@ -158,6 +158,33 @@ html.lenis body {
   font-weight: 500;
 }
 
+.landingViewerMobile,
+.landingHostMobile,
+.landingMicrocopyMobile {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .landingHostDesktop,
+  .landingMicrocopyDesktop {
+    display: none;
+  }
+
+  .landingViewerMobile,
+  .landingHostMobile {
+    display: inline-flex;
+  }
+
+  .landingMicrocopyMobile {
+    display: block;
+  }
+
+  .landingViewerMobile .iosViewerCtaPrimary {
+    min-height: 50px;
+    padding-inline: 22px;
+  }
+}
+
 .landingHero {
   min-height: calc(100svh - 64px);
   padding-bottom: 0;
@@ -778,8 +805,18 @@ html.lenis body {
   box-shadow: var(--color-shadow);
 }
 
+.landingInstallMethods {
+  display: grid;
+  gap: 28px;
+}
+
+.landingInstallMethod {
+  display: grid;
+  gap: 14px;
+}
+
 .landingInstallLabel {
-  margin-bottom: 18px;
+  margin-bottom: 0;
   color: var(--color-text);
   font-size: 0.75rem;
   font-weight: 600;
@@ -812,6 +849,110 @@ html.lenis body {
   color: var(--color-text-muted);
   font-size: 0.7rem;
   line-height: 1.45;
+}
+
+.iosViewerCtaWrap {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.landingViewerMobile.iosViewerCtaWrap {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .landingViewerMobile.iosViewerCtaWrap {
+    display: inline-flex;
+  }
+}
+
+.iosViewerCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.iosViewerCta svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  fill: currentColor;
+}
+
+.iosViewerCtaStore {
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: #000;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 590;
+  letter-spacing: -0.02em;
+}
+
+.iosViewerCtaStore:hover {
+  filter: brightness(1.15);
+}
+
+.iosViewerCtaPrimary.iosViewerCtaDocs {
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-to);
+  color: #fff;
+  font-weight: 510;
+  text-decoration: none;
+}
+
+.iosViewerCtaPrimary.iosViewerCtaDocs:hover {
+  filter: brightness(0.97);
+  color: #fff;
+  text-decoration: none;
+}
+
+.iosViewerCtaBadge.iosViewerCtaDocs,
+.iosViewerCtaSecondary,
+.iosViewerCtaLink,
+.iosViewerCtaText {
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 510;
+  text-decoration: underline;
+  text-decoration-color: var(--color-border);
+  text-underline-offset: 4px;
+}
+
+.iosViewerCtaBadge.iosViewerCtaDocs:hover,
+.iosViewerCtaSecondary:hover,
+.iosViewerCtaLink:hover,
+.iosViewerCtaText:hover {
+  color: var(--color-accent-pop);
+  text-decoration-color: currentColor;
+}
+
+.iosViewerCtaNote {
+  max-width: 280px;
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.landingPriceCard .iosViewerCtaWrap {
+  display: contents;
+}
+
+.landingPriceCard .iosViewerCtaText {
+  min-height: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .iosViewerCtaStore {
+    background: #fff;
+    color: #000;
+  }
 }
 
 .landingFinalFooter {
@@ -1356,6 +1497,12 @@ html.lenis body {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
+  }
+
+  .landingViewerMobile,
+  .landingViewerMobile .iosViewerCta {
+    width: 100%;
+    justify-content: center;
   }
 }
 

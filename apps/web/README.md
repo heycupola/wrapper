@@ -18,6 +18,9 @@ login flow.
   Below 1024px, and whenever reduced motion is requested, the same semantic DOM
   becomes a normal vertical story with no pinning or smooth-scroll runtime.
   Visual tokens, motion rules, and voice guidance live in [`BRAND.md`](BRAND.md).
+  The start panel keeps CLI install (`brew` / `curl`) as the host path and adds
+  an iOS viewer CTA. `NEXT_PUBLIC_IOS_APP_URL` points at App Store or TestFlight
+  when live; otherwise the CTA falls back to the mobile viewer docs.
 - **Dashboard** (`app/dashboard`): a sidebar-based nested workspace with separate
   profile, active sessions, billing, and data/deletion routes. `/dashboard`
   opens the profile page, and incomplete onboarding redirects to the required

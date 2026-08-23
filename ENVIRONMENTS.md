@@ -104,6 +104,8 @@ build time):
 | `NEXT_PUBLIC_CONVEX_URL`         | `…confident-fox-458.convex.cloud`      | `…sleek-echidna-539.convex.cloud`      | `…sleek-echidna-539.convex.cloud`  |
 | `NEXT_PUBLIC_CONVEX_SITE_URL`    | `…confident-fox-458.convex.site`       | `…sleek-echidna-539.convex.site`       | `…sleek-echidna-539.convex.site`   |
 | `NEXT_PUBLIC_APPLE_AUTH_ENABLED` | `true` after Apple OAuth is configured | `true` after Apple OAuth is configured | `false` unless testing Apple OAuth |
+| `NEXT_PUBLIC_IOS_APP_URL`        | App Store or TestFlight URL when live  | same, or empty to use the docs fallback | empty uses the mobile viewer guide |
+| `NEXT_PUBLIC_IOS_APP_LABEL`      | optional CTA override                  | optional CTA override                  | optional CTA override              |
 
 ### GitHub Environments (`dev`, `production`): backend and relay only
 
