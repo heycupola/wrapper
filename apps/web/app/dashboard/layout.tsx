@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
+import { AuthShell } from "../../components/auth-shell";
 import { SiteHeader } from "../../components/landing-header";
 import { getAuthProviderAvailability } from "../../lib/auth-providers";
 import { getToken, isAuthenticated } from "../../lib/auth-server";
 import { getDashboardOnboardingState } from "../../lib/dashboard-server";
-import { DashboardPageHeader } from "./dashboard-page-header";
 import { DashboardSidebar } from "./dashboard-sidebar";
 import { DashboardSignIn } from "./dashboard-sign-in";
 
@@ -18,28 +18,25 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     if (onboarding?.needsOnboarding) redirect("/onboarding");
   }
 
+  if (!signedIn) {
+    return (
+      <AuthShell
+        title="Sign in"
+        description="Use the provider linked to your Wrapper profile."
+        showHeaderAction={false}
+        showFooter={false}
+      >
+        <DashboardSignIn appleEnabled={providers.apple} />
+      </AuthShell>
+    );
+  }
+
   return (
     <div className="dashboardShell">
       <SiteHeader showAction={false} />
-      <main
-        id="main-content"
-        className={signedIn ? "dashboardMain" : "dashboardMain dashboardMainSignedOut"}
-        tabIndex={-1}
-      >
-        {signedIn ? <DashboardSidebar /> : null}
-        <section className="dashboardWorkspace">
-          {signedIn ? (
-            children
-          ) : (
-            <>
-              <DashboardPageHeader
-                title="Sign in"
-                description="Use the provider linked to your Wrapper profile."
-              />
-              <DashboardSignIn appleEnabled={providers.apple} />
-            </>
-          )}
-        </section>
+      <main id="main-content" className="dashboardMain" tabIndex={-1}>
+        <DashboardSidebar />
+        <section className="dashboardWorkspace">{children}</section>
       </main>
     </div>
   );
