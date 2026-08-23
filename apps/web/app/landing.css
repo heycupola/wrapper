@@ -146,6 +146,8 @@ html.lenis body {
 }
 
 .landingActions {
+  display: flex;
+  align-items: center;
   gap: 10px;
   margin-top: 30px;
   flex-wrap: wrap;
@@ -158,31 +160,14 @@ html.lenis body {
   font-weight: 500;
 }
 
-.landingViewerMobile,
-.landingHostMobile,
-.landingMicrocopyMobile {
-  display: none;
+.landingHeroViewer.iosViewerCtaWrap {
+  display: inline-flex;
+  align-items: stretch;
 }
 
-@media (max-width: 1023px) {
-  .landingHostDesktop,
-  .landingMicrocopyDesktop {
-    display: none;
-  }
-
-  .landingViewerMobile,
-  .landingHostMobile {
-    display: inline-flex;
-  }
-
-  .landingMicrocopyMobile {
-    display: block;
-  }
-
-  .landingViewerMobile .iosViewerCtaPrimary {
-    min-height: 50px;
-    padding-inline: 22px;
-  }
+.landingHeroViewer .iosViewerCta {
+  min-height: 50px;
+  padding-inline: 22px;
 }
 
 .landingHero {
@@ -857,29 +842,28 @@ html.lenis body {
   justify-items: start;
 }
 
-.landingViewerMobile.iosViewerCtaWrap {
-  display: none;
-}
-
-@media (max-width: 1023px) {
-  .landingViewerMobile.iosViewerCtaWrap {
-    display: inline-flex;
-  }
-}
-
 .iosViewerCta {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   min-height: 44px;
+  line-height: 1;
   text-decoration: none;
 }
 
 .iosViewerCta svg {
-  width: 16px;
-  height: 16px;
+  display: block;
+  width: 14px;
+  height: 18px;
+  overflow: visible;
   flex-shrink: 0;
   fill: currentColor;
+}
+
+.iosViewerCta > span {
+  display: block;
+  line-height: 1;
 }
 
 .iosViewerCtaStore {
@@ -1499,8 +1483,8 @@ html.lenis body {
     width: 100%;
   }
 
-  .landingViewerMobile,
-  .landingViewerMobile .iosViewerCta {
+  .landingHeroViewer,
+  .landingHeroViewer .iosViewerCta {
     width: 100%;
     justify-content: center;
   }

@@ -934,27 +934,7 @@
   gap: 24px;
 }
 
-.onboardingQuestion {
-  display: grid;
-  gap: 12px;
-}
-
-.onboardingQuestion h2 {
-  max-width: 520px;
-  font-size: clamp(1.45rem, 4vw, 2rem);
-  font-weight: 590;
-  line-height: 1.15;
-  letter-spacing: -0.04em;
-}
-
-.onboardingQuestion > p {
-  max-width: 520px;
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-  line-height: 1.55;
-}
-
-.onboardingQuestion p code {
+.authDescription code {
   padding: 2px 5px;
   border-radius: 5px;
   background: var(--color-surface);
@@ -980,7 +960,6 @@
 .onboardingFields {
   display: grid;
   gap: 10px;
-  margin-top: 8px;
 }
 
 .onboardingFields .authLabel:not(:first-child) {

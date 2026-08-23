@@ -2623,7 +2623,7 @@ a {
   font-weight: 510;
   font-family: inherit;
   letter-spacing: -0.02em;
-  line-height: 1.1;
+  line-height: 1;
   border: 0;
   border-radius: var(--radius-pill);
   background: #e5e5e5;
@@ -2731,14 +2731,26 @@ a {
 }
 
 .social-btn svg {
-  width: 18px;
-  height: 18px;
+  display: block;
+  width: 16px;
+  height: 16px;
+  overflow: visible;
   flex-shrink: 0;
+}
+
+.social-btn > span {
+  display: block;
+  line-height: 1;
 }
 
 .githubSignInButton svg,
 .appleSignInButton svg {
   fill: currentColor;
+}
+
+.appleSignInButton svg {
+  width: 14px;
+  height: 18px;
 }
 
 .siteFooter {

@@ -10,8 +10,8 @@ export function AuthShell({
   showHeaderAction = true,
   showFooter = true,
 }: {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   children: ReactNode;
   size?: "compact" | "wide";
   showHeaderAction?: boolean;
@@ -25,12 +25,14 @@ export function AuthShell({
           className={`authSurface ${size === "wide" ? "authSurfaceWide" : ""}`}
           aria-labelledby="auth-page-title"
         >
-          <header className="authPageHeader">
-            <h1 id="auth-page-title" className="authTitle">
-              {title}
-            </h1>
-            <p className="authDescription">{description}</p>
-          </header>
+          {title ? (
+            <header className="authPageHeader">
+              <h1 id="auth-page-title" className="authTitle">
+                {title}
+              </h1>
+              {description ? <p className="authDescription">{description}</p> : null}
+            </header>
+          ) : null}
           {children}
         </section>
       </main>

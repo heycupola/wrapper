@@ -32,28 +32,12 @@ export function HorizontalLanding() {
                 explicitly share it.
               </p>
               <div className="landingActions revealItem">
-                <a className="primaryAction landingButtonLarge landingHostDesktop" href="#start">
+                <a className="primaryAction landingButtonLarge" href="#start">
                   Install Wrapper
                 </a>
-                <IosViewerCta variant="primary" className="landingViewerMobile" />
-                <a className="textAction landingButtonLarge landingHostMobile" href="#start">
-                  Install the CLI
-                </a>
-                <a
-                  className="textAction landingButtonLarge"
-                  href="https://docs.wrapper.sh"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  See docs
-                </a>
+                <IosViewerCta variant="badge" className="landingHeroViewer" />
               </div>
-              <p className="landingMicrocopy landingMicrocopyDesktop revealItem">
-                macOS and Linux · zsh, bash, and fish
-              </p>
-              <p className="landingMicrocopy landingMicrocopyMobile revealItem">
-                iOS 18+ · needs a shared host session
-              </p>
+              <p className="landingMicrocopy revealItem">macOS and Linux · iPhone or iPad</p>
             </div>
 
             <div className="landingHeroMedia revealItem">

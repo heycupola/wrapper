@@ -1,7 +1,5 @@
 import { v } from "convex/values";
 import { protectedMutation, protectedQuery } from "./lib/middleware.ts";
-import { createError, ErrorCode } from "./lib/errors.ts";
-import { ErrorSeverity } from "./lib/types.ts";
 import { computeOnboardingStatus } from "./lib/onboarding.ts";
 
 const onboardingStep = v.union(
@@ -113,29 +111,29 @@ export const complete = protectedMutation({
       .query("onboarding")
       .withIndex("by_user", (q) => q.eq("userId", ctx.userId))
       .first();
-    if (!row) {
-      throw createError({
-        code: ErrorCode.INVALID_OPERATION,
-        message: "Cannot complete onboarding before finishing required steps",
-        severity: ErrorSeverity.Medium,
-      });
-    }
-
-    const nextStatus = computeOnboardingStatus(row);
-    if (nextStatus !== "completed") {
-      throw createError({
-        code: ErrorCode.INVALID_OPERATION,
-        message: "Complete all onboarding steps first",
-        severity: ErrorSeverity.Medium,
-      });
-    }
-
-    await ctx.db.patch(row._id, {
-      status: "completed",
+    const finished = {
+      completedProfile: true,
+      connectedCli: true,
+      sharedFirstSession: true,
+      status: "completed" as const,
       source: args.source,
       sourceOther: args.sourceOther,
       teamSize: args.teamSize,
       updatedAt: now,
+      completedAt: now,
+    };
+
+    if (!row) {
+      await ctx.db.insert("onboarding", {
+        userId: ctx.userId,
+        createdAt: now,
+        ...finished,
+      });
+      return { ok: true };
+    }
+
+    await ctx.db.patch(row._id, {
+      ...finished,
       completedAt: row.completedAt ?? now,
     });
 

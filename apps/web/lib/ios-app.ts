@@ -18,7 +18,7 @@ export function getIosAppTarget(environment: PublicEnvironment = process.env): I
   if (!href) {
     return {
       href: IOS_VIEWER_DOCS_URL,
-      label: label ?? "iOS viewer guide",
+      label: label ?? "Get the iOS viewer",
       kind: "docs",
       external: true,
     };
