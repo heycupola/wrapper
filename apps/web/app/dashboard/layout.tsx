@@ -22,7 +22,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     return (
       <AuthShell
         title="Sign in"
-        description="Use the provider linked to your Wrapper profile."
+        description="Continue with the account on your Wrapper profile."
+        size="narrow"
         showHeaderAction={false}
         showFooter={false}
       >
