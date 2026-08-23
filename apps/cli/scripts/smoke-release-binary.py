@@ -19,6 +19,9 @@ def main() -> None:
     binary = args.binary.resolve()
 
     with tempfile.TemporaryDirectory(prefix="wrapper-release-smoke-") as home:
+        project = Path(home) / "project"
+        project.mkdir()
+        (project / ".env").write_text("NODE_ENV=development\n", encoding="utf-8")
         env = {
             **os.environ,
             "HOME": home,
@@ -28,6 +31,7 @@ def main() -> None:
         env.pop("NODE_ENV", None)
         process = subprocess.Popen(
             [str(binary), "shell-host", "--shell", "/bin/sh"],
+            cwd=project,
             env=env,
             start_new_session=True,
             stderr=subprocess.PIPE,
@@ -59,10 +63,10 @@ def main() -> None:
         )
         if not production_registry.is_file() or development_registry.exists():
             raise SystemExit(
-                "release binary did not use production defaults with NODE_ENV unset"
+                "release binary loaded project dotenv or missed production defaults"
             )
 
-    print(f"verified native PTY startup and production defaults: {binary}")
+    print(f"verified isolated native PTY production defaults: {binary}")
 
 
 if __name__ == "__main__":

@@ -113,8 +113,11 @@ describe("CLI release workflows", () => {
   test("dry run verifies the complete checksum set without publishing", () => {
     expect(dryRunWorkflow).toContain("Verify release asset set");
     expect(dryRunWorkflow).toContain("sha256sum --check checksums.txt");
-    expect(dryRunWorkflow).toContain("bun build --compile --env=disable");
-    expect(releaseWorkflow).toContain("bun build --compile --env=disable");
+    for (const workflow of [dryRunWorkflow, releaseWorkflow]) {
+      expect(workflow).toContain("--env=disable");
+      expect(workflow).toContain("--no-compile-autoload-dotenv");
+      expect(workflow).toContain("--no-compile-autoload-bunfig");
+    }
     expect(dryRunWorkflow).toContain("COPYFILE_DISABLE=1 tar");
     expect(releaseWorkflow).toContain("COPYFILE_DISABLE=1 tar");
     expect(dryRunWorkflow).toContain("smoke-release-binary.py");
