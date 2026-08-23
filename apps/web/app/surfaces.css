@@ -154,6 +154,10 @@
   padding: clamp(52px, 7vw, 88px) var(--page-pad) 96px;
 }
 
+.dashboardMainSignedOut {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .dashboardSidebar {
   position: sticky;
   top: calc(var(--header-h) + 32px);
@@ -258,7 +262,7 @@
 
 .dashboardSignIn {
   display: grid;
-  max-width: 600px;
+  max-width: 720px;
   gap: 24px;
   padding-top: 8px;
 }
@@ -586,11 +590,26 @@
   font-weight: 590;
 }
 
+.dashboardViewerNotice .iosViewerCtaWrap {
+  margin-top: 8px;
+}
+
 .dashboardNotice a {
   color: var(--color-text);
   text-decoration: underline;
   text-decoration-color: var(--color-border);
   text-underline-offset: 3px;
+}
+
+.dashboardNotice .iosViewerCtaStore {
+  color: #fff;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dashboardNotice .iosViewerCtaStore {
+    color: #000;
+  }
 }
 
 .dashboardBillingGrid,

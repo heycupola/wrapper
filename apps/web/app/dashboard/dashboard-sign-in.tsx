@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { AppleSignInButton } from "../../components/apple-sign-in-button";
+import { SocialSignInButtons } from "../../components/social-sign-in";
 import { authClient } from "../../lib/auth-client";
 
 export function DashboardSignIn({ appleEnabled }: { appleEnabled: boolean }) {
@@ -32,27 +32,11 @@ export function DashboardSignIn({ appleEnabled }: { appleEnabled: boolean }) {
         <h2 id="dashboard-sign-in-title">Sign in to continue</h2>
         <p>Use the provider linked to your Wrapper profile to open the dashboard.</p>
       </div>
-      <div className="authActions">
-        {appleEnabled ? (
-          <AppleSignInButton disabled={pending} onClick={() => void signInWith("apple")} />
-        ) : null}
-        <button
-          type="button"
-          className="social-btn"
-          disabled={pending}
-          onClick={() => void signInWith("github")}
-        >
-          Continue with GitHub
-        </button>
-        <button
-          type="button"
-          className="social-btn"
-          disabled={pending}
-          onClick={() => void signInWith("google")}
-        >
-          Continue with Google
-        </button>
-      </div>
+      <SocialSignInButtons
+        appleEnabled={appleEnabled}
+        disabled={pending}
+        onSignIn={(provider) => void signInWith(provider)}
+      />
       <p className="authHint">
         Need help opening the dashboard? <Link href="/support">Visit support</Link>.
       </p>

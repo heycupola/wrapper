@@ -22,8 +22,12 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   return (
     <div className="dashboardShell">
       <SiteHeader showAction={false} />
-      <main id="main-content" className="dashboardMain" tabIndex={-1}>
-        <DashboardSidebar />
+      <main
+        id="main-content"
+        className={signedIn ? "dashboardMain" : "dashboardMain dashboardMainSignedOut"}
+        tabIndex={-1}
+      >
+        {signedIn ? <DashboardSidebar /> : null}
         <section className="dashboardWorkspace">
           {signedIn ? (
             children
