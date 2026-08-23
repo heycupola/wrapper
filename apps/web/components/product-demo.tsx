@@ -36,7 +36,7 @@ export function ProductDemo() {
   }, [reduceMotion]);
 
   return (
-    <figure className="productStage" aria-label="Wrapper on a MacBook and iPhone">
+    <figure className="productStage" aria-label="Wrapper on a MacBook and iOS viewer">
       <div className="macbook">
         <div className="macbookLid" aria-hidden="true" />
         <div className="macbookScreen">

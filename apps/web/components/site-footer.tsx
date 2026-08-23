@@ -1,35 +1,49 @@
 import Link from "next/link";
+import { getIosAppTarget } from "../lib/ios-app";
 import { CupolaMark } from "./cupola-mark";
 
-const groups = [
-  {
-    title: "Product",
-    links: [
-      {
-        href: "https://docs.wrapper.sh",
-        label: "Docs",
-        external: true,
-      },
-      { href: "/#start", label: "Install" },
-      { href: "https://github.com/heycupola/wrapper", label: "GitHub", external: true },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { href: "/privacy-policy", label: "Privacy Policy" },
-      { href: "/terms-of-service", label: "Terms of Service" },
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      { href: "/dashboard", label: "Dashboard" },
-      { href: "/support", label: "Help and Contact" },
-      { href: "/support#security", label: "Report a Vulnerability" },
-    ],
-  },
-] as const;
+function footerGroups() {
+  const ios = getIosAppTarget();
+  return [
+    {
+      title: "Product",
+      links: [
+        {
+          href: "https://docs.wrapper.sh",
+          label: "Docs",
+          external: true,
+        },
+        { href: "/#start", label: "Install" },
+        { href: ios.href, label: "iOS viewer", external: ios.external },
+        { href: "https://github.com/heycupola/wrapper", label: "GitHub", external: true },
+      ],
+    },
+    {
+      title: "Legal",
+      links: [
+        { href: "/privacy-policy", label: "Privacy Policy" },
+        { href: "/terms-of-service", label: "Terms of Service" },
+      ],
+    },
+    {
+      title: "Support",
+      links: [
+        { href: "/dashboard", label: "Dashboard" },
+        { href: "/support", label: "Help and Contact" },
+        { href: "/support#security", label: "Report a Vulnerability" },
+      ],
+    },
+  ];
+}
+
+function IosViewerCompactLink() {
+  const ios = getIosAppTarget();
+  return (
+    <a href={ios.href} target="_blank" rel="noopener noreferrer">
+      iOS viewer
+    </a>
+  );
+}
 
 export function SiteFooter({ compact = false }: { compact?: boolean }) {
   if (compact) {
@@ -50,6 +64,7 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
         </div>
         <nav aria-label="Footer">
           <Link href="/dashboard">Dashboard</Link>
+          <IosViewerCompactLink />
           <a href="https://github.com/heycupola/wrapper" target="_blank" rel="noopener noreferrer">
             GitHub
           </a>
@@ -63,7 +78,7 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
   return (
     <footer className="siteFooter">
       <div className="siteFooterGrid">
-        {groups.map((group) => (
+        {footerGroups().map((group) => (
           <div key={group.title} className="siteFooterGroup">
             <h2>{group.title}</h2>
             <nav aria-label={`${group.title} links`}>

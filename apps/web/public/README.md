@@ -7,7 +7,7 @@ Drop landing-page media here. Recommended filenames:
 - `wrapper-demo-poster.png`: poster frame shown before the video loads.
 
 Until these exist, the hero renders a MacBook host terminal and the Wrapper
-iPhone app inside Figma device chrome.
+iOS viewer inside Figma device chrome.
 To enable the video, configure:
 
 ```bash

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { IosViewerCta } from "../../../components/ios-viewer-cta";
 import { getToken } from "../../../lib/auth-server";
 import { getDashboardSessions } from "../../../lib/dashboard-server";
 import { DashboardPageHeader } from "../dashboard-page-header";
@@ -79,6 +80,14 @@ export default async function DashboardSessionsPage() {
           ))}
         </div>
       )}
+
+      {sessions && sessions.length > 0 ? (
+        <aside className="dashboardNotice dashboardViewerNotice">
+          <strong>Open in the iOS viewer</strong>
+          <p>Your shell stays on the host. The iOS viewer attaches only after you share.</p>
+          <IosViewerCta variant="badge" />
+        </aside>
+      ) : null}
 
       <aside className="dashboardNotice">
         <strong>Sharing remains host-controlled</strong>

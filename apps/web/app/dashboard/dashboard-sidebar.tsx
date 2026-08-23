@@ -21,7 +21,9 @@ export function DashboardSidebar() {
       </div>
       <nav>
         {items.map((item) => {
-          const active = pathname === item.href;
+          const active =
+            pathname === item.href ||
+            (item.href === "/dashboard/profile" && pathname === "/dashboard");
           return (
             <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}>
               {item.label}

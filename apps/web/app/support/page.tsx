@@ -30,6 +30,10 @@ export default function SupportPage() {
             . DMs are open.
           </li>
           <li>
+            The iOS viewer attaches to a shared host session. See the{" "}
+            <a href="https://docs.wrapper.sh/guides/mobile-viewer">mobile viewer guide</a>.
+          </li>
+          <li>
             Run <code>wrapper status</code> to inspect local session state.
           </li>
           <li>
