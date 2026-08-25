@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      lastUpdated="August 13, 2026"
+      lastUpdated="August 25, 2026"
       introduction="Wrapper is a remote terminal sharing service operated by Cupola Labs, LLC. Your terminal stays on your machine until you explicitly share it. This policy explains the metadata Wrapper stores, how terminal traffic moves between peers, which providers help us operate the service, and the controls available to you."
     >
       <LegalSection title="Information we collect">
@@ -59,8 +59,9 @@ export default function PrivacyPolicyPage() {
         <h3>Billing and optional analytics</h3>
         <p>
           Autumn and Stripe process subscription and payment information. Wrapper does not store
-          payment-card details. Anonymous CLI telemetry is disabled by default and is sent to
-          PostHog only after you run <code>wrapper telemetry enable</code>. Telemetry is designed
+          payment-card details. Resend sends transactional account emails such as welcome, plan
+          change, and deletion notices. Anonymous CLI telemetry is disabled by default and is sent
+          to PostHog only after you run <code>wrapper telemetry enable</code>. Telemetry is designed
           not to include terminal input, output, share codes, relay tickets, or authentication
           tokens.
         </p>
@@ -95,6 +96,7 @@ export default function PrivacyPolicyPage() {
           <li>Vercel for the Wrapper website.</li>
           <li>Apple, GitHub, and Google for optional social authentication.</li>
           <li>Autumn and Stripe for subscriptions and payment processing.</li>
+          <li>Resend for transactional account and billing emails.</li>
           <li>PostHog for optional anonymous CLI telemetry.</li>
           <li>Google and Twilio STUN servers for WebRTC network discovery.</li>
         </ul>

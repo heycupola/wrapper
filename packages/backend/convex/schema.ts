@@ -85,4 +85,20 @@ export default defineSchema({
   })
     .index("by_event_id", ["eventIdHash"])
     .index("by_created_at", ["createdAt"]),
+  emailState: defineTable({
+    userId: v.string(),
+    hasPro: v.optional(v.boolean()),
+    planDowngradedAt: v.optional(v.number()),
+    gracePeriodEmailSent: v.optional(v.boolean()),
+    accessRestrictedEmailSent: v.optional(v.boolean()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_plan_downgraded", ["planDowngradedAt"]),
+  processedWebhook: defineTable({
+    eventId: v.string(),
+    source: v.union(v.literal("autumn"), v.literal("resend")),
+    processedAt: v.number(),
+  })
+    .index("by_eventId_source", ["eventId", "source"])
+    .index("by_processedAt", ["processedAt"]),
 });

@@ -28,6 +28,29 @@ const queueBillingCustomerDeletionRef = makeFunctionReference<
   { userId: string },
   { queued: boolean }
 >("account:queueBillingCustomerDeletion");
+const sendWelcomeEmailRef = makeFunctionReference<
+  "action",
+  { userId: string },
+  { success: boolean }
+>("user:_sendWelcomeEmail") as unknown as FunctionReference<
+  "action",
+  "internal",
+  { userId: string },
+  { success: boolean }
+>;
+const sendAccountDeletedEmailRef = makeFunctionReference<
+  "action",
+  { to: string; userName: string; sessionsDeleted: number; ticketsRevoked: number },
+  { success: boolean }
+>("user:_sendAccountDeletedEmail") as unknown as FunctionReference<
+  "action",
+  "internal",
+  { to: string; userName: string; sessionsDeleted: number; ticketsRevoked: number },
+  { success: boolean }
+>;
+const authOnCreateRef = makeFunctionReference<"mutation", { doc: unknown; model: string }, null>(
+  "account:onCreate",
+) as unknown as FunctionReference<"mutation", "internal", { doc: unknown; model: string }, null>;
 const authOnDeleteRef = makeFunctionReference<"mutation", { doc: unknown; model: string }, null>(
   "account:onDelete",
 ) as unknown as FunctionReference<"mutation", "internal", { doc: unknown; model: string }, null>;
@@ -66,8 +89,27 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
   },
   triggers: {
     user: {
+      onCreate: async (ctx, user) => {
+        await ctx.scheduler.runAfter(0, sendWelcomeEmailRef, {
+          userId: user._id,
+        });
+      },
       onDelete: async (ctx, user) => {
-        await ctx.runMutation(deleteOwnedDataRef, { userId: user._id });
+        const counts = await ctx.runMutation(deleteOwnedDataRef, { userId: user._id });
+        if (user.email) {
+          try {
+            await ctx.scheduler.runAfter(0, sendAccountDeletedEmailRef, {
+              to: user.email,
+              userName: user.name || "there",
+              sessionsDeleted: counts.sessions,
+              ticketsRevoked: counts.relayTickets,
+            });
+          } catch {
+            log.error("Account deletion email could not be queued", {
+              errorCode: "account_deleted_email_queue_failed",
+            });
+          }
+        }
         try {
           const billingCleanup = await ctx.runMutation(queueBillingCustomerDeletionRef, {
             userId: user._id,
@@ -88,6 +130,7 @@ export const authComponent = createClient<DataModel, typeof authSchema>(componen
     },
   },
   authFunctions: {
+    onCreate: authOnCreateRef,
     onDelete: authOnDeleteRef,
   },
 }) as ReturnType<typeof createClient<DataModel>>;

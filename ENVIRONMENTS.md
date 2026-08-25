@@ -83,6 +83,12 @@ recommended branch protection settings are in [`OPERATIONS.md`](./OPERATIONS.md)
 | `APPLE_CLIENT_ID` / `APPLE_CLIENT_SECRET`   | dev Services ID + secret | prod Services ID + secret   |
 | `APPLE_NOTIFICATION_AUDIENCES`              | primary dev App ID       | `sh.wrapper.mobile`         |
 | `AUTUMN_SECRET_KEY`                         | `am_sk_test_…` (sandbox) | `am_sk_live_…` (production) |
+| `AUTUMN_WEBHOOK_SECRET`                     | Autumn Svix signing secret | Autumn Svix signing secret |
+| `WRAPPER_AUTUMN_PRO_PLAN_ID`                | `pro`                    | `pro`                       |
+| `RESEND_API_KEY`                            | Resend test/live key     | Resend live key             |
+| `RESEND_WEBHOOK_SECRET`                     | Resend Svix signing secret | Resend Svix signing secret |
+| `FROM_EMAIL_ADDRESS`                        | `Wrapper <notifications@wrapper.sh>` | same |
+| `FROM_EMAIL_ADDRESS_PERSONAL`               | `Can from Wrapper <can@wrapper.sh>` | same |
 | `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID`     | `can_share_relay`        | `can_share_relay`           |
 | `WRAPPER_RELAY_HOST_TICKET_TTL_MS` etc.     | optional (has defaults)  | optional (has defaults)     |
 
@@ -177,6 +183,18 @@ build time):
    ID and Services ID as audiences, provide both as a comma-separated allowlist.
    The endpoint verifies Apple's RS256 signature, issuer, audience, expiry, and
    replay id before invalidating sessions or deleting Apple-only accounts.
+
+   Register Autumn and Resend webhooks against the matching Convex `.site`
+   origin. Production URLs:
+
+   ```text
+   https://confident-fox-458.convex.site/webhook/autumn
+   https://confident-fox-458.convex.site/webhook/resend
+   ```
+
+   Verify `wrapper.sh` in Resend and set `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`,
+   `FROM_EMAIL_ADDRESS`, and `FROM_EMAIL_ADDRESS_PERSONAL` on both Convex
+   deployments. Without `RESEND_API_KEY`, transactional sends are skipped.
 
    Generate and pipe the Apple client secret without placing it in shell
    history:
