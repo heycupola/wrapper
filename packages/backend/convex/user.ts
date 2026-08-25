@@ -46,7 +46,7 @@ export const _upgradeToPro = internalMutation({
       .query("emailState")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
-    if (existing?.hasPro === true) {
+    if (existing?.hasPro === true && existing.planUpgradedEmailSent === true) {
       return { success: true, claimedUpgradeEmail: false };
     }
 
@@ -54,14 +54,36 @@ export const _upgradeToPro = internalMutation({
       hasPro: true,
       planDowngradedAt: undefined,
       gracePeriodEmailSent: undefined,
+      planUpgradedEmailSent: true,
       accessRestrictedEmailSent: undefined,
     };
     if (existing) {
       await ctx.db.patch(existing._id, patch);
       return { success: true, claimedUpgradeEmail: true };
     }
-    await ctx.db.insert("emailState", { userId: args.userId, hasPro: true });
+    await ctx.db.insert("emailState", {
+      userId: args.userId,
+      hasPro: true,
+      planUpgradedEmailSent: true,
+    });
     return { success: true, claimedUpgradeEmail: true };
+  },
+});
+
+export const _releaseUpgradeEmail = internalMutation({
+  args: {
+    userId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("emailState")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+    if (existing?.hasPro === true && existing.planUpgradedEmailSent === true) {
+      await ctx.db.patch(existing._id, { planUpgradedEmailSent: undefined });
+    }
+    return null;
   },
 });
 
@@ -106,6 +128,7 @@ export const _downgradeToFree = internalMutation({
       hasPro: false,
       planDowngradedAt: now,
       gracePeriodEmailSent: true,
+      planUpgradedEmailSent: undefined,
       accessRestrictedEmailSent: undefined,
     };
     if (existing) {
@@ -253,10 +276,22 @@ export const _handlePlanUpgrade = internalAction({
       return;
     }
 
-    await sendEmail(ctx, user._id, user.email, {
-      kind: EmailKind.PlanUpgraded,
-      userName: user.name || "there",
-    });
+    try {
+      const sent = await sendEmail(ctx, user._id, user.email, {
+        kind: EmailKind.PlanUpgraded,
+        userName: user.name || "there",
+      });
+      if (sent.emailId === "skipped") {
+        await ctx.runMutation(internal.user._releaseUpgradeEmail, {
+          userId: user._id,
+        });
+      }
+    } catch (error) {
+      await ctx.runMutation(internal.user._releaseUpgradeEmail, {
+        userId: user._id,
+      });
+      throw error;
+    }
   },
 });
 

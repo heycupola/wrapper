@@ -4,6 +4,8 @@ import { components } from "./_generated/api";
 import { type ActionCtx, internalAction, internalMutation } from "./_generated/server";
 import { deleteAllPaginated, deleteAuthRecordsForUser } from "./lib/accountDeletion.ts";
 import { createLogger } from "./lib/logger.ts";
+import { EmailKind } from "./lib/types.ts";
+import { sendEmailDirect } from "./resend.ts";
 
 const log = createLogger("apple-notifications");
 const EVENT_RETENTION_MS = 90 * 24 * 60 * 60 * 1_000;
@@ -356,10 +358,21 @@ async function deleteAppleOnlyUser(ctx: ActionCtx, userId: string): Promise<void
     where: [{ field: "_id", operator: "eq", value: userId }],
   })) as { email: string; name?: string | null } | null;
 
-  await ctx.runMutation(deleteOwnedDataRef, { userId });
+  const counts = await ctx.runMutation(deleteOwnedDataRef, { userId });
   await ctx.runMutation(queueBillingCustomerDeletionRef, { userId });
   await deleteSessionsForUser(ctx, userId);
   if (!user) return;
+
+  try {
+    await sendEmailDirect(user.email, {
+      kind: EmailKind.AccountDeleted,
+      userName: user.name || "there",
+      sessionsDeleted: counts.sessions,
+      ticketsRevoked: counts.relayTickets,
+    });
+  } catch {
+    log.error("Failed to send account deletion email");
+  }
 
   await deleteAuthRecordsForUser({
     deletePage: async (request, paginationOpts) =>

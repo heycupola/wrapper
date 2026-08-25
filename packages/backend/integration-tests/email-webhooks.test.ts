@@ -31,6 +31,9 @@ const upgradeToProRef = makeFunctionReference<
   { userId: string },
   { success: boolean; claimedUpgradeEmail: boolean }
 >("user:_upgradeToPro");
+const releaseUpgradeEmailRef = makeFunctionReference<"mutation", { userId: string }, null>(
+  "user:_releaseUpgradeEmail",
+);
 const downgradeToFreeRef = makeFunctionReference<
   "mutation",
   { userId: string },
@@ -202,6 +205,12 @@ describe("email webhook and plan state", () => {
     expect(await t.mutation(upgradeToProRef, { userId: "pro-user" })).toEqual({
       success: true,
       claimedUpgradeEmail: false,
+    });
+
+    await t.mutation(releaseUpgradeEmailRef, { userId: "pro-user" });
+    expect(await t.mutation(upgradeToProRef, { userId: "pro-user" })).toEqual({
+      success: true,
+      claimedUpgradeEmail: true,
     });
   });
 });
