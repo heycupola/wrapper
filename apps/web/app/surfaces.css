@@ -240,17 +240,21 @@
   gap: 18px;
 }
 
-.dashboardSignIn .authActions {
+.socialSignIn {
   display: grid;
-  width: 100%;
+  width: min(100%, 280px);
   gap: 8px;
 }
 
-.dashboardSignIn .authActions .social-btn {
+.socialSignIn .social-btn {
   width: 100%;
   min-height: 48px;
   justify-content: flex-start;
   padding-inline: 16px;
+}
+
+.dashboardSignIn .socialSignIn {
+  width: 100%;
 }
 
 .dashboardPanel {

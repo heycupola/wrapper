@@ -104,6 +104,15 @@ describe("account deletion cleanup", () => {
         count: 1,
         resetAt: now + 60_000,
       });
+      await ctx.db.insert("emailState", {
+        userId: "delete-user",
+        hasPro: false,
+        planDowngradedAt: now,
+      });
+      await ctx.db.insert("emailState", {
+        userId: "keep-user",
+        hasPro: true,
+      });
       await ctx.db.insert("onboarding", {
         userId: "keep-user",
         completedProfile: false,
@@ -184,6 +193,18 @@ describe("account deletion cleanup", () => {
       expect(
         await ctx.db
           .query("onboarding")
+          .withIndex("by_user", (query) => query.eq("userId", "keep-user"))
+          .first(),
+      ).not.toBeNull();
+      expect(
+        await ctx.db
+          .query("emailState")
+          .withIndex("by_user", (query) => query.eq("userId", "delete-user"))
+          .first(),
+      ).toBeNull();
+      expect(
+        await ctx.db
+          .query("emailState")
           .withIndex("by_user", (query) => query.eq("userId", "keep-user"))
           .first(),
       ).not.toBeNull();

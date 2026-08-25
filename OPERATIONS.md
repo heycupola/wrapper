@@ -248,51 +248,39 @@ planned maintenance event unless immediate containment is required.
 
 ## GitHub branch protection assessment
 
-Assessment on 2026-08-12:
+Reassessment on 2026-08-25. Classic branch protection is in place; do not add a
+parallel repository ruleset unless classic protection is being retired.
 
-- the repository is public and its default branch is `dev`;
-- `dev` and `main` have no branch protection rules; and
-- the repository has no rulesets.
+Current settings:
 
-Create one active repository ruleset named `protect-dev-and-main` with these exact settings:
+- `main` requires a pull request, conversation resolution, and the CI checks
+  `Quality gate (audit/lint/format/types)` and `Full lane (unit + e2e + relay smoke)`.
+  Required approvals remain `0` until a second production-enabled maintainer exists.
+- `dev` allows direct pushes for the current solo workflow, but blocks force pushes
+  and deletions and requires the same CI checks on pull requests.
+- GitHub Environment `dev` may deploy only from `dev`.
+- GitHub Environment `Production` (matched case-insensitively as `production` by
+  Actions) may deploy only from `main`.
+- Administrators can still bypass environment restrictions for a documented emergency.
 
-- **Target:** branch names `refs/heads/dev` and `refs/heads/main`.
-- **Bypass list:** empty. Administrators remain able to edit the ruleset for a documented
-  emergency, but routine merges must not bypass it.
-- **Restrict deletions:** enabled.
-- **Block force pushes:** enabled.
-- **Require linear history:** enabled.
-- **Require a pull request before merging:** enabled.
-  - Required approvals: `1`.
-  - Dismiss stale approvals on new commits: enabled.
-  - Require approval of the most recent reviewable push: enabled.
-  - Require conversation resolution: enabled.
-  - Require Code Owner review: disabled until a real multi-owner `CODEOWNERS` file exists.
-  - Allowed merge methods: squash and rebase only.
-- **Require status checks to pass:** enabled.
-  - Require branches to be up to date: enabled.
-  - Required check: `Quality gate (audit/lint/format/types)`.
-  - Required check: `Full lane (unit + e2e + relay smoke)`.
-- **Require deployments, merge queue, signed commits, and code scanning results:** disabled
-  until their workflows and operator process are proven not to deadlock changes.
+When a second maintainer is assigned:
 
-Leave all unlisted rules disabled.
+- raise `main` required approvals to `1`;
+- dismiss stale approvals and require approval of the most recent reviewable push;
+- add a production environment reviewer and disable self-review;
+- consider requiring pull requests on `dev` as well.
 
-Run CI on a pull request first so GitHub can select the exact check names. Do not require
-`Synthetic health`, `Deploy relay`, or `Deploy Convex`: synthetic health has no pull-request
-trigger, and the deploy workflows are path-filtered, so requiring them would leave unrelated
-pull requests permanently pending.
-
-Also restrict the GitHub `dev` environment to deployments from `dev` and the `production`
-environment to deployments from `main`. Add a production reviewer and disable self-review
-after a second production-enabled maintainer is assigned.
+Do not require `Synthetic health`, `Deploy relay`, or `Deploy Convex` as merge checks.
+Synthetic health has no pull-request trigger, and the deploy workflows are path-filtered.
 
 ## External setup still required
 
 Repository files cannot safely perform these account-level operations:
 
 1. Assign a second incident operator and maintain the private contact and credential registers.
-2. Create the repository ruleset and GitHub environment restrictions described above.
+2. Rotate `HOMEBREW_TAP_TOKEN`. The 2026-08-23 `v0.1.2` tap update failed with
+   `Bad credentials`; future CLI releases will not update Homebrew until a PAT that
+   can push to `heycupola/homebrew-tap` is stored as that Actions secret.
 3. Configure failure notifications for the scheduled GitHub workflow.
 4. Configure the external uptime checks and primary/backup notification routes.
 5. Select encrypted backup storage, define the deletion/revocation reconciliation source,

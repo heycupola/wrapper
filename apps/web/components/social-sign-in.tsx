@@ -51,7 +51,7 @@ export function SocialSignInButtons({
   onSignIn,
 }: SocialSignInButtonsProps) {
   return (
-    <div className="authActions">
+    <div className="socialSignIn">
       <button
         type="button"
         className="social-btn githubSignInButton"
