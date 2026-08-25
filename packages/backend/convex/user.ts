@@ -46,7 +46,14 @@ export const _upgradeToPro = internalMutation({
       .query("emailState")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
-    if (existing?.hasPro === true && existing.planUpgradedEmailSent === true) {
+    if (existing?.hasPro === true) {
+      if (existing.planUpgradedEmailSent === false) {
+        await ctx.db.patch(existing._id, { planUpgradedEmailSent: true });
+        return { success: true, claimedUpgradeEmail: true };
+      }
+      if (existing.planUpgradedEmailSent !== true) {
+        await ctx.db.patch(existing._id, { planUpgradedEmailSent: true });
+      }
       return { success: true, claimedUpgradeEmail: false };
     }
 
@@ -81,7 +88,7 @@ export const _releaseUpgradeEmail = internalMutation({
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
     if (existing?.hasPro === true && existing.planUpgradedEmailSent === true) {
-      await ctx.db.patch(existing._id, { planUpgradedEmailSent: undefined });
+      await ctx.db.patch(existing._id, { planUpgradedEmailSent: false });
     }
     return null;
   },

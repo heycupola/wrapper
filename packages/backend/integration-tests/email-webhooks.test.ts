@@ -213,4 +213,15 @@ describe("email webhook and plan state", () => {
       claimedUpgradeEmail: true,
     });
   });
+
+  test("legacy Pro rows do not claim another upgrade email", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("emailState", { userId: "legacy-pro", hasPro: true });
+    });
+    expect(await t.mutation(upgradeToProRef, { userId: "legacy-pro" })).toEqual({
+      success: true,
+      claimedUpgradeEmail: false,
+    });
+  });
 });
