@@ -32,8 +32,18 @@ const upgradeToProRef = makeFunctionReference<"mutation", { userId: string }, { 
 const downgradeToFreeRef = makeFunctionReference<
   "mutation",
   { userId: string },
-  { success: boolean; newlyDowngraded: boolean; claimedGraceEmail: boolean }
+  {
+    success: boolean;
+    newlyDowngraded: boolean;
+    claimedGraceEmail: boolean;
+    planDowngradedAt?: number;
+  }
 >("user:_downgradeToFree");
+const releaseGracePeriodEmailRef = makeFunctionReference<
+  "mutation",
+  { userId: string; planDowngradedAt: number },
+  null
+>("user:_releaseGracePeriodEmail");
 const loadUsersToRestrictRef = makeFunctionReference<
   "query",
   Record<string, never>,
@@ -122,11 +132,10 @@ describe("email webhook and plan state", () => {
     const t = convexTest(schema, modules);
 
     const first = await t.mutation(downgradeToFreeRef, { userId: "same-user" });
-    expect(first).toEqual({
-      success: true,
-      newlyDowngraded: true,
-      claimedGraceEmail: true,
-    });
+    expect(first.success).toBe(true);
+    expect(first.newlyDowngraded).toBe(true);
+    expect(first.claimedGraceEmail).toBe(true);
+    expect(first.planDowngradedAt).toEqual(expect.any(Number));
 
     let originalTs = 0;
     await t.run(async (ctx) => {
@@ -154,6 +163,30 @@ describe("email webhook and plan state", () => {
       expect(row?.planDowngradedAt).toBe(originalTs);
       expect(row?.gracePeriodEmailSent).toBe(true);
       expect(row?.accessRestrictedEmailSent).toBeUndefined();
+    });
+
+    await t.mutation(releaseGracePeriodEmailRef, {
+      userId: "same-user",
+      planDowngradedAt: originalTs - 1,
+    });
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("emailState")
+        .withIndex("by_user", (query) => query.eq("userId", "same-user"))
+        .first();
+      expect(row?.gracePeriodEmailSent).toBe(true);
+    });
+
+    await t.mutation(releaseGracePeriodEmailRef, {
+      userId: "same-user",
+      planDowngradedAt: originalTs,
+    });
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("emailState")
+        .withIndex("by_user", (query) => query.eq("userId", "same-user"))
+        .first();
+      expect(row?.gracePeriodEmailSent).toBeUndefined();
     });
   });
 });

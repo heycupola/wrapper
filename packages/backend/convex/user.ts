@@ -65,6 +65,7 @@ export const _downgradeToFree = internalMutation({
     success: v.boolean(),
     newlyDowngraded: v.boolean(),
     claimedGraceEmail: v.boolean(),
+    planDowngradedAt: v.optional(v.number()),
   }),
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -85,7 +86,12 @@ export const _downgradeToFree = internalMutation({
         hasPro: false,
         gracePeriodEmailSent: true,
       });
-      return { success: true, newlyDowngraded: false, claimedGraceEmail: true };
+      return {
+        success: true,
+        newlyDowngraded: false,
+        claimedGraceEmail: true,
+        planDowngradedAt: existing.planDowngradedAt,
+      };
     }
 
     const patch = {
@@ -96,7 +102,12 @@ export const _downgradeToFree = internalMutation({
     };
     if (existing) {
       await ctx.db.patch(existing._id, patch);
-      return { success: true, newlyDowngraded: true, claimedGraceEmail: true };
+      return {
+        success: true,
+        newlyDowngraded: true,
+        claimedGraceEmail: true,
+        planDowngradedAt: now,
+      };
     }
     await ctx.db.insert("emailState", {
       userId: args.userId,
@@ -104,13 +115,19 @@ export const _downgradeToFree = internalMutation({
       planDowngradedAt: now,
       gracePeriodEmailSent: true,
     });
-    return { success: true, newlyDowngraded: true, claimedGraceEmail: true };
+    return {
+      success: true,
+      newlyDowngraded: true,
+      claimedGraceEmail: true,
+      planDowngradedAt: now,
+    };
   },
 });
 
 export const _releaseGracePeriodEmail = internalMutation({
   args: {
     userId: v.string(),
+    planDowngradedAt: v.number(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -118,7 +135,10 @@ export const _releaseGracePeriodEmail = internalMutation({
       .query("emailState")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
-    if (existing?.gracePeriodEmailSent === true) {
+    if (
+      existing?.gracePeriodEmailSent === true &&
+      existing.planDowngradedAt === args.planDowngradedAt
+    ) {
       await ctx.db.patch(existing._id, { gracePeriodEmailSent: undefined });
     }
     return null;
@@ -252,15 +272,19 @@ export const _handlePlanDowngrade = internalAction({
         daysRemaining: 7,
         userName: user.name || "there",
       });
-      if (sent.emailId === "skipped") {
+      if (sent.emailId === "skipped" && downgrade.planDowngradedAt !== undefined) {
         await ctx.runMutation(internal.user._releaseGracePeriodEmail, {
           userId: user._id,
+          planDowngradedAt: downgrade.planDowngradedAt,
         });
       }
     } catch (error) {
-      await ctx.runMutation(internal.user._releaseGracePeriodEmail, {
-        userId: user._id,
-      });
+      if (downgrade.planDowngradedAt !== undefined) {
+        await ctx.runMutation(internal.user._releaseGracePeriodEmail, {
+          userId: user._id,
+          planDowngradedAt: downgrade.planDowngradedAt,
+        });
+      }
       throw error;
     }
   },
