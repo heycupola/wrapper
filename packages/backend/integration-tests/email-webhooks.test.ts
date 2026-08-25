@@ -32,7 +32,7 @@ const upgradeToProRef = makeFunctionReference<"mutation", { userId: string }, { 
 const downgradeToFreeRef = makeFunctionReference<
   "mutation",
   { userId: string },
-  { success: boolean; newlyDowngraded: boolean; gracePeriodEmailSent: boolean }
+  { success: boolean; newlyDowngraded: boolean; claimedGraceEmail: boolean }
 >("user:_downgradeToFree");
 const loadUsersToRestrictRef = makeFunctionReference<
   "query",
@@ -125,7 +125,7 @@ describe("email webhook and plan state", () => {
     expect(first).toEqual({
       success: true,
       newlyDowngraded: true,
-      gracePeriodEmailSent: false,
+      claimedGraceEmail: true,
     });
 
     let originalTs = 0;
@@ -136,14 +136,14 @@ describe("email webhook and plan state", () => {
         .first();
       if (!row?.planDowngradedAt) throw new Error("missing grace timestamp");
       originalTs = row.planDowngradedAt;
-      await ctx.db.patch(row._id, { gracePeriodEmailSent: true });
+      expect(row.gracePeriodEmailSent).toBe(true);
     });
 
     const second = await t.mutation(downgradeToFreeRef, { userId: "same-user" });
     expect(second).toEqual({
       success: true,
       newlyDowngraded: false,
-      gracePeriodEmailSent: true,
+      claimedGraceEmail: false,
     });
 
     await t.run(async (ctx) => {

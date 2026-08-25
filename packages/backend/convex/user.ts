@@ -64,7 +64,7 @@ export const _downgradeToFree = internalMutation({
   returns: v.object({
     success: v.boolean(),
     newlyDowngraded: v.boolean(),
-    gracePeriodEmailSent: v.boolean(),
+    claimedGraceEmail: v.boolean(),
   }),
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -74,32 +74,54 @@ export const _downgradeToFree = internalMutation({
       .first();
 
     if (existing && existing.hasPro !== true && existing.planDowngradedAt !== undefined) {
-      if (existing.hasPro !== false) {
-        await ctx.db.patch(existing._id, { hasPro: false });
+      if (existing.gracePeriodEmailSent === true) {
+        if (existing.hasPro !== false) {
+          await ctx.db.patch(existing._id, { hasPro: false });
+        }
+        return { success: true, newlyDowngraded: false, claimedGraceEmail: false };
       }
-      return {
-        success: true,
-        newlyDowngraded: false,
-        gracePeriodEmailSent: existing.gracePeriodEmailSent === true,
-      };
+
+      await ctx.db.patch(existing._id, {
+        hasPro: false,
+        gracePeriodEmailSent: true,
+      });
+      return { success: true, newlyDowngraded: false, claimedGraceEmail: true };
     }
 
     const patch = {
       hasPro: false,
       planDowngradedAt: now,
-      gracePeriodEmailSent: undefined,
+      gracePeriodEmailSent: true,
       accessRestrictedEmailSent: undefined,
     };
     if (existing) {
       await ctx.db.patch(existing._id, patch);
-      return { success: true, newlyDowngraded: true, gracePeriodEmailSent: false };
+      return { success: true, newlyDowngraded: true, claimedGraceEmail: true };
     }
     await ctx.db.insert("emailState", {
       userId: args.userId,
       hasPro: false,
       planDowngradedAt: now,
+      gracePeriodEmailSent: true,
     });
-    return { success: true, newlyDowngraded: true, gracePeriodEmailSent: false };
+    return { success: true, newlyDowngraded: true, claimedGraceEmail: true };
+  },
+});
+
+export const _releaseGracePeriodEmail = internalMutation({
+  args: {
+    userId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("emailState")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+    if (existing?.gracePeriodEmailSent === true) {
+      await ctx.db.patch(existing._id, { gracePeriodEmailSent: undefined });
+    }
+    return null;
   },
 });
 
@@ -217,25 +239,30 @@ export const _handlePlanDowngrade = internalAction({
     log.info("User downgraded to Free", {
       userId: user._id,
       newlyDowngraded: downgrade.newlyDowngraded,
+      claimedGraceEmail: downgrade.claimedGraceEmail,
     });
 
-    if (downgrade.gracePeriodEmailSent) {
+    if (!downgrade.claimedGraceEmail) {
       return;
     }
 
-    const sent = await sendEmail(ctx, user._id, user.email, {
-      kind: EmailKind.GracePeriodStarted,
-      daysRemaining: 7,
-      userName: user.name || "there",
-    });
-    if (sent.emailId === "skipped") {
-      return;
+    try {
+      const sent = await sendEmail(ctx, user._id, user.email, {
+        kind: EmailKind.GracePeriodStarted,
+        daysRemaining: 7,
+        userName: user.name || "there",
+      });
+      if (sent.emailId === "skipped") {
+        await ctx.runMutation(internal.user._releaseGracePeriodEmail, {
+          userId: user._id,
+        });
+      }
+    } catch (error) {
+      await ctx.runMutation(internal.user._releaseGracePeriodEmail, {
+        userId: user._id,
+      });
+      throw error;
     }
-
-    await ctx.runMutation(internal.user._updateEmailStateAfterEmailSent, {
-      userId: user._id,
-      emailKind: EmailKind.GracePeriodStarted,
-    });
   },
 });
 
