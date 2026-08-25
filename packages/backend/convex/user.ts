@@ -37,11 +37,19 @@ export const _upgradeToPro = internalMutation({
   args: {
     userId: v.string(),
   },
+  returns: v.object({
+    success: v.boolean(),
+    claimedUpgradeEmail: v.boolean(),
+  }),
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("emailState")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
+    if (existing?.hasPro === true) {
+      return { success: true, claimedUpgradeEmail: false };
+    }
+
     const patch = {
       hasPro: true,
       planDowngradedAt: undefined,
@@ -50,10 +58,10 @@ export const _upgradeToPro = internalMutation({
     };
     if (existing) {
       await ctx.db.patch(existing._id, patch);
-      return { success: true };
+      return { success: true, claimedUpgradeEmail: true };
     }
     await ctx.db.insert("emailState", { userId: args.userId, hasPro: true });
-    return { success: true };
+    return { success: true, claimedUpgradeEmail: true };
   },
 });
 
@@ -232,11 +240,18 @@ export const _handlePlanUpgrade = internalAction({
   handler: async (ctx, args) => {
     const user = await loadAuthUser(ctx, args.userId);
 
-    await ctx.runMutation(internal.user._upgradeToPro, {
+    const upgrade = await ctx.runMutation(internal.user._upgradeToPro, {
       userId: user._id,
     });
 
-    log.info("User upgraded to Pro", { userId: user._id });
+    log.info("User upgraded to Pro", {
+      userId: user._id,
+      claimedUpgradeEmail: upgrade.claimedUpgradeEmail,
+    });
+
+    if (!upgrade.claimedUpgradeEmail) {
+      return;
+    }
 
     await sendEmail(ctx, user._id, user.email, {
       kind: EmailKind.PlanUpgraded,

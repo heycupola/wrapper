@@ -26,9 +26,11 @@ const cleanupOldEventsRef = makeFunctionReference<
   Record<string, never>,
   { deleted: number }
 >("webhook:_cleanupOldEvents");
-const upgradeToProRef = makeFunctionReference<"mutation", { userId: string }, { success: boolean }>(
-  "user:_upgradeToPro",
-);
+const upgradeToProRef = makeFunctionReference<
+  "mutation",
+  { userId: string },
+  { success: boolean; claimedUpgradeEmail: boolean }
+>("user:_upgradeToPro");
 const downgradeToFreeRef = makeFunctionReference<
   "mutation",
   { userId: string },
@@ -187,6 +189,19 @@ describe("email webhook and plan state", () => {
         .withIndex("by_user", (query) => query.eq("userId", "same-user"))
         .first();
       expect(row?.gracePeriodEmailSent).toBeUndefined();
+    });
+  });
+
+  test("repeated upgrade claims the Pro email only once", async () => {
+    const t = convexTest(schema, modules);
+
+    expect(await t.mutation(upgradeToProRef, { userId: "pro-user" })).toEqual({
+      success: true,
+      claimedUpgradeEmail: true,
+    });
+    expect(await t.mutation(upgradeToProRef, { userId: "pro-user" })).toEqual({
+      success: true,
+      claimedUpgradeEmail: false,
     });
   });
 });
