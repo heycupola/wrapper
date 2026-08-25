@@ -87,15 +87,15 @@ The separate `apps/mobile` submodule now contains a Simulator-ready native
 iPhone/iPad viewer MVP: device authorization, owner and guest join flows,
 SwiftTerm rendering, relay transport, native WebRTC, and adaptive navigation.
 It uses Swift 6.0 language mode with complete strict concurrency on Xcode 26.
-Signed-device validation, TestFlight, and App Store review remain pre-release
-work.
+CLI `v0.1.2` is published on GitHub Releases. Signed-device validation and App
+Store review remain pre-release work.
 
-The active focus is release and operational hardening:
+The active focus is operational hardening:
 
-- publish CLI release archives and update the Homebrew tap formula
+- rotate `HOMEBREW_TAP_TOKEN` so release workflow can keep the tap in sync
 - keep dependency audit, lint, format, types, auth, and relay checks green
-- verify the P2P fast path and fallback on real networks
-- complete signed iPhone/iPad builds, TestFlight, and physical-device QA
+- complete App Store review and publish the public iOS listing
+- finish the remaining hosted-ops items in [`OPERATIONS.md`](./OPERATIONS.md)
 
 ## Local development
 

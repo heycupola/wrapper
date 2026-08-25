@@ -54,6 +54,10 @@ jobs:
             echo "::error::HOMEBREW_TAP_TOKEN is required"
             exit 1
           fi
+          if ! gh api repos/heycupola/homebrew-tap >/dev/null; then
+            echo "::error::HOMEBREW_TAP_TOKEN was rejected. Create a PAT that can push to heycupola/homebrew-tap and store it as the HOMEBREW_TAP_TOKEN Actions secret."
+            exit 1
+          fi
 
       - name: Validate release version
         run: |
@@ -179,8 +183,8 @@ jobs:
               "  end",
               "",
               "  def install",
-              '    bin.install "wrapper"',
-              '    bin.install Dir["wrapper-pty-helper-*"]',
+              '    bin.install "bin/wrapper"',
+              '    bin.install Dir["bin/wrapper-pty-helper-*"]',
               "  end",
               "",
               "  test do",

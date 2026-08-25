@@ -57,7 +57,7 @@
       }
     },
     {
-      "files": ["packages/backend/**/*.ts"],
+      "files": ["packages/backend/**/*.{ts,tsx}"],
       "rules": {
         "no-underscore-dangle": "off"
       }

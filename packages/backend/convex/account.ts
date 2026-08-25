@@ -190,11 +190,16 @@ export const deleteOwnedData = internalMutation({
       ),
     );
     const userRateLimits = rateLimitGroups.flat();
+    const emailStateRows = await ctx.db
+      .query("emailState")
+      .withIndex("by_user", (query) => query.eq("userId", args.userId))
+      .collect();
 
     await Promise.all([
       ...relayTickets.values().map((ticket) => ctx.db.delete(ticket._id)),
       ...onboardingRows.map((row) => ctx.db.delete(row._id)),
       ...userRateLimits.map((row) => ctx.db.delete(row._id)),
+      ...emailStateRows.map((row) => ctx.db.delete(row._id)),
       ...sessions.map((session) => ctx.db.delete(session._id)),
     ]);
 
@@ -206,4 +211,4 @@ export const deleteOwnedData = internalMutation({
   },
 });
 
-export const { onDelete } = authComponent.triggersApi();
+export const { onCreate, onDelete } = authComponent.triggersApi();
