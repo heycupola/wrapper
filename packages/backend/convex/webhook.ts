@@ -17,14 +17,43 @@ export const _isProcessed = internalQuery({
   },
 });
 
-export const _markProcessed = internalMutation({
+export const _claimEvent = internalMutation({
   args: { eventId: v.string(), source: webhookSource },
+  returns: v.object({ claimed: v.boolean() }),
   handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("processedWebhook")
+      .withIndex("by_eventId_source", (q) =>
+        q.eq("eventId", args.eventId).eq("source", args.source),
+      )
+      .first();
+    if (existing) {
+      return { claimed: false };
+    }
+
     await ctx.db.insert("processedWebhook", {
       eventId: args.eventId,
       source: args.source,
       processedAt: Date.now(),
     });
+    return { claimed: true };
+  },
+});
+
+export const _releaseClaim = internalMutation({
+  args: { eventId: v.string(), source: webhookSource },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("processedWebhook")
+      .withIndex("by_eventId_source", (q) =>
+        q.eq("eventId", args.eventId).eq("source", args.source),
+      )
+      .first();
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+    return null;
   },
 });
 

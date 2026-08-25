@@ -56,11 +56,11 @@ http.route({
       return new Response("Missing event ID", { status: 400 });
     }
 
-    const alreadyProcessed = await ctx.runQuery(internal.webhook._isProcessed, {
+    const { claimed } = await ctx.runMutation(internal.webhook._claimEvent, {
       eventId: svixId,
       source: "autumn",
     });
-    if (alreadyProcessed) {
+    if (!claimed) {
       autumnLog.info("Event already processed, skipping", { svixId });
       return new Response("Already processed", { status: 200 });
     }
@@ -74,12 +74,11 @@ http.route({
       });
 
       await handleAutumnWebhookEvent(ctx, payload);
-
-      await ctx.runMutation(internal.webhook._markProcessed, {
+    } catch (error) {
+      await ctx.runMutation(internal.webhook._releaseClaim, {
         eventId: svixId,
         source: "autumn",
       });
-    } catch (error) {
       autumnLog.error("Error handling webhook", { error: String(error) });
       return new Response("Webhook handler error", { status: 500 });
     }
@@ -122,11 +121,11 @@ http.route({
       return new Response("Missing event ID", { status: 400 });
     }
 
-    const alreadyProcessed = await ctx.runQuery(internal.webhook._isProcessed, {
+    const { claimed } = await ctx.runMutation(internal.webhook._claimEvent, {
       eventId: svixId,
       source: "resend",
     });
-    if (alreadyProcessed) {
+    if (!claimed) {
       resendLog.info("Event already processed, skipping", { svixId });
       return new Response("Already processed", { status: 200 });
     }
@@ -174,13 +173,12 @@ http.route({
         }
       }
 
-      await ctx.runMutation(internal.webhook._markProcessed, {
+      return new Response(null, { status: 200 });
+    } catch (error) {
+      await ctx.runMutation(internal.webhook._releaseClaim, {
         eventId: svixId,
         source: "resend",
       });
-
-      return new Response(null, { status: 200 });
-    } catch (error) {
       resendLog.error("Error handling webhook", { error: String(error) });
       return new Response("Webhook handler error", { status: 500 });
     }

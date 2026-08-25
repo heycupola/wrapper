@@ -11,11 +11,16 @@ const isProcessedRef = makeFunctionReference<
   { eventId: string; source: "autumn" | "resend" },
   boolean
 >("webhook:_isProcessed");
-const markProcessedRef = makeFunctionReference<
+const claimEventRef = makeFunctionReference<
+  "mutation",
+  { eventId: string; source: "autumn" | "resend" },
+  { claimed: boolean }
+>("webhook:_claimEvent");
+const releaseClaimRef = makeFunctionReference<
   "mutation",
   { eventId: string; source: "autumn" | "resend" },
   null
->("webhook:_markProcessed");
+>("webhook:_releaseClaim");
 const cleanupOldEventsRef = makeFunctionReference<
   "mutation",
   Record<string, never>,
@@ -27,7 +32,7 @@ const upgradeToProRef = makeFunctionReference<"mutation", { userId: string }, { 
 const downgradeToFreeRef = makeFunctionReference<
   "mutation",
   { userId: string },
-  { success: boolean }
+  { success: boolean; newlyDowngraded: boolean; gracePeriodEmailSent: boolean }
 >("user:_downgradeToFree");
 const loadUsersToRestrictRef = makeFunctionReference<
   "query",
@@ -44,9 +49,20 @@ describe("email webhook and plan state", () => {
 
     expect(await t.query(isProcessedRef, { eventId: "evt_1", source: "autumn" })).toBe(false);
 
-    await t.mutation(markProcessedRef, { eventId: "evt_1", source: "autumn" });
+    expect(await t.mutation(claimEventRef, { eventId: "evt_1", source: "autumn" })).toEqual({
+      claimed: true,
+    });
+    expect(await t.mutation(claimEventRef, { eventId: "evt_1", source: "autumn" })).toEqual({
+      claimed: false,
+    });
     expect(await t.query(isProcessedRef, { eventId: "evt_1", source: "autumn" })).toBe(true);
     expect(await t.query(isProcessedRef, { eventId: "evt_1", source: "resend" })).toBe(false);
+
+    await t.mutation(releaseClaimRef, { eventId: "evt_1", source: "autumn" });
+    expect(await t.query(isProcessedRef, { eventId: "evt_1", source: "autumn" })).toBe(false);
+    expect(await t.mutation(claimEventRef, { eventId: "evt_1", source: "autumn" })).toEqual({
+      claimed: true,
+    });
   });
 
   test("cleans webhook events older than 72 hours", async () => {
@@ -100,5 +116,44 @@ describe("email webhook and plan state", () => {
 
     const loaded = await t.query(loadUsersToRestrictRef, {});
     expect(loaded.usersToRestrict.map((row) => row.userId)).toEqual(["ready-user"]);
+  });
+
+  test("repeated downgrade keeps the original grace timer and send flags", async () => {
+    const t = convexTest(schema, modules);
+
+    const first = await t.mutation(downgradeToFreeRef, { userId: "same-user" });
+    expect(first).toEqual({
+      success: true,
+      newlyDowngraded: true,
+      gracePeriodEmailSent: false,
+    });
+
+    let originalTs = 0;
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("emailState")
+        .withIndex("by_user", (query) => query.eq("userId", "same-user"))
+        .first();
+      if (!row?.planDowngradedAt) throw new Error("missing grace timestamp");
+      originalTs = row.planDowngradedAt;
+      await ctx.db.patch(row._id, { gracePeriodEmailSent: true });
+    });
+
+    const second = await t.mutation(downgradeToFreeRef, { userId: "same-user" });
+    expect(second).toEqual({
+      success: true,
+      newlyDowngraded: false,
+      gracePeriodEmailSent: true,
+    });
+
+    await t.run(async (ctx) => {
+      const row = await ctx.db
+        .query("emailState")
+        .withIndex("by_user", (query) => query.eq("userId", "same-user"))
+        .first();
+      expect(row?.planDowngradedAt).toBe(originalTs);
+      expect(row?.gracePeriodEmailSent).toBe(true);
+      expect(row?.accessRestrictedEmailSent).toBeUndefined();
+    });
   });
 });

@@ -61,12 +61,29 @@ export const _downgradeToFree = internalMutation({
   args: {
     userId: v.string(),
   },
+  returns: v.object({
+    success: v.boolean(),
+    newlyDowngraded: v.boolean(),
+    gracePeriodEmailSent: v.boolean(),
+  }),
   handler: async (ctx, args) => {
     const now = Date.now();
     const existing = await ctx.db
       .query("emailState")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
+
+    if (existing && existing.hasPro !== true && existing.planDowngradedAt !== undefined) {
+      if (existing.hasPro !== false) {
+        await ctx.db.patch(existing._id, { hasPro: false });
+      }
+      return {
+        success: true,
+        newlyDowngraded: false,
+        gracePeriodEmailSent: existing.gracePeriodEmailSent === true,
+      };
+    }
+
     const patch = {
       hasPro: false,
       planDowngradedAt: now,
@@ -75,14 +92,14 @@ export const _downgradeToFree = internalMutation({
     };
     if (existing) {
       await ctx.db.patch(existing._id, patch);
-      return { success: true };
+      return { success: true, newlyDowngraded: true, gracePeriodEmailSent: false };
     }
     await ctx.db.insert("emailState", {
       userId: args.userId,
       hasPro: false,
       planDowngradedAt: now,
     });
-    return { success: true };
+    return { success: true, newlyDowngraded: true, gracePeriodEmailSent: false };
   },
 });
 
@@ -193,16 +210,31 @@ export const _handlePlanDowngrade = internalAction({
   handler: async (ctx, args) => {
     const user = await loadAuthUser(ctx, args.userId);
 
-    await ctx.runMutation(internal.user._downgradeToFree, {
+    const downgrade = await ctx.runMutation(internal.user._downgradeToFree, {
       userId: user._id,
     });
 
-    log.info("User downgraded to Free", { userId: user._id });
+    log.info("User downgraded to Free", {
+      userId: user._id,
+      newlyDowngraded: downgrade.newlyDowngraded,
+    });
 
-    await sendEmail(ctx, user._id, user.email, {
+    if (downgrade.gracePeriodEmailSent) {
+      return;
+    }
+
+    const sent = await sendEmail(ctx, user._id, user.email, {
       kind: EmailKind.GracePeriodStarted,
       daysRemaining: 7,
       userName: user.name || "there",
+    });
+    if (sent.emailId === "skipped") {
+      return;
+    }
+
+    await ctx.runMutation(internal.user._updateEmailStateAfterEmailSent, {
+      userId: user._id,
+      emailKind: EmailKind.GracePeriodStarted,
     });
   },
 });
@@ -266,11 +298,19 @@ export const _batchSendAccessRestrictedEmails = internalAction({
         userId: state.userId,
       });
 
-      await sendEmail(ctx, user._id, user.email, {
+      const sent = await sendEmail(ctx, user._id, user.email, {
         kind: EmailKind.AccessRestricted,
         ownedSessionCount: counts.ownedSessionCount,
         sharedSessionCount: counts.sharedSessionCount,
         userName: user.name || "there",
+      });
+      if (sent.emailId === "skipped") {
+        continue;
+      }
+
+      await ctx.runMutation(internal.user._updateEmailStateAfterEmailSent, {
+        userId: user._id,
+        emailKind: EmailKind.AccessRestricted,
       });
     }
 
