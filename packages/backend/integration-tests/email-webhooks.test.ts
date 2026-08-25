@@ -26,8 +26,13 @@ const cleanupOldEventsRef = makeFunctionReference<
   Record<string, never>,
   { deleted: number }
 >("webhook:_cleanupOldEvents");
-const upgradeToProRef = makeFunctionReference<"mutation", { userId: string }, { success: boolean }>(
-  "user:_upgradeToPro",
+const upgradeToProRef = makeFunctionReference<
+  "mutation",
+  { userId: string },
+  { success: boolean; claimedUpgradeEmail: boolean }
+>("user:_upgradeToPro");
+const releaseUpgradeEmailRef = makeFunctionReference<"mutation", { userId: string }, null>(
+  "user:_releaseUpgradeEmail",
 );
 const downgradeToFreeRef = makeFunctionReference<
   "mutation",
@@ -187,6 +192,36 @@ describe("email webhook and plan state", () => {
         .withIndex("by_user", (query) => query.eq("userId", "same-user"))
         .first();
       expect(row?.gracePeriodEmailSent).toBeUndefined();
+    });
+  });
+
+  test("repeated upgrade claims the Pro email only once", async () => {
+    const t = convexTest(schema, modules);
+
+    expect(await t.mutation(upgradeToProRef, { userId: "pro-user" })).toEqual({
+      success: true,
+      claimedUpgradeEmail: true,
+    });
+    expect(await t.mutation(upgradeToProRef, { userId: "pro-user" })).toEqual({
+      success: true,
+      claimedUpgradeEmail: false,
+    });
+
+    await t.mutation(releaseUpgradeEmailRef, { userId: "pro-user" });
+    expect(await t.mutation(upgradeToProRef, { userId: "pro-user" })).toEqual({
+      success: true,
+      claimedUpgradeEmail: true,
+    });
+  });
+
+  test("legacy Pro rows do not claim another upgrade email", async () => {
+    const t = convexTest(schema, modules);
+    await t.run(async (ctx) => {
+      await ctx.db.insert("emailState", { userId: "legacy-pro", hasPro: true });
+    });
+    expect(await t.mutation(upgradeToProRef, { userId: "legacy-pro" })).toEqual({
+      success: true,
+      claimedUpgradeEmail: false,
     });
   });
 });

@@ -90,6 +90,7 @@ export default defineSchema({
     hasPro: v.optional(v.boolean()),
     planDowngradedAt: v.optional(v.number()),
     gracePeriodEmailSent: v.optional(v.boolean()),
+    planUpgradedEmailSent: v.optional(v.boolean()),
     accessRestrictedEmailSent: v.optional(v.boolean()),
   })
     .index("by_user", ["userId"])

@@ -37,23 +37,60 @@ export const _upgradeToPro = internalMutation({
   args: {
     userId: v.string(),
   },
+  returns: v.object({
+    success: v.boolean(),
+    claimedUpgradeEmail: v.boolean(),
+  }),
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("emailState")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .first();
+    if (existing?.hasPro === true) {
+      if (existing.planUpgradedEmailSent === false) {
+        await ctx.db.patch(existing._id, { planUpgradedEmailSent: true });
+        return { success: true, claimedUpgradeEmail: true };
+      }
+      if (existing.planUpgradedEmailSent !== true) {
+        await ctx.db.patch(existing._id, { planUpgradedEmailSent: true });
+      }
+      return { success: true, claimedUpgradeEmail: false };
+    }
+
     const patch = {
       hasPro: true,
       planDowngradedAt: undefined,
       gracePeriodEmailSent: undefined,
+      planUpgradedEmailSent: true,
       accessRestrictedEmailSent: undefined,
     };
     if (existing) {
       await ctx.db.patch(existing._id, patch);
-      return { success: true };
+      return { success: true, claimedUpgradeEmail: true };
     }
-    await ctx.db.insert("emailState", { userId: args.userId, hasPro: true });
-    return { success: true };
+    await ctx.db.insert("emailState", {
+      userId: args.userId,
+      hasPro: true,
+      planUpgradedEmailSent: true,
+    });
+    return { success: true, claimedUpgradeEmail: true };
+  },
+});
+
+export const _releaseUpgradeEmail = internalMutation({
+  args: {
+    userId: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("emailState")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first();
+    if (existing?.hasPro === true && existing.planUpgradedEmailSent === true) {
+      await ctx.db.patch(existing._id, { planUpgradedEmailSent: false });
+    }
+    return null;
   },
 });
 
@@ -98,6 +135,7 @@ export const _downgradeToFree = internalMutation({
       hasPro: false,
       planDowngradedAt: now,
       gracePeriodEmailSent: true,
+      planUpgradedEmailSent: undefined,
       accessRestrictedEmailSent: undefined,
     };
     if (existing) {
@@ -232,16 +270,35 @@ export const _handlePlanUpgrade = internalAction({
   handler: async (ctx, args) => {
     const user = await loadAuthUser(ctx, args.userId);
 
-    await ctx.runMutation(internal.user._upgradeToPro, {
+    const upgrade = await ctx.runMutation(internal.user._upgradeToPro, {
       userId: user._id,
     });
 
-    log.info("User upgraded to Pro", { userId: user._id });
-
-    await sendEmail(ctx, user._id, user.email, {
-      kind: EmailKind.PlanUpgraded,
-      userName: user.name || "there",
+    log.info("User upgraded to Pro", {
+      userId: user._id,
+      claimedUpgradeEmail: upgrade.claimedUpgradeEmail,
     });
+
+    if (!upgrade.claimedUpgradeEmail) {
+      return;
+    }
+
+    try {
+      const sent = await sendEmail(ctx, user._id, user.email, {
+        kind: EmailKind.PlanUpgraded,
+        userName: user.name || "there",
+      });
+      if (sent.emailId === "skipped") {
+        await ctx.runMutation(internal.user._releaseUpgradeEmail, {
+          userId: user._id,
+        });
+      }
+    } catch (error) {
+      await ctx.runMutation(internal.user._releaseUpgradeEmail, {
+        userId: user._id,
+      });
+      throw error;
+    }
   },
 });
 
