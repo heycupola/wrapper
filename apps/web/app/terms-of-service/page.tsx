@@ -13,7 +13,7 @@ export default function TermsOfServicePage() {
   return (
     <LegalPage
       title="Terms of Service"
-      lastUpdated="August 11, 2026"
+      lastUpdated="August 26, 2026"
       introduction="These Terms form an agreement between you and Cupola Labs, LLC concerning Wrapper, its CLI, website, backend, relay, documentation, and mobile clients (collectively, the Service). By creating an account or using the Service, you agree to these Terms and the Privacy Policy."
     >
       <LegalSection title="Eligibility and accounts">
@@ -170,8 +170,8 @@ export default function TermsOfServicePage() {
 
       <LegalSection title="Contact">
         <p>
-          Questions about these Terms: <a href="mailto:support@relic.so">support@relic.so</a>, the
-          current Cupola Labs support inbox. Security reports must follow the private process on our{" "}
+          Questions about these Terms: <a href="mailto:support@wrapper.sh">support@wrapper.sh</a>.
+          Security reports must follow the private process on our{" "}
           <Link href="/support#security">support page</Link>.
         </p>
       </LegalSection>

@@ -2,6 +2,7 @@
   "name": "ip",
   "version": "2.1.0",
   "private": true,
+  "license": "MIT",
   "type": "commonjs",
   "main": "index.cjs",
   "types": "index.d.ts",

@@ -1,6 +1,7 @@
 {
   "name": "backend",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "bunx convex dev",
