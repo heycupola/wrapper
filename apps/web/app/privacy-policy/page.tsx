@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      lastUpdated="August 25, 2026"
+      lastUpdated="August 26, 2026"
       introduction="Wrapper is a remote terminal sharing service operated by Cupola Labs, LLC. Your terminal stays on your machine until you explicitly share it. This policy explains the metadata Wrapper stores, how terminal traffic moves between peers, which providers help us operate the service, and the controls available to you."
     >
       <LegalSection title="Information we collect">
@@ -131,8 +131,8 @@ export default function PrivacyPolicyPage() {
           removal of the associated billing customer. Temporary billing-provider failures do not
           keep the local account active; bounded background retries continue and operators can
           investigate exhausted cleanup attempts. To request access, correction, export, or
-          assistance with deletion, contact <a href="mailto:support@relic.so">support@relic.so</a>,
-          the current Cupola Labs support inbox.
+          assistance with deletion, contact{" "}
+          <a href="mailto:support@wrapper.sh">support@wrapper.sh</a>.
         </p>
       </LegalSection>
 
@@ -148,7 +148,7 @@ export default function PrivacyPolicyPage() {
         <p>
           Depending on where you live, you may have rights to access, correct, delete, restrict, or
           export personal information and to object to certain processing. We do not sell personal
-          information. Contact <a href="mailto:support@relic.so">support@relic.so</a> to make a
+          information. Contact <a href="mailto:support@wrapper.sh">support@wrapper.sh</a> to make a
           request. You may also complain to your local data-protection authority.
         </p>
       </LegalSection>
@@ -173,8 +173,8 @@ export default function PrivacyPolicyPage() {
           date above and may be communicated through the service or account email.
         </p>
         <p>
-          Privacy questions: <a href="mailto:support@relic.so">support@relic.so</a>. See also our{" "}
-          <Link href="/terms-of-service">Terms of Service</Link>.
+          Privacy questions: <a href="mailto:support@wrapper.sh">support@wrapper.sh</a>. See also
+          our <Link href="/terms-of-service">Terms of Service</Link>.
         </p>
       </LegalSection>
     </LegalPage>

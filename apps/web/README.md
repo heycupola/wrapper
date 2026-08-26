@@ -50,10 +50,11 @@ login flow.
 - **Convex backend** (`@repo/backend`) for auth, onboarding state, and billing.
 - **Better Auth** for sessions and the device authorization approval step.
 
-The canonical marketing domain is `wrapper.sh` (see `app/layout.tsx`). The
-landing video assets and their explicit enablement variables are described in
-`public/README.md`. `app/opengraph-image.tsx` generates the large social preview
-from the same visual system as the landing page.
+The canonical marketing domain is `wrapper.sh` (see `app/layout.tsx`). Optional
+landing video assets live in `public/` and are enabled with
+`NEXT_PUBLIC_WRAPPER_DEMO_VIDEO_URL` and `NEXT_PUBLIC_WRAPPER_DEMO_POSTER_URL`.
+`app/opengraph-image.tsx` generates the large social preview from the same visual
+system as the landing page.
 
 ## Local development
 
