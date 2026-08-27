@@ -22,10 +22,10 @@
     "@react-email/components": "^1.0.2",
     "@react-email/render": "^2.0.0",
     "@useautumn/convex": "0.0.23",
-    "better-auth": "1.6.26",
-    "convex": "1.43.0",
-    "convex-helpers": "0.1.122",
-    "jose": "^6.2.8",
+    "better-auth": "1.7.1",
+    "convex": "1.45.0",
+    "convex-helpers": "0.1.123",
+    "jose": "^6.2.10",
     "react": "catalog:",
     "react-dom": "catalog:",
     "resend": "^6.6.0"
@@ -35,9 +35,9 @@
     "@types/bun": "latest",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "convex-test": "^0.0.55",
+    "convex-test": "^0.0.56",
     "typescript": "^5",
-    "vite": "^8.2.1",
-    "vitest": "^4.1.10"
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
   }
 }
