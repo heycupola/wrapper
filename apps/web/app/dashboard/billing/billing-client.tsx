@@ -19,9 +19,11 @@ const checkoutRef = makeFunctionReference<
 
 export function DashboardBillingActions({
   token,
+  plan,
   canManageBilling,
 }: {
   token: string;
+  plan: "free" | "pro";
   canManageBilling: boolean;
 }) {
   const [pending, setPending] = useState<"portal" | "checkout" | null>(null);
@@ -40,7 +42,7 @@ export function DashboardBillingActions({
     setPending("portal");
     setError(null);
     try {
-      const returnUrl = new URL("/dashboard/billing", window.location.origin).toString();
+      const returnUrl = new URL("/plan/returned", window.location.origin).toString();
       const result = await client.action(billingPortalRef, { returnUrl });
       const portalUrl = getSafeBillingPortalUrl(result.portalUrl);
       if (!portalUrl) throw new Error("Unexpected billing portal address.");
@@ -58,10 +60,7 @@ export function DashboardBillingActions({
     setPending("checkout");
     setError(null);
     try {
-      const successUrl = new URL(
-        "/dashboard/billing?upgraded=1",
-        window.location.origin,
-      ).toString();
+      const successUrl = new URL("/plan/upgraded", window.location.origin).toString();
       const result = await client.action(checkoutRef, { successUrl });
       const checkoutUrl = getSafeCheckoutUrl(result.checkoutUrl);
       if (!checkoutUrl) throw new Error("Unexpected checkout address.");
@@ -79,20 +78,24 @@ export function DashboardBillingActions({
       <div>
         <h2 id="billing-actions-title">Billing actions</h2>
         <p>
-          {canManageBilling
-            ? "Use Stripe for subscription management or start a new Pro checkout."
+          {plan === "pro"
+            ? canManageBilling
+              ? "Use Stripe to manage invoices, payment details, and cancellation."
+              : "You're on Pro. A paid checkout is what creates a Stripe portal for invoices."
             : "Upgrade to Pro when a session needs to leave this machine."}
         </p>
       </div>
       <div className="authActions">
-        <button
-          type="button"
-          className="social-btn social-btn-primary"
-          disabled={pending !== null}
-          onClick={() => void startCheckout()}
-        >
-          {pending === "checkout" ? "Starting checkout…" : "Upgrade to Pro"}
-        </button>
+        {plan === "free" ? (
+          <button
+            type="button"
+            className="social-btn social-btn-primary"
+            disabled={pending !== null}
+            onClick={() => void startCheckout()}
+          >
+            {pending === "checkout" ? "Starting checkout…" : "Upgrade to Pro"}
+          </button>
+        ) : null}
         {canManageBilling ? (
           <button
             type="button"

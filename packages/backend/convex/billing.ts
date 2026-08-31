@@ -1,3 +1,4 @@
+import { makeFunctionReference } from "convex/server";
 import { v } from "convex/values";
 import { createError, ErrorCode } from "./lib/errors.ts";
 import { protectedAction, protectedQuery } from "./lib/middleware.ts";
@@ -11,6 +12,15 @@ const appOrigin = new URL(
 ).origin;
 const STRIPE_CHECKOUT_ORIGIN = "https://checkout.stripe.com";
 const STRIPE_PORTAL_ORIGIN = "https://billing.stripe.com";
+
+type BillingState = {
+  canManageBilling: boolean;
+  plan: "free" | "pro";
+};
+
+const getCachedStateRef = makeFunctionReference<"query", Record<string, never>, BillingState>(
+  "billing:getState",
+);
 
 export const getState = protectedQuery({
   args: {},
@@ -26,10 +36,41 @@ export const getState = protectedQuery({
   },
 });
 
+/**
+ * Dashboard plan from Autumn (same source as relay share), with the webhook
+ * `emailState` row as fallback when the provider is down. Portal eligibility
+ * still comes from that row: a Stripe customer exists after paid checkout, not
+ * after an Autumn dashboard grant.
+ */
+export const getLiveState = protectedAction({
+  args: {},
+  handler: async (ctx): Promise<BillingState> => {
+    const cached = await ctx.runQuery(getCachedStateRef, {});
+    const featureId = getRelayShareFeatureId();
+    if (!featureId) return cached;
+
+    const access = await ctx.autumn.check(ctx, { featureId });
+    if (access.error) return cached;
+    return {
+      canManageBilling: cached.canManageBilling,
+      plan: access.data?.allowed === true ? "pro" : "free",
+    };
+  },
+});
+
 function getProPlanId(): string {
   const value = process.env.WRAPPER_AUTUMN_PRO_PLAN_ID;
   if (!value) return "pro";
   return value.trim();
+}
+
+function getRelayShareFeatureId(): string | null {
+  const value = process.env.WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID;
+  if (value === undefined) return "can_share_relay";
+  const trimmed = value.trim();
+  const disabled = ["", "off", "none", "false", "0", "disabled"];
+  if (disabled.includes(trimmed.toLowerCase())) return null;
+  return trimmed;
 }
 
 /**
