@@ -6,8 +6,8 @@ describe("iOS app target", () => {
   test("falls back to the mobile viewer guide as a beta join when no URL is set", () => {
     assert.deepEqual(getIosAppTarget({}), {
       href: IOS_VIEWER_DOCS_URL,
-      label: "Join the iOS beta",
-      navLabel: "iOS beta",
+      label: "Get iOS viewer",
+      navLabel: "iOS viewer",
       kind: "docs",
       external: true,
       beta: true,
@@ -32,13 +32,13 @@ describe("iOS app target", () => {
     );
   });
 
-  test("labels TestFlight URLs as a beta join", () => {
+  test("keeps Get iOS viewer copy and marks TestFlight URLs as beta", () => {
     const target = getIosAppTarget({
       NEXT_PUBLIC_IOS_APP_URL: "https://testflight.apple.com/join/abcd",
     });
     assert.equal(target.kind, "testflight");
-    assert.equal(target.label, "Join the iOS beta");
-    assert.equal(target.navLabel, "iOS beta");
+    assert.equal(target.label, "Get iOS viewer");
+    assert.equal(target.navLabel, "iOS viewer");
     assert.equal(target.beta, true);
   });
 
