@@ -7,7 +7,7 @@ export function AuthShell({
   description,
   children,
   size = "compact",
-  showHeaderAction = true,
+  showHeaderAction = false,
   showFooter = true,
 }: {
   title?: string;
