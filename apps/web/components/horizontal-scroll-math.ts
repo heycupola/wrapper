@@ -24,6 +24,17 @@ export function sectionScrollTarget(
   return start + Math.min(Math.max(0, maxTranslate), Math.max(0, sectionLeft));
 }
 
+/** True once the horizontal track has laid out, so a non-intro hash is not 0. */
+export function hashMetricsReady(input: {
+  measuredCount: number;
+  maxTranslate: number;
+  sectionLeft: number;
+  isFirstSection: boolean;
+}): boolean {
+  if (input.measuredCount === 0 || input.maxTranslate <= 0) return false;
+  return input.isFirstSection || input.sectionLeft > 0;
+}
+
 export function nearestSectionIndex(
   horizontalOffset: number,
   viewportWidth: number,

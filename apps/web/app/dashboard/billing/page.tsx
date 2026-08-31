@@ -22,6 +22,7 @@ export default async function DashboardBillingPage({
   const upgraded = Array.isArray(params.upgraded) ? params.upgraded[0] : params.upgraded;
   const billing = await getDashboardBillingState(token);
   const canManageBilling = billing?.canManageBilling === true || upgraded === "1";
+  const plan = billing?.plan === "pro" || upgraded === "1" ? "pro" : "free";
 
   return (
     <>
@@ -34,7 +35,9 @@ export default async function DashboardBillingPage({
         <article className="dashboardPanel">
           <div className="dashboardPanelHeader">
             <div>
-              <span className="dashboardPanelLabel">Included</span>
+              <span className="dashboardPanelLabel">
+                {plan === "free" ? "Current plan" : "Included"}
+              </span>
               <h2>Free</h2>
             </div>
             <strong className="dashboardPlanPrice">$0</strong>
@@ -49,7 +52,9 @@ export default async function DashboardBillingPage({
         <article className="dashboardPanel dashboardProPanel">
           <div className="dashboardPanelHeader">
             <div>
-              <span className="dashboardPanelLabel">Remote access</span>
+              <span className="dashboardPanelLabel">
+                {plan === "pro" ? "Current plan" : "Remote access"}
+              </span>
               <h2>Pro</h2>
             </div>
             <p className="dashboardPlanPrice">
