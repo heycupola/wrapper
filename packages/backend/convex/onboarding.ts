@@ -80,6 +80,7 @@ export const complete = protectedMutation({
     await ctx.db.patch(row._id, {
       ...finished,
       completedAt: row.completedAt ?? now,
+      sharedFirstSession: undefined,
     });
 
     return { ok: true };

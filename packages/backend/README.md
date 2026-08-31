@@ -22,6 +22,7 @@ who may attach to which session.
 - `onboarding`
   - `userId`
   - `completedProfile`, `connectedCli`
+  - leftover `sharedFirstSession` is optional and cleared on write
   - `status` (`in_progress` or `completed`)
   - `source`, `sourceOther`, `teamSize`
   - `createdAt`, `updatedAt`, `completedAt`

@@ -52,6 +52,7 @@ export async function applyOnboardingStep(
     status,
     updatedAt: now,
     completedAt: status === "completed" ? (row.completedAt ?? now) : undefined,
+    sharedFirstSession: undefined,
   });
   return status;
 }
