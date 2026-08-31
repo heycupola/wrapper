@@ -57,4 +57,6 @@ export const paths = {
   sessionsRegistry: (): string => join(paths.state(), "sessions.json"),
   /** `${config}/auth.json` */
   authFile: (): string => join(paths.config(), "auth.json"),
+  /** `${config}/config.json` */
+  configFile: (): string => join(paths.config(), "config.json"),
 } as const;

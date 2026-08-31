@@ -22,7 +22,7 @@ describe("iOS app target", () => {
       }),
       {
         href: "https://apps.apple.com/app/wrapper/id000",
-        label: "Get the iOS viewer",
+        label: "Get iOS viewer",
         navLabel: "iOS viewer",
         kind: "store",
         external: true,

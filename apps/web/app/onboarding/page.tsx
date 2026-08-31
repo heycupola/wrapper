@@ -4,6 +4,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { getToken, isAuthenticated } from "../../lib/auth-server";
 import { AuthShell } from "../../components/auth-shell";
+import { getIosAppTarget } from "../../lib/ios-app";
 import { OnboardingClient } from "./onboarding-client";
 
 export const metadata: Metadata = {
@@ -16,7 +17,6 @@ type OnboardingState = {
   status: "in_progress" | "completed";
   completedProfile: boolean;
   connectedCli: boolean;
-  sharedFirstSession: boolean;
   source?: string | null;
   sourceOther?: string | null;
   teamSize?: string | null;
@@ -52,10 +52,11 @@ export default async function OnboardingPage() {
   const client = new ConvexHttpClient(convexUrl);
   client.setAuth(token);
   const state = await client.query(getOnboardingStateRef, {});
+  if (!state.needsOnboarding) redirect("/dashboard");
 
   return (
     <AuthShell showHeaderAction={false} showFooter={false}>
-      <OnboardingClient token={token} initialState={state} />
+      <OnboardingClient token={token} initialState={state} iosViewer={getIosAppTarget()} />
     </AuthShell>
   );
 }

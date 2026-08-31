@@ -3,8 +3,9 @@ title: "Authentication"
 description: "Sign in with device authorization, inspect the session, and log out safely."
 ---
 
-Wrapper uses Better Auth device authorization. The CLI opens a browser flow,
-you approve a short code, and the CLI stores a session token locally.
+Wrapper uses Better Auth device authorization. The CLI prints a verification
+URL, you press Enter to open it, approve a short code, and the CLI stores a
+session token locally.
 
 ## Sign in
 
@@ -13,8 +14,9 @@ wrapper auth login
 ```
 
 1. The CLI prints a verification URL and user code.
-2. Sign in with your Wrapper account in the browser.
-3. Approve the device.
+2. Press Enter to open the URL in your browser, or copy it if you are on a
+   headless session.
+3. Sign in with your Wrapper account and approve the device.
 4. The CLI stores credentials and can mint short-lived Convex JWTs for backend
    calls.
 
@@ -47,6 +49,7 @@ Related state:
 
 | Path                                       | Contents                           |
 | ------------------------------------------ | ---------------------------------- |
+| `~/.config/wrapper/config.json`            | Optional prefix and other settings |
 | `~/.local/state/wrapper/sessions.json`     | Live local session registry (prod) |
 | `~/.local/state/wrapper-dev/sessions.json` | Live local session registry (dev)  |
 

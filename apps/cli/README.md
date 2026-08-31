@@ -245,8 +245,9 @@ bun run dev:host
 
 Wrapper prints a one-time controls hint when a host reaches its first idle
 prompt and when a viewer attaches. The terminal title then stays updated with
-the role, short session id, and active transport. Pressing `Ctrl+\` changes the
-title into a context-aware controls menu for 1.5 seconds.
+the role, short session id, and active transport. Pressing the prefix key (`Ctrl+\` by default) changes the
+title into a context-aware controls menu for 1.5 seconds. Set `WRAPPER_PREFIX`
+or `prefix` in `~/.config/wrapper/config.json` to change the prefix.
 
 Wrapper does not reserve a permanent row inside the terminal. A fixed bottom
 bar would conflict with alternate-screen applications such as Vim, Neovim,
@@ -312,6 +313,7 @@ share-code prompt.
 | `WRAPPER_RELAY_URL`     | relay endpoint override                      | dev localhost, prod Fly relay            |
 | `WRAPPER_AUTH_ORIGIN`   | auth callback origin                         | dev localhost, prod `https://wrapper.sh` |
 | `WRAPPER_HUD`           | session title + armed controls HUD           | `on`                                     |
+| `WRAPPER_PREFIX`        | in-session prefix (`ctrl+\`, `ctrl+g`)       | `Ctrl+\`                                 |
 | `WRAPPER_P2P`           | WebRTC P2P fast path; `0/false/off` opts out | on (relay is the fallback)               |
 | `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend            | prod deployment; dev must set it         |
 | `WRAPPER_DISABLE`       | disable hook in one terminal                 | unset                                    |

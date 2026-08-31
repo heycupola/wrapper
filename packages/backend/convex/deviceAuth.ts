@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { internalMutation, mutation } from "./_generated/server";
 import { protectedMutation } from "./lib/middleware";
+import { applyOnboardingStep } from "./lib/onboarding.ts";
 import { enforceRateLimit } from "./lib/rateLimit";
 
 const siteUrl =
@@ -110,7 +111,8 @@ export const approveDeviceCode = protectedMutation({
       user_code: args.user_code,
     });
 
-    return { success: true };
+    const status = await applyOnboardingStep(ctx, "connectedCli");
+    return { success: true, needsOnboarding: status !== "completed" };
   },
 });
 
