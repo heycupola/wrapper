@@ -1,26 +1,36 @@
 ---
 title: "Pricing"
-description: "Free local wrapping and Pro remote sharing."
+description: "Local is free. Remote is Pro."
 ---
 
 ## Plans
 
-| Plan | Price       | Includes                                   |
-| ---- | ----------- | ------------------------------------------ |
-| Free | $0          | Shell wrapping, local attach, account auth |
-| Pro  | $20 / month | Remote relay sharing (`can_share_relay`)   |
+| Plan | Price       | Includes                                                                                |
+| ---- | ----------- | --------------------------------------------------------------------------------------- |
+| Free | $0          | Wrap zsh, bash, and fish. Attach from the same computer. Sessions stay on your machine. |
+| Pro  | $20 / month | Everything in Free. Attach from another device. Share a session, revoke anytime.        |
 
-Upgrade from the signed-in [dashboard billing](https://www.wrapper.sh/dashboard/billing)
-page. Profile shows Free or Pro. Stripe's customer portal is available after
-the first Pro checkout; free accounts only see upgrade.
+Upgrade from signed-in [dashboard billing](https://www.wrapper.sh/dashboard/billing).
+Profile shows Free or Pro. Stripe's customer portal is available after the
+first Pro checkout; free accounts only see upgrade.
 
-## What Pro unlocks
+## Free
 
-- Host can press `Ctrl+\` then `s` to share
-- Viewers can `wrapper attach --relay --id <sessionId>`
-- Default WebRTC P2P fast path with relay fallback
+- Wrap `zsh`, `bash`, and `fish`
+- Attach from another terminal on the same computer
+- Sessions stay on your machine (loopback, no relay)
 
-Without Pro, local wrapping and local attach remain available.
+Released binaries still require `wrapper auth login` as the session owner.
+Local attach does not require Pro.
+
+## Pro
+
+- Everything in Free
+- Attach from another device
+- Share a session from the host (`Ctrl+\` then `s`), revoke anytime (`Ctrl+\` then `u`)
+- iOS viewer for iPhone and iPad
+
+How a remote session connects is in [Remote share](/guides/remote-share).
 
 ## Entitlement id
 
@@ -31,4 +41,5 @@ deployment.
 ## Related
 
 - [Remote share](/guides/remote-share)
+- [Mobile viewer](/guides/mobile-viewer)
 - [Security and privacy](/configuration/security)

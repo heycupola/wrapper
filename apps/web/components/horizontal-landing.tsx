@@ -183,11 +183,9 @@ export function HorizontalLanding() {
                   </p>
                 </header>
                 <ul>
-                  <li>Wrapper for zsh, bash, and fish</li>
+                  <li>Wrap zsh, bash, and fish</li>
                   <li>Attach from the same computer</li>
-                  <li>Share and revoke controls</li>
-                  <li>Per-session secure tokens</li>
-                  <li>No account required</li>
+                  <li>Sessions stay on your machine</li>
                 </ul>
                 <a className="landingPriceCta" href="#start">
                   Install Wrapper
@@ -208,10 +206,9 @@ export function HorizontalLanding() {
                   </p>
                 </header>
                 <ul>
-                  <li>Everything included in Free</li>
+                  <li>Everything in Free</li>
                   <li>Attach from another device</li>
-                  <li>Direct WebRTC when available</li>
-                  <li>Authenticated relay fallback</li>
+                  <li>Share a session, revoke anytime</li>
                   <li>
                     <IosViewerCta variant="text" />
                   </li>
