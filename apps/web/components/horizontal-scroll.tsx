@@ -1,7 +1,12 @@
 "use client";
 
 import { useLayoutEffect, useRef, type ReactNode } from "react";
-import { clearLandingScene, peekLandingScene } from "../lib/landing-scene";
+import {
+  clearLandingScene,
+  INSTALL_SCENE_ID,
+  OPEN_INSTALL_SCENE_EVENT,
+  peekLandingScene,
+} from "../lib/landing-scene";
 import {
   clampHorizontalOffset,
   hashMetricsReady,
@@ -127,7 +132,12 @@ export function HorizontalScroll({
       updateActiveSection(lockedOffset);
     };
 
-    const scrollToSection = (section: HTMLElement, updateHistory: boolean, immediate = false) => {
+    const scrollToSection = (
+      section: HTMLElement,
+      updateHistory: boolean,
+      immediate = false,
+      lock = false,
+    ) => {
       if (updateHistory) history.pushState(null, "", `#${section.id}`);
 
       if (!horizontalActive) {
@@ -135,7 +145,7 @@ export function HorizontalScroll({
         return;
       }
 
-      lockToSection(section);
+      if (lock) lockToSection(section);
       const target = sectionScrollTarget(storyStart, section.offsetLeft, maxTranslate);
       if (lenis) {
         lenis.scrollTo(
@@ -152,7 +162,7 @@ export function HorizontalScroll({
       if (!sectionId) return;
       const section = document.getElementById(sectionId);
       if (!section) return;
-      scrollToSection(section, updateHistory, immediate);
+      scrollToSection(section, updateHistory, immediate, true);
       clearLandingScene(sectionId);
       pendingScene = null;
     };
@@ -330,6 +340,11 @@ export function HorizontalScroll({
       applyRequestedSection();
     };
 
+    const onOpenInstallScene = () => {
+      pendingScene = peekLandingScene() ?? INSTALL_SCENE_ID;
+      applyRequestedSection();
+    };
+
     resizeObserver = new ResizeObserver(scheduleMeasure);
     resizeObserver.observe(scroller);
     resizeObserver.observe(track);
@@ -339,6 +354,7 @@ export function HorizontalScroll({
     window.addEventListener("resize", scheduleMeasure, { passive: true });
     window.addEventListener("orientationchange", scheduleMeasure);
     window.addEventListener("hashchange", onHashChange);
+    window.addEventListener(OPEN_INSTALL_SCENE_EVENT, onOpenInstallScene);
     document.addEventListener("click", onDocumentClick);
     experience.addEventListener("focusin", onFocusIn);
     desktopQuery.addEventListener("change", syncMode);
@@ -355,6 +371,7 @@ export function HorizontalScroll({
       window.removeEventListener("resize", scheduleMeasure);
       window.removeEventListener("orientationchange", scheduleMeasure);
       window.removeEventListener("hashchange", onHashChange);
+      window.removeEventListener(OPEN_INSTALL_SCENE_EVENT, onOpenInstallScene);
       document.removeEventListener("click", onDocumentClick);
       experience.removeEventListener("focusin", onFocusIn);
       desktopQuery.removeEventListener("change", syncMode);

@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { INSTALL_SCENE_ID, rememberLandingScene } from "../lib/landing-scene";
+import {
+  INSTALL_SCENE_ID,
+  OPEN_INSTALL_SCENE_EVENT,
+  rememberLandingScene,
+} from "../lib/landing-scene";
 
 export function InstallWrapperLink({
   className,
@@ -14,7 +18,7 @@ export function InstallWrapperLink({
   return (
     <Link
       className={className}
-      href="/"
+      href="/#start"
       scroll={false}
       onClick={(event) => {
         if (
@@ -28,10 +32,12 @@ export function InstallWrapperLink({
           return;
         }
         rememberLandingScene(INSTALL_SCENE_ID);
+        event.preventDefault();
         if (window.location.pathname !== "/") {
-          event.preventDefault();
           window.location.assign("/");
+          return;
         }
+        window.dispatchEvent(new Event(OPEN_INSTALL_SCENE_EVENT));
       }}
     >
       {children}
