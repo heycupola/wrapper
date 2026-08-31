@@ -14,7 +14,7 @@ function footerGroups() {
           external: true,
         },
         { href: "/#start", label: "Install" },
-        { href: ios.href, label: "Get iOS viewer", external: ios.external },
+        { href: ios.href, label: ios.navLabel, external: ios.external },
         { href: "https://github.com/heycupola/wrapper", label: "GitHub", external: true },
       ],
     },
@@ -41,7 +41,7 @@ function IosViewerCompactLink() {
   const ios = getIosAppTarget();
   return (
     <a href={ios.href} target="_blank" rel="noopener noreferrer">
-      Get iOS viewer
+      {ios.navLabel}
     </a>
   );
 }

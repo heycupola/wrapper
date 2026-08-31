@@ -35,12 +35,9 @@ export function IosViewerCta({ variant = "badge", className, note = false }: Ios
       >
         {storeLike ? <AppleMark /> : null}
         <span>{target.label}</span>
+        {target.beta && storeLike ? <span className="iosViewerCtaBetaMark">Beta</span> : null}
       </a>
-      {note ? (
-        <small className="iosViewerCtaNote">
-          iOS 18+ · needs a shared host session. The shell stays on the host.
-        </small>
-      ) : null}
+      {note ? <small className="iosViewerCtaNote">{target.note}</small> : null}
     </span>
   );
 }

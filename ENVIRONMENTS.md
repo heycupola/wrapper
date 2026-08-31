@@ -13,7 +13,7 @@ each one deploys. If you only want to test locally, jump to
 | **web**     | Next.js site                                           | Vercel                     | `apps/web`         |
 | **cli**     | The `wrapper` CLI (host/attach)                        | GitHub Releases / Homebrew | `apps/cli`         |
 | **docs**    | Mintlify documentation source                          | `docs.wrapper.sh`          | `apps/docs`        |
-| **mobile**  | Native iPhone/iPad viewer MVP                          | TestFlight pre-release     | `apps/mobile`      |
+| **mobile**  | Native iPhone/iPad viewer                              | TestFlight public beta     | `apps/mobile`      |
 
 ## Public domains
 
@@ -110,8 +110,14 @@ build time):
 | `NEXT_PUBLIC_CONVEX_URL`         | `…confident-fox-458.convex.cloud`      | `…sleek-echidna-539.convex.cloud`      | `…sleek-echidna-539.convex.cloud`  |
 | `NEXT_PUBLIC_CONVEX_SITE_URL`    | `…confident-fox-458.convex.site`       | `…sleek-echidna-539.convex.site`       | `…sleek-echidna-539.convex.site`   |
 | `NEXT_PUBLIC_APPLE_AUTH_ENABLED` | `true` after Apple OAuth is configured | `true` after Apple OAuth is configured | `false` unless testing Apple OAuth |
-| `NEXT_PUBLIC_IOS_APP_URL`        | App Store or TestFlight URL when live  | same, or empty to use the docs fallback | empty uses the mobile viewer guide |
+| `NEXT_PUBLIC_IOS_APP_URL`        | TestFlight public join URL until App Store | same, or empty for docs fallback | empty uses the mobile viewer guide |
 | `NEXT_PUBLIC_IOS_APP_LABEL`      | optional CTA override                  | optional CTA override                  | optional CTA override              |
+
+`NEXT_PUBLIC_*` is baked at build time. After creating a TestFlight public
+link, set Production `NEXT_PUBLIC_IOS_APP_URL` to
+`https://testflight.apple.com/join/<id>` and redeploy the web app. Until that
+value is set, landing CTAs stay labeled as the iOS beta and open the
+[mobile viewer guide](https://docs.wrapper.sh/guides/mobile-viewer).
 
 ### GitHub Environments (`dev`, `production`): backend and relay only
 
@@ -227,6 +233,12 @@ build time):
 7. **Docs**: `apps/docs` is connected to Mintlify at `https://docs.wrapper.sh`.
    Keep DNS, TLS, and representative page requests healthy after navigation or
    domain changes.
+
+8. **iOS TestFlight public beta**: upload a **Release** build (prod Convex and
+   relay), add it to an **External** testing group, complete Beta App Review,
+   then **Enable Public Link**. Set Vercel Production
+   `NEXT_PUBLIC_IOS_APP_URL` to that `testflight.apple.com/join/…` URL and
+   redeploy. Do not put an Internal-only invite on the website.
 
 Once done, a push to `dev` updates matching dev backend/relay paths and creates a
 Vercel Preview. A merge to `main` updates matching production backend/relay

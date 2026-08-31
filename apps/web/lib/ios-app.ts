@@ -5,11 +5,18 @@ export type IosAppKind = "store" | "testflight" | "docs";
 export type IosAppTarget = {
   href: string;
   label: string;
+  navLabel: string;
   kind: IosAppKind;
   external: boolean;
+  beta: boolean;
+  note: string;
 };
 
 type PublicEnvironment = Readonly<Record<string, string | undefined>>;
+
+const STORE_NOTE = "iOS 18+ · needs a shared host session. The shell stays on the host.";
+const BETA_NOTE =
+  "Beta · TestFlight · iOS 18+ · needs a shared host session. The shell stays on the host.";
 
 export function getIosAppTarget(environment: PublicEnvironment = process.env): IosAppTarget {
   const href = sanitizeHttpUrl(environment.NEXT_PUBLIC_IOS_APP_URL);
@@ -18,18 +25,25 @@ export function getIosAppTarget(environment: PublicEnvironment = process.env): I
   if (!href) {
     return {
       href: IOS_VIEWER_DOCS_URL,
-      label: label ?? "Get the iOS viewer",
+      label: label ?? "Join the iOS beta",
+      navLabel: "iOS beta",
       kind: "docs",
       external: true,
+      beta: true,
+      note: BETA_NOTE,
     };
   }
 
   const kind = href.includes("testflight.apple.com") ? "testflight" : "store";
+  const beta = kind === "testflight";
   return {
     href,
-    label: label ?? (kind === "testflight" ? "Join the iOS beta" : "Get the iOS viewer"),
+    label: label ?? (beta ? "Join the iOS beta" : "Get the iOS viewer"),
+    navLabel: beta ? "iOS beta" : "iOS viewer",
     kind,
     external: true,
+    beta,
+    note: beta ? BETA_NOTE : STORE_NOTE,
   };
 }
 
