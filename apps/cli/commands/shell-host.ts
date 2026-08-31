@@ -303,6 +303,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   heartbeat.unref();
 
   function currentTransport(): SessionTransportStatus {
+    if (relayStarting && !shared) return "sharing";
     if (!shared) return "local";
     if (relayStarting) return "connecting";
     if (!relayBridge) return "local";
@@ -341,114 +342,117 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   }
 
   const startRelayBridge = async (): Promise<void> => {
-    if (relayBridge || relayStarting) return;
-
-    if (backend.status !== "ready") {
-      // Local-only share (no relay); allowed without a Pro plan.
-      commitShared();
-      announce(
-        `wrapper • shared • ${sessionTag}`,
-        "session shared locally (relay unavailable: login/backend required)",
-      );
-      return;
-    }
-
-    relayStarting = true;
-    paintRestingTitle();
-    const code = generateShareCode();
+    // `relayStarting` is flipped by the share command before this runs, so a
+    // second prefix+s cannot race the in-flight setup. Always clear it here.
     try {
-      // Persist the shared flag and the access-code hash before issuing the relay
-      // ticket so viewer authorization is synchronized rather than racing the
-      // periodic fire-and-forget heartbeat. Only the code hash is stored.
-      await backend.client.mutation(setShareCodeRef, { sessionId, code });
-      await backend.client.mutation(setRelayStateRef, { sessionId, relayState: "connecting" });
-      const issued = await backend.client.action(issueHostRelayTicketRef, { sessionId });
-      relayBridge = startRelayHostBridge({
-        relayUrl: env.relayUrl,
-        ticket: issued.ticket,
-        sessionId,
-        pty: session,
-        enableP2P: env.p2pEnabled,
-        onTransportChange: (state) => {
-          relayConnected = state.relayConnected;
-          p2pPeerCount = state.p2pPeerCount;
-          paintRestingTitle();
-        },
-        onOpen: () => {
-          if (backend.status !== "ready") return;
-          void backend.client
-            .mutation(setRelayStateRef, { sessionId, relayState: "online" })
-            .catch(() => {});
-        },
-        onClose: () => {
-          if (backend.status !== "ready") return;
-          void backend.client
-            .mutation(setRelayStateRef, { sessionId, relayState: "offline" })
-            .catch(() => {});
-        },
-        onError: () => {
-          if (backend.status !== "ready") return;
-          void backend.client
-            .mutation(setRelayStateRef, { sessionId, relayState: "error" })
-            .catch(() => {});
-        },
-      });
-      shareCode = code;
-      commitShared();
-      announce(`wrapper • shared • ${sessionTag}`, "session shared via relay");
-      printShareInvite();
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      const payload = convexErrorPayload(error);
-      await backend.client
-        .mutation(setRelayStateRef, { sessionId, relayState: "error" })
-        .catch(() => {});
+      if (relayBridge) return;
 
-      if (isProPlanRequiredError(error)) {
-        // Expected outcome for free users. `shared` is never committed until a
-        // share succeeds, so nothing to roll back locally — just undo the backend
-        // heartbeat we sent before the ticket, and show a clean upgrade prompt
-        // (with a retry hint) instead of dumping the raw server error.
-        log.debug("relay share denied (Pro required)", {
+      if (backend.status !== "ready") {
+        // Local-only share (no relay); allowed without a Pro plan.
+        commitShared();
+        announce(
+          `wrapper • shared • ${sessionTag}`,
+          "session shared locally (relay unavailable: login/backend required)",
+        );
+        return;
+      }
+
+      paintRestingTitle();
+      const code = generateShareCode();
+      try {
+        // Persist the shared flag and the access-code hash before issuing the relay
+        // ticket so viewer authorization is synchronized rather than racing the
+        // periodic fire-and-forget heartbeat. Only the code hash is stored.
+        await backend.client.mutation(setShareCodeRef, { sessionId, code });
+        await backend.client.mutation(setRelayStateRef, { sessionId, relayState: "connecting" });
+        const issued = await backend.client.action(issueHostRelayTicketRef, { sessionId });
+        relayBridge = startRelayHostBridge({
+          relayUrl: env.relayUrl,
+          ticket: issued.ticket,
+          sessionId,
+          pty: session,
+          enableP2P: env.p2pEnabled,
+          onTransportChange: (state) => {
+            relayConnected = state.relayConnected;
+            p2pPeerCount = state.p2pPeerCount;
+            paintRestingTitle();
+          },
+          onOpen: () => {
+            if (backend.status !== "ready") return;
+            void backend.client
+              .mutation(setRelayStateRef, { sessionId, relayState: "online" })
+              .catch(() => {});
+          },
+          onClose: () => {
+            if (backend.status !== "ready") return;
+            void backend.client
+              .mutation(setRelayStateRef, { sessionId, relayState: "offline" })
+              .catch(() => {});
+          },
+          onError: () => {
+            if (backend.status !== "ready") return;
+            void backend.client
+              .mutation(setRelayStateRef, { sessionId, relayState: "error" })
+              .catch(() => {});
+          },
+        });
+        shareCode = code;
+        commitShared();
+        announce(`wrapper • shared • ${sessionTag}`, "session shared via relay");
+        printShareInvite();
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        const payload = convexErrorPayload(error);
+        await backend.client
+          .mutation(setRelayStateRef, { sessionId, relayState: "error" })
+          .catch(() => {});
+
+        if (isProPlanRequiredError(error)) {
+          // Expected outcome for free users. `shared` is never committed until a
+          // share succeeds, so nothing to roll back locally — just undo the backend
+          // heartbeat we sent before the ticket, and show a clean upgrade prompt
+          // (with a retry hint) instead of dumping the raw server error.
+          log.debug("relay share denied (Pro required)", {
+            error: err.message,
+            code: payload.code,
+            detail: payload.message,
+          });
+          await backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
+          if (env.hudEnabled) setTitle("");
+
+          const checkoutUrl = await fetchProCheckoutUrl(backend.client);
+          const lines = checkoutUrl
+            ? [
+                "Relay sharing requires Pro.",
+                `Upgrade → ${checkoutUrl}`,
+                `Once upgraded, press ${prefix.label} then s to share (no restart needed).`,
+              ]
+            : [
+                "Relay sharing requires Pro — upgrade your plan,",
+                `then press ${prefix.label} then s to try again.`,
+              ];
+          if (session.isIdle) {
+            for (const line of lines) inlineMessage(line);
+          } else {
+            for (const line of lines) log.info(line);
+          }
+          if (env.hudEnabled) notifyOS("wrapper", "Relay sharing requires Pro");
+          return;
+        }
+
+        // Unexpected failure (e.g. relay unreachable): keep the diagnostic warning
+        // and fall back to a local-only share.
+        log.warn("failed to start relay bridge", {
           error: err.message,
           code: payload.code,
           detail: payload.message,
         });
-        await backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
-        if (env.hudEnabled) setTitle("");
-
-        const checkoutUrl = await fetchProCheckoutUrl(backend.client);
-        const lines = checkoutUrl
-          ? [
-              "Relay sharing requires Pro.",
-              `Upgrade → ${checkoutUrl}`,
-              `Once upgraded, press ${prefix.label} then s to share (no restart needed).`,
-            ]
-          : [
-              "Relay sharing requires Pro — upgrade your plan,",
-              `then press ${prefix.label} then s to try again.`,
-            ];
-        if (session.isIdle) {
-          for (const line of lines) inlineMessage(line);
-        } else {
-          for (const line of lines) log.info(line);
-        }
-        if (env.hudEnabled) notifyOS("wrapper", "Relay sharing requires Pro");
-        return;
+        commitShared();
+        announce(
+          `wrapper • shared • ${sessionTag}`,
+          "session shared locally (relay connect failed; check logs/auth)",
+        );
       }
-
-      // Unexpected failure (e.g. relay unreachable): keep the diagnostic warning
-      // and fall back to a local-only share.
-      log.warn("failed to start relay bridge", {
-        error: err.message,
-        code: payload.code,
-        detail: payload.message,
-      });
-      commitShared();
-      announce(
-        `wrapper • shared • ${sessionTag}`,
-        "session shared locally (relay connect failed; check logs/auth)",
-      );
     } finally {
       relayStarting = false;
       paintRestingTitle();
@@ -477,12 +481,24 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
           announce(`wrapper • shared • ${sessionTag}`, "already shared");
           return;
         }
+        if (relayStarting) {
+          announce(`wrapper • sharing • ${sessionTag}`, "already sharing…");
+          return;
+        }
         // `shared` is committed inside startRelayBridge only once the share
         // actually takes effect, so a denied relay share (e.g. no Pro plan)
-        // never leaves the session marked as shared.
+        // never leaves the session marked as shared. Flip `relayStarting`
+        // synchronously so a second prefix+s cannot race the in-flight setup.
+        relayStarting = true;
+        paintRestingTitle();
+        announce(`wrapper • sharing • ${sessionTag}`, "sharing…");
         void startRelayBridge();
         break;
       case "unshare":
+        if (relayStarting) {
+          announce(`wrapper • sharing • ${sessionTag}`, "still sharing…");
+          return;
+        }
         if (!shared) {
           announce("", "not currently shared");
           return;
@@ -504,7 +520,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       case "status":
         announce(
           shared ? `wrapper • shared • ${sessionTag}` : `wrapper • idle • ${sessionTag}`,
-          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : "no"}`,
+          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : relayStarting ? "sharing" : "no"} transport=${currentTransport()}`,
         );
         break;
       case "detach":
