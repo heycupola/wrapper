@@ -242,7 +242,7 @@
 
 .socialSignIn {
   display: grid;
-  width: min(100%, 280px);
+  width: min(100%, 320px);
   gap: 8px;
 }
 

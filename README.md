@@ -166,7 +166,10 @@ list of CLI environment variables, see
 
 ## License
 
-[MIT](./LICENSE) © 2026 Cupola Labs, LLC.
+This repository is [MIT](./LICENSE) © 2026 Cupola Labs, LLC.
+
+The iOS app in [`apps/mobile`](./apps/mobile) is a separate repository and is
+**not** covered by this MIT license.
 
 Security issues must be reported privately according to [`SECURITY.md`](./SECURITY.md).
 Hosted-service policies are published at

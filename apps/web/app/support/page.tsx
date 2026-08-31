@@ -50,9 +50,9 @@ export default function SupportPage() {
         </p>
         <p>
           If a self-service action is unavailable, or for access, correction, export, and other
-          privacy requests, email <a href="mailto:support@relic.so">support@relic.so</a> (Cupola
-          Labs support). Include the email address on the account and a description of the issue,
-          but never send authentication tokens or terminal content.
+          privacy requests, email <a href="mailto:support@wrapper.sh">support@wrapper.sh</a>.
+          Include the email address on the account and a description of the issue, but never send
+          authentication tokens or terminal content.
         </p>
       </LegalSection>
 
@@ -69,8 +69,7 @@ export default function SupportPage() {
         <div id="security">
           <p>
             Do not open a public issue or pull request for a suspected vulnerability. Email{" "}
-            <a href="mailto:can@relic.so">can@relic.so</a> (Cupola Labs security) or use the
-            repository&apos;s{" "}
+            <a href="mailto:can@wrapper.sh">can@wrapper.sh</a> or use the repository&apos;s{" "}
             <a href="https://github.com/heycupola/wrapper/security/advisories/new">
               private GitHub security advisory form
             </a>

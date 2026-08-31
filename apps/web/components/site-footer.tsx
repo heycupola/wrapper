@@ -31,6 +31,7 @@ function footerGroups() {
         { href: "/dashboard", label: "Dashboard" },
         { href: "/support", label: "Help and Contact" },
         { href: "/support#security", label: "Report a Vulnerability" },
+        { href: "https://x.com/heycupola", label: "X", external: true },
       ],
     },
   ];
@@ -67,6 +68,9 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
           <IosViewerCompactLink />
           <a href="https://github.com/heycupola/wrapper" target="_blank" rel="noopener noreferrer">
             GitHub
+          </a>
+          <a href="https://x.com/heycupola" target="_blank" rel="noopener noreferrer">
+            X
           </a>
           <Link href="/privacy-policy">Privacy</Link>
           <Link href="/terms-of-service">Terms</Link>

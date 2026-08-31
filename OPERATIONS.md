@@ -16,7 +16,7 @@ outside this repository and ensure at least two people have the access needed to
 | Relay                             | Fly production operator                                      |
 | Web and legal pages               | Vercel production operator                                   |
 | Documentation                     | Mintlify production operator                                 |
-| Security and disclosure           | Cupola Labs security (`can@relic.so`)                        |
+| Security and disclosure           | Cupola Labs security (`can@wrapper.sh`)                      |
 | Communications and backup command | Second production-enabled maintainer                         |
 
 The incident commander owns coordination, timestamps, severity, and handoffs even when
