@@ -2679,9 +2679,9 @@ a {
 }
 
 @media (prefers-color-scheme: dark) {
-  .social-btn:not(.social-btn-primary):not(.githubSignInButton):not(.googleSignInButton):not(
-      .appleSignInButton
-    ) {
+  .social-btn:not(.social-btn-primary):not(.social-btn-danger):not(.githubSignInButton):not(
+      .googleSignInButton
+    ):not(.appleSignInButton) {
     background: #1c1c20;
     color: var(--color-text);
   }
@@ -2726,7 +2726,12 @@ a {
 
 @media (prefers-color-scheme: dark) {
   .social-btn-danger {
+    background: #1c1c20;
     color: #ff9393;
+  }
+
+  .social-btn-danger:hover {
+    background: rgba(191, 48, 48, 0.18);
   }
 }
 
