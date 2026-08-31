@@ -16,10 +16,12 @@ export function rememberLandingScene(id: string): void {
   }
 }
 
-export function peekLandingScene(): string | null {
-  if (typeof window === "undefined") return rememberedScene;
+export function peekLandingScene(allowedIds?: readonly string[]): string | null {
+  if (typeof window === "undefined") {
+    return rememberedScene && Date.now() < rememberedUntil ? rememberedScene : null;
+  }
   const fromHash = decodeURIComponent(window.location.hash.slice(1));
-  if (fromHash) return fromHash;
+  if (fromHash && (!allowedIds || allowedIds.includes(fromHash))) return fromHash;
   if (rememberedScene && Date.now() < rememberedUntil) return rememberedScene;
   try {
     const stored = sessionStorage.getItem(LANDING_SCENE_KEY);

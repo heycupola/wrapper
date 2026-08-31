@@ -66,7 +66,7 @@ export function HorizontalScroll({
     let lenisStarted = false;
     let lockedOffset: number | null = null;
     let lockExpires = 0;
-    let pendingScene = peekLandingScene();
+    let pendingScene = peekLandingScene(sectionIds);
 
     const sectionElements = () =>
       sectionIds.flatMap((id) => {
@@ -335,13 +335,13 @@ export function HorizontalScroll({
     };
 
     const onHashChange = () => {
-      pendingScene = peekLandingScene();
+      pendingScene = peekLandingScene(sectionIds);
       lockedOffset = null;
       applyRequestedSection();
     };
 
     const onOpenInstallScene = () => {
-      pendingScene = peekLandingScene() ?? INSTALL_SCENE_ID;
+      pendingScene = INSTALL_SCENE_ID;
       applyRequestedSection();
     };
 
