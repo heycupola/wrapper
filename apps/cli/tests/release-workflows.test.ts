@@ -132,8 +132,9 @@ describe("CLI release workflows", () => {
     expect(homebrewWorkflow).toContain("SHA_LINUX_ARM64");
     expect(homebrewWorkflow).toContain("ruby -c Formula/wrapper.rb");
     expect(homebrewWorkflow).toContain('homepage "https://www.wrapper.sh"');
-    expect(homebrewWorkflow).toContain('bin.install "bin/wrapper"');
-    expect(homebrewWorkflow).toContain('bin.install Dir["bin/wrapper-pty-helper-*"]');
+    expect(homebrewWorkflow).toContain('cd "bin" if File.exist?("bin/wrapper")');
+    expect(homebrewWorkflow).toContain('bin.install "wrapper"');
+    expect(homebrewWorkflow).toContain('helpers = Dir["wrapper-pty-helper-*"]');
     expect(homebrewWorkflow).toContain("repos/heycupola/homebrew-tap");
   });
 });
