@@ -116,7 +116,7 @@ build time):
 `NEXT_PUBLIC_*` is baked at build time. After creating a TestFlight public
 link, set Production `NEXT_PUBLIC_IOS_APP_URL` to
 `https://testflight.apple.com/join/<id>` and redeploy the web app. Until that
-value is set, landing CTAs stay labeled as the iOS beta and open the
+value is set, landing CTAs stay **Get iOS viewer** with a Beta tag and open the
 [mobile viewer guide](https://docs.wrapper.sh/guides/mobile-viewer).
 
 ### GitHub Environments (`dev`, `production`): backend and relay only
