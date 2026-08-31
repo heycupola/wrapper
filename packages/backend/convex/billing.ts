@@ -21,6 +21,7 @@ export const getState = protectedQuery({
       .first();
     return {
       canManageBilling: Boolean(row && (row.hasPro === true || row.planDowngradedAt !== undefined)),
+      plan: row?.hasPro === true ? "pro" : "free",
     };
   },
 });

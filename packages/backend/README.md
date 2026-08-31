@@ -79,8 +79,9 @@ who may attach to which session.
 
 `convex/billing.ts`:
 
-- `getState`: whether the signed-in user can open Stripe's billing portal (a
-  customer exists after Pro checkout or a later downgrade)
+- `getState`: current Free or Pro plan, and whether the signed-in user can open
+  Stripe's billing portal (a customer exists after Pro checkout or a later
+  downgrade)
 - `createProCheckout`: create a Stripe checkout URL for the Pro plan through
   Autumn, used by both the CLI upgrade hint and the web upgrade button
 - `createBillingPortal`: open Stripe's customer portal for users who already

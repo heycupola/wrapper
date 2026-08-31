@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import {
   clampHorizontalOffset,
+  hashMetricsReady,
   horizontalStoryHeight,
   nearestSectionIndex,
   sectionScrollTarget,
@@ -25,6 +26,54 @@ describe("horizontal story geometry", () => {
     assert.equal(sectionScrollTarget(40, 0, 900), 40);
     assert.equal(sectionScrollTarget(40, 420, 900), 460);
     assert.equal(sectionScrollTarget(40, 1200, 900), 940);
+  });
+
+  test("waits for track overflow before treating a later section hash as ready", () => {
+    assert.equal(
+      hashMetricsReady({
+        measuredCount: 0,
+        maxTranslate: 0,
+        sectionLeft: 0,
+        isFirstSection: true,
+      }),
+      false,
+    );
+    assert.equal(
+      hashMetricsReady({
+        measuredCount: 5,
+        maxTranslate: 0,
+        sectionLeft: 0,
+        isFirstSection: false,
+      }),
+      false,
+    );
+    assert.equal(
+      hashMetricsReady({
+        measuredCount: 5,
+        maxTranslate: 4000,
+        sectionLeft: 0,
+        isFirstSection: false,
+      }),
+      false,
+    );
+    assert.equal(
+      hashMetricsReady({
+        measuredCount: 5,
+        maxTranslate: 4000,
+        sectionLeft: 0,
+        isFirstSection: true,
+      }),
+      true,
+    );
+    assert.equal(
+      hashMetricsReady({
+        measuredCount: 5,
+        maxTranslate: 4000,
+        sectionLeft: 3200,
+        isFirstSection: false,
+      }),
+      true,
+    );
   });
 
   test("selects the section nearest the viewport center", () => {
