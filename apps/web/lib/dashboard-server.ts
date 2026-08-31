@@ -34,10 +34,10 @@ const onboardingStateRef = makeFunctionReference<
 >("onboarding:getState");
 
 const billingStateRef = makeFunctionReference<
-  "query",
+  "action",
   Record<string, never>,
   DashboardBillingState
->("billing:getState");
+>("billing:getLiveState");
 
 const activeSessionsRef = makeFunctionReference<"query", Record<string, never>, DashboardSession[]>(
   "session:listActive",
@@ -69,7 +69,7 @@ export async function getDashboardBillingState(
   client.setAuth(token);
 
   try {
-    return await client.query(billingStateRef, {});
+    return await client.action(billingStateRef, {});
   } catch {
     return null;
   }

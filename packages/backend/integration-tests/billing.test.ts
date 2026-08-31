@@ -252,6 +252,39 @@ describe("billing portal visibility", () => {
   });
 });
 
+describe("live billing state", () => {
+  test("reads the current plan from Autumn instead of the webhook cache", async () => {
+    vi.spyOn(Autumn.prototype, "check").mockResolvedValue({
+      data: { allowed: true },
+      error: null,
+    } as never);
+    const t = convexTest(schema, modules).withIdentity({ subject: "granted-user" });
+
+    await expect(t.action(api.billing.getLiveState, {})).resolves.toEqual({
+      canManageBilling: false,
+      plan: "pro",
+    });
+  });
+
+  test("falls back to the webhook cache when Autumn is unavailable", async () => {
+    vi.spyOn(Autumn.prototype, "check").mockResolvedValue({
+      error: { message: "down" },
+    } as never);
+    const t = convexTest(schema, modules).withIdentity({ subject: "cached-pro" });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("emailState", {
+        userId: "cached-pro",
+        hasPro: true,
+      });
+    });
+
+    await expect(t.action(api.billing.getLiveState, {})).resolves.toEqual({
+      canManageBilling: true,
+      plan: "pro",
+    });
+  });
+});
+
 describe("billing account cleanup", () => {
   test("queues provider work without contacting billing during account deletion", async () => {
     vi.useFakeTimers();
