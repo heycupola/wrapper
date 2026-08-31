@@ -87,7 +87,7 @@ The separate `apps/mobile` submodule now contains a Simulator-ready native
 iPhone/iPad viewer MVP: device authorization, owner and guest join flows,
 SwiftTerm rendering, relay transport, native WebRTC, and adaptive navigation.
 It uses Swift 6.0 language mode with complete strict concurrency on Xcode 26.
-CLI `v0.1.2` is published on GitHub Releases. Signed-device validation and App
+CLI `v0.1.3` is published on GitHub Releases. Signed-device validation and App
 Store review remain pre-release work.
 
 The active focus is operational hardening:
