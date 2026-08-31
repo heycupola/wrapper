@@ -14,6 +14,7 @@ import {
   startAuthAutoRefresh,
   type AuthAutoRefresh,
 } from "../util/convex-client";
+import { convexErrorPayload, isProPlanRequiredError } from "../util/convex-error";
 import { env } from "../util/env";
 import { resolvePrefix } from "../util/prefix-config";
 import {
@@ -398,16 +399,21 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       printShareInvite();
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
+      const payload = convexErrorPayload(error);
       await backend.client
         .mutation(setRelayStateRef, { sessionId, relayState: "error" })
         .catch(() => {});
 
-      if (isProPlanRequiredError(err.message)) {
+      if (isProPlanRequiredError(error)) {
         // Expected outcome for free users. `shared` is never committed until a
         // share succeeds, so nothing to roll back locally — just undo the backend
         // heartbeat we sent before the ticket, and show a clean upgrade prompt
         // (with a retry hint) instead of dumping the raw server error.
-        log.debug("relay share denied (Pro required)", { error: err.message });
+        log.debug("relay share denied (Pro required)", {
+          error: err.message,
+          code: payload.code,
+          detail: payload.message,
+        });
         await backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
         if (env.hudEnabled) setTitle("");
 
@@ -416,11 +422,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
           ? [
               "Relay sharing requires Pro.",
               `Upgrade → ${checkoutUrl}`,
-              "Once upgraded, press Ctrl+\\ then s to share (no restart needed).",
+              `Once upgraded, press ${prefix.label} then s to share (no restart needed).`,
             ]
           : [
               "Relay sharing requires Pro — upgrade your plan,",
-              "then press Ctrl+\\ then s to try again.",
+              `then press ${prefix.label} then s to try again.`,
             ];
         if (session.isIdle) {
           for (const line of lines) inlineMessage(line);
@@ -433,7 +439,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
 
       // Unexpected failure (e.g. relay unreachable): keep the diagnostic warning
       // and fall back to a local-only share.
-      log.warn("failed to start relay bridge", { error: err.message });
+      log.warn("failed to start relay bridge", {
+        error: err.message,
+        code: payload.code,
+        detail: payload.message,
+      });
       commitShared();
       announce(
         `wrapper • shared • ${sessionTag}`,
@@ -620,10 +630,6 @@ function currentSize(): { cols: number; rows: number } {
     cols: process.stdout.columns ?? 80,
     rows: process.stdout.rows ?? 24,
   };
-}
-
-function isProPlanRequiredError(message: string): boolean {
-  return message.includes("Relay sharing requires Pro plan");
 }
 
 async function fetchProCheckoutUrl(client: ConvexHttpClient): Promise<string | null> {
