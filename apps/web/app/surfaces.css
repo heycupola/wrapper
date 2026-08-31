@@ -618,6 +618,104 @@
   border-color: color-mix(in srgb, var(--color-accent-pop) 28%, var(--color-border));
 }
 
+.planMoment {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  width: min(100%, var(--content-max));
+  margin: 0 auto;
+  padding: clamp(48px, 12vh, 120px) var(--page-pad) 80px;
+}
+
+.planMomentCard {
+  display: grid;
+  justify-items: center;
+  gap: 32px;
+  max-width: 440px;
+  text-align: center;
+}
+
+.planMomentMark {
+  width: 120px;
+  height: 120px;
+}
+
+.planMomentSvg {
+  display: block;
+  width: 120px;
+  height: 120px;
+}
+
+.planMomentRing,
+.planMomentStroke {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.planMomentRing {
+  stroke: color-mix(in srgb, var(--color-accent-pop) 28%, var(--color-border));
+  stroke-width: 2;
+}
+
+.planMomentCard[data-variant="cancelled"] .planMomentRing {
+  stroke: var(--color-border);
+}
+
+.planMomentStroke {
+  stroke: var(--color-accent-pop);
+  stroke-width: 4;
+  stroke-dasharray: 52;
+  stroke-dashoffset: 52;
+  animation: planMomentDraw 500ms var(--ease-out-quint) 80ms forwards;
+}
+
+.planMomentCard[data-variant="cancelled"] .planMomentStroke {
+  stroke: var(--color-text-muted);
+  stroke-dasharray: 36;
+  stroke-dashoffset: 36;
+}
+
+.planMomentCopy {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  animation: riseIn 640ms var(--ease-out-quint) 80ms both;
+}
+
+.planMomentCopy .dashboardPanelLabel {
+  margin-bottom: 0;
+}
+
+.planMomentCopy h1 {
+  font-size: clamp(1.85rem, 4vw, 2.4rem);
+  font-weight: 590;
+  line-height: 1.08;
+  letter-spacing: -0.05em;
+}
+
+.planMomentCopy p:not(.dashboardPanelLabel) {
+  max-width: 38ch;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.planMomentActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  animation: riseIn 640ms var(--ease-out-quint) 160ms both;
+}
+
+@keyframes planMomentDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 .dashboardPlanPrice {
   display: flex;
   flex-direction: column;

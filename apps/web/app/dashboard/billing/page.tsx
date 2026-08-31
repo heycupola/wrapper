@@ -70,7 +70,7 @@ export default async function DashboardBillingPage({
         </article>
       </div>
 
-      <DashboardBillingActions token={token} canManageBilling={canManageBilling} />
+      <DashboardBillingActions token={token} plan={plan} canManageBilling={canManageBilling} />
 
       {canManageBilling ? (
         <aside className="dashboardNotice">
