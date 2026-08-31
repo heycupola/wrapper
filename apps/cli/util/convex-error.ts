@@ -23,7 +23,7 @@ export function convexErrorPayload(error: unknown): ConvexErrorPayload {
     try {
       payload = JSON.parse(trimmed);
     } catch {
-      return { message: payload };
+      return { message: trimmed };
     }
   }
   if (!payload || typeof payload !== "object") return {};
