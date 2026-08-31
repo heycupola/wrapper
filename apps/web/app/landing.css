@@ -866,6 +866,19 @@ html.lenis body {
   line-height: 1;
 }
 
+.iosViewerCtaBetaMark {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .iosViewerCtaStore {
   padding: 0 16px;
   border-radius: var(--radius-pill);
@@ -916,7 +929,7 @@ html.lenis body {
 }
 
 .iosViewerCtaNote {
-  max-width: 280px;
+  max-width: 320px;
   color: var(--color-text-muted);
   font-size: 0.7rem;
   line-height: 1.45;
@@ -936,6 +949,10 @@ html.lenis body {
   .iosViewerCtaStore {
     background: #fff;
     color: #000;
+  }
+
+  .iosViewerCtaStore .iosViewerCtaBetaMark {
+    background: rgba(0, 0, 0, 0.08);
   }
 }
 

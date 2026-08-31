@@ -83,8 +83,8 @@ export default async function DashboardSessionsPage() {
 
       {sessions && sessions.length > 0 ? (
         <aside className="dashboardNotice dashboardViewerNotice">
-          <strong>Open in the iOS viewer</strong>
-          <p>Your shell stays on the host. The iOS viewer attaches only after you share.</p>
+          <strong>Open in the iOS viewer beta</strong>
+          <p>Your shell stays on the host. The TestFlight viewer attaches only after you share.</p>
           <IosViewerCta variant="badge" />
         </aside>
       ) : null}

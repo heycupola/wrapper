@@ -94,7 +94,7 @@ The active focus is operational hardening:
 
 - rotate `HOMEBREW_TAP_TOKEN` so release workflow can keep the tap in sync
 - keep dependency audit, lint, format, types, auth, and relay checks green
-- complete App Store review and publish the public iOS listing
+- complete the TestFlight public beta for the iOS viewer, then App Store review
 - finish the remaining hosted-ops items in [`OPERATIONS.md`](./OPERATIONS.md)
 
 ## Local development
