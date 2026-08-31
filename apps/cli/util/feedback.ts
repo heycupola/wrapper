@@ -37,7 +37,13 @@ const ESC = "\x1b";
 const BEL = "\x07";
 
 export type SessionHudRole = "host" | "viewer";
-export type SessionTransportStatus = "local" | "connecting" | "relay" | "p2p" | "offline";
+export type SessionTransportStatus =
+  | "local"
+  | "sharing"
+  | "connecting"
+  | "relay"
+  | "p2p"
+  | "offline";
 
 export interface SessionHudState {
   role: SessionHudRole;

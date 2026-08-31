@@ -24,6 +24,16 @@ describe("session HUD", () => {
     ).toBe("● host • ABC123 • p2p x2 | s share • u unshare • ? status");
   });
 
+  test("formats sharing transport while share is in flight", () => {
+    expect(
+      formatSessionHud({
+        role: "host",
+        sessionTag: "ABC123",
+        transport: "sharing",
+      }),
+    ).toBe("wrapper • host • ABC123 • sharing");
+  });
+
   test("formats viewer prefix controls", () => {
     expect(
       formatSessionHud({
