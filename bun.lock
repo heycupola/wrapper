@@ -15,7 +15,7 @@
     },
     "apps/cli": {
       "name": "@repo/cli",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "bin": {
         "wrapper": "./index.ts",
       },
