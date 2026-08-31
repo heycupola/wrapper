@@ -19,10 +19,11 @@ login flow.
   becomes a normal vertical story with no pinning or smooth-scroll runtime.
   Visual tokens, motion rules, and voice guidance live in [`BRAND.md`](BRAND.md).
   The start panel keeps CLI install (`brew` / `curl`) as the host path and adds
-  an iOS viewer CTA. While the viewer is in TestFlight, that CTA is labeled as
-  the iOS beta. `NEXT_PUBLIC_IOS_APP_URL` should be the public TestFlight join
-  URL; otherwise it falls back to the mobile viewer docs. Switch it to the App
-  Store listing when that ships.
+  an iOS viewer CTA labeled **Get iOS viewer**. While the viewer is in
+  TestFlight (or falling back to docs), the CTA keeps a Beta tag; the App Store
+  listing drops that tag. `NEXT_PUBLIC_IOS_APP_URL` should be the public
+  TestFlight join URL; otherwise it falls back to the mobile viewer docs.
+  Switch it to the App Store listing when that ships.
 - **Dashboard** (`app/dashboard`): a sidebar-based nested workspace with separate
   profile, active sessions, billing, and data/deletion routes. `/dashboard`
   opens the profile page, and incomplete onboarding redirects to the required

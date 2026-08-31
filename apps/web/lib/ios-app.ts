@@ -25,8 +25,8 @@ export function getIosAppTarget(environment: PublicEnvironment = process.env): I
   if (!href) {
     return {
       href: IOS_VIEWER_DOCS_URL,
-      label: label ?? "Join the iOS beta",
-      navLabel: "iOS beta",
+      label: label ?? "Get iOS viewer",
+      navLabel: "iOS viewer",
       kind: "docs",
       external: true,
       beta: true,
@@ -38,8 +38,8 @@ export function getIosAppTarget(environment: PublicEnvironment = process.env): I
   const beta = kind === "testflight";
   return {
     href,
-    label: label ?? (beta ? "Join the iOS beta" : "Get iOS viewer"),
-    navLabel: beta ? "iOS beta" : "iOS viewer",
+    label: label ?? "Get iOS viewer",
+    navLabel: "iOS viewer",
     kind,
     external: true,
     beta,
