@@ -193,7 +193,7 @@ export function HorizontalScroll({
         smoothWheel: true,
         wheelMultiplier: 1,
       });
-      if (window.location.hash) {
+      if (measuredSections.length > 0 && window.location.hash) {
         navigateToHash(false, true);
       }
     };
