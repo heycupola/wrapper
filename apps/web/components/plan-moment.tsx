@@ -14,8 +14,8 @@ export function PlanMoment({ variant }: { variant: "upgraded" | "cancelled" }) {
             <p className="dashboardPanelLabel">Pro</p>
             <h1 id="plan-moment-title">You unlocked remote sessions</h1>
             <p>
-              Attach from another device and share a wrapped shell. The session still starts on
-              your machine; Pro is what lets it leave.
+              Attach from another device and share a wrapped shell. The session still starts on your
+              machine; Pro is what lets it leave.
             </p>
           </>
         ) : (
