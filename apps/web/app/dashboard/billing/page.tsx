@@ -10,12 +10,18 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function DashboardBillingPage() {
+export default async function DashboardBillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ upgraded?: string | string[] }>;
+}) {
   const token = await getToken();
   if (!token) return null;
 
+  const params = await searchParams;
+  const upgraded = Array.isArray(params.upgraded) ? params.upgraded[0] : params.upgraded;
   const billing = await getDashboardBillingState(token);
-  const canManageBilling = billing?.canManageBilling === true;
+  const canManageBilling = billing?.canManageBilling === true || upgraded === "1";
 
   return (
     <>
