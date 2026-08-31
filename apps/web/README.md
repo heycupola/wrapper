@@ -14,7 +14,9 @@ login flow.
   `requestAnimationFrame` writes the compositor-backed `translate3d`. The track
   remains continuous and never snaps between scenes. Hash links map each
   section back to its vertical document coordinate without adding visible
-  navigation chrome.
+  navigation chrome. Dashboard Install links remember the install scene and
+  open `/` without a hash, then lock that last scene until the track and Lenis
+  catch up. In-page hero/header CTAs still use `#start`.
   Below 1024px, and whenever reduced motion is requested, the same semantic DOM
   becomes a normal vertical story with no pinning or smooth-scroll runtime.
   Visual tokens, motion rules, and voice guidance live in [`BRAND.md`](BRAND.md).
@@ -29,8 +31,8 @@ login flow.
   opens the profile page, and incomplete onboarding redirects to the required
   setup flow before dashboard content renders. Sessions use the real
   `session:listActive` query, while billing reuses the existing protected
-  checkout and portal actions. The workspace stays on a flat canvas and uses no
-  invented metrics.
+  checkout and portal actions. Profile shows the current Free or Pro plan. The
+  workspace stays on a flat canvas and uses no invented metrics.
 - **Device login approval** (`app/oauth/authorize`): the page the CLI sends you
   to during `wrapper auth login`. It reads the `user_code` from the URL,
   confirms your identity through Better Auth, presents the request as structured

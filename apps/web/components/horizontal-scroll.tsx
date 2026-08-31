@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
+import {
+  clearLandingScene,
+  INSTALL_SCENE_ID,
+  OPEN_INSTALL_SCENE_EVENT,
+  peekLandingScene,
+} from "../lib/landing-scene";
 import {
   clampHorizontalOffset,
+  hashMetricsReady,
   horizontalStoryHeight,
   nearestSectionIndex,
   sectionScrollTarget,
@@ -11,6 +18,7 @@ import {
 
 const desktopQueryString = "(min-width: 1024px)";
 const reducedMotionQueryString = "(prefers-reduced-motion: reduce)";
+const HASH_LOCK_MS = 2000;
 
 type MeasuredSection = SectionMetric & {
   element: HTMLElement;
@@ -35,7 +43,7 @@ export function HorizontalScroll({
   const scrollerRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const experience = experienceRef.current;
     const scroller = scrollerRef.current;
     const track = trackRef.current;
@@ -55,13 +63,19 @@ export function HorizontalScroll({
     let resizeObserver: ResizeObserver | null = null;
     let lenis: LenisController | null = null;
     let lenisGeneration = 0;
-    let initialHashApplied = false;
+    let lenisStarted = false;
+    let lockedOffset: number | null = null;
+    let lockExpires = 0;
+    let pendingScene = peekLandingScene(sectionIds);
 
     const sectionElements = () =>
       sectionIds.flatMap((id) => {
         const element = document.getElementById(id);
         return element ? [element] : [];
       });
+
+    const requestedSectionId = () =>
+      pendingScene && sectionIds.includes(pendingScene) ? pendingScene : "";
 
     const updateActiveSection = (horizontalOffset: number) => {
       if (measuredSections.length === 0) return;
@@ -78,7 +92,24 @@ export function HorizontalScroll({
       renderFrame = null;
       if (!horizontalActive) return;
 
-      const offset = clampHorizontalOffset(window.scrollY, storyStart, maxTranslate);
+      let offset = clampHorizontalOffset(window.scrollY, storyStart, maxTranslate);
+      if (lockedOffset !== null) {
+        if (performance.now() < lockExpires) {
+          offset = lockedOffset;
+          const target = sectionScrollTarget(storyStart, lockedOffset, maxTranslate);
+          if (Math.abs(window.scrollY - target) <= 4) {
+            lockedOffset = null;
+            offset = clampHorizontalOffset(window.scrollY, storyStart, maxTranslate);
+          } else if (lenis) {
+            lenis.scrollTo(target, { immediate: true, force: true });
+          } else {
+            window.scrollTo({ top: target, behavior: "auto" });
+          }
+        } else {
+          lockedOffset = null;
+        }
+      }
+
       const roundedOffset = Math.round(offset * 1000) / 1000;
       track.style.transform = `translate3d(${-roundedOffset}px, 0, 0)`;
 
@@ -94,11 +125,28 @@ export function HorizontalScroll({
       renderFrame = requestAnimationFrame(render);
     };
 
-    const scrollToSection = (section: HTMLElement, updateHistory: boolean, immediate = false) => {
-      if (!horizontalActive) return;
-      const target = sectionScrollTarget(storyStart, section.offsetLeft, maxTranslate);
+    const lockToSection = (section: HTMLElement) => {
+      lockedOffset = Math.min(maxTranslate, Math.max(0, section.offsetLeft));
+      lockExpires = performance.now() + HASH_LOCK_MS;
+      track.style.transform = `translate3d(${-lockedOffset}px, 0, 0)`;
+      updateActiveSection(lockedOffset);
+    };
+
+    const scrollToSection = (
+      section: HTMLElement,
+      updateHistory: boolean,
+      immediate = false,
+      lock = false,
+    ) => {
       if (updateHistory) history.pushState(null, "", `#${section.id}`);
 
+      if (!horizontalActive) {
+        section.scrollIntoView({ behavior: immediate ? "auto" : "smooth", block: "start" });
+        return;
+      }
+
+      if (lock) lockToSection(section);
+      const target = sectionScrollTarget(storyStart, section.offsetLeft, maxTranslate);
       if (lenis) {
         lenis.scrollTo(
           target,
@@ -109,11 +157,49 @@ export function HorizontalScroll({
       }
     };
 
-    const navigateToHash = (updateHistory = false, immediate = false) => {
-      const sectionId = decodeURIComponent(window.location.hash.slice(1));
-      if (!sectionId || !sectionIds.includes(sectionId)) return;
+    const navigateToRequested = (updateHistory = false, immediate = false) => {
+      const sectionId = requestedSectionId();
+      if (!sectionId) return;
       const section = document.getElementById(sectionId);
-      if (section) scrollToSection(section, updateHistory, immediate);
+      if (!section) return;
+      scrollToSection(section, updateHistory, immediate, true);
+      clearLandingScene(sectionId);
+      pendingScene = null;
+    };
+
+    const hashSectionReady = (section: HTMLElement) => {
+      if (!horizontalActive) return true;
+      return hashMetricsReady({
+        measuredCount: measuredSections.length,
+        maxTranslate,
+        sectionLeft: section.offsetLeft,
+        isFirstSection: section.id === sectionIds[0],
+      });
+    };
+
+    const applyRequestedSection = () => {
+      const sectionId = requestedSectionId();
+      if (!sectionId) return;
+      const section = document.getElementById(sectionId);
+      if (!section || !hashSectionReady(section)) return;
+      navigateToRequested(false, true);
+    };
+
+    const startLenis = async () => {
+      if (lenisStarted) return;
+      lenisStarted = true;
+      const generation = ++lenisGeneration;
+      const { default: Lenis } = await import("lenis");
+      if (generation !== lenisGeneration || !horizontalActive) return;
+      lenis = new Lenis({
+        autoRaf: true,
+        gestureOrientation: "vertical",
+        lerp: 0.12,
+        overscroll: false,
+        smoothWheel: true,
+        wheelMultiplier: 1,
+      });
+      if (pendingScene) applyRequestedSection();
     };
 
     const measure = () => {
@@ -131,17 +217,21 @@ export function HorizontalScroll({
       }));
 
       experience.style.height = `${Math.ceil(horizontalStoryHeight(viewportHeight, maxTranslate))}px`;
+      storyStart = window.scrollY + experience.getBoundingClientRect().top;
+      applyRequestedSection();
       render();
-
-      if (!initialHashApplied && window.location.hash) {
-        initialHashApplied = true;
-        requestAnimationFrame(() => navigateToHash(false, true));
-      }
+      void startLenis();
     };
 
     const scheduleMeasure = () => {
       if (measureFrame !== null) cancelAnimationFrame(measureFrame);
       measureFrame = requestAnimationFrame(measure);
+    };
+
+    const measureNow = () => {
+      if (measureFrame !== null) cancelAnimationFrame(measureFrame);
+      measureFrame = null;
+      measure();
     };
 
     const stopVerticalObserver = () => {
@@ -177,25 +267,9 @@ export function HorizontalScroll({
 
     const destroyLenis = () => {
       lenisGeneration += 1;
+      lenisStarted = false;
       lenis?.destroy();
       lenis = null;
-    };
-
-    const startLenis = async () => {
-      const generation = ++lenisGeneration;
-      const { default: Lenis } = await import("lenis");
-      if (generation !== lenisGeneration || !horizontalActive) return;
-      lenis = new Lenis({
-        autoRaf: true,
-        gestureOrientation: "vertical",
-        lerp: 0.12,
-        overscroll: false,
-        smoothWheel: true,
-        wheelMultiplier: 1,
-      });
-      if (measuredSections.length > 0 && window.location.hash) {
-        navigateToHash(false, true);
-      }
     };
 
     const clearHorizontalLayout = () => {
@@ -205,12 +279,14 @@ export function HorizontalScroll({
       maxTranslate = 0;
       storyStart = 0;
       viewportWidth = 0;
+      lockedOffset = null;
     };
 
     const syncMode = () => {
       const nextHorizontal = desktopQuery.matches && !reducedMotionQuery.matches;
       if (nextHorizontal === horizontalActive) {
         if (horizontalActive) scheduleMeasure();
+        else if (pendingScene) applyRequestedSection();
         return;
       }
 
@@ -220,12 +296,13 @@ export function HorizontalScroll({
 
       if (horizontalActive) {
         stopVerticalObserver();
-        void startLenis();
-        scheduleMeasure();
+        void scroller.offsetWidth;
+        measureNow();
       } else {
         destroyLenis();
         clearHorizontalLayout();
         startVerticalObserver();
+        if (pendingScene) applyRequestedSection();
       }
     };
 
@@ -258,7 +335,14 @@ export function HorizontalScroll({
     };
 
     const onHashChange = () => {
-      if (horizontalActive) navigateToHash();
+      pendingScene = peekLandingScene(sectionIds);
+      lockedOffset = null;
+      applyRequestedSection();
+    };
+
+    const onOpenInstallScene = () => {
+      pendingScene = INSTALL_SCENE_ID;
+      applyRequestedSection();
     };
 
     resizeObserver = new ResizeObserver(scheduleMeasure);
@@ -270,6 +354,7 @@ export function HorizontalScroll({
     window.addEventListener("resize", scheduleMeasure, { passive: true });
     window.addEventListener("orientationchange", scheduleMeasure);
     window.addEventListener("hashchange", onHashChange);
+    window.addEventListener(OPEN_INSTALL_SCENE_EVENT, onOpenInstallScene);
     document.addEventListener("click", onDocumentClick);
     experience.addEventListener("focusin", onFocusIn);
     desktopQuery.addEventListener("change", syncMode);
@@ -286,6 +371,7 @@ export function HorizontalScroll({
       window.removeEventListener("resize", scheduleMeasure);
       window.removeEventListener("orientationchange", scheduleMeasure);
       window.removeEventListener("hashchange", onHashChange);
+      window.removeEventListener(OPEN_INSTALL_SCENE_EVENT, onOpenInstallScene);
       document.removeEventListener("click", onDocumentClick);
       experience.removeEventListener("focusin", onFocusIn);
       desktopQuery.removeEventListener("change", syncMode);

@@ -1,13 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { authClient } from "../../../lib/auth-client";
+import type { DashboardPlan } from "../../../lib/dashboard-server";
 
-export function DashboardProfile() {
+export function DashboardProfile({ plan }: { plan: DashboardPlan | null }) {
   const { data: session, isPending } = authClient.useSession();
   const user = session?.user;
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const planLabel = plan === "pro" ? "Pro" : plan === "free" ? "Free" : "Unavailable";
 
   async function signOut(): Promise<void> {
     setSigningOut(true);
@@ -24,16 +27,7 @@ export function DashboardProfile() {
 
   return (
     <div className="dashboardPageStack">
-      <section className="dashboardPanel" aria-labelledby="profile-details-title">
-        <div className="dashboardPanelHeader">
-          <div>
-            <span className="dashboardPanelLabel">Identity</span>
-            <h2 id="profile-details-title">Personal details</h2>
-          </div>
-          <span className="deviceStatus" data-status={user ? "approved" : "pending"}>
-            {isPending ? "Loading" : user ? "Signed in" : "Unavailable"}
-          </span>
-        </div>
+      <section className="dashboardPanel" aria-label="Profile">
         <dl className="dashboardDetails" aria-busy={isPending}>
           <div>
             <dt>Name</dt>
@@ -46,6 +40,12 @@ export function DashboardProfile() {
           <div>
             <dt>Email status</dt>
             <dd>{isPending ? "Loading…" : user?.emailVerified ? "Verified" : "Not verified"}</dd>
+          </div>
+          <div>
+            <dt>Plan</dt>
+            <dd>
+              <Link href="/dashboard/billing">{planLabel}</Link>
+            </dd>
           </div>
         </dl>
       </section>

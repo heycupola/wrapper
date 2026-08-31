@@ -217,7 +217,10 @@ describe("billing portal visibility", () => {
   test("hides portal management until the user has a billing customer", async () => {
     const t = convexTest(schema, modules).withIdentity({ subject: "billing-user" });
 
-    await expect(t.query(api.billing.getState, {})).resolves.toEqual({ canManageBilling: false });
+    await expect(t.query(api.billing.getState, {})).resolves.toEqual({
+      canManageBilling: false,
+      plan: "free",
+    });
 
     await t.run(async (ctx) => {
       await ctx.db.insert("emailState", {
@@ -226,7 +229,10 @@ describe("billing portal visibility", () => {
       });
     });
 
-    await expect(t.query(api.billing.getState, {})).resolves.toEqual({ canManageBilling: true });
+    await expect(t.query(api.billing.getState, {})).resolves.toEqual({
+      canManageBilling: true,
+      plan: "pro",
+    });
   });
 
   test("keeps portal management after a plan downgrade", async () => {
@@ -239,7 +245,10 @@ describe("billing portal visibility", () => {
       });
     });
 
-    await expect(t.query(api.billing.getState, {})).resolves.toEqual({ canManageBilling: true });
+    await expect(t.query(api.billing.getState, {})).resolves.toEqual({
+      canManageBilling: true,
+      plan: "free",
+    });
   });
 });
 

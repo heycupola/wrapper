@@ -330,6 +330,14 @@
   text-align: right;
 }
 
+.dashboardDetails dd a {
+  color: var(--color-text);
+  font-weight: 510;
+  text-decoration: underline;
+  text-decoration-color: var(--color-border);
+  text-underline-offset: 3px;
+}
+
 .dashboardDeleteConfirmation {
   display: grid;
   gap: 12px;
