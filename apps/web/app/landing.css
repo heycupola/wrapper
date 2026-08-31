@@ -941,8 +941,14 @@ html.lenis body {
 
 .landingPriceCard .iosViewerCtaText {
   min-height: 0;
+  justify-content: flex-start;
   font-size: inherit;
   font-weight: inherit;
+  line-height: inherit;
+}
+
+.landingPriceCard li:has(.iosViewerCtaText) {
+  align-items: center;
 }
 
 @media (prefers-color-scheme: dark) {

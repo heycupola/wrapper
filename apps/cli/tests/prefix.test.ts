@@ -110,6 +110,17 @@ describe("PrefixFilter", () => {
     expect(armedHistory).toEqual([true, false]);
   });
 
+  test("honours a custom prefix byte", () => {
+    const events: PrefixCommand[] = [];
+    const filter = new PrefixFilter({
+      prefix: 0x07,
+      onCommand: (c) => events.push(c),
+      armedTimeoutMs: 0,
+    });
+    expect(filter.process(`\x07s`)).toBe("");
+    expect(events).toEqual(["share"]);
+  });
+
   test("auto-timeout re-emits the prefix byte instead of dropping it", async () => {
     const forwarded: string[] = [];
     const filter = new PrefixFilter({

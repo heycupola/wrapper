@@ -1,14 +1,8 @@
 import { v } from "convex/values";
 import { protectedMutation, protectedQuery } from "./lib/middleware.ts";
-import { computeOnboardingStatus } from "./lib/onboarding.ts";
+import { applyOnboardingStep } from "./lib/onboarding.ts";
 
-const onboardingStep = v.union(
-  v.literal("completedProfile"),
-  v.literal("connectedCli"),
-  v.literal("sharedFirstSession"),
-);
-
-type OnboardingStep = "completedProfile" | "connectedCli" | "sharedFirstSession";
+const onboardingStep = v.union(v.literal("completedProfile"), v.literal("connectedCli"));
 
 export const getState = protectedQuery({
   args: {},
@@ -24,7 +18,6 @@ export const getState = protectedQuery({
         status: "in_progress" as const,
         completedProfile: false,
         connectedCli: false,
-        sharedFirstSession: false,
       };
     }
 
@@ -33,7 +26,6 @@ export const getState = protectedQuery({
       status: row.status,
       completedProfile: row.completedProfile,
       connectedCli: row.connectedCli,
-      sharedFirstSession: row.sharedFirstSession,
       source: row.source ?? null,
       sourceOther: row.sourceOther ?? null,
       teamSize: row.teamSize ?? null,
@@ -48,53 +40,7 @@ export const completeStep = protectedMutation({
     value: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const now = Date.now();
-    const nextValue = args.value ?? true;
-    const row = await ctx.db
-      .query("onboarding")
-      .withIndex("by_user", (q) => q.eq("userId", ctx.userId))
-      .first();
-
-    if (!row) {
-      const base = {
-        completedProfile: false,
-        connectedCli: false,
-        sharedFirstSession: false,
-      };
-      base[args.step as OnboardingStep] = nextValue;
-      const status = computeOnboardingStatus(base);
-      await ctx.db.insert("onboarding", {
-        userId: ctx.userId,
-        completedProfile: base.completedProfile,
-        connectedCli: base.connectedCli,
-        sharedFirstSession: base.sharedFirstSession,
-        status,
-        createdAt: now,
-        updatedAt: now,
-        completedAt: status === "completed" ? now : undefined,
-      });
-      return { ok: true, status };
-    }
-
-    const patch: {
-      completedProfile?: boolean;
-      connectedCli?: boolean;
-      sharedFirstSession?: boolean;
-      status?: "in_progress" | "completed";
-      updatedAt: number;
-      completedAt?: number;
-    } = { updatedAt: now };
-    patch[args.step] = nextValue;
-
-    const status = computeOnboardingStatus({
-      completedProfile: patch.completedProfile ?? row.completedProfile,
-      connectedCli: patch.connectedCli ?? row.connectedCli,
-      sharedFirstSession: patch.sharedFirstSession ?? row.sharedFirstSession,
-    });
-    patch.status = status;
-    if (status === "completed") patch.completedAt = now;
-    await ctx.db.patch(row._id, patch);
-
+    const status = await applyOnboardingStep(ctx, args.step, args.value ?? true);
     return { ok: true, status };
   },
 });
@@ -114,7 +60,6 @@ export const complete = protectedMutation({
     const finished = {
       completedProfile: true,
       connectedCli: true,
-      sharedFirstSession: true,
       status: "completed" as const,
       source: args.source,
       sourceOther: args.sourceOther,

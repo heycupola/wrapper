@@ -6,8 +6,11 @@ export type DashboardOnboardingState = {
   status: "in_progress" | "completed";
   completedProfile: boolean;
   connectedCli: boolean;
-  sharedFirstSession: boolean;
   completedAt?: number | null;
+};
+
+export type DashboardBillingState = {
+  canManageBilling: boolean;
 };
 
 export type DashboardSession = {
@@ -27,6 +30,12 @@ const onboardingStateRef = makeFunctionReference<
   DashboardOnboardingState
 >("onboarding:getState");
 
+const billingStateRef = makeFunctionReference<
+  "query",
+  Record<string, never>,
+  DashboardBillingState
+>("billing:getState");
+
 const activeSessionsRef = makeFunctionReference<"query", Record<string, never>, DashboardSession[]>(
   "session:listActive",
 );
@@ -42,6 +51,22 @@ export async function getDashboardOnboardingState(
 
   try {
     return await client.query(onboardingStateRef, {});
+  } catch {
+    return null;
+  }
+}
+
+export async function getDashboardBillingState(
+  token: string,
+): Promise<DashboardBillingState | null> {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!convexUrl) return null;
+
+  const client = new ConvexHttpClient(convexUrl);
+  client.setAuth(token);
+
+  try {
+    return await client.query(billingStateRef, {});
   } catch {
     return null;
   }

@@ -21,7 +21,7 @@ who may attach to which session.
   - `createdAt`, `expiresAt`, `usedAt` (single-use enforcement)
 - `onboarding`
   - `userId`
-  - `completedProfile`, `connectedCli`, `sharedFirstSession`
+  - `completedProfile`, `connectedCli`
   - `status` (`in_progress` or `completed`)
   - `source`, `sourceOther`, `teamSize`
   - `createdAt`, `updatedAt`, `completedAt`
@@ -55,7 +55,8 @@ who may attach to which session.
   contract)
 - `getDeviceCodeInfo`: globally rate-limited mutation that looks up a pending
   code so the web page can show what is being approved
-- `approveDeviceCode` / `denyDeviceCode`: authenticated approve or deny actions
+- `approveDeviceCode` / `denyDeviceCode`: authenticated approve or deny actions.
+  Approving a device also marks the CLI as connected for onboarding.
 
 `convex/relay.ts`:
 
@@ -77,8 +78,12 @@ who may attach to which session.
 
 `convex/billing.ts`:
 
+- `getState`: whether the signed-in user can open Stripe's billing portal (a
+  customer exists after Pro checkout or a later downgrade)
 - `createProCheckout`: create a Stripe checkout URL for the Pro plan through
   Autumn, used by both the CLI upgrade hint and the web upgrade button
+- `createBillingPortal`: open Stripe's customer portal for users who already
+  have a billing customer
 
 `convex/auth.ts`:
 

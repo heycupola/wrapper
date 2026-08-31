@@ -13,6 +13,10 @@ Wrapper supports macOS and Linux. On Windows, use WSL.
 brew install heycupola/tap/wrapper
 ```
 
+If Homebrew reports that Xcode is outdated, update Command Line Tools or use the
+curl installer below. The formula only unpacks a release binary; it does not
+build Wrapper with Xcode. See [Troubleshooting](/troubleshooting).
+
 ### Checksum-verified installer
 
 ```bash
@@ -33,7 +37,7 @@ Confirm:
 wrapper --version
 ```
 
-## Get the iOS viewer beta
+## Get iOS viewer beta
 
 The iPhone and iPad app is a TestFlight viewer, not a host. The shell, files,
 and credentials stay on the Mac or Linux machine. After the CLI is installed

@@ -66,10 +66,10 @@ export function formatSessionHud(state: SessionHudState): string {
 }
 
 /** One-time discoverability hint printed before the terminal becomes busy. */
-export function formatControlsHint(role: SessionHudRole): string {
+export function formatControlsHint(role: SessionHudRole, prefixLabel = "Ctrl+\\"): string {
   return role === "host"
-    ? "controls: Ctrl+\\ then s share | u unshare | ? status"
-    : "controls: Ctrl+\\ then d detach | ? status";
+    ? `controls: ${prefixLabel} then s share | u unshare | ? status`
+    : `controls: ${prefixLabel} then d detach | ? status`;
 }
 
 /**

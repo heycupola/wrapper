@@ -94,23 +94,26 @@ export function HorizontalScroll({
       renderFrame = requestAnimationFrame(render);
     };
 
-    const scrollToSection = (section: HTMLElement, updateHistory: boolean) => {
+    const scrollToSection = (section: HTMLElement, updateHistory: boolean, immediate = false) => {
       if (!horizontalActive) return;
       const target = sectionScrollTarget(storyStart, section.offsetLeft, maxTranslate);
       if (updateHistory) history.pushState(null, "", `#${section.id}`);
 
       if (lenis) {
-        lenis.scrollTo(target, { duration: 0.9, force: true });
+        lenis.scrollTo(
+          target,
+          immediate ? { immediate: true, force: true } : { duration: 0.9, force: true },
+        );
       } else {
-        window.scrollTo({ top: target, behavior: "smooth" });
+        window.scrollTo({ top: target, behavior: immediate ? "auto" : "smooth" });
       }
     };
 
-    const navigateToHash = (updateHistory = false) => {
+    const navigateToHash = (updateHistory = false, immediate = false) => {
       const sectionId = decodeURIComponent(window.location.hash.slice(1));
       if (!sectionId || !sectionIds.includes(sectionId)) return;
       const section = document.getElementById(sectionId);
-      if (section) scrollToSection(section, updateHistory);
+      if (section) scrollToSection(section, updateHistory, immediate);
     };
 
     const measure = () => {
@@ -132,7 +135,7 @@ export function HorizontalScroll({
 
       if (!initialHashApplied && window.location.hash) {
         initialHashApplied = true;
-        requestAnimationFrame(() => navigateToHash());
+        requestAnimationFrame(() => navigateToHash(false, true));
       }
     };
 
@@ -190,6 +193,9 @@ export function HorizontalScroll({
         smoothWheel: true,
         wheelMultiplier: 1,
       });
+      if (window.location.hash) {
+        navigateToHash(false, true);
+      }
     };
 
     const clearHorizontalLayout = () => {
