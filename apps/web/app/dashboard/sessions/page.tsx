@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { IosViewerCta } from "../../../components/ios-viewer-cta";
+import { InstallWrapperLink } from "../../../components/install-wrapper-link";
 import { getToken } from "../../../lib/auth-server";
 import { getDashboardSessions } from "../../../lib/dashboard-server";
 import { DashboardPageHeader } from "../dashboard-page-header";
@@ -33,9 +33,7 @@ export default async function DashboardSessionsPage() {
         <section className="dashboardEmptyState">
           <strong>No active sessions</strong>
           <p>Install Wrapper and open an interactive shell to create the first host session.</p>
-          <Link className="primaryAction" href="/#start">
-            Install Wrapper
-          </Link>
+          <InstallWrapperLink className="primaryAction">Install Wrapper</InstallWrapperLink>
         </section>
       ) : (
         <div className="dashboardSessionCards">

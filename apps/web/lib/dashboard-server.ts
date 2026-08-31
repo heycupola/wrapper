@@ -9,8 +9,11 @@ export type DashboardOnboardingState = {
   completedAt?: number | null;
 };
 
+export type DashboardPlan = "free" | "pro";
+
 export type DashboardBillingState = {
   canManageBilling: boolean;
+  plan: DashboardPlan;
 };
 
 export type DashboardSession = {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getIosAppTarget } from "../lib/ios-app";
 import { CupolaMark } from "./cupola-mark";
+import { InstallWrapperLink } from "./install-wrapper-link";
 
 function footerGroups() {
   const ios = getIosAppTarget();
@@ -91,6 +92,8 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
                   <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer">
                     {link.label}
                   </a>
+                ) : link.href === "/#start" ? (
+                  <InstallWrapperLink key={link.href}>{link.label}</InstallWrapperLink>
                 ) : (
                   <Link key={link.href} href={link.href}>
                     {link.label}
