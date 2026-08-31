@@ -37,7 +37,7 @@ export function HorizontalLanding() {
                 </a>
                 <IosViewerCta variant="badge" className="landingHeroViewer" />
               </div>
-              <p className="landingMicrocopy revealItem">macOS and Linux · iPhone or iPad</p>
+              <p className="landingMicrocopy revealItem">macOS and Linux · iOS viewer beta</p>
             </div>
 
             <div className="landingHeroMedia revealItem">
@@ -278,7 +278,7 @@ export function HorizontalLanding() {
                   </div>
                 </div>
                 <div className="landingInstallMethod revealItem">
-                  <p className="landingInstallLabel">Viewer · iPhone or iPad</p>
+                  <p className="landingInstallLabel">Viewer · iPhone or iPad beta</p>
                   <IosViewerCta variant="badge" note />
                 </div>
               </div>
