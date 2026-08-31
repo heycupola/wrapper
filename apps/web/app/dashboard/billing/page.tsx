@@ -43,9 +43,9 @@ export default async function DashboardBillingPage({
             <strong className="dashboardPlanPrice">$0</strong>
           </div>
           <ul className="dashboardFeatureList">
-            <li>Local wrap for zsh, bash, and fish</li>
-            <li>Attach from this computer</li>
-            <li>No subscription required</li>
+            <li>Wrap zsh, bash, and fish</li>
+            <li>Attach from the same computer</li>
+            <li>Sessions stay on your machine</li>
           </ul>
         </article>
 
@@ -63,9 +63,9 @@ export default async function DashboardBillingPage({
             </p>
           </div>
           <ul className="dashboardFeatureList">
+            <li>Everything in Free</li>
             <li>Attach from another device</li>
-            <li>WebRTC when available</li>
-            <li>Authenticated relay fallback</li>
+            <li>Share a session, revoke anytime</li>
           </ul>
         </article>
       </div>
