@@ -12,7 +12,7 @@ interface LegalPageProps {
 export function LegalPage({ title, lastUpdated, introduction, children }: LegalPageProps) {
   return (
     <div className="legalShell">
-      <SiteHeader />
+      <SiteHeader showAction={false} />
       <main id="main-content" className="legalMain" tabIndex={-1}>
         <div className="legalTitle">
           <h1>{title}</h1>
