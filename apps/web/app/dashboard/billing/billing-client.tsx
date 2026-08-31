@@ -17,7 +17,13 @@ const checkoutRef = makeFunctionReference<
   { checkoutUrl: string }
 >("billing:createProCheckout");
 
-export function DashboardBillingActions({ token }: { token: string }) {
+export function DashboardBillingActions({
+  token,
+  canManageBilling,
+}: {
+  token: string;
+  canManageBilling: boolean;
+}) {
   const [pending, setPending] = useState<"portal" | "checkout" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,7 +78,11 @@ export function DashboardBillingActions({ token }: { token: string }) {
     <section className="dashboardActionPanel" aria-labelledby="billing-actions-title">
       <div>
         <h2 id="billing-actions-title">Billing actions</h2>
-        <p>Use Stripe for subscription management or start a new Pro checkout.</p>
+        <p>
+          {canManageBilling
+            ? "Use Stripe for subscription management or start a new Pro checkout."
+            : "Upgrade to Pro when a session needs to leave this machine."}
+        </p>
       </div>
       <div className="authActions">
         <button
@@ -83,14 +93,16 @@ export function DashboardBillingActions({ token }: { token: string }) {
         >
           {pending === "checkout" ? "Starting checkout…" : "Upgrade to Pro"}
         </button>
-        <button
-          type="button"
-          className="social-btn"
-          disabled={pending !== null}
-          onClick={() => void openPortal()}
-        >
-          {pending === "portal" ? "Opening portal…" : "Manage billing"}
-        </button>
+        {canManageBilling ? (
+          <button
+            type="button"
+            className="social-btn"
+            disabled={pending !== null}
+            onClick={() => void openPortal()}
+          >
+            {pending === "portal" ? "Opening portal…" : "Manage billing"}
+          </button>
+        ) : null}
       </div>
       {error ? (
         <p className="authError" role="alert">

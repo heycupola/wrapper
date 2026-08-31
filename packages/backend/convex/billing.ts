@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { createError, ErrorCode } from "./lib/errors.ts";
-import { protectedAction } from "./lib/middleware.ts";
+import { protectedAction, protectedQuery } from "./lib/middleware.ts";
 import { ErrorSeverity } from "./lib/types.ts";
 
 const appOrigin = new URL(
@@ -11,6 +11,19 @@ const appOrigin = new URL(
 ).origin;
 const STRIPE_CHECKOUT_ORIGIN = "https://checkout.stripe.com";
 const STRIPE_PORTAL_ORIGIN = "https://billing.stripe.com";
+
+export const getState = protectedQuery({
+  args: {},
+  handler: async (ctx) => {
+    const row = await ctx.db
+      .query("emailState")
+      .withIndex("by_user", (q) => q.eq("userId", ctx.userId))
+      .first();
+    return {
+      canManageBilling: Boolean(row && (row.hasPro === true || row.planDowngradedAt !== undefined)),
+    };
+  },
+});
 
 function getProPlanId(): string {
   const value = process.env.WRAPPER_AUTUMN_PRO_PLAN_ID;

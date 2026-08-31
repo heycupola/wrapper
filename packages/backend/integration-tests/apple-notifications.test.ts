@@ -110,7 +110,6 @@ describe("Apple account-change processing", () => {
           completedProfile: true,
           connectedCli: true,
           createdAt: now,
-          sharedFirstSession: true,
           status: "completed",
           updatedAt: now,
           userId,

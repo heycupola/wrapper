@@ -592,6 +592,20 @@
   gap: 14px;
 }
 
+.dashboardBillingGrid .dashboardPanel {
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.dashboardBillingGrid .dashboardFeatureList {
+  gap: 6px;
+  font-size: 0.74rem;
+}
+
+.dashboardBillingGrid .dashboardPlanPrice {
+  font-size: 1.25rem;
+}
+
 .dashboardProPanel {
   border-color: color-mix(in srgb, var(--color-accent-pop) 28%, var(--color-border));
 }
@@ -652,15 +666,19 @@
   color: var(--brand-danger);
 }
 
-.dashboardDangerPanel .social-btn.social-btn-danger {
+.dashboardDangerPanel .social-btn.social-btn-danger,
+.dangerAction {
   width: fit-content;
   justify-self: start;
   background: #b63838;
   color: #fff;
 }
 
-.dashboardDangerPanel .social-btn.social-btn-danger:hover {
+.dashboardDangerPanel .social-btn.social-btn-danger:hover,
+.dangerAction:hover {
   background: #a32f2f;
+  color: #fff;
+  filter: none;
 }
 
 .authMain {
@@ -948,6 +966,34 @@
   font-family: var(--font-mono);
   font-size: 0.8rem;
   overflow-wrap: anywhere;
+}
+
+.onboardingInstall {
+  display: grid;
+  gap: 14px;
+}
+
+.onboardingCommands {
+  display: grid;
+  gap: 8px;
+}
+
+.onboardingInstallHint {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.onboardingInstallHint code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+}
+
+.onboardingViewerCta {
+  justify-self: start;
 }
 
 .onboardingFields {
@@ -1326,6 +1372,7 @@
   .authSurface,
   .dashboardPanel,
   .onboardingCommand,
+  .onboardingCommands .copyCommand,
   .legalIntroduction,
   .notFoundTerminal {
     border: 1px solid CanvasText;

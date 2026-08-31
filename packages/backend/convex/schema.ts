@@ -6,7 +6,8 @@ export default defineSchema({
     userId: v.string(),
     completedProfile: v.boolean(),
     connectedCli: v.boolean(),
-    sharedFirstSession: v.boolean(),
+    // Leftover on existing rows from the removed sharing tutorial step.
+    sharedFirstSession: v.optional(v.boolean()),
     status: v.union(v.literal("in_progress"), v.literal("completed")),
     source: v.optional(v.string()),
     sourceOther: v.optional(v.string()),

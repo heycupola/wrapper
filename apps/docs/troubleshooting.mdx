@@ -12,6 +12,17 @@ Symptoms: `wrapper: command not found`, wrong binary.
    is on your `PATH`.
 3. Re-run the installer or `brew reinstall heycupola/tap/wrapper`.
 
+## Homebrew says Xcode is outdated
+
+Wrapper's Homebrew formula installs a prebuilt binary. It does not compile
+Swift or require Xcode. Homebrew itself still refuses to run when the Xcode
+Command Line Tools on the Mac are older than Homebrew expects.
+
+1. Update Command Line Tools: `xcode-select --install` or Software Update.
+2. Or skip Homebrew and use the curl installer above.
+
+The curl installer does not go through Homebrew, so it is unaffected.
+
 ## Shell hook not wrapping
 
 Symptoms: `wrapper status` is empty after install.

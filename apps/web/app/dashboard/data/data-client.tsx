@@ -49,7 +49,7 @@ export function DashboardDeletion() {
       {!open ? (
         <button
           type="button"
-          className="social-btn social-btn-danger"
+          className="social-btn social-btn-danger dangerAction"
           aria-expanded="false"
           aria-controls="delete-profile-confirmation"
           onClick={() => {
@@ -76,7 +76,7 @@ export function DashboardDeletion() {
           <div className="authActions">
             <button
               type="button"
-              className="social-btn social-btn-danger"
+              className="social-btn social-btn-danger dangerAction"
               disabled={deleting || confirmation !== "DELETE"}
               onClick={() => void deleteProfile()}
             >

@@ -23,6 +23,12 @@ type ApproveOrDenyArgs = {
   user_code: string;
 };
 
+const getOnboardingStateRef = makeFunctionReference<
+  "query",
+  Record<string, never>,
+  { needsOnboarding: boolean }
+>("onboarding:getState");
+
 const getDeviceCodeInfoRef = makeFunctionReference<
   "mutation",
   GetDeviceCodeInfoArgs,
@@ -32,7 +38,7 @@ const getDeviceCodeInfoRef = makeFunctionReference<
 const approveDeviceCodeRef = makeFunctionReference<
   "mutation",
   ApproveOrDenyArgs,
-  { success: boolean }
+  { success: boolean; needsOnboarding: boolean }
 >("deviceAuth:approveDeviceCode");
 
 const denyDeviceCodeRef = makeFunctionReference<
@@ -61,6 +67,7 @@ export function DeviceAuthorizeClient({
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [deviceInfo, setDeviceInfo] = useState<GetDeviceCodeInfoResponse>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(true);
 
   const client = useMemo(() => {
     if (!convexUrl) return null;
@@ -113,6 +120,16 @@ export function DeviceAuthorizeClient({
   );
 
   useEffect(() => {
+    if (!client || !authenticated) return;
+    void client
+      .query(getOnboardingStateRef, {})
+      .then((state) => setNeedsOnboarding(state.needsOnboarding))
+      .catch(() => {
+        setNeedsOnboarding(true);
+      });
+  }, [authenticated, client]);
+
+  useEffect(() => {
     if (!client) return;
     if (!userCode) return;
     if (hasAutoChecked) return;
@@ -140,7 +157,8 @@ export function DeviceAuthorizeClient({
     setStatus(null);
     try {
       if (action === "approve") {
-        await client.mutation(approveDeviceCodeRef, { user_code: normalized });
+        const result = await client.mutation(approveDeviceCodeRef, { user_code: normalized });
+        setNeedsOnboarding(result.needsOnboarding);
         setStatus("Device code approved");
       } else {
         await client.mutation(denyDeviceCodeRef, { user_code: normalized });
@@ -268,9 +286,12 @@ export function DeviceAuthorizeClient({
           {status}
         </output>
       ) : null}
-      {status === "Device code approved" ? (
-        <Link className="social-btn social-btn-primary" href="/onboarding">
-          Continue to onboarding
+      {status === "Device code approved" || deviceInfo?.status === "approved" ? (
+        <Link
+          className="social-btn social-btn-primary"
+          href={needsOnboarding ? "/onboarding" : "/dashboard"}
+        >
+          {needsOnboarding ? "Continue to onboarding" : "Continue to dashboard"}
         </Link>
       ) : null}
       {error ? (

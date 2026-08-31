@@ -12,6 +12,7 @@ import {
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
 import { resolveAuthedConvexClient } from "../util/convex-client";
 import { env } from "../util/env";
+import { resolvePrefix } from "../util/prefix-config";
 import {
   bell,
   clearTitle,
@@ -98,11 +99,14 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
   // Relay URLs carry a single-use join ticket, and local URLs carry the loopback
   // token, in the query string. Redact both so no credential lands in the log
   // file or the terminal scrollback.
+  const prefix = resolvePrefix();
   const safeUrl = url.replace(/ticket=[^&]+/, "ticket=***").replace(/token=[^&]+/, "token=***");
   log.info("attaching", { url: safeUrl, sessionId: target.id });
   trackEvent("attach_started");
   process.stderr.write(`[wrapper] attaching to ${safeUrl}\n`);
-  process.stderr.write(`[wrapper] ${formatControlsHint("viewer")} (session keeps running)\n`);
+  process.stderr.write(
+    `[wrapper] ${formatControlsHint("viewer", prefix.label)} (session keeps running)\n`,
+  );
 
   let userAborted = false;
   const sessionTag = target.id.slice(0, 6);
@@ -167,6 +171,7 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
   };
 
   const prefixFilter = new PrefixFilter({
+    prefix: prefix.byte,
     onCommand: handlePrefixCommand,
     onForward: (data) => handle.forwardInput(data),
     onArmedChange: (armed) => {

@@ -38,7 +38,7 @@ export function getIosAppTarget(environment: PublicEnvironment = process.env): I
   const beta = kind === "testflight";
   return {
     href,
-    label: label ?? (beta ? "Join the iOS beta" : "Get the iOS viewer"),
+    label: label ?? (beta ? "Join the iOS beta" : "Get iOS viewer"),
     navLabel: beta ? "iOS beta" : "iOS viewer",
     kind,
     external: true,

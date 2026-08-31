@@ -4,22 +4,19 @@ import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
+import { CopyCommand } from "../../components/copy-command";
+import type { IosAppTarget } from "../../lib/ios-app";
 
-type Screen = "cli" | "sharing" | "context";
+type Screen = "install" | "auth" | "context";
 
 const SCREEN_COPY: Record<Screen, { title: string; description: ReactNode }> = {
-  cli: {
+  install: {
+    title: "Install Wrapper",
+    description: "Install the CLI, then enable the shell hook in a new terminal.",
+  },
+  auth: {
     title: "Connect the CLI",
     description: "Run this in your terminal and finish device authorization.",
-  },
-  sharing: {
-    title: "How to stop sharing",
-    description: (
-      <>
-        Use <code>Ctrl+\ s</code> to share and <code>Ctrl+\ u</code> to revoke access from the host
-        shell.
-      </>
-    ),
   },
   context: {
     title: "A couple of optional questions",
@@ -32,7 +29,6 @@ type OnboardingState = {
   status: "in_progress" | "completed";
   completedProfile: boolean;
   connectedCli: boolean;
-  sharedFirstSession: boolean;
   source?: string | null;
   sourceOther?: string | null;
   teamSize?: string | null;
@@ -53,9 +49,11 @@ const sourceOptions = new Set(["search", "github", "x", "friend", "other"]);
 export function OnboardingClient({
   token,
   initialState,
+  iosViewer,
 }: {
   token: string;
   initialState: OnboardingState;
+  iosViewer: IosAppTarget;
 }) {
   const router = useRouter();
   const [screen, setScreen] = useState<Screen>(() => getInitialScreen(initialState));
@@ -79,13 +77,13 @@ export function OnboardingClient({
   }, [token]);
 
   async function advance(): Promise<void> {
-    if (screen === "cli") {
+    if (screen === "install") {
       setError(null);
-      setScreen("sharing");
+      setScreen("auth");
       return;
     }
 
-    if (screen === "sharing") {
+    if (screen === "auth") {
       setError(null);
       setScreen("context");
       return;
@@ -124,7 +122,34 @@ export function OnboardingClient({
         <p className="authDescription">{copy.description}</p>
       </header>
 
-      {screen === "cli" ? <code className="onboardingCommand">wrapper auth login</code> : null}
+      {screen === "install" ? (
+        <div className="onboardingInstall">
+          <div className="onboardingCommands">
+            <CopyCommand
+              command="brew install heycupola/tap/wrapper"
+              label="Copy Homebrew command"
+            />
+            <CopyCommand
+              command="curl -fsSL https://wrapper.sh/install | bash"
+              label="Copy curl command"
+            />
+            <CopyCommand command="wrapper install" label="Copy shell hook command" />
+          </div>
+          <p className="onboardingInstallHint">
+            Open a new terminal after <code>wrapper install</code> so the hook can wrap your shell.
+          </p>
+          <a
+            className="iosViewerCta iosViewerCtaText onboardingViewerCta"
+            href={iosViewer.href}
+            target={iosViewer.external ? "_blank" : undefined}
+            rel={iosViewer.external ? "noopener noreferrer" : undefined}
+          >
+            {iosViewer.label}
+          </a>
+        </div>
+      ) : null}
+
+      {screen === "auth" ? <code className="onboardingCommand">wrapper auth login</code> : null}
 
       {screen === "context" ? (
         <div className="onboardingFields">
@@ -200,7 +225,6 @@ export function OnboardingClient({
 }
 
 function getInitialScreen(state: OnboardingState): Screen {
-  if (!state.connectedCli) return "cli";
-  if (!state.sharedFirstSession) return "sharing";
+  if (!state.connectedCli) return "install";
   return "context";
 }

@@ -15,6 +15,7 @@ import {
   type AuthAutoRefresh,
 } from "../util/convex-client";
 import { env } from "../util/env";
+import { resolvePrefix } from "../util/prefix-config";
 import {
   bell,
   clearTitle,
@@ -139,6 +140,7 @@ function generateShareCode(): string {
 }
 
 export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
+  const prefix = resolvePrefix();
   // Guard against recursive shell-host re-entry.
   if (process.env.WRAPPER_NESTING_GUARD === "1") {
     log.error("shell-host re-entry detected; refusing to spawn inner shell", {
@@ -502,6 +504,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   };
 
   const prefixFilter = new PrefixFilter({
+    prefix: prefix.byte,
     onCommand: handlePrefixCommand,
     onForward: (data) => session.write(data),
     onArmedChange: (armed) => {
@@ -544,7 +547,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   const showControlsHint = (): void => {
     controlsHintTimer = null;
     if (session.isIdle) {
-      inlineMessage(formatControlsHint("host"));
+      inlineMessage(formatControlsHint("host", prefix.label));
       paintRestingTitle();
       return;
     }

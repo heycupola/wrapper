@@ -37,6 +37,7 @@ describe("session HUD", () => {
 
   test("provides discoverability hints for both roles", () => {
     expect(formatControlsHint("host")).toContain("Ctrl+\\");
+    expect(formatControlsHint("host", "Ctrl+G")).toContain("Ctrl+G");
     expect(formatControlsHint("host")).toContain("s share");
     expect(formatControlsHint("viewer")).toContain("d detach");
   });

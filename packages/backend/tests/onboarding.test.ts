@@ -2,12 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { computeOnboardingStatus } from "../convex/lib/onboarding";
 
 describe("computeOnboardingStatus", () => {
-  test("returns completed when all onboarding steps are done", () => {
+  test("returns completed when profile and CLI steps are done", () => {
     expect(
       computeOnboardingStatus({
         completedProfile: true,
         connectedCli: true,
-        sharedFirstSession: true,
       }),
     ).toBe("completed");
   });
@@ -17,7 +16,6 @@ describe("computeOnboardingStatus", () => {
       computeOnboardingStatus({
         completedProfile: true,
         connectedCli: false,
-        sharedFirstSession: true,
       }),
     ).toBe("in_progress");
   });

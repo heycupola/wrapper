@@ -8,23 +8,24 @@ source should set `NODE_ENV=development` and explicit endpoints.
 
 ## End-user variables
 
-| Variable                  | Role                             | Production default                   |
-| ------------------------- | -------------------------------- | ------------------------------------ |
-| `WRAPPER_RELAY_URL`       | Relay WebSocket base             | `wss://wrapper-relay-prod.fly.dev`   |
-| `WRAPPER_AUTH_ORIGIN`     | Device-login web origin          | `https://wrapper.sh`                 |
-| `WRAPPER_CONVEX_URL`      | Convex `.cloud` URL              | production Convex deployment         |
-| `WRAPPER_CONVEX_SITE_URL` | Auth HTTP (`.site`) override     | derived from `.cloud`                |
-| `WRAPPER_P2P`             | WebRTC fast path                 | on (`0`, `false`, or `off` disables) |
-| `WRAPPER_HUD`             | Terminal-title HUD               | on (`off` disables)                  |
-| `WRAPPER_DISABLE`         | Skip shell wrap for one process  | unset                                |
-| `WRAPPER_WRAPPED`         | Set by `shell-host` (do not set) | unset                                |
-| `WRAPPER_LOG`             | Log level                        | `warn` in production                 |
-| `WRAPPER_LOG_FILE`        | Log path override                | platform default                     |
-| `WRAPPER_TELEMETRY`       | Telemetry override               | disabled until opted in              |
-| `WRAPPER_POSTHOG_KEY`     | Telemetry key                    | empty                                |
-| `WRAPPER_TELEMETRY_URL`   | Telemetry endpoint               | `https://telemetry.wrapper.sh`       |
-| `NODE_ENV`                | Isolates dev paths and defaults  | unset = production                   |
-| `CI`                      | Quiet CI mode, no telemetry      | unset                                |
+| Variable                  | Role                                           | Production default                   |
+| ------------------------- | ---------------------------------------------- | ------------------------------------ |
+| `WRAPPER_RELAY_URL`       | Relay WebSocket base                           | `wss://wrapper-relay-prod.fly.dev`   |
+| `WRAPPER_AUTH_ORIGIN`     | Device-login web origin                        | `https://wrapper.sh`                 |
+| `WRAPPER_CONVEX_URL`      | Convex `.cloud` URL                            | production Convex deployment         |
+| `WRAPPER_CONVEX_SITE_URL` | Auth HTTP (`.site`) override                   | derived from `.cloud`                |
+| `WRAPPER_P2P`             | WebRTC fast path                               | on (`0`, `false`, or `off` disables) |
+| `WRAPPER_HUD`             | Terminal-title HUD                             | on (`off` disables)                  |
+| `WRAPPER_PREFIX`          | Keybinding prefix (`ctrl+\`, `ctrl+g`, `0x1c`) | `Ctrl+\`                             |
+| `WRAPPER_DISABLE`         | Skip shell wrap for one process                | unset                                |
+| `WRAPPER_WRAPPED`         | Set by `shell-host` (do not set)               | unset                                |
+| `WRAPPER_LOG`             | Log level                                      | `warn` in production                 |
+| `WRAPPER_LOG_FILE`        | Log path override                              | platform default                     |
+| `WRAPPER_TELEMETRY`       | Telemetry override                             | disabled until opted in              |
+| `WRAPPER_POSTHOG_KEY`     | Telemetry key                                  | empty                                |
+| `WRAPPER_TELEMETRY_URL`   | Telemetry endpoint                             | `https://telemetry.wrapper.sh`       |
+| `NODE_ENV`                | Isolates dev paths and defaults                | unset = production                   |
+| `CI`                      | Quiet CI mode, no telemetry                    | unset                                |
 
 Installer-only:
 
@@ -44,8 +45,26 @@ Installer-only:
 Important files:
 
 - `auth.json` in the config directory
+- `config.json` in the config directory (optional prefix override)
 - `sessions.json` in the state directory
 - log files under the state directory (or `WRAPPER_LOG_FILE`)
+
+## Keybinding prefix
+
+The in-session prefix defaults to `Ctrl+\`. Override it with `WRAPPER_PREFIX` or
+`~/.config/wrapper/config.json`. Environment wins over the file.
+
+```json
+{ "prefix": "ctrl+g" }
+```
+
+```bash
+WRAPPER_PREFIX=ctrl+g
+```
+
+Accepted forms: `ctrl+g`, `ctrl+\`, `^G`, `0x1c`. Interrupt keys (`Ctrl+C`,
+`Ctrl+D`, `Ctrl+Z`, Enter, Tab, Esc) are rejected so the shell stays usable.
+Command letters (`s`, `u`, `d`, `?`) stay fixed.
 
 ## Development defaults
 

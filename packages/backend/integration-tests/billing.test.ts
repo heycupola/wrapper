@@ -213,6 +213,36 @@ describe("billing portal entry point", () => {
   });
 });
 
+describe("billing portal visibility", () => {
+  test("hides portal management until the user has a billing customer", async () => {
+    const t = convexTest(schema, modules).withIdentity({ subject: "billing-user" });
+
+    await expect(t.query(api.billing.getState, {})).resolves.toEqual({ canManageBilling: false });
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("emailState", {
+        userId: "billing-user",
+        hasPro: true,
+      });
+    });
+
+    await expect(t.query(api.billing.getState, {})).resolves.toEqual({ canManageBilling: true });
+  });
+
+  test("keeps portal management after a plan downgrade", async () => {
+    const t = convexTest(schema, modules).withIdentity({ subject: "former-pro" });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("emailState", {
+        userId: "former-pro",
+        hasPro: false,
+        planDowngradedAt: Date.now(),
+      });
+    });
+
+    await expect(t.query(api.billing.getState, {})).resolves.toEqual({ canManageBilling: true });
+  });
+});
+
 describe("billing account cleanup", () => {
   test("queues provider work without contacting billing during account deletion", async () => {
     vi.useFakeTimers();

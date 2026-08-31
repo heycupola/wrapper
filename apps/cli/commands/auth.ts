@@ -6,6 +6,7 @@ import { makeFunctionReference } from "convex/server";
 import { type StoredAuthToken, loadStoredAuthToken, resolveConvexUrl } from "../util/auth-session";
 import { resolveConvexSiteUrl } from "../util/convex-client";
 import { DeviceAuthPollingCancelledError, pollForDeviceToken } from "../util/device-auth-poll";
+import { openUrl } from "../util/open-url";
 import { paths } from "../util/paths";
 import { installShutdownHandlers } from "../util/signals";
 
@@ -84,6 +85,18 @@ export async function runAuthLogin(opts: AuthLoginOptions): Promise<void> {
       ].join("\n"),
       "Device Authorization",
     );
+
+    const openBrowser = await p.confirm({
+      message: "Press Enter to open the browser",
+      initialValue: true,
+    });
+    if (p.isCancel(openBrowser)) {
+      p.cancel("Device authorization cancelled.");
+      process.exit(130);
+    }
+    if (openBrowser && !openUrl(result.verification_uri_complete)) {
+      p.log.warn("Could not open the browser. Open the URL above.");
+    }
 
     const token = await waitForDeviceToken(client, result);
     persistAuthToken(convexUrl, token);

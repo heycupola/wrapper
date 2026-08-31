@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getToken } from "../../../lib/auth-server";
+import { getDashboardBillingState } from "../../../lib/dashboard-server";
 import { DashboardPageHeader } from "../dashboard-page-header";
 import { DashboardBillingActions } from "./billing-client";
 
@@ -12,6 +13,9 @@ export const metadata: Metadata = {
 export default async function DashboardBillingPage() {
   const token = await getToken();
   if (!token) return null;
+
+  const billing = await getDashboardBillingState(token);
+  const canManageBilling = billing?.canManageBilling === true;
 
   return (
     <>
@@ -30,9 +34,8 @@ export default async function DashboardBillingPage() {
             <strong className="dashboardPlanPrice">$0</strong>
           </div>
           <ul className="dashboardFeatureList">
-            <li>Wrapper for zsh, bash, and fish</li>
-            <li>Local attach from the same computer</li>
-            <li>Explicit share and revoke controls</li>
+            <li>Local wrap for zsh, bash, and fish</li>
+            <li>Attach from this computer</li>
             <li>No subscription required</li>
           </ul>
         </article>
@@ -49,23 +52,24 @@ export default async function DashboardBillingPage() {
             </p>
           </div>
           <ul className="dashboardFeatureList">
-            <li>Everything included in Free</li>
             <li>Attach from another device</li>
-            <li>Direct WebRTC when available</li>
+            <li>WebRTC when available</li>
             <li>Authenticated relay fallback</li>
           </ul>
         </article>
       </div>
 
-      <DashboardBillingActions token={token} />
+      <DashboardBillingActions token={token} canManageBilling={canManageBilling} />
 
-      <aside className="dashboardNotice">
-        <strong>Billing provider is the source of truth</strong>
-        <p>
-          The secure billing portal shows invoices, payment details, current subscription state, and
-          cancellation timing.
-        </p>
-      </aside>
+      {canManageBilling ? (
+        <aside className="dashboardNotice">
+          <strong>Billing provider is the source of truth</strong>
+          <p>
+            The secure billing portal shows invoices, payment details, current subscription state,
+            and cancellation timing.
+          </p>
+        </aside>
+      ) : null}
     </>
   );
 }

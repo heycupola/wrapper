@@ -196,8 +196,13 @@ describe("device authorization entry points", () => {
       email: "approved@example.com",
       name: "Approved User",
     });
-    await signedIn.mutation(api.deviceAuth.approveDeviceCode, {
+    const approval = await signedIn.mutation(api.deviceAuth.approveDeviceCode, {
       user_code: issued.user_code,
+    });
+    expect(approval).toEqual({ success: true, needsOnboarding: true });
+    expect(await signedIn.query(api.onboarding.getState, {})).toMatchObject({
+      connectedCli: true,
+      needsOnboarding: true,
     });
 
     expect(
