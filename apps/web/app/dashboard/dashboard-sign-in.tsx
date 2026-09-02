@@ -27,7 +27,7 @@ export function DashboardSignIn({ appleEnabled }: { appleEnabled: boolean }) {
   }
 
   return (
-    <section className="dashboardSignIn" aria-label="Sign in">
+    <div className="dashboardSignIn">
       <SocialSignInButtons
         appleEnabled={appleEnabled}
         disabled={pending}
@@ -36,11 +36,14 @@ export function DashboardSignIn({ appleEnabled }: { appleEnabled: boolean }) {
       <p className="authHint">
         Need help? <Link href="/support">Visit support</Link>.
       </p>
+      <output className="visuallyHidden">
+        {pending ? "Redirecting to your sign-in provider…" : ""}
+      </output>
       {error ? (
         <p className="authError" role="alert">
           {error}
         </p>
       ) : null}
-    </section>
+    </div>
   );
 }

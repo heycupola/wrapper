@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ExternalLink } from "../../components/external-link";
 
 export function DashboardPageHeader({
   title,
@@ -26,9 +27,9 @@ export function DashboardPageHeader({
       {actionHref && actionLabel ? (
         <div className="dashboardPageActions">
           {actionExternal ? (
-            <a className={actionClass} href={actionHref} target="_blank" rel="noreferrer">
+            <ExternalLink className={actionClass} href={actionHref}>
               {actionLabel}
-            </a>
+            </ExternalLink>
           ) : (
             <Link className={actionClass} href={actionHref}>
               {actionLabel}

@@ -27,7 +27,10 @@ export function DashboardProfile({ plan }: { plan: DashboardPlan | null }) {
 
   return (
     <div className="dashboardPageStack">
-      <section className="dashboardPanel" aria-label="Profile">
+      <section className="dashboardPanel" aria-labelledby="profile-details-title">
+        <h2 id="profile-details-title" className="visuallyHidden">
+          Account details
+        </h2>
         <dl className="dashboardDetails" aria-busy={isPending}>
           <div>
             <dt>Name</dt>
@@ -65,6 +68,7 @@ export function DashboardProfile({ plan }: { plan: DashboardPlan | null }) {
         >
           {signingOut ? "Signing out…" : "Sign out"}
         </button>
+        <output className="visuallyHidden">{signingOut ? "Signing out…" : ""}</output>
         {error ? (
           <p className="authError" role="alert">
             {error}

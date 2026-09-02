@@ -37,7 +37,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <SiteHeader showAction={false} />
       <main id="main-content" className="dashboardMain" tabIndex={-1}>
         <DashboardSidebar />
-        <section className="dashboardWorkspace">{children}</section>
+        <div className="dashboardWorkspace">{children}</div>
       </main>
     </div>
   );
