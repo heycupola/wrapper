@@ -5,6 +5,7 @@ import { makeFunctionReference } from "convex/server";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { CopyCommand } from "../../components/copy-command";
+import { NewTabNote } from "../../components/external-link";
 import type { IosAppTarget } from "../../lib/ios-app";
 
 type Screen = "install" | "auth" | "context";
@@ -115,7 +116,12 @@ export function OnboardingClient({
 
   return (
     <div className="onboardingSimple">
-      <header className="authPageHeader">
+      {/* Each step swaps the heading; the live region reads the new step out so
+          the change is not only visual. */}
+      <header className="authPageHeader" aria-live="polite" aria-atomic="true">
+        <p className="visuallyHidden">
+          Step {STEP_ORDER.indexOf(screen) + 1} of {STEP_ORDER.length}
+        </p>
         <h1 id="auth-page-title" className="authTitle">
           {copy.title}
         </h1>
@@ -127,16 +133,17 @@ export function OnboardingClient({
           <div className="onboardingCommands">
             <CopyCommand
               command="brew install heycupola/tap/wrapper"
-              label="Copy Homebrew command"
+              label="Copy Homebrew install command"
             />
             <CopyCommand
               command="curl -fsSL https://wrapper.sh/install | bash"
-              label="Copy curl command"
+              label="Copy curl install command"
             />
             <CopyCommand command="wrapper install" label="Copy shell hook command" />
           </div>
           <p className="onboardingInstallHint">
-            Open a new terminal after <code>wrapper install</code> so the hook can wrap your shell.
+            Use Homebrew or the script, not both. Then open a new terminal after{" "}
+            <code>wrapper install</code> so the hook can wrap your shell.
           </p>
           <a
             className="iosViewerCta iosViewerCtaText onboardingViewerCta"
@@ -145,11 +152,16 @@ export function OnboardingClient({
             rel={iosViewer.external ? "noopener noreferrer" : undefined}
           >
             {iosViewer.label}
+            {iosViewer.external ? <NewTabNote /> : null}
           </a>
         </div>
       ) : null}
 
-      {screen === "auth" ? <code className="onboardingCommand">wrapper auth login</code> : null}
+      {screen === "auth" ? (
+        <div className="onboardingCommands">
+          <CopyCommand command="wrapper auth login" label="Copy sign-in command" />
+        </div>
+      ) : null}
 
       {screen === "context" ? (
         <div className="onboardingFields">
@@ -181,6 +193,7 @@ export function OnboardingClient({
                 className="authInput"
                 value={sourceOther}
                 disabled={busy}
+                autoComplete="off"
                 onChange={(event) => setSourceOther(event.target.value)}
                 placeholder="Optional"
               />
@@ -215,6 +228,7 @@ export function OnboardingClient({
         {busy ? "Saving…" : screen === "context" ? "Continue" : "Next"}
       </button>
 
+      <output className="visuallyHidden">{busy ? "Saving your answers…" : ""}</output>
       {error ? (
         <p className="authError" role="alert">
           {error}
@@ -223,6 +237,8 @@ export function OnboardingClient({
     </div>
   );
 }
+
+const STEP_ORDER: Screen[] = ["install", "auth", "context"];
 
 function getInitialScreen(state: OnboardingState): Screen {
   if (!state.connectedCli) return "install";
