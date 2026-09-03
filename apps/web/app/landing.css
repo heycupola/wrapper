@@ -180,12 +180,14 @@ html.lenis body {
   padding-bottom: 0;
 }
 
-/* The hero is the one section allowed past --content-max: the MacBook bleeds
-   off the left edge of the viewport and the copy keeps a readable column on
-   the right. --hero-bleed is the distance from the inner box to that edge. */
+/* The hero is the one section allowed past --content-max: the devices take
+   the wide column on the left and the copy keeps a readable column on the
+   right. The media column starts at the page padding like everything else, so
+   the MacBook's left edge lands on the same line as the header's logo (or sits
+   inside it when the column has room to spare) rather than hanging just off
+   the viewport edge. */
 .landingHeroInner {
   --hero-max: 1680px;
-  --hero-bleed: max(var(--page-pad), (100vw - var(--hero-max)) / 2);
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(320px, 27vw, 460px);
   gap: clamp(24px, 3.5vw, 64px);
@@ -206,7 +208,6 @@ html.lenis body {
   align-self: stretch;
   min-width: 0;
   min-height: 560px;
-  margin-left: calc(-1 * var(--hero-bleed));
 }
 
 .connectionSteps {
