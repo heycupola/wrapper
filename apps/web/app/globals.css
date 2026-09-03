@@ -54,6 +54,18 @@
   --radius-md: 24px;
   --radius-lg: 32px;
   --radius-pill: 999px;
+  /* Type scale. 12px is the floor for anything a person has to read, and only
+     badges and eyebrow labels sit there; running text starts at 14px and the
+     copy a page is about lands at 16px. Line heights pair with the size:
+     tight for headings, 1.5 and up for anything that wraps (WCAG 1.4.12). */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-body: 1.55;
   --page-pad: clamp(20px, 5.5vw, 80px);
   --content-max: 1280px;
   --header-h: 72px;

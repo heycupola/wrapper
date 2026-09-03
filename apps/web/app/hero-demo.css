@@ -5,14 +5,17 @@
 
 /* ── Stage ─────────────────────────────────────────────────────────────── */
 
-/* --mw is the MacBook's full width. The lid's left edge bleeds off the
-   viewport by --bleed (shallow enough that the Apple menu stays on screen) and
-   the base rests on the bottom of the stage. The phone stands in front of the
-   Mac's lower-right corner. */
+/* --mw is the MacBook's full width. The Mac and the phone are laid out as one
+   block --pair times that wide (the phone overhangs the Mac's right edge), and
+   the block is centred in the stage: whatever room the column has beyond the
+   pair splits evenly to both sides instead of piling up between the Mac and
+   the copy, and the whole lid stays on screen rather than being clipped at
+   the bezel. The phone stands in front of the Mac's lower-right corner. */
 .demoStage {
-  --mw: min(100cqw, 126cqh);
-  --bleed: calc(var(--mw) * 0.05);
+  --pair: 1.065;
+  --mw: min(100cqw / var(--pair), 126cqh);
   --pw: calc(var(--mw) * 0.29);
+  --pair-x: calc((100cqw - var(--mw) * var(--pair)) / 2);
   /* The Mac hangs from the top of the stage; the phone is offset from the same
      anchor so the pair moves together. */
   --mac-top: 8cqh;
@@ -33,7 +36,7 @@
 .demoStage .macbook {
   top: var(--mac-top);
   bottom: auto;
-  left: calc(-1 * var(--bleed));
+  left: var(--pair-x);
   z-index: 1;
   width: var(--mw);
   margin: 0;
@@ -206,7 +209,7 @@
   top: calc(var(--mac-top) + var(--mw) * 0.035);
   right: auto;
   bottom: auto;
-  left: calc(var(--mw) * 0.775 - var(--bleed));
+  left: calc(var(--pair-x) + var(--mw) * 0.775);
   z-index: 4;
   width: var(--pw);
   margin: 0;
@@ -1929,6 +1932,8 @@
 /* ── Compact stage (stacked layout) ────────────────────────────────────── */
 
 @media (max-width: 1023px), (prefers-reduced-motion: reduce) {
+  /* Stacked, the Mac is wider than the stage and bleeds a little off both
+     sides, so the pair is pinned to the left rather than centred. */
   .demoStage {
     --mw: 108cqw;
     --bleed: calc(var(--mw) * 0.06);
@@ -1939,6 +1944,7 @@
   .demoStage .macbook {
     top: auto;
     bottom: calc(var(--mw) * 0.03);
+    left: calc(-1 * var(--bleed));
   }
 
   .demoStage .iphone {
@@ -1957,13 +1963,13 @@
 @media (max-width: 760px) {
   .demoStage {
     --mw: 100cqw;
-    --bleed: 0cqw;
     --pw: 60cqw;
   }
 
   .demoStage .macbook {
     top: 0;
     bottom: auto;
+    left: 0;
   }
 
   .demoStage .iphone {
