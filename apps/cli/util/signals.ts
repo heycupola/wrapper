@@ -22,7 +22,7 @@ const SIGNALS: ReadonlyArray<ShutdownReason> = ["SIGINT", "SIGTERM", "SIGHUP"];
 
 export function installShutdownHandlers(opts: ShutdownOptions): ShutdownHandle {
   let fired = false;
-  const handlers = new Map<ShutdownReason, NodeJS.SignalsListener>();
+  const handlers = new Map<NodeJS.Signals, NodeJS.SignalsListener>();
 
   const fire = (reason: ShutdownReason): void => {
     if (fired) return;
