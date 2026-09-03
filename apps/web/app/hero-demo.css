@@ -1,0 +1,2274 @@
+/* Interactive hero: composition of the two devices, the live terminal on the
+   Mac, the viewer app on the phone, and the handwritten guide. Device frames
+   themselves (.macbook*, .iphone*) stay in globals.css; this file positions
+   them for the hero and draws everything on their screens. */
+
+/* ── Stage ─────────────────────────────────────────────────────────────── */
+
+/* --mw is the MacBook's full width. The lid's left edge bleeds off the
+   viewport by --bleed (shallow enough that the Apple menu stays on screen) and
+   the base rests on the bottom of the stage. The phone stands in front of the
+   Mac's lower-right corner. */
+.demoStage {
+  --mw: min(100cqw, 126cqh);
+  --bleed: calc(var(--mw) * 0.05);
+  --pw: calc(var(--mw) * 0.29);
+  /* The Mac hangs from the top of the stage; the phone is offset from the same
+     anchor so the pair moves together. */
+  --mac-top: 8cqh;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  container: stage / size;
+}
+
+/* ── MacBook frame ─────────────────────────────────────────────────────── */
+
+/* Drawn the way getkeeby.com draws its machine, in cqw of the .macbook box:
+   a pure black lid whose top corners are rounded and whose bottom edge runs
+   straight into the base, a 16:10 display behind a ~1% bezel with no chin,
+   a notch as tall as the menu bar, and a sliver of aluminium (1.6% of the
+   width) that pokes out 4% past the lid on each side with the lip cut-out
+   in the middle. A soft ellipse under the base grounds it on the page. */
+.demoStage .macbook {
+  top: var(--mac-top);
+  bottom: auto;
+  left: calc(-1 * var(--bleed));
+  z-index: 1;
+  width: var(--mw);
+  margin: 0;
+  aspect-ratio: 1416 / 834;
+  transform: none;
+}
+
+.demoStage .macbookLid {
+  position: absolute;
+  inset: 0 3.95cqw 1.57cqw;
+  border-radius: 2cqw 2cqw 0 0;
+  background: #000;
+  box-shadow: none;
+}
+
+.demoStage .macbookLid::before,
+.demoStage .macbookLid::after {
+  content: none;
+}
+
+.demoStage .macbookScreen {
+  position: absolute;
+  inset: 1.07cqw 1.07cqw 0;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: 1cqw 1cqw 0 0;
+  background: #0b0b0c;
+}
+
+.demoStage .macbookNotch {
+  position: absolute;
+  inset: auto;
+  top: 1.07cqw;
+  left: 50%;
+  z-index: 2;
+  width: 15.2cqw;
+  height: 2.64cqw;
+  border-radius: 0 0 0.9cqw 0.9cqw;
+  background: #000;
+  transform: translateX(-50%);
+}
+
+.demoStage .macbookCamera {
+  position: absolute;
+  inset: auto;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  width: 0.62cqw;
+  height: 0.62cqw;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #2a3550 0%, #101522 55%, #05070c 100%);
+  box-shadow: 0 0 0 0.1cqw #0c0f16;
+  transform: translate(-50%, -50%);
+}
+
+.demoStage .macbookBase {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  height: 1.57cqw;
+  border-radius: 0 0 2cqw 2cqw;
+  background: linear-gradient(180deg, #d6d6d6 0%, #bbbbbb 100%);
+  box-shadow: none;
+}
+
+.demoStage .macbookBase::before {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 14.2cqw;
+  height: 0.3cqw;
+  border-radius: 0 0 0.4cqw 0.4cqw;
+  background: rgba(0, 0, 0, 0.05);
+  content: "";
+  transform: translateX(-50%);
+}
+
+/* Soft ellipse of shadow under the machine. */
+.demoStage .macbookBase::after {
+  position: absolute;
+  top: 100%;
+  left: 12.5%;
+  width: 75%;
+  height: 2cqw;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.06), transparent 70%);
+  content: "";
+}
+
+/* ── Wallpaper ─────────────────────────────────────────────────────────── */
+
+/* Drawn in CSS rather than shipped as a bitmap so it is crisp at any size
+   and follows the visitor's appearance like a macOS Dynamic Desktop: a
+   Sequoia-style sweep from pale sky in the top corner down to deep blue,
+   with a couple of soft swells drifting slowly across it and two faint
+   ribbons of light for definition. Colours live in tokens so the dark
+   variant below only swaps the palette. */
+.macWallpaper {
+  --wp-sky: #f7fbff;
+  --wp-pale: #cfe2ff;
+  --wp-mid: #6ea6f5;
+  --wp-deep: #1f5fd9;
+  --wp-abyss: #123c9c;
+  --wp-violet: #a99cf3;
+  --wp-warm: #f8c9a9;
+  --wp-swell-a: rgba(255, 255, 255, 0.62);
+  --wp-swell-b: rgba(255, 196, 160, 0.5);
+  --wp-swell-c: rgba(16, 60, 180, 0.55);
+  --wp-ribbon: rgba(255, 255, 255, 0.22);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(56% 74% at 86% 2%, var(--wp-sky) 0%, transparent 60%),
+    radial-gradient(50% 60% at 6% 24%, var(--wp-pale) 0%, transparent 64%),
+    radial-gradient(44% 46% at 14% 92%, var(--wp-warm) 0%, transparent 62%),
+    radial-gradient(46% 58% at 94% 66%, var(--wp-violet) 0%, transparent 62%),
+    radial-gradient(84% 54% at 58% 110%, var(--wp-abyss) 0%, transparent 64%),
+    linear-gradient(160deg, var(--wp-pale) 0%, var(--wp-mid) 44%, var(--wp-deep) 100%);
+}
+
+/* Three blurred swells slightly larger than the screen so their edges never
+   show while they drift. */
+.macWallpaper::before {
+  position: absolute;
+  inset: -18%;
+  background:
+    radial-gradient(34% 38% at 34% 34%, var(--wp-swell-a) 0%, transparent 70%),
+    radial-gradient(30% 42% at 24% 78%, var(--wp-swell-b) 0%, transparent 70%),
+    radial-gradient(50% 32% at 60% 90%, var(--wp-swell-c) 0%, transparent 70%);
+  content: "";
+  animation: wallpaperDrift 42s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Ribbons: crisp-edged diagonals give the eye something to hold on to. */
+.macWallpaper::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    106deg,
+    transparent 0 36%,
+    var(--wp-ribbon) 43%,
+    transparent 49%,
+    transparent 57%,
+    color-mix(in srgb, var(--wp-ribbon) 60%, transparent) 63%,
+    transparent 70%,
+    transparent 78%,
+    color-mix(in srgb, var(--wp-ribbon) 35%, transparent) 83%,
+    transparent 89%
+  );
+  content: "";
+}
+
+@keyframes wallpaperDrift {
+  from {
+    transform: translate3d(-3%, -2%, 0) rotate(-2deg) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 2.5%, 0) rotate(2deg) scale(1.06);
+  }
+}
+
+/* The phone stands in front of the Mac's lower-right corner, its bottom
+   hanging a few percent past the base so it reads as a device on the desk
+   rather than a window on the screen. */
+.demoStage .iphone {
+  top: calc(var(--mac-top) + var(--mw) * 0.035);
+  right: auto;
+  bottom: auto;
+  left: calc(var(--mw) * 0.775 - var(--bleed));
+  z-index: 4;
+  width: var(--pw);
+  margin: 0;
+  overflow: visible;
+  aspect-ratio: 402 / 830;
+  filter: drop-shadow(0 1.2cqw 3cqw rgba(0, 0, 0, 0.22));
+}
+
+.demoStage .iphoneShell {
+  bottom: 1.62cqw;
+}
+
+.demoStage .iphoneKey.isAction {
+  top: 34cqw;
+  height: 8cqw;
+}
+
+.demoStage .iphoneKey.isVolumeUp {
+  top: 48cqw;
+  height: 14cqw;
+}
+
+.demoStage .iphoneKey.isVolumeDown {
+  top: 65cqw;
+  height: 14cqw;
+}
+
+.demoStage .iphoneKey.isPower {
+  top: 54cqw;
+  height: 22cqw;
+}
+
+/* ── Menu bar (abstract) ───────────────────────────────────────────────── */
+
+/* Menu titles are pills rather than words so the bar reads as chrome, not as
+   copy competing with the terminal. */
+.demoStage .macMenuBar.isAbstract {
+  gap: 1.35cqw;
+  padding: 0 1.1cqw 0 1.4cqw;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.macMenuPill {
+  display: block;
+  width: 2.4cqw;
+  height: 0.62cqw;
+  flex-shrink: 0;
+  border-radius: 1cqw;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.macMenuPill.isApp {
+  width: 3.4cqw;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.macMenuPill[data-w="1.6"] {
+  width: 1.6cqw;
+}
+
+.macMenuPill[data-w="1.9"] {
+  width: 1.9cqw;
+}
+
+.macMenuPill[data-w="2"] {
+  width: 2cqw;
+}
+
+.macMenuPill[data-w="2.1"] {
+  width: 2.1cqw;
+}
+
+.macMenuPill[data-w="2.3"] {
+  width: 2.3cqw;
+}
+
+.macMenuPill[data-w="2.9"] {
+  width: 2.9cqw;
+}
+
+.macMenuPill[data-w="3.1"] {
+  width: 3.1cqw;
+}
+
+.macMenuPill[data-w="3.4"] {
+  width: 3.4cqw;
+}
+
+.macMenuStatus {
+  display: flex;
+  align-items: center;
+  gap: 1cqw;
+  margin-left: auto;
+}
+
+.macMenuDot {
+  display: block;
+  width: 0.62cqw;
+  height: 0.62cqw;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.macMenuIcon {
+  width: 1.15cqw;
+  height: 1.15cqw;
+  border-radius: 0.25cqw;
+}
+
+.macMenuIcon.isDarkScheme {
+  display: none;
+}
+
+/* ── Mac terminal window ───────────────────────────────────────────────── */
+
+/* --wx/--wy are the drag offset in percent of the screen (set by
+   useWindowDrag on .macbookScreen); the notes and keycaps share it so they
+   keep pointing at the window wherever it goes. */
+.demoStage .macWindow,
+.demoStage .demoGuide,
+.demoStage .demoKeycapTrail {
+  translate: calc(var(--wx, 0) * 1cqw) calc(var(--wy, 0) * 1cqh);
+}
+
+.demoStage .macWindow {
+  top: 8.6%;
+  left: 5%;
+  width: 63%;
+  height: 66%;
+  gap: 0;
+  background: #fff;
+  transition: box-shadow var(--motion-mid) ease;
+}
+
+.demoMacWindow.isDragging {
+  box-shadow:
+    0 0 0 0.09cqw rgba(0, 0, 0, 0.3),
+    0 2.6cqw 6.5cqw rgba(0, 0, 0, 0.45);
+  user-select: none;
+}
+
+.demoMacWindow.isFocused {
+  box-shadow:
+    0 0 0 0.09cqw rgba(0, 0, 0, 0.3),
+    0 1.8cqw 5cqw rgba(0, 0, 0, 0.42);
+}
+
+/* The shell's input is invisible, so keyboard focus is shown on the window
+   itself: a light ring reads on any wallpaper. Pointer focus is tagged by
+   the input and gets no ring; the active titlebar and caret already show
+   the window is live. */
+.demoMacWindow:has(.demoKeyboardTarget:focus-visible:not([data-focus-source="pointer"])) {
+  outline: 0.28cqw solid #fff;
+  outline-offset: 0.35cqw;
+}
+
+.demoMacWindow .macTitlebar {
+  position: relative;
+  justify-content: flex-start;
+  height: 3.3cqw;
+  padding: 0 1.05cqw;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.09);
+  background: linear-gradient(#f5f5f5, #e8e8e8);
+  cursor: grab;
+  touch-action: none;
+}
+
+.demoMacWindow.isDragging .macTitlebar {
+  cursor: grabbing;
+}
+
+/* Keyboard handle for moving the window; it only shows when focused. It sits
+   in the title bar visually but comes after the shell in the DOM. */
+.macMoveHandle {
+  position: absolute;
+  top: 1.65cqw;
+  right: 0.9cqw;
+  display: grid;
+  width: 2cqw;
+  height: 2cqw;
+  padding: 0;
+  border: 0;
+  border-radius: 0.45cqw;
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  place-items: center;
+  translate: 0 -50%;
+  cursor: default;
+  pointer-events: none;
+}
+
+.macMoveHandle svg {
+  width: 1.3cqw;
+  height: 1.3cqw;
+}
+
+.macMoveHandle:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  outline: 2px solid #1f5fd6;
+  outline-offset: 1px;
+}
+
+.demoMacWindow:not(.isFocused) .macTitlebar {
+  background: #f6f6f6;
+}
+
+.demoMacWindow:not(.isFocused) .macTraffic i {
+  border-color: rgba(0, 0, 0, 0.06);
+  background: #dcdcdc;
+}
+
+.demoMacWindow .macTitlebar h3 {
+  position: absolute;
+  inset: 0 6cqw;
+  /* Block, not flex: text-overflow only elides text that is the box's own
+     content, and a centred flex item would spill over the traffic lights
+     instead of clipping. The line height is the title bar's height. */
+  display: block;
+  overflow: hidden;
+  color: rgba(0, 0, 0, 0.72);
+  font-family: var(--font-mono);
+  font-size: 1.12cqw;
+  font-weight: 600;
+  line-height: 3.3cqw;
+  letter-spacing: -0.01em;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transition: color var(--motion-fast) ease;
+}
+
+.demoMacWindow:not(.isFocused) .macTitlebar h3 {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.demoMacWindow .macTitlebar h3.isArmed {
+  color: #1f5fd6;
+}
+
+.demoMacWindow .macContent {
+  position: relative;
+  padding: 1.1cqw 1.4cqw 1.2cqw;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  color: #111;
+  font-family: var(--font-mono);
+  font-size: 1.5cqw;
+  font-weight: 450;
+  line-height: 1.48;
+  cursor: text;
+  user-select: text;
+}
+
+.demoMacWindow .macContent::-webkit-scrollbar {
+  display: none;
+}
+
+/* Lines are shared between the Mac (light) and the phone (dark); the colours
+   are set by the surrounding surface. */
+.demoLine {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  /* Output arrives like a real terminal paints it: a short settle per line,
+     keyed by line id so existing lines never replay. No fill mode: muted lines
+     own their resting opacity. */
+  animation: demoLineIn 180ms var(--ease-out-quint);
+}
+
+@keyframes demoLineIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.2em);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.demoLine.isCommand,
+.demoLine.isPromptLine {
+  display: block;
+}
+
+.demoPrompt {
+  white-space: nowrap;
+}
+
+.demoCwd {
+  color: #1f5fd6;
+  font-weight: 700;
+}
+
+.demoChevron {
+  color: #1fa04a;
+  font-weight: 700;
+}
+
+.demoTag {
+  color: #067585;
+}
+
+.demoLine.isMuted {
+  opacity: 0.55;
+}
+
+.demoLine.isOutput {
+  color: inherit;
+}
+
+.demoInput {
+  white-space: pre-wrap;
+}
+
+.demoCaret {
+  display: inline-block;
+  width: 0.62em;
+  height: 1.12em;
+  margin-left: 0.04em;
+  vertical-align: -0.2em;
+  border: 1px solid currentColor;
+  border-radius: 1px;
+  background: transparent;
+  opacity: 0.55;
+}
+
+.demoCaret.isFocused {
+  border-color: transparent;
+  background: currentColor;
+  opacity: 1;
+  animation: demoBlink 1.05s steps(1, end) infinite;
+}
+
+@keyframes demoBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.demoKeyboardTarget {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: transparent;
+  font-size: 16px;
+  opacity: 0;
+  pointer-events: none;
+  caret-color: transparent;
+}
+
+/* ── Guide notes + keycap trail ─────────────────────────────────────────── */
+
+.demoGuide {
+  position: absolute;
+  top: 76.6%;
+  right: 34%;
+  bottom: 0;
+  left: 5%;
+  z-index: 5;
+  display: flex;
+  align-items: flex-start;
+  pointer-events: none;
+}
+
+/* A frosted pill under the handwriting keeps it legible over the busiest
+   parts of the wallpaper without turning the note into a UI card. */
+.demoNote {
+  max-width: 60cqw;
+  margin: 0;
+  padding: 0.35cqw 1cqw 0.45cqw;
+  border-radius: 1.4cqw;
+  background: rgba(8, 20, 48, 0.28);
+  color: #fff;
+  font-family: var(--font-hand), "Bradley Hand", "Segoe Print", cursive;
+  font-size: 2.45cqw;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: 0.005em;
+  text-shadow: 0 0.1cqw 0.45cqw rgba(0, 20, 60, 0.45);
+  backdrop-filter: blur(0.9cqw) saturate(1.2);
+  pointer-events: auto;
+  animation: demoNoteIn var(--motion-slow) var(--ease-out-quint) both;
+}
+
+/* Once the window has been dragged low, the note and keycaps move above it
+   and the arrows flip to keep pointing at the title bar. */
+[data-window-low] .demoGuide {
+  top: auto;
+  bottom: calc(100% - 8.6% + 0.6cqw);
+  align-items: flex-end;
+}
+
+[data-window-low] .demoKeycapTrail {
+  top: auto;
+  bottom: calc(100% - 8.6% + 0.8cqw);
+}
+
+[data-window-low] .demoNoteArrow {
+  scale: 1 -1;
+  vertical-align: -0.15em;
+}
+
+[data-window-low] .demoNoteArrow.isTrailing {
+  scale: -1 -1;
+}
+
+.demoNote.isQuiet {
+  opacity: 0.82;
+}
+
+.demoNoteArrow {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  margin-right: 0.12em;
+  vertical-align: -0.3em;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0.1cqw 0.35cqw rgba(0, 20, 60, 0.45));
+  animation: demoArrowNudge 1.6s var(--ease-out-soft) infinite;
+}
+
+.demoNoteArrow.isTrailing {
+  margin-right: 0;
+  margin-left: 0.12em;
+  scale: -1 1;
+  animation-name: demoArrowNudgeMirrored;
+}
+
+.demoNoteChord {
+  white-space: nowrap;
+}
+
+.demoNoteAction {
+  /* Inline in the sentence, but padded out to a 24px-tall target. */
+  display: inline-block;
+  padding: 0.35em 0;
+  margin: -0.35em 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 0.06em;
+  text-underline-offset: 0.12em;
+  text-decoration-color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: text-decoration-color var(--motion-fast) ease;
+}
+
+.demoNoteAction:hover {
+  text-decoration-color: #fff;
+}
+
+.demoNoteAction:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.demoNoteAction code {
+  font-family: var(--font-mono);
+  font-size: 0.78em;
+  font-weight: 600;
+}
+
+.demoKeys {
+  display: inline-flex;
+  gap: 0.18em;
+  vertical-align: -0.1em;
+}
+
+.demoKeys kbd,
+.demoKeycap {
+  display: inline-grid;
+  min-width: 1.35em;
+  height: 1.35em;
+  /* Letters and slashes hang from the baseline, so centring the line box puts
+     them on the key's lip; extra bottom padding (the 0.13em lip plus a nudge)
+     lifts them to the face's optical centre, as legends sit on a real key. */
+  padding: 0 0.35em 0.2em;
+  border-radius: 0.28em;
+  background: rgba(255, 255, 255, 0.94);
+  color: #222;
+  font-family: var(--font-sans);
+  font-size: 0.72em;
+  font-weight: 600;
+  line-height: 1;
+  /* Legends stay as typed: the CLI chords are unshifted `s` / `u` / `d`. */
+  text-transform: none;
+  white-space: nowrap;
+  place-items: center;
+  box-shadow:
+    inset 0 -0.13em 0 rgba(0, 0, 0, 0.14),
+    0 0.12em 0.4em rgba(0, 0, 0, 0.25);
+  text-shadow: none;
+}
+
+/* ⌃ is drawn at cap height, so it needs the opposite correction. */
+.demoCapControl {
+  display: inline-block;
+  translate: 0 0.14em;
+}
+
+.demoKeycapTrail {
+  position: absolute;
+  top: 77.8%;
+  left: 58%;
+  z-index: 5;
+  display: flex;
+  gap: 0.7cqw;
+  pointer-events: none;
+}
+
+.demoKeycap {
+  height: 3.2cqw;
+  min-width: 3.2cqw;
+  padding: 0 0.9cqw;
+  border-radius: 0.7cqw;
+  font-size: 1.45cqw;
+  animation:
+    demoCapIn 220ms var(--ease-spring) both,
+    demoCapOut 300ms ease-in 1100ms forwards;
+}
+
+@keyframes demoNoteIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.4cqw) rotate(-0.6deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0);
+  }
+}
+
+@keyframes demoArrowNudge {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  45% {
+    translate: -0.1em -0.08em;
+  }
+}
+
+@keyframes demoArrowNudgeMirrored {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  45% {
+    translate: 0.1em -0.08em;
+  }
+}
+
+@keyframes demoCapIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.6cqw) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes demoCapOut {
+  to {
+    opacity: 0;
+    transform: translateY(-0.4cqw);
+  }
+}
+
+/* ── Dock ──────────────────────────────────────────────────────────────── */
+
+.macDock {
+  position: absolute;
+  bottom: 1.1cqw;
+  left: 50%;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.15cqw;
+  padding: 0.2cqw 0.35cqw 0.45cqw;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  border-radius: 1.5cqw;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0.6cqw 2.4cqw rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(1.6cqw);
+  translate: -50% 0;
+}
+
+/* Icons carry their own tile shape and margin (the 256px artwork has the
+   macOS grid baked in), so the slot is a plain square with a soft shadow. */
+.macDockIcon {
+  position: relative;
+  display: block;
+  width: 4.6cqw;
+  height: 4.6cqw;
+  filter: drop-shadow(0 0.2cqw 0.45cqw rgba(0, 0, 0, 0.28));
+  transform-origin: 50% 100%;
+  transition:
+    scale var(--motion-fast) var(--ease-spring),
+    translate var(--motion-fast) var(--ease-spring);
+}
+
+/* The macOS magnification, scaled down: the icon under the pointer lifts and
+   its neighbours follow a little. */
+.macDockIcon:hover {
+  scale: 1.18;
+  translate: 0 -0.35cqw;
+}
+
+.macDockIcon:has(+ .macDockIcon:hover),
+.macDockIcon:hover + .macDockIcon {
+  scale: 1.08;
+  translate: 0 -0.15cqw;
+}
+
+.macDockIcon svg,
+.macDockIcon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* VS Code's ribbon has no tile, so scale it to the tile grid instead. */
+.macDockIcon.isFree img {
+  width: 80%;
+  height: 80%;
+  margin: 10%;
+}
+
+.macDockDivider {
+  display: block;
+  width: 1px;
+  height: 3.2cqw;
+  margin: 0 0.2cqw;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+/* The running-app dot under Wrapper. */
+.macDockRunning {
+  position: absolute;
+  bottom: -0.2cqw;
+  left: 50%;
+  width: 0.4cqw;
+  height: 0.4cqw;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  translate: -50% 0;
+}
+
+/* ── iPhone: shared chrome ─────────────────────────────────────────────── */
+
+/* Every measurement on the phone is in iOS points: --pt is one point of a
+   393pt-wide display expressed against the screen's container width. */
+.iphoneScreen {
+  --pt: 0.2545cqw;
+  --ios-bg: #f6f6f2;
+  --ios-surface: #ecede8;
+  --ios-surface-strong: #fff;
+  --ios-text: #121316;
+  --ios-muted: #62666e;
+  --ios-accent: #356de8;
+  --ios-accent-soft: rgba(53, 109, 232, 0.14);
+  --ios-success: #277a4b;
+  --ios-warning: #9a6414;
+  --ios-separator: rgba(18, 19, 22, 0.1);
+  --ios-tertiary: rgba(60, 60, 67, 0.3);
+  --ios-term-bg: #0b0d10;
+  --ios-term-surface: #15181d;
+  --ios-term-text: #f5f7fa;
+  --ios-term-muted: #9298a2;
+  --ios-destructive: #ff3b30;
+  /* Liquid Glass: the fill, its bright top rim, and the drop shadow of the
+     system's toolbar buttons and capsules. */
+  --ios-glass: rgba(255, 255, 255, 0.76);
+  --ios-glass-rim: rgba(255, 255, 255, 0.95);
+  --ios-glass-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.26), 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+  position: relative;
+  /* The display is clipped against a black bezel. Filling it with the
+     grouped-list cream lets `overflow: hidden` + `border-radius` anti-alias
+     a 1px light fringe the moment a dark screen (the terminal) fills the clip. */
+  background: #000;
+  color: var(--ios-text);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+@media (prefers-color-scheme: dark) {
+  .iphoneScreen {
+    --ios-bg: #0d0f12;
+    --ios-surface: #1c2026;
+    --ios-surface-strong: #15181d;
+    --ios-text: #f6f7f9;
+    --ios-muted: #a8adb5;
+    --ios-accent: #7aa7ff;
+    --ios-accent-soft: rgba(122, 167, 255, 0.14);
+    --ios-success: #72cf98;
+    --ios-warning: #e3ae5d;
+    --ios-separator: rgba(246, 247, 249, 0.12);
+    --ios-tertiary: rgba(235, 235, 245, 0.3);
+    --ios-destructive: #ff453a;
+    --ios-glass: rgba(52, 55, 62, 0.72);
+    --ios-glass-rim: rgba(255, 255, 255, 0.16);
+    --ios-glass-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.7), 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+  }
+
+  .iosProminent:disabled {
+    background: color-mix(in srgb, var(--ios-text) 17%, transparent);
+    color: color-mix(in srgb, var(--ios-text) 55%, transparent);
+  }
+
+  .iosStatus {
+    color: var(--ios-text);
+  }
+}
+
+.iosStatus.isDark {
+  color: #fff;
+}
+
+.iosApp {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* No matching radius: a second rounded clip on top of .iphoneScreen is
+     what used to hairline the corners when the terminal (dark) filled it. */
+  background: var(--ios-bg);
+}
+
+.iosApp.isDetail {
+  background: var(--ios-term-bg);
+}
+
+.iosPage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    transform 420ms var(--ease-out-quint),
+    opacity 420ms var(--ease-out-quint),
+    visibility 0s linear 0s;
+}
+
+.iosListPage {
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--ios-surface-strong) 42%, transparent),
+      transparent 50%,
+      color-mix(in srgb, var(--ios-surface) 30%, transparent)
+    ),
+    var(--ios-bg);
+}
+
+.iosDetailPage {
+  background: var(--ios-term-bg);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition-delay: 0s, 0s, 420ms;
+}
+
+.iosApp.isDetail .iosListPage {
+  transform: translateX(-28%);
+  opacity: 0.6;
+}
+
+.iosApp.isDetail .iosDetailPage {
+  transform: translateX(0);
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+/* ── Sheets ────────────────────────────────────────────────────────────────
+   A .large sheet the way iOS 26 presents it: the list underneath stays put
+   and dims (no more card-stack scaling), the sheet rises to 62pt below the
+   top with the display's concentric 40pt corners, and its toolbar buttons
+   are Liquid Glass capsules. Both sheets (join, settings) are always mounted
+   and open independently. */
+.iosSheetDim {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: rgba(0, 0, 0, 0.32);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 360ms ease;
+}
+
+.iosSheet {
+  position: absolute;
+  inset: calc(var(--pt) * 62) 0 0;
+  z-index: 7;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: calc(var(--pt) * 40) calc(var(--pt) * 40) 0 0;
+  background: var(--ios-bg);
+  box-shadow: 0 -0.5px 0 rgba(255, 255, 255, 0.5);
+  transform: translateY(104%);
+  visibility: hidden;
+  transition:
+    transform 460ms var(--ease-out-quint),
+    visibility 0s linear 460ms;
+}
+
+.iosSheet[data-open] {
+  transform: translateY(0);
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.iosApp.hasSheet .iosSheetDim {
+  opacity: 1;
+}
+
+/* iOS 26 toolbars have no bar of their own: 44pt Liquid Glass buttons float
+   at the top of the content, 16pt in from the edges. */
+.iosNavBar {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  height: calc(var(--pt) * 60);
+  padding: 0 calc(var(--pt) * 16);
+}
+
+.iosNavBar.isDark {
+  --ios-glass: rgba(255, 255, 255, 0.12);
+  --ios-glass-rim: rgba(255, 255, 255, 0.18);
+  --ios-glass-shadow: 0 8px 22px -8px rgba(0, 0, 0, 0.7);
+  background: var(--ios-term-bg);
+  color: #fff;
+}
+
+.iosNavBar.isInline {
+  height: calc(var(--pt) * 76);
+}
+
+.iosNavButton,
+.iosNavText,
+.iosBackButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(var(--pt) * 44);
+  height: calc(var(--pt) * 44);
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--pt) * 22);
+  background: var(--ios-glass);
+  color: var(--ios-accent);
+  font-family: inherit;
+  font-size: calc(var(--pt) * 17);
+  font-weight: 400;
+  box-shadow:
+    inset 0 0.5px 0 var(--ios-glass-rim),
+    var(--ios-glass-shadow);
+  cursor: pointer;
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.iosNavButton:disabled {
+  cursor: default;
+}
+
+.iosNavButton svg {
+  width: calc(var(--pt) * 20);
+  height: calc(var(--pt) * 20);
+}
+
+.iosNavButton.isDestructive {
+  color: var(--ios-destructive);
+}
+
+/* On the terminal's dark bar the glyphs are white, including the destructive
+   Detach; the back button is the chevron alone in a glass circle. */
+.iosNavBar.isDark .iosNavButton,
+.iosNavBar.isDark .iosBackButton {
+  color: #fff;
+}
+
+.iosBackButton svg {
+  width: calc(var(--pt) * 16);
+  height: calc(var(--pt) * 24);
+  margin-left: calc(var(--pt) * -2);
+}
+
+/* Text actions (Cancel, Done) render in the label colour, not the tint. */
+.iosNavText {
+  padding: 0 calc(var(--pt) * 16);
+  color: var(--ios-text);
+}
+
+.iosNavText.isBold {
+  font-weight: 600;
+}
+
+.iosNavSpacer {
+  min-width: 0;
+  color: transparent;
+  font-size: calc(var(--pt) * 17);
+  user-select: none;
+}
+
+.iosInlineTitle {
+  position: absolute;
+  left: 50%;
+  font-size: calc(var(--pt) * 17);
+  font-weight: 600;
+  transform: translateX(-50%);
+}
+
+.iosLargeTitle {
+  flex-shrink: 0;
+  margin: calc(var(--pt) * 4) 0 calc(var(--pt) * 6);
+  padding: 0 calc(var(--pt) * 20);
+  color: var(--ios-text);
+  font-size: calc(var(--pt) * 34);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.iosList {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: calc(var(--pt) * 8) calc(var(--pt) * 16) calc(var(--pt) * 24);
+  overflow: hidden;
+}
+
+.iosGroup {
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: calc(var(--pt) * 26);
+  background: var(--ios-surface-strong);
+}
+
+.iosGroup.isClear {
+  background: transparent;
+}
+
+/* iOS 26 section headers are sentence-case title3 text, not small caps. */
+.iosSectionHeader {
+  margin: calc(var(--pt) * 22) 0 calc(var(--pt) * 8);
+  padding: 0 calc(var(--pt) * 16);
+  color: var(--ios-muted);
+  font-size: calc(var(--pt) * 19);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.iosSectionFooter {
+  margin: calc(var(--pt) * 7) 0 0;
+  padding: 0 calc(var(--pt) * 16);
+  color: var(--ios-muted);
+  font-size: calc(var(--pt) * 13);
+  line-height: 1.35;
+}
+
+.iosCapsule {
+  display: inline-flex;
+  align-items: center;
+  padding: calc(var(--pt) * 6) calc(var(--pt) * 10);
+  border-radius: 999px;
+  font-size: calc(var(--pt) * 12);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Sessions list ─────────────────────────────────────────────────────── */
+
+.iosSummary {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--pt) * 14);
+  padding: calc(var(--pt) * 16) calc(var(--pt) * 16);
+  background: var(--ios-accent-soft);
+}
+
+.iosSummaryIcon {
+  width: calc(var(--pt) * 26);
+  height: calc(var(--pt) * 26);
+  flex-shrink: 0;
+  color: var(--ios-accent);
+}
+
+.iosSummaryText {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: calc(var(--pt) * 3);
+}
+
+.iosSummaryText strong {
+  font-size: calc(var(--pt) * 17);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.iosSummaryText small {
+  color: var(--ios-muted);
+  font-size: calc(var(--pt) * 12);
+  line-height: 1.25;
+}
+
+.iosNumeric {
+  display: block;
+  animation: iosNumeric 360ms var(--ease-out-quint) both;
+}
+
+.iosActiveCount {
+  background: color-mix(in srgb, var(--ios-surface-strong) 72%, transparent);
+  color: var(--ios-accent);
+  animation: iosNumeric 360ms var(--ease-out-quint) both;
+}
+
+@keyframes iosNumeric {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--pt) * 6));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.iosEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--pt) * 8);
+  padding: calc(var(--pt) * 44) calc(var(--pt) * 20) calc(var(--pt) * 30);
+  text-align: center;
+  animation: iosFadeIn 320ms ease both;
+}
+
+.iosEmptyIcon {
+  width: calc(var(--pt) * 46);
+  height: calc(var(--pt) * 46);
+  margin-bottom: calc(var(--pt) * 6);
+  color: var(--ios-muted);
+}
+
+.iosEmpty strong {
+  font-size: calc(var(--pt) * 22);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.iosEmpty p {
+  max-width: calc(var(--pt) * 260);
+  margin: 0 0 calc(var(--pt) * 10);
+  color: var(--ios-muted);
+  font-size: calc(var(--pt) * 15);
+  line-height: 1.3;
+}
+
+.iosProminent,
+.iosBordered {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--pt) * 6);
+  min-height: calc(var(--pt) * 36);
+  padding: 0 calc(var(--pt) * 16);
+  border: 0;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: calc(var(--pt) * 17);
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    filter var(--motion-fast) ease,
+    scale var(--motion-fast) ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.iosProminent {
+  /* A shade under the system blue: white 13px labels on #007aff sit at 4:1,
+     this lands at 4.6:1 without reading as a different colour. */
+  background: color-mix(in srgb, var(--ios-accent) 88%, #000);
+  color: #fff;
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* Disabled prominent buttons drop their tint for the tertiary fill. */
+.iosProminent:disabled {
+  background: color-mix(in srgb, var(--ios-text) 8%, transparent);
+  color: color-mix(in srgb, var(--ios-text) 28%, transparent);
+  box-shadow: none;
+  cursor: default;
+}
+
+.iosProminent:not(:disabled):active,
+.iosBordered:active,
+.iosRow:active {
+  scale: 0.98;
+}
+
+.iosProminent svg,
+.iosBordered svg {
+  width: calc(var(--pt) * 16);
+  height: calc(var(--pt) * 16);
+}
+
+.iosProminent.isWide {
+  width: 100%;
+  min-height: calc(var(--pt) * 56);
+  font-size: calc(var(--pt) * 17);
+  font-weight: 600;
+}
+
+.iosProminent.isWide svg {
+  width: calc(var(--pt) * 20);
+  height: calc(var(--pt) * 20);
+}
+
+.iosBordered {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.iosRow {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: calc(var(--pt) * 14);
+  padding: calc(var(--pt) * 14) calc(var(--pt) * 16);
+  border: 0;
+  background: none;
+  color: var(--ios-text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: scale var(--motion-fast) ease;
+  animation: iosRowIn 520ms var(--ease-spring) both;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.iosRow:hover {
+  background: color-mix(in srgb, var(--ios-text) 4%, transparent);
+}
+
+@keyframes iosRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--pt) * 14)) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes iosFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.iosRowIcon {
+  display: grid;
+  width: calc(var(--pt) * 44);
+  height: calc(var(--pt) * 44);
+  flex-shrink: 0;
+  border-radius: calc(var(--pt) * 14);
+  background: var(--ios-accent-soft);
+  color: var(--ios-accent);
+  place-items: center;
+}
+
+.iosRowIcon svg {
+  width: calc(var(--pt) * 22);
+  height: calc(var(--pt) * 22);
+}
+
+.iosRowText {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: calc(var(--pt) * 5);
+}
+
+.iosRowText strong {
+  font-family: var(--font-mono);
+  font-size: calc(var(--pt) * 17);
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.15;
+}
+
+.iosRowCwd {
+  overflow: hidden;
+  color: var(--ios-muted);
+  font-size: calc(var(--pt) * 15);
+  line-height: 1.2;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.iosRowMeta {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--pt) * 6);
+  color: var(--ios-accent);
+  font-size: calc(var(--pt) * 12);
+  line-height: 1.2;
+}
+
+.iosRowMeta i {
+  font-style: normal;
+}
+
+.iosRowTrailing {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: calc(var(--pt) * 12);
+}
+
+.iosBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--pt) * 5);
+  padding: calc(var(--pt) * 5) calc(var(--pt) * 9);
+  border-radius: 999px;
+  font-size: calc(var(--pt) * 11);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.iosBadge svg {
+  width: calc(var(--pt) * 12);
+  height: calc(var(--pt) * 12);
+}
+
+.iosBadge.isReady {
+  background: color-mix(in srgb, var(--ios-success) 12%, transparent);
+  color: var(--ios-success);
+}
+
+.iosRowChevron {
+  width: calc(var(--pt) * 12);
+  height: calc(var(--pt) * 12);
+  color: var(--ios-tertiary);
+}
+
+/* ── ConnectionPreparationView ─────────────────────────────────────────── */
+
+.iosPrep {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  background: var(--ios-term-bg);
+  color: #fff;
+  animation: iosFadeIn 260ms ease both;
+}
+
+/* The toolbar's glass buttons float above the panel, as in the ZStack; the
+   large title belongs to the scrolled content and is covered. */
+.iosPrep .iosLargeTitle {
+  visibility: hidden;
+}
+
+/* The list's toolbar keeps the page's light glass over the dark panel; only
+   the terminal's own bar is in the dark colour scheme. */
+.iosPrep .iosNavBar.isDark {
+  --ios-glass: inherit;
+  --ios-glass-rim: inherit;
+  --ios-glass-shadow: inherit;
+  background: none;
+}
+
+.iosPrep .iosNavBar.isDark .iosNavButton {
+  color: var(--ios-accent);
+}
+
+.iosPrepBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--pt) * 18);
+  padding: calc(var(--pt) * 28);
+  text-align: center;
+}
+
+.iosPrepWarn {
+  width: calc(var(--pt) * 40);
+  height: calc(var(--pt) * 40);
+  color: var(--ios-warning);
+}
+
+.iosPrepText {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--pt) * 6);
+}
+
+.iosPrepText strong {
+  font-size: calc(var(--pt) * 17);
+  font-weight: 600;
+}
+
+.iosPrepText p {
+  margin: 0;
+  color: var(--ios-term-muted);
+  font-size: calc(var(--pt) * 15);
+  line-height: 1.3;
+}
+
+.iosPrepActions {
+  display: flex;
+  gap: calc(var(--pt) * 12);
+}
+
+.iosSpinner {
+  width: calc(var(--pt) * 20);
+  height: calc(var(--pt) * 20);
+  animation: iosSpin 0.9s steps(8) infinite;
+}
+
+.iosSpinner.isLarge {
+  width: calc(var(--pt) * 34);
+  height: calc(var(--pt) * 34);
+}
+
+@keyframes iosSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── JoinSessionView ───────────────────────────────────────────────────── */
+
+.iosFormSheet {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+/* A Form in a sheet: inset-grouped sections, scrollable. */
+.iosForm {
+  padding-top: calc(var(--pt) * 20);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.iosForm::-webkit-scrollbar {
+  display: none;
+}
+
+.iosForm .iosGroup + .iosGroup,
+.iosForm .iosSectionFooter + .iosGroup,
+.iosForm .iosGroup + .iosProminent.isWide {
+  margin-top: calc(var(--pt) * 24);
+}
+
+.iosForm .iosSectionFooter + .iosSectionHeader {
+  margin-top: calc(var(--pt) * 20);
+}
+
+.iosJoinHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--pt) * 8);
+  padding: calc(var(--pt) * 14) calc(var(--pt) * 12) calc(var(--pt) * 4);
+  text-align: center;
+}
+
+.iosJoinIcon {
+  display: grid;
+  width: calc(var(--pt) * 64);
+  height: calc(var(--pt) * 64);
+  margin-bottom: calc(var(--pt) * 4);
+  border-radius: 50%;
+  background: var(--ios-accent-soft);
+  color: var(--ios-accent);
+  place-items: center;
+}
+
+.iosJoinIcon svg {
+  width: calc(var(--pt) * 34);
+  height: calc(var(--pt) * 34);
+}
+
+.iosJoinHero strong {
+  font-size: calc(var(--pt) * 22);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.iosJoinHero p {
+  margin: 0;
+  color: var(--ios-muted);
+  font-size: calc(var(--pt) * 17);
+}
+
+/* One row of an inset-grouped Form: 44pt, 17pt text, separator inset to the
+   text's leading edge. */
+.iosCell {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: calc(var(--pt) * 44);
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--pt) * 12);
+  padding: calc(var(--pt) * 11) calc(var(--pt) * 16);
+  border: 0;
+  background: none;
+  color: var(--ios-text);
+  font-family: inherit;
+  font-size: calc(var(--pt) * 17);
+  line-height: 1.3;
+  text-align: left;
+  text-decoration: none;
+}
+
+.iosCell + .iosCell::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: calc(var(--pt) * 16);
+  height: 1px;
+  background: var(--ios-separator);
+  content: "";
+}
+
+.iosCell.isLink + .iosCell.isLink::before {
+  left: calc(var(--pt) * 56);
+}
+
+.iosCellValue {
+  flex-shrink: 0;
+  color: var(--ios-muted);
+}
+
+/* Label rows (Link / Button with a systemImage) are tinted. */
+.iosCell.isLink {
+  justify-content: flex-start;
+  color: var(--ios-accent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.iosCell.isLink:hover {
+  background: color-mix(in srgb, var(--ios-text) 4%, transparent);
+}
+
+.iosCell.isLink:disabled {
+  cursor: default;
+}
+
+.iosCell.isLink svg {
+  width: calc(var(--pt) * 24);
+  height: calc(var(--pt) * 24);
+  flex-shrink: 0;
+  margin-right: calc(var(--pt) * 4);
+}
+
+.iosCell.isDestructive {
+  color: var(--ios-destructive);
+}
+
+/* TextField rows show only their prompt until something is typed. */
+.iosCell.iosField {
+  justify-content: flex-start;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.iosCell.iosField.isPlaceholder {
+  color: var(--ios-tertiary);
+}
+
+/* A footnote Text on its own row. */
+.iosFootnote {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--pt) * 10);
+  padding: calc(var(--pt) * 12) calc(var(--pt) * 16);
+  color: var(--ios-muted);
+  font-size: calc(var(--pt) * 13);
+  line-height: 1.35;
+}
+
+.iosFootnote p {
+  margin: 0;
+}
+
+.iosFootnote svg {
+  width: calc(var(--pt) * 18);
+  height: calc(var(--pt) * 18);
+  flex-shrink: 0;
+  margin-top: calc(var(--pt) * -1);
+  color: var(--ios-muted);
+}
+
+/* ── TerminalScreen ────────────────────────────────────────────────────── */
+
+.iosTerminal {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  background: var(--ios-term-bg);
+  color: var(--ios-term-text);
+}
+
+.iosPrincipal {
+  position: absolute;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--pt) * 1);
+  transform: translateX(-50%);
+}
+
+.iosPrincipal strong {
+  font-family: var(--font-mono);
+  font-size: calc(var(--pt) * 17);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.iosLink {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--pt) * 5);
+  color: var(--ios-term-muted);
+  font-family: var(--font-mono);
+  font-size: calc(var(--pt) * 11);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.iosLink svg {
+  width: calc(var(--pt) * 12);
+  height: calc(var(--pt) * 12);
+}
+
+.iosLink[data-link="connecting"] svg {
+  color: var(--ios-accent);
+  animation: iosSpin 1.4s linear infinite;
+}
+
+.iosLink[data-link="relay"] svg {
+  color: var(--ios-warning);
+}
+
+.iosLink[data-link="p2p"] svg {
+  color: var(--ios-success);
+}
+
+.iosTerminalBody {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: calc(var(--pt) * 10) calc(var(--pt) * 12);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  font-family: var(--font-mono);
+  font-size: calc(var(--pt) * 13.5);
+  line-height: 1.5;
+  cursor: text;
+}
+
+.iosTerminalBody::-webkit-scrollbar {
+  display: none;
+}
+
+.iosTerminalBody .demoCwd {
+  color: #7aa7ff;
+}
+
+.iosTerminalBody .demoChevron {
+  color: #72cf98;
+}
+
+.iosTerminalBody .demoTag {
+  color: #5fd3e0;
+}
+
+.iosStage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--pt) * 14);
+  background: color-mix(in srgb, var(--ios-term-bg) 96%, transparent);
+  font-family: var(--font-sans);
+  font-size: calc(var(--pt) * 17);
+  font-weight: 600;
+  animation: iosFadeIn 200ms ease both;
+}
+
+.iosKeyBar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--pt) * 6);
+  padding: calc(var(--pt) * 8) calc(var(--pt) * 12);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ios-term-surface);
+}
+
+.iosKey {
+  display: inline-grid;
+  min-width: calc(var(--pt) * 32);
+  height: calc(var(--pt) * 34);
+  padding: 0 calc(var(--pt) * 4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: calc(var(--pt) * 9);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: calc(var(--pt) * 12);
+  font-weight: 600;
+  place-items: center;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-fast) ease,
+    scale var(--motion-fast) ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.iosKey.isIcon {
+  width: calc(var(--pt) * 34);
+  padding: 0;
+}
+
+.iosKey svg {
+  width: calc(var(--pt) * 14);
+  height: calc(var(--pt) * 14);
+}
+
+.iosKey:active {
+  scale: 0.94;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.iosKey.isPressed {
+  border-color: transparent;
+  background: var(--ios-accent);
+}
+
+.iosKeySeparator {
+  width: 1px;
+  height: calc(var(--pt) * 28);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.iosHomeIndicator {
+  display: block;
+  width: calc(var(--pt) * 134);
+  height: calc(var(--pt) * 5);
+  margin: calc(var(--pt) * 8) auto calc(var(--pt) * 8);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.iosListPage::after {
+  position: absolute;
+  bottom: calc(var(--pt) * 8);
+  left: 50%;
+  width: calc(var(--pt) * 134);
+  height: calc(var(--pt) * 5);
+  border-radius: 999px;
+  background: var(--ios-text);
+  content: "";
+  transform: translateX(-50%);
+}
+
+/* ── Compact stage (stacked layout) ────────────────────────────────────── */
+
+@media (max-width: 1023px), (prefers-reduced-motion: reduce) {
+  .demoStage {
+    --mw: 108cqw;
+    --bleed: calc(var(--mw) * 0.06);
+    --pw: calc(var(--mw) * 0.3);
+  }
+
+  /* Stacked, the stage is sized to its contents, so anchor to the bottom. */
+  .demoStage .macbook {
+    top: auto;
+    bottom: calc(var(--mw) * 0.03);
+  }
+
+  .demoStage .iphone {
+    top: auto;
+    right: 0.5cqw;
+    bottom: 0;
+    left: auto;
+  }
+}
+
+/* Phones: side by side the pair would be thumbnails, so the scene stacks.
+   The Mac takes the full width with the terminal filling its display, and
+   the phone sits below at two thirds of the width, large enough for its own
+   controls to be tapped. The hero media's aspect ratio (landing.css) is what
+   gives the stage the height for both. */
+@media (max-width: 760px) {
+  .demoStage {
+    --mw: 100cqw;
+    --bleed: 0cqw;
+    --pw: 60cqw;
+  }
+
+  .demoStage .macbook {
+    top: 0;
+    bottom: auto;
+  }
+
+  .demoStage .iphone {
+    top: auto;
+    right: auto;
+    bottom: 0;
+    left: 20cqw;
+  }
+
+  .demoStage .macWindow {
+    top: 9%;
+    left: 4%;
+    width: 92%;
+    height: 62%;
+  }
+
+  /* At phone widths the Dock would compete with the note for the strip under
+     the window; the terminal and the guide matter more than the set dressing. */
+  .macDock {
+    display: none;
+  }
+
+  .macMenuPill,
+  .macMenuDot {
+    height: 1.4cqw;
+  }
+
+  .macMenuDot {
+    width: 1.4cqw;
+  }
+
+  /* The Mac is now the width of a phone screen, so everything inside it is
+     drawn at roughly twice the desktop ratio to land at readable pixel sizes:
+     13px terminal text, a 26px title bar, 24px buttons. */
+  .demoMacWindow .macTitlebar {
+    height: 8.2cqw;
+    padding: 0 2.4cqw;
+  }
+
+  .demoMacWindow .macTraffic {
+    gap: 1.8cqw;
+  }
+
+  .demoMacWindow .macTraffic i {
+    width: 3.2cqw;
+    height: 3.2cqw;
+  }
+
+  .demoMacWindow .macTitlebar h3 {
+    inset: 0 14cqw;
+    font-size: 2.8cqw;
+    line-height: 8.2cqw;
+  }
+
+  .macMoveHandle {
+    top: 4.1cqw;
+    right: 2cqw;
+    width: 5.6cqw;
+    height: 5.6cqw;
+    border-radius: 1.1cqw;
+  }
+
+  .macMoveHandle svg {
+    width: 3.4cqw;
+    height: 3.4cqw;
+  }
+
+  .demoMacWindow .macContent {
+    padding: 2cqw 2.6cqw;
+    font-size: 4.1cqw;
+  }
+
+  .demoGuide {
+    top: 73%;
+    right: 4%;
+    left: 4%;
+  }
+
+  .demoNote {
+    max-width: none;
+    padding: 1cqw 2.6cqw 1.2cqw;
+    border-radius: 3cqw;
+    font-size: 4.2cqw;
+  }
+
+  /* Pressed keys echo in the title bar's free right half rather than under
+     the window, where the note now takes the full width. */
+  .demoKeycapTrail {
+    top: 9%;
+    right: 15cqw;
+    left: auto;
+    gap: 1.4cqw;
+  }
+
+  .demoKeycap {
+    height: 8cqw;
+    min-width: 8cqw;
+    font-size: 4cqw;
+  }
+}
+
+/* ── Mac in dark appearance ────────────────────────────────────────────── */
+
+/* The Mac follows the visitor's appearance the way a real one would: the
+   wallpaper goes to its night variant, the menu bar and Dock go translucent
+   dark, and Terminal switches to its dark profile. The phone already does
+   this through its --ios-* tokens above. */
+@media (prefers-color-scheme: dark) {
+  /* Space Gray chassis: the aluminium edge of the lid becomes a graphite
+     ring around the black bezel, and the base takes the same darker
+     anodised finish so the machine reads as a body against the dark page. */
+  .demoStage .macbookLid {
+    box-shadow:
+      0 0 0 0.14cqw #4c4d52,
+      0 0 0 0.2cqw rgba(0, 0, 0, 0.5);
+  }
+
+  .demoStage .macbookBase {
+    background: linear-gradient(180deg, #6b6c72 0%, #4a4b50 62%, #3c3d42 100%);
+  }
+
+  .demoStage .macbookBase::before {
+    background: rgba(0, 0, 0, 0.28);
+  }
+
+  .demoStage .macbookBase::after {
+    background: radial-gradient(ellipse, rgba(0, 0, 0, 0.5), transparent 70%);
+  }
+
+  /* iPhone 17 in Black: the anodised aluminium band goes to a deep charcoal
+     with a faint top-lit sheen, the inner ring loses its silver highlight for
+     a graphite one, and the buttons match the band. A soft light rim keeps the
+     outline readable against the dark page. */
+  .demoStage .iphoneShell {
+    background: linear-gradient(180deg, #3a3a3f 0%, #232326 18%, #1c1c1f 82%, #2c2c30 100%);
+    box-shadow:
+      inset 0 0 0 0.12cqw rgba(255, 255, 255, 0.14),
+      0 0 0 0.08cqw rgba(255, 255, 255, 0.08),
+      0 1.2cqw 3cqw rgba(0, 0, 0, 0.55);
+  }
+
+  .demoStage .iphoneRing {
+    background: #0e0e10;
+    box-shadow: 0 0 0 0.3cqw #3b3b40;
+  }
+
+  .demoStage .iphoneKey.isLeft,
+  .demoStage .iphoneKey.isRight {
+    background: #2a2a2e;
+    box-shadow: inset 0 0 0 0.1cqw rgba(255, 255, 255, 0.1);
+  }
+
+  /* Night side of the wallpaper: the same sweep in indigo and violet. */
+  .macWallpaper {
+    --wp-sky: #4a63d8;
+    --wp-pale: #22347f;
+    --wp-mid: #172661;
+    --wp-deep: #0b1440;
+    --wp-abyss: #04071d;
+    --wp-violet: #5b35b5;
+    --wp-warm: #7a2d8a;
+    --wp-swell-a: rgba(110, 140, 255, 0.4);
+    --wp-swell-b: rgba(200, 90, 210, 0.3);
+    --wp-swell-c: rgba(2, 6, 30, 0.6);
+    --wp-ribbon: rgba(150, 175, 255, 0.16);
+  }
+
+  .demoStage .macMenuBar.isAbstract {
+    background: rgba(20, 22, 28, 0.42);
+  }
+
+  .macMenuPill,
+  .macMenuDot {
+    background: rgba(255, 255, 255, 0.6);
+  }
+
+  .macMenuPill.isApp {
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  .macMenuIcon.isLightScheme {
+    display: none;
+  }
+
+  .macMenuIcon.isDarkScheme {
+    display: block;
+  }
+
+  /* Terminal window: macOS dark chrome, "Basic" profile in dark. */
+  .demoStage .macWindow {
+    background: #1e1e20;
+    box-shadow:
+      0 0 0 0.09cqw rgba(255, 255, 255, 0.16),
+      0 1.8cqw 5cqw rgba(0, 0, 0, 0.6);
+  }
+
+  .demoMacWindow.isFocused,
+  .demoMacWindow.isDragging {
+    box-shadow:
+      0 0 0 0.09cqw rgba(255, 255, 255, 0.2),
+      0 2.6cqw 6.5cqw rgba(0, 0, 0, 0.7);
+  }
+
+  .demoMacWindow .macTitlebar {
+    border-bottom-color: rgba(0, 0, 0, 0.55);
+    background: linear-gradient(#3b3b3e, #2f2f32);
+  }
+
+  .demoMacWindow:not(.isFocused) .macTitlebar {
+    background: #2a2a2d;
+  }
+
+  .demoMacWindow:not(.isFocused) .macTraffic i {
+    border-color: rgba(255, 255, 255, 0.06);
+    background: #4b4b4f;
+  }
+
+  .demoMacWindow .macTitlebar h3 {
+    color: rgba(255, 255, 255, 0.86);
+  }
+
+  .demoMacWindow:not(.isFocused) .macTitlebar h3 {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .demoMacWindow .macTitlebar h3.isArmed {
+    color: #7aa7ff;
+  }
+
+  .demoMacWindow .macContent {
+    color: #f2f2f2;
+  }
+
+  .demoMacWindow .demoCwd {
+    color: #7aa7ff;
+  }
+
+  .demoMacWindow .demoChevron {
+    color: #72cf98;
+  }
+
+  .demoMacWindow .demoTag {
+    color: #5fd3e0;
+  }
+
+  .macMoveHandle {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  .macMoveHandle:focus-visible {
+    outline-color: #7aa7ff;
+  }
+
+  /* Keycaps read as dark keys on a dark keyboard. */
+  .demoKeys kbd,
+  .demoKeycap {
+    background: rgba(58, 58, 62, 0.96);
+    color: #f2f2f7;
+    box-shadow:
+      inset 0 -0.13em 0 rgba(0, 0, 0, 0.5),
+      0 0.12em 0.4em rgba(0, 0, 0, 0.45);
+  }
+
+  .macDock {
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(28, 28, 34, 0.48);
+    box-shadow: 0 0.6cqw 2.4cqw rgba(0, 0, 0, 0.45);
+  }
+
+  .macDockDivider {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .macDockRunning {
+    background: rgba(255, 255, 255, 0.78);
+  }
+}
+
+/* ── Motion preferences ────────────────────────────────────────────────── */
+
+/* The global rule already stops every animation and transition; these are the
+   resting states that need a value of their own once motion is gone. */
+@media (prefers-reduced-motion: reduce) {
+  .demoCaret.isFocused {
+    opacity: 1;
+  }
+
+  .demoNote,
+  .demoKeycap {
+    opacity: 1;
+    transform: none;
+  }
+
+  .demoNote.isQuiet {
+    opacity: 0.82;
+  }
+}
+
+@media (forced-colors: active) {
+  .demoCaret.isFocused {
+    background: CanvasText;
+  }
+
+  .demoNoteAction {
+    text-decoration-color: LinkText;
+  }
+}

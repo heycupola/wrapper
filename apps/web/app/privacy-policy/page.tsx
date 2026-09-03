@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      lastUpdated="August 26, 2026"
+      lastUpdated="2026-08-26"
       introduction="Wrapper is a remote terminal sharing service operated by Cupola Labs, LLC. Your terminal stays on your machine until you explicitly share it. This policy explains the metadata Wrapper stores, how terminal traffic moves between peers, which providers help us operate the service, and the controls available to you."
     >
       <LegalSection title="Information we collect">

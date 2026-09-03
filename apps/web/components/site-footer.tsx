@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getIosAppTarget } from "../lib/ios-app";
 import { CupolaMark } from "./cupola-mark";
+import { ExternalLink } from "./external-link";
 import { InstallWrapperLink } from "./install-wrapper-link";
 
 function footerGroups() {
@@ -32,7 +33,7 @@ function footerGroups() {
         { href: "/dashboard", label: "Dashboard" },
         { href: "/support", label: "Help and Contact" },
         { href: "/support#security", label: "Report a Vulnerability" },
-        { href: "https://x.com/heycupola", label: "X", external: true },
+        { href: "https://x.com/heycupola", label: "Cupola on X", external: true },
       ],
     },
   ];
@@ -40,10 +41,19 @@ function footerGroups() {
 
 function IosViewerCompactLink() {
   const ios = getIosAppTarget();
+  return ios.external ? (
+    <ExternalLink href={ios.href}>{ios.navLabel}</ExternalLink>
+  ) : (
+    <Link href={ios.href}>{ios.navLabel}</Link>
+  );
+}
+
+function BuiltBy() {
   return (
-    <a href={ios.href} target="_blank" rel="noopener noreferrer">
-      {ios.navLabel}
-    </a>
+    <ExternalLink className="builtBy" href="https://cupo.la" aria-label="Built by Cupola">
+      <span>Built by</span>
+      <CupolaMark />
+    </ExternalLink>
   );
 }
 
@@ -53,28 +63,34 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
       <footer className="landingFinalFooter">
         <div className="landingFooterMeta">
           <span>© {new Date().getFullYear()} Wrapper</span>
-          <a
-            className="builtBy"
-            href="https://cupo.la"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Built by Cupola"
-          >
-            <span>Built by</span>
-            <CupolaMark />
-          </a>
+          <BuiltBy />
         </div>
         <nav aria-label="Footer">
-          <Link href="/dashboard">Dashboard</Link>
-          <IosViewerCompactLink />
-          <a href="https://github.com/heycupola/wrapper" target="_blank" rel="noopener noreferrer">
-            GitHub
-          </a>
-          <a href="https://x.com/heycupola" target="_blank" rel="noopener noreferrer">
-            X
-          </a>
-          <Link href="/privacy-policy">Privacy</Link>
-          <Link href="/terms-of-service">Terms</Link>
+          <ul>
+            <li>
+              <Link href="/dashboard">Dashboard</Link>
+            </li>
+            <li>
+              <IosViewerCompactLink />
+            </li>
+            <li>
+              <ExternalLink href="https://github.com/heycupola/wrapper">GitHub</ExternalLink>
+            </li>
+            <li>
+              <ExternalLink
+                href="https://x.com/heycupola"
+                aria-label="Cupola on X (opens in a new tab)"
+              >
+                X
+              </ExternalLink>
+            </li>
+            <li>
+              <Link href="/privacy-policy">Privacy</Link>
+            </li>
+            <li>
+              <Link href="/terms-of-service">Terms</Link>
+            </li>
+          </ul>
         </nav>
       </footer>
     );
@@ -87,19 +103,19 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
           <div key={group.title} className="siteFooterGroup">
             <h2>{group.title}</h2>
             <nav aria-label={`${group.title} links`}>
-              {group.links.map((link) =>
-                "external" in link ? (
-                  <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer">
-                    {link.label}
-                  </a>
-                ) : link.href === "/#start" ? (
-                  <InstallWrapperLink key={link.href}>{link.label}</InstallWrapperLink>
-                ) : (
-                  <Link key={link.href} href={link.href}>
-                    {link.label}
-                  </Link>
-                ),
-              )}
+              <ul>
+                {group.links.map((link) => (
+                  <li key={link.href}>
+                    {link.external ? (
+                      <ExternalLink href={link.href}>{link.label}</ExternalLink>
+                    ) : link.href === "/#start" ? (
+                      <InstallWrapperLink>{link.label}</InstallWrapperLink>
+                    ) : (
+                      <Link href={link.href}>{link.label}</Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </nav>
           </div>
         ))}
@@ -107,18 +123,9 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
       <div className="siteFooterMeta">
         <div className="landingFooterMeta">
           <span>© {new Date().getFullYear()} Wrapper</span>
-          <a
-            className="builtBy"
-            href="https://cupo.la"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Built by Cupola"
-          >
-            <span>Built by</span>
-            <CupolaMark />
-          </a>
+          <BuiltBy />
         </div>
-        <span>Terminal sharing is always opt-in.</span>
+        <p className="siteFooterNote">Terminal sharing is always opt-in.</p>
       </div>
     </footer>
   );

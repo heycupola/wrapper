@@ -107,6 +107,13 @@ export function DashboardBillingActions({
           </button>
         ) : null}
       </div>
+      <output className="visuallyHidden">
+        {pending === "checkout"
+          ? "Starting Pro checkout, you will be taken to Stripe."
+          : pending === "portal"
+            ? "Opening the billing portal."
+            : ""}
+      </output>
       {error ? (
         <p className="authError" role="alert">
           {error}

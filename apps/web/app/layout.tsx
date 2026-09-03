@@ -1,12 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono } from "next/font/google";
+import { Caveat, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./surfaces.css";
 import "./landing.css";
+import "./hero-demo.css";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-geist-mono",
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  variable: "--font-hand",
 });
 
 const SITE_NAME = "Wrapper";
@@ -72,7 +79,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={geistMono.variable}>
+    <html lang="en" className={`${geistMono.variable} ${caveat.variable}`}>
       <head>
         <meta name="color-scheme" content="light dark" />
       </head>

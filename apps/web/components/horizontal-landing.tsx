@@ -17,15 +17,19 @@ export function HorizontalLanding() {
       <LandingHeader />
 
       <HorizontalScroll sectionIds={storySectionIds}>
-        <section id="intro" className="landingSection landingHero">
+        <section id="intro" className="landingSection landingHero" aria-labelledby="intro-title">
           <div className="landingSectionInner landingHeroInner">
+            <div className="landingHeroMedia revealItem">
+              <ProductDemo />
+            </div>
+
             <div className="landingHeroCopy revealStack">
-              <h1 className="landingHeroTitle revealItem">
+              <h1 id="intro-title" className="landingHeroTitle revealItem">
                 Your terminal,
                 <br />
                 still running.
                 <br />
-                Wherever you are.
+                Wherever <span className="noWrap">you are.</span>
               </h1>
               <p className="landingLead revealItem">
                 Keep your real shell on your machine. Reach it from another device only when you
@@ -39,17 +43,17 @@ export function HorizontalLanding() {
               </div>
               <p className="landingMicrocopy revealItem">macOS and Linux · iOS viewer beta</p>
             </div>
-
-            <div className="landingHeroMedia revealItem">
-              <ProductDemo />
-            </div>
           </div>
         </section>
 
-        <section id="connection" className="landingSection landingConnection">
+        <section
+          id="connection"
+          className="landingSection landingConnection"
+          aria-labelledby="connection-title"
+        >
           <div className="landingSectionInner landingSplit">
             <div className="landingSectionCopy revealStack">
-              <h2 className="landingSectionTitle revealItem">
+              <h2 id="connection-title" className="landingSectionTitle revealItem">
                 Direct when possible.
                 <br />
                 Available when not.
@@ -92,10 +96,10 @@ export function HorizontalLanding() {
           </div>
         </section>
 
-        <section id="trust" className="landingSection landingTrust">
+        <section id="trust" className="landingSection landingTrust" aria-labelledby="trust-title">
           <div className="landingSectionInner landingTrustInner">
             <div className="landingSectionCopy revealStack">
-              <h2 className="landingSectionTitle revealItem">
+              <h2 id="trust-title" className="landingSectionTitle revealItem">
                 Nothing leaves
                 <br />
                 until you say so.
@@ -153,10 +157,14 @@ export function HorizontalLanding() {
           </div>
         </section>
 
-        <section id="pricing" className="landingSection landingPricing">
+        <section
+          id="pricing"
+          className="landingSection landingPricing"
+          aria-labelledby="pricing-title"
+        >
           <div className="landingSectionInner landingSplit">
             <div className="landingSectionCopy revealStack">
-              <h2 className="landingSectionTitle revealItem">
+              <h2 id="pricing-title" className="landingSectionTitle revealItem">
                 Local is free.
                 <br />
                 Remote is Pro.
@@ -171,16 +179,14 @@ export function HorizontalLanding() {
             </div>
 
             <div className="landingPriceGrid">
-              <article className="landingPriceCard">
+              <article className="landingPriceCard" aria-labelledby="plan-free-title">
                 <header>
-                  <div>
-                    <span>Free</span>
-                    <p>Your shell, on this machine.</p>
-                  </div>
+                  <h3 id="plan-free-title">Free</h3>
                   <p className="landingPrice">
                     <strong>$0</strong>
                     <span>forever</span>
                   </p>
+                  <p>Your shell, on this machine.</p>
                 </header>
                 <ul>
                   <li>Wrap zsh, bash, and fish</li>
@@ -192,18 +198,19 @@ export function HorizontalLanding() {
                 </a>
               </article>
 
-              <article className="landingPriceCard landingPriceCardPro">
+              <article
+                className="landingPriceCard landingPriceCardPro"
+                aria-labelledby="plan-pro-title"
+              >
                 <header>
-                  <div>
-                    <span>
-                      Pro <small>Remote access</small>
-                    </span>
-                    <p>Your shell, from another device.</p>
-                  </div>
+                  <h3 id="plan-pro-title">
+                    Pro <small>Remote access</small>
+                  </h3>
                   <p className="landingPrice">
                     <strong>$20</strong>
                     <span>/ month</span>
                   </p>
+                  <p>Your shell, from another device.</p>
                 </header>
                 <ul>
                   <li>Everything in Free</li>
@@ -216,15 +223,16 @@ export function HorizontalLanding() {
                 <Link className="landingPriceCta landingPriceCtaPrimary" href="/dashboard">
                   Choose Pro
                 </Link>
+                <p className="landingPriceCardNote">Sign in to upgrade from the dashboard.</p>
               </article>
             </div>
           </div>
         </section>
 
-        <section id="start" className="landingSection landingStart">
+        <section id="start" className="landingSection landingStart" aria-labelledby="start-title">
           <div className="landingSectionInner landingStartInner">
             <div className="landingSectionCopy revealStack">
-              <h2 className="landingSectionTitle revealItem">
+              <h2 id="start-title" className="landingSectionTitle revealItem">
                 Your shell is already
                 <br />
                 the right shell.
@@ -266,13 +274,16 @@ export function HorizontalLanding() {
                   <div className="landingCommands">
                     <CopyCommand
                       command="brew install heycupola/tap/wrapper"
-                      label="Copy Homebrew command"
+                      label="Copy Homebrew install command"
                     />
                     <CopyCommand
                       command="curl -fsSL https://wrapper.sh/install | bash"
-                      label="Copy curl command"
+                      label="Copy curl install command"
                     />
                   </div>
+                  <p className="landingInstallHint">
+                    Homebrew if you have it; the script does the same on any Mac or Linux box.
+                  </p>
                 </div>
                 <div className="landingInstallMethod revealItem">
                   <p className="landingInstallLabel">Viewer · iPhone or iPad beta</p>

@@ -60,6 +60,7 @@ export function HorizontalScroll({
     let renderFrame: number | null = null;
     let measureFrame: number | null = null;
     let verticalObserver: IntersectionObserver | null = null;
+    let revealObserver: IntersectionObserver | null = null;
     let resizeObserver: ResizeObserver | null = null;
     let lenis: LenisController | null = null;
     let lenisGeneration = 0;
@@ -237,9 +238,39 @@ export function HorizontalScroll({
     const stopVerticalObserver = () => {
       verticalObserver?.disconnect();
       verticalObserver = null;
+      revealObserver?.disconnect();
+      revealObserver = null;
+      scroller.classList.remove("isStacked");
+    };
+
+    // Stacked layout: the horizontal reveal keys off whole sections, which on
+    // a phone can be several screens tall. Here each item reveals on its own
+    // as it scrolls into the lower part of the viewport. The hero is excluded;
+    // it has a first-paint entrance instead.
+    const startRevealObserver = () => {
+      if (revealObserver || reducedMotionQuery.matches) return;
+      revealObserver = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            entry.target.classList.add("isRevealed");
+            revealObserver?.unobserve(entry.target);
+          }
+        },
+        { rootMargin: "0px 0px -12% 0px" },
+      );
+      const items = scroller.querySelectorAll<HTMLElement>(
+        ".landingSection:not(.landingHero) :is(.revealItem, .landingTrustGrid > article, .landingPriceGrid > article)",
+      );
+      for (const item of items) {
+        if (item.classList.contains("isRevealed")) continue;
+        revealObserver.observe(item);
+      }
+      scroller.classList.add("isStacked");
     };
 
     const startVerticalObserver = () => {
+      startRevealObserver();
       if (verticalObserver) return;
       verticalObserver = new IntersectionObserver(
         (entries) => {

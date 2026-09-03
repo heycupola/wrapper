@@ -4,13 +4,14 @@
 .siteHeader {
   position: sticky;
   top: 0;
-  z-index: 80;
+  z-index: var(--z-header);
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
   min-height: var(--header-h);
-  padding: 10px var(--page-pad);
+  padding: max(10px, env(safe-area-inset-top)) max(var(--page-pad), env(safe-area-inset-right)) 10px
+    max(var(--page-pad), env(safe-area-inset-left));
   border-bottom: 1px solid color-mix(in srgb, var(--color-text) 7%, transparent);
   background: color-mix(in srgb, var(--color-bg) 88%, transparent);
   backdrop-filter: blur(18px) saturate(1.2);
@@ -95,11 +96,12 @@
 }
 
 .githubStarCount {
+  font-variant-numeric: tabular-nums;
   display: inline-flex;
   align-items: center;
   gap: 3px;
   color: var(--color-text-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 510;
 }
 
@@ -167,7 +169,7 @@
 
 .dashboardSidebar nav a {
   display: flex;
-  min-height: 40px;
+  min-height: 44px;
   align-items: center;
   padding: 0 12px;
   border-radius: var(--radius-sm);
@@ -279,7 +281,7 @@
   display: block;
   margin-bottom: 4px;
   color: var(--color-text-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 590;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -331,6 +333,9 @@
 }
 
 .dashboardDetails dd a {
+  display: inline-block;
+  padding: 4px 0;
+  margin: -4px 0;
   color: var(--color-text);
   font-weight: 510;
   text-decoration: underline;
@@ -341,8 +346,75 @@
 .dashboardDeleteConfirmation {
   display: grid;
   gap: 12px;
-  padding-top: 18px;
-  border-top: 1px solid var(--color-border);
+}
+
+/* Confirmation dialog (native <dialog>). The element itself is the backdrop
+   hit area; the form inside is the panel. */
+.confirmDialog {
+  width: min(100% - 32px, 440px);
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.confirmDialog::backdrop {
+  background: color-mix(in srgb, var(--brand-ink, #121316) 42%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.confirmDialog[open] {
+  animation: riseIn var(--motion-mid) var(--ease-out-quint);
+}
+
+.confirmDialogPanel {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-strong);
+  box-shadow: 0 30px 80px -30px color-mix(in srgb, var(--brand-ink, #121316) 55%, transparent);
+}
+
+.confirmDialog.isDanger .confirmDialogPanel {
+  border-color: var(--brand-danger);
+}
+
+.confirmDialogPanel h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.confirmDialogBody {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.confirmDialogActions {
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .confirmDialog {
+    width: calc(100% - 16px);
+    margin-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .confirmDialogActions {
+    flex-direction: column-reverse;
+  }
+
+  .confirmDialogActions .social-btn {
+    width: 100%;
+  }
 }
 
 .dashboardPageStack {
@@ -393,11 +465,26 @@
 
 .dashboardSessionCards {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.dashboardSessionCards {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.dashboardSessionCards > li {
+  display: grid;
+  min-width: 0;
+}
+
+/* "Shared" is never colour alone: a dot marks the live state too. */
+.dashboardSessionState[data-live="true"]::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .dashboardSessionCard code,
@@ -405,7 +492,7 @@
   overflow: hidden;
   color: var(--color-text-muted);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -421,9 +508,10 @@
   display: block;
   width: 100%;
   min-width: 0;
-  padding: 0;
+  /* Pads the one-line path out to a 24px target without moving the text. */
+  padding: 4px 0;
+  margin: -4px 0;
   border: 0;
-  outline: none;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -435,7 +523,7 @@
   position: absolute;
   right: 0;
   bottom: calc(100% + 9px);
-  z-index: 20;
+  z-index: var(--z-tooltip);
   width: max-content;
   max-width: min(520px, 78vw);
   padding: 9px 11px;
@@ -443,7 +531,7 @@
   background: var(--color-text);
   color: var(--color-bg);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
   opacity: 0;
@@ -457,7 +545,8 @@
 }
 
 .dashboardPathValue:hover .dashboardPathTooltip,
-.dashboardPathValue:focus-visible .dashboardPathTooltip {
+.dashboardPathValue:focus-visible .dashboardPathTooltip,
+.dashboardPathValue.isCopied .dashboardPathTooltip {
   opacity: 1;
   transform: translateY(0);
 }
@@ -476,13 +565,13 @@
   border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-text-muted);
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   font-weight: 590;
 }
 
 .dashboardSessionState[data-live="true"] {
   background: var(--color-accent-soft);
-  color: var(--color-accent-pop);
+  color: var(--color-accent-text);
 }
 
 .dashboardSessionCard {
@@ -532,6 +621,25 @@
   min-width: 0;
   overflow-wrap: anywhere;
   text-align: right;
+}
+
+/* Narrow: label above value so paths and IDs get the whole row instead of
+   being clipped to a half-width column. */
+@media (max-width: 640px) {
+  .dashboardSessionCard dl > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .dashboardSessionCard dd,
+  .dashboardSessionCard .dashboardPathValue {
+    text-align: left;
+  }
+
+  .dashboardSessionCard .dashboardPathTooltip {
+    right: auto;
+    left: 0;
+  }
 }
 
 .dashboardEmptyState {
@@ -597,25 +705,186 @@
 .dashboardDataGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
 }
 
-.dashboardBillingGrid .dashboardPanel {
+/* Plans are one short row each, the way Cursor's dashboard lists them: name
+   and price on the first line, a one-sentence summary, and a "What's
+   included" trigger whose tooltip carries the full list. */
+.dashboardBillingGrid .dashboardPlanCard {
+  gap: 10px;
+  padding: 18px 20px;
+  border-radius: var(--radius-sm);
+}
+
+.dashboardPlanHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 12px;
-  padding: 16px 18px;
 }
 
-.dashboardBillingGrid .dashboardFeatureList {
+.dashboardPlanName {
+  display: grid;
+  gap: 2px;
+}
+
+.dashboardPlanName .dashboardPanelLabel {
+  margin-bottom: 0;
+  font-size: 0.6875rem;
+}
+
+.dashboardPlanName h2 {
+  font-size: 1.125rem;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.dashboardPlanCard .dashboardPlanPrice {
+  flex: none;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+  padding-top: 2px;
+  font-size: 1.5rem;
+}
+
+.dashboardPlanCard .dashboardPlanPrice span {
+  font-size: 0.8125rem;
+}
+
+.dashboardPriceLead {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  letter-spacing: -0.015em;
+}
+
+.dashboardPlanFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 2px;
+}
+
+.dashboardPlanInfo {
+  position: relative;
+  display: inline-flex;
+}
+
+.dashboardPlanInfoButton {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
   gap: 6px;
-  font-size: 0.74rem;
+  padding: 0 8px 0 6px;
+  margin-left: -6px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 510;
+  letter-spacing: -0.01em;
+  transition:
+    color var(--motion-fast) var(--ease-out-quint),
+    background-color var(--motion-fast) var(--ease-out-quint);
 }
 
-.dashboardBillingGrid .dashboardPlanPrice {
-  font-size: 1.25rem;
+.dashboardPlanInfoButton svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.dashboardPlanInfoButton:hover,
+.dashboardPlanInfo[data-pinned] .dashboardPlanInfoButton {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  color: var(--color-text);
+}
+
+.dashboardPlanInfoButton:focus-visible {
+  outline: 2px solid var(--color-accent-pop);
+  outline-offset: 1px;
+}
+
+.dashboardPlanTooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: var(--z-tooltip);
+  width: max-content;
+  max-width: min(300px, 80vw);
+  padding: 10px 12px 10px 12px;
+  border-radius: 10px;
+  background: var(--color-text);
+  color: var(--color-bg);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity var(--motion-fast) var(--ease-out-quint),
+    transform var(--motion-fast) var(--ease-out-quint),
+    visibility 0s linear var(--motion-fast);
+  pointer-events: none;
+}
+
+.dashboardPlanTooltip ul {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboardPlanTooltip li {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.dashboardPlanTooltip li::before {
+  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
+  content: "✓";
+  font-weight: 700;
+}
+
+.dashboardPlanInfo:hover .dashboardPlanTooltip,
+.dashboardPlanInfo:focus-within .dashboardPlanTooltip,
+.dashboardPlanInfo[data-pinned] .dashboardPlanTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
+.dashboardPlanInfo[data-pinned] .dashboardPlanTooltip {
+  pointer-events: auto;
+}
+
+.dashboardPlanFoot .iosViewerCtaWrap {
+  display: inline-flex;
+}
+
+.dashboardPlanFoot .iosViewerCtaText {
+  min-height: 24px;
+  font-size: 0.8125rem;
 }
 
 .dashboardProPanel {
-  border-color: color-mix(in srgb, var(--color-accent-pop) 28%, var(--color-border));
+  border-color: color-mix(in srgb, var(--color-accent-pop) 36%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-pop) 8%, var(--color-surface-strong));
+  box-shadow: 0 24px 56px -38px color-mix(in srgb, var(--color-accent-pop) 36%, transparent);
 }
 
 .planMoment {
@@ -676,6 +945,14 @@
   stroke-dashoffset: 36;
 }
 
+/* Without the draw-on animation the mark has to start fully drawn. */
+@media (prefers-reduced-motion: reduce) {
+  .planMomentStroke,
+  .planMomentCard[data-variant="cancelled"] .planMomentStroke {
+    stroke-dashoffset: 0;
+  }
+}
+
 .planMomentCopy {
   display: grid;
   justify-items: center;
@@ -717,9 +994,10 @@
 }
 
 .dashboardPlanPrice {
+  font-variant-numeric: tabular-nums;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 3px;
   color: var(--color-text);
   font-size: 1.5rem;
@@ -728,15 +1006,21 @@
 }
 
 .dashboardPlanPrice strong {
-  color: var(--color-accent-pop);
+  color: inherit;
   font: inherit;
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+
+.dashboardProPanel .dashboardPlanPrice strong {
+  color: var(--color-accent-text);
 }
 
 .dashboardPlanPrice span {
   color: var(--color-text-muted);
-  font-size: 0.62rem;
-  font-weight: 400;
-  letter-spacing: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .dashboardFeatureList {
@@ -757,7 +1041,7 @@
 }
 
 .dashboardFeatureList li::before {
-  color: var(--color-accent-pop);
+  color: var(--color-accent-text);
   content: "✓";
   font-weight: 700;
 }
@@ -862,6 +1146,17 @@
   gap: 16px;
   padding-top: 0;
   border-top: 0;
+}
+
+.authCodeForm {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.authCodeForm .authHint {
+  margin-top: -6px;
 }
 
 .authSurface > .authCard + .authCard {
@@ -984,8 +1279,8 @@
   padding: 0 9px;
   border-radius: var(--radius-pill);
   background: var(--color-accent-soft);
-  color: var(--color-accent-pop);
-  font-size: 0.625rem;
+  color: var(--color-accent-text);
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1138,15 +1433,18 @@
 .siteFooterGroup h2 {
   margin-bottom: 12px;
   color: var(--color-text);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 590;
 }
 
-.siteFooterGroup nav {
+.siteFooterGroup ul {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .siteFooterGroup a,
@@ -1157,6 +1455,27 @@
 
 .siteFooterGroup a {
   transition: color var(--motion-fast) ease;
+}
+
+/* Touch: each link is a full-height row, so the list's own gap goes; the
+   rows already keep the targets apart. */
+@media (pointer: coarse) {
+  .siteFooterGroup ul {
+    gap: 0;
+  }
+
+  .siteFooterGroup a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .siteHeader .primaryAction,
+  .siteHeader .navAction,
+  .siteHeader .textAction,
+  .githubNavAction {
+    min-height: 44px;
+  }
 }
 
 .siteFooterGroup a:hover {
@@ -1170,6 +1489,11 @@
   margin-top: 28px;
   padding-top: 20px;
   border-top: 1px solid var(--color-border);
+}
+
+.siteFooterNote {
+  margin: 0;
+  color: var(--color-text-muted);
 }
 
 .legalMain {
@@ -1206,6 +1530,62 @@
   line-height: 1.75;
 }
 
+/* Reading measure: the shell stays 920px wide for the title, but running text
+   is capped near 70 characters. */
+.legalIntroduction p,
+.legalSectionContent {
+  max-width: 70ch;
+}
+
+.legalContents {
+  margin-top: 36px;
+  padding: 20px 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface-strong) 60%, transparent);
+}
+
+.legalContents h2 {
+  margin: 0 0 10px;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.legalContents ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  columns: 2;
+  column-gap: 24px;
+}
+
+@media (max-width: 640px) {
+  .legalContents ol {
+    columns: 1;
+  }
+}
+
+.legalContents li {
+  break-inside: avoid;
+}
+
+.legalContents a {
+  display: inline-block;
+  padding: 3px 0;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-text) 25%, transparent);
+  text-underline-offset: 3px;
+}
+
+.legalContents a:hover {
+  text-decoration-color: currentColor;
+}
+
 .legalSections {
   margin-top: 44px;
   border-top: 1px solid var(--color-border);
@@ -1214,6 +1594,8 @@
 .legalSections > section {
   padding: 36px 0;
   border-bottom: 1px solid var(--color-border);
+  /* Deep links land below the sticky header, not under it. */
+  scroll-margin-top: calc(var(--header-h, 64px) + 16px);
 }
 
 .legalSections h2 {
@@ -1255,7 +1637,7 @@
 }
 
 .legalSectionContent a:hover {
-  color: var(--color-accent-pop);
+  color: var(--color-accent-text);
   text-decoration-color: currentColor;
 }
 
@@ -1347,6 +1729,10 @@
   .dashboardSessionCards {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .dashboardBillingGrid .dashboardPlanCard {
+    padding: 16px 18px;
+  }
 }
 
 @media (max-width: 760px) {
@@ -1425,14 +1811,66 @@
     justify-content: center;
   }
 
+  .siteFooter {
+    padding: 36px max(20px, env(safe-area-inset-right))
+      max(40px, calc(28px + env(safe-area-inset-bottom))) max(20px, env(safe-area-inset-left));
+  }
+
+  /* Two columns keep the footer to about one screen; the third group wraps
+     under the first. */
   .siteFooterGrid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 20px;
+  }
+
+  .siteFooterGroup h2 {
+    margin-bottom: 4px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .siteFooterGroup ul {
+    align-items: stretch;
+    width: 100%;
+    gap: 0;
+  }
+
+  .siteFooterGroup li {
+    width: 100%;
+  }
+
+  .siteFooterGroup a,
+  .siteFooterMeta {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  .siteFooterGroup a {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 44px;
+    padding-block: 10px;
+    color: var(--color-text);
   }
 
   .siteFooterMeta {
     align-items: flex-start;
     flex-direction: column;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 20px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .siteFooter .landingFooterMeta {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+
+  .siteFooterNote {
+    max-width: 36ch;
   }
 
   .legalMain {
@@ -1488,5 +1926,120 @@
   .navAction,
   .social-btn-primary {
     border: 1px solid ButtonText;
+  }
+}
+
+/* ── Print ─────────────────────────────────────────────────────────────── */
+
+/* ── Arrival ───────────────────────────────────────────────────────────────
+   Dashboard and auth pages land the same way the landing scenes do: the
+   sidebar fades, then each block in the workspace rises in order. Skipped
+   under reduced motion by the global rule. */
+@media (prefers-reduced-motion: no-preference) {
+  .dashboardSidebar {
+    animation: surfaceFadeIn var(--motion-slow) var(--ease-out-quint) backwards;
+  }
+
+  .dashboardWorkspace > *,
+  .authSurface > * {
+    animation: riseIn var(--motion-slow) var(--ease-out-quint) backwards;
+    animation-delay: 40ms;
+  }
+
+  .dashboardWorkspace > :nth-child(2),
+  .authSurface > :nth-child(2) {
+    animation-delay: 110ms;
+  }
+
+  .dashboardWorkspace > :nth-child(3),
+  .authSurface > :nth-child(3) {
+    animation-delay: 180ms;
+  }
+
+  .dashboardWorkspace > :nth-child(4),
+  .authSurface > :nth-child(4) {
+    animation-delay: 250ms;
+  }
+
+  .dashboardWorkspace > :nth-child(n + 5),
+  .authSurface > :nth-child(n + 5) {
+    animation-delay: 320ms;
+  }
+
+  /* Session cards cascade inside their panel. */
+  .dashboardSessionCards > li {
+    animation: riseIn var(--motion-slow) var(--ease-out-quint) backwards;
+    animation-delay: calc(180ms + min(var(--card-index, 0), 6) * 60ms);
+  }
+
+  .dashboardSessionCards > li:nth-child(2) {
+    --card-index: 1;
+  }
+
+  .dashboardSessionCards > li:nth-child(3) {
+    --card-index: 2;
+  }
+
+  .dashboardSessionCards > li:nth-child(4) {
+    --card-index: 3;
+  }
+
+  .dashboardSessionCards > li:nth-child(n + 5) {
+    --card-index: 4;
+  }
+
+  /* Legal pages: the body follows the title, intro and contents. */
+  .legalMain > :nth-child(4) {
+    animation: riseIn var(--motion-slow) var(--ease-out-quint) 250ms backwards;
+  }
+}
+
+@keyframes surfaceFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media print {
+  .siteHeader,
+  .siteFooter,
+  .skipLink,
+  .legalContents {
+    display: none;
+  }
+
+  .legalMain {
+    width: 100%;
+    padding: 0;
+  }
+
+  .legalTitle h1 {
+    font-size: 24pt;
+  }
+
+  .legalIntroduction {
+    border: 0;
+    padding: 0;
+    background: none;
+  }
+
+  .legalIntroduction,
+  .legalSectionContent,
+  .legalSections h2 {
+    color: #000;
+  }
+
+  .legalSections > section {
+    break-inside: avoid;
+    border-color: #999;
+  }
+
+  .legalSectionContent a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
   }
 }
