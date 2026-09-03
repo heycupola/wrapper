@@ -18,7 +18,7 @@ export interface ShutdownHandle {
   dispose: () => void;
 }
 
-const SIGNALS: ReadonlyArray<ShutdownReason> = ["SIGINT", "SIGTERM", "SIGHUP"];
+const SIGNALS: readonly NodeJS.Signals[] = ["SIGINT", "SIGTERM", "SIGHUP"];
 
 export function installShutdownHandlers(opts: ShutdownOptions): ShutdownHandle {
   let fired = false;
@@ -32,14 +32,18 @@ export function installShutdownHandlers(opts: ShutdownOptions): ShutdownHandle {
   };
 
   for (const sig of SIGNALS) {
-    const handler: NodeJS.SignalsListener = () => fire(sig);
+    const handler: NodeJS.SignalsListener = () => fire(sig as ShutdownReason);
     handlers.set(sig, handler);
     process.once(sig, handler);
   }
 
   const detach = (): void => {
+    const remove = process.removeListener as unknown as (
+      signal: NodeJS.Signals,
+      listener: NodeJS.SignalsListener,
+    ) => void;
     for (const [sig, handler] of handlers) {
-      process.off(sig, handler);
+      remove(sig, handler);
     }
     handlers.clear();
   };
