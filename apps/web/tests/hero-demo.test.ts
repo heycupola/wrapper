@@ -6,6 +6,7 @@ import {
   DEMO_SESSION_ID,
   DEMO_SESSION_TAG,
   DEMO_SHARE_CODE,
+  DEMO_HOME_DIR,
   type DemoAction,
   type DemoState,
   guideStep,
@@ -58,7 +59,7 @@ describe("hero demo shell", () => {
   test("runs commands, keeps history and echoes the prompt cwd", () => {
     let state = reduceAll(createDemoState(), [...type("cd src"), enter, ...type("pwd"), enter]);
     assert.equal(state.cwd, "~/projects/api/src");
-    assert.equal(lastLine(state)?.text, "/Users/ali/projects/api/src");
+    assert.equal(lastLine(state)?.text, `${DEMO_HOME_DIR}/projects/api/src`);
 
     state = reduceDemo(state, { type: "key", key: "ArrowUp" });
     assert.equal(state.input, "pwd");

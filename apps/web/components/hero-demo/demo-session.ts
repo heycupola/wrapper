@@ -18,6 +18,8 @@ export const DEMO_SESSION_TAG = DEMO_SESSION_ID.slice(0, 6);
 export const DEMO_SHARE_CODE = "7N4K-WQ2M";
 export const DEMO_PORT = 51823;
 export const DEMO_HOME = "~/projects/api";
+export const DEMO_USER = "icanvardar";
+export const DEMO_HOME_DIR = `/Users/${DEMO_USER}`;
 export const DEMO_SHELL = "zsh";
 export const PREFIX_LABEL = "Ctrl+\\";
 
@@ -647,7 +649,7 @@ function runCommand(state: DemoState, rawCommand: string): DemoState {
     case "pwd":
       return pushLine(next, "output", expandHome(next.cwd));
     case "whoami":
-      return pushLine(next, "output", "ali");
+      return pushLine(next, "output", DEMO_USER);
     case "uptime":
       return pushLine(
         next,
@@ -679,7 +681,7 @@ function runCommand(state: DemoState, rawCommand: string): DemoState {
       return pushLine(
         next,
         "error",
-        "ali is not in the sudoers file. This incident will be reported.",
+        `${DEMO_USER} is not in the sudoers file. This incident will be reported.`,
       );
     case "rm":
       return pushLine(next, "muted", "nice try — this is a demo shell");
@@ -717,7 +719,7 @@ function runLs(state: DemoState, args: readonly string[]): DemoState {
       const dir = TREE[`${path}/${entry}`] !== undefined || !entry.includes(".");
       const mode = dir ? "drwxr-xr-x" : "-rw-r--r--";
       const size = dir ? "160" : String(400 + entry.length * 37);
-      return `${mode}  1 ali  staff  ${size.padStart(5)} Jun 10 09:41 ${entry}`;
+      return `${mode}  1 ${DEMO_USER}  staff  ${size.padStart(5)} Jun 10 09:41 ${entry}`;
     });
     return pushLines(state, "output", rows);
   }
@@ -840,11 +842,11 @@ function runWrapper(state: DemoState, args: readonly string[]): DemoState {
 // ────────────────────────────────────────────────────────────────────────────
 
 function expandHome(path: string): string {
-  return path.replace(/^~/, "/Users/ali");
+  return path.replace(/^~/, DEMO_HOME_DIR);
 }
 
 function resolvePath(cwd: string, target: string): string {
-  const normalized = target.replace(/^\/Users\/ali(?=\/|$)/, "~");
+  const normalized = target.replace(new RegExp(`^${DEMO_HOME_DIR}(?=\\/|$)`), "~");
   if (normalized.startsWith("/")) return normalized;
   const fromHome = normalized.startsWith("~");
   const stack = fromHome ? ["~"] : cwd.split("/");
