@@ -7,6 +7,7 @@ import {
   DEMO_SESSION_TAG,
   DEMO_SHARE_CODE,
   DEMO_SHELL,
+  DEMO_HOME_DIR,
   type DemoState,
   type ViewerLink,
   viewerCanConnect,
@@ -44,7 +45,7 @@ import {
 import { TerminalLines, useStickToBottom, useTerminalInput } from "./terminal-view";
 import type { DemoSend } from "./use-demo-session";
 
-const SESSION_CWD = "/Users/ali/projects/api";
+const SESSION_CWD = `${DEMO_HOME_DIR}/projects/api`;
 
 /**
  * The viewer, screen for screen: `SessionNavigationView` (list, summary card,
