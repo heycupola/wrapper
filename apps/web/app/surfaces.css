@@ -868,6 +868,10 @@
   transition-delay: 0s;
 }
 
+.dashboardPlanInfo[data-pinned] .dashboardPlanTooltip {
+  pointer-events: auto;
+}
+
 .dashboardPlanFoot .iosViewerCtaWrap {
   display: inline-flex;
 }
