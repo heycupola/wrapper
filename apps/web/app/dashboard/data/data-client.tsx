@@ -1,31 +1,39 @@
 "use client";
 
 import { useState } from "react";
+import { ConfirmDialog } from "../../../components/confirm-dialog";
 import { authClient } from "../../../lib/auth-client";
+
+const CONFIRM_WORD = "DELETE";
 
 export function DashboardDeletion() {
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [deleting, setDeleting] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const matches = confirmation === CONFIRM_WORD;
+
+  function close() {
+    if (deleting) return;
+    setOpen(false);
+    setConfirmation("");
+    setError(null);
+  }
 
   async function deleteProfile(): Promise<void> {
-    if (confirmation !== "DELETE") {
-      setError("Type DELETE exactly to confirm permanent deletion.");
+    if (!matches) {
+      setError(`Type ${CONFIRM_WORD} exactly to confirm permanent deletion.`);
       return;
     }
 
     setDeleting(true);
     setError(null);
-    setStatus("Deleting your profile and associated Wrapper data…");
     try {
       const result = await authClient.deleteUser();
       if (result.error) throw result.error;
       if (!result.data?.success) throw new Error("Deletion did not complete.");
       window.location.assign("/");
     } catch (caught) {
-      setStatus(null);
       setError(
         caught instanceof Error
           ? caught.message
@@ -46,68 +54,57 @@ export function DashboardDeletion() {
         </p>
       </div>
 
-      {!open ? (
-        <button
-          type="button"
-          className="social-btn social-btn-danger dangerAction"
-          aria-expanded="false"
-          aria-controls="delete-profile-confirmation"
-          onClick={() => {
-            setOpen(true);
-            setError(null);
-          }}
-        >
-          Delete profile and data
-        </button>
-      ) : (
-        <div className="dashboardDeleteConfirmation" id="delete-profile-confirmation">
+      <button
+        type="button"
+        className="social-btn social-btn-danger dangerAction"
+        aria-haspopup="dialog"
+        onClick={() => setOpen(true)}
+      >
+        Delete profile and data
+      </button>
+
+      <ConfirmDialog
+        open={open}
+        danger
+        title="Delete your profile and data?"
+        description="This removes your profile, sessions and billing customer for good. There is no recovery."
+        confirmLabel="Permanently delete"
+        busyLabel="Deleting…"
+        confirmDisabled={!matches}
+        busy={deleting}
+        initialFocus="first-field"
+        onConfirm={() => void deleteProfile()}
+        onCancel={close}
+      >
+        <div className="dashboardDeleteConfirmation">
           <label className="authLabel" htmlFor="delete-profile-input">
-            Type <strong>DELETE</strong> to confirm
+            Type <strong>{CONFIRM_WORD}</strong> to continue
           </label>
           <input
             id="delete-profile-input"
             className="authInput"
             value={confirmation}
             autoComplete="off"
+            autoCapitalize="characters"
             spellCheck={false}
             disabled={deleting}
-            onChange={(event) => setConfirmation(event.target.value)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "delete-profile-error" : undefined}
+            onChange={(event) => {
+              setConfirmation(event.target.value);
+              if (error) setError(null);
+            }}
           />
-          <div className="authActions">
-            <button
-              type="button"
-              className="social-btn social-btn-danger dangerAction"
-              disabled={deleting || confirmation !== "DELETE"}
-              onClick={() => void deleteProfile()}
-            >
-              {deleting ? "Deleting…" : "Permanently delete"}
-            </button>
-            <button
-              type="button"
-              className="social-btn"
-              disabled={deleting}
-              onClick={() => {
-                setOpen(false);
-                setConfirmation("");
-                setError(null);
-              }}
-            >
-              Cancel
-            </button>
-          </div>
+          {deleting ? (
+            <output className="authInfo">Deleting your profile and associated Wrapper data…</output>
+          ) : null}
+          {error ? (
+            <p id="delete-profile-error" className="authError" role="alert">
+              {error}
+            </p>
+          ) : null}
         </div>
-      )}
-
-      {status ? (
-        <output className="authInfo" aria-live="polite">
-          {status}
-        </output>
-      ) : null}
-      {error ? (
-        <p className="authError" role="alert">
-          {error}
-        </p>
-      ) : null}
+      </ConfirmDialog>
     </section>
   );
 }

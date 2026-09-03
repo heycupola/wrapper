@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExternalLink } from "../../components/external-link";
 import { LegalPage, LegalSection } from "../../components/legal-page";
 
 export const metadata: Metadata = {
@@ -17,21 +18,27 @@ export default function SupportPage() {
       <LegalSection title="Product help">
         <ul>
           <li>
-            Read the <a href="https://docs.wrapper.sh">Wrapper documentation</a>.
+            Read the{" "}
+            <ExternalLink href="https://docs.wrapper.sh">Wrapper documentation</ExternalLink>.
           </li>
           <li>
-            Review the <a href="https://docs.wrapper.sh/troubleshooting">troubleshooting guide</a>.
+            Review the{" "}
+            <ExternalLink href="https://docs.wrapper.sh/troubleshooting">
+              troubleshooting guide
+            </ExternalLink>
+            .
           </li>
           <li>
             Send a private DM to{" "}
-            <a href="https://x.com/heycupola" target="_blank" rel="noopener noreferrer">
-              @heycupola on X
-            </a>
-            . DMs are open.
+            <ExternalLink href="https://x.com/heycupola">@heycupola on X</ExternalLink>. DMs are
+            open.
           </li>
           <li>
             The iOS viewer is in TestFlight beta and attaches to a shared host session. See the{" "}
-            <a href="https://docs.wrapper.sh/guides/mobile-viewer">mobile viewer guide</a>.
+            <ExternalLink href="https://docs.wrapper.sh/guides/mobile-viewer">
+              mobile viewer guide
+            </ExternalLink>
+            .
           </li>
           <li>
             Run <code>wrapper status</code> to inspect local session state.
@@ -59,29 +66,30 @@ export default function SupportPage() {
       <LegalSection title="Bug reports">
         <p>
           Non-sensitive reproducible bugs can be reported through{" "}
-          <a href="https://github.com/heycupola/wrapper/issues">GitHub Issues</a>. Include the
-          Wrapper version, operating system, whether the active transport was `local`, `relay`, or
-          `p2p`, and minimal reproduction steps using test data.
+          <ExternalLink href="https://github.com/heycupola/wrapper/issues">
+            GitHub Issues
+          </ExternalLink>
+          . Include the Wrapper version, operating system, whether the active transport was{" "}
+          <code>local</code>, <code>relay</code>, or <code>p2p</code>, and minimal reproduction
+          steps using test data.
         </p>
       </LegalSection>
 
-      <LegalSection title="Security reporting">
-        <div id="security">
-          <p>
-            Do not open a public issue or pull request for a suspected vulnerability. Email{" "}
-            <a href="mailto:can@wrapper.sh">can@wrapper.sh</a> or use the repository&apos;s{" "}
-            <a href="https://github.com/heycupola/wrapper/security/advisories/new">
-              private GitHub security advisory form
-            </a>
-            .
-          </p>
-          <p>
-            Include affected versions, impact, reproduction steps, and a safe proof of concept. Do
-            not access another user&apos;s terminal, retain terminal data, or disrupt production. We
-            will acknowledge valid reports as soon as practical and coordinate disclosure after
-            affected users are protected.
-          </p>
-        </div>
+      <LegalSection title="Security reporting" id="security">
+        <p>
+          Do not open a public issue or pull request for a suspected vulnerability. Email{" "}
+          <a href="mailto:can@wrapper.sh">can@wrapper.sh</a> or use the repository&apos;s{" "}
+          <ExternalLink href="https://github.com/heycupola/wrapper/security/advisories/new">
+            private GitHub security advisory form
+          </ExternalLink>
+          .
+        </p>
+        <p>
+          Include affected versions, impact, reproduction steps, and a safe proof of concept. Do not
+          access another user&apos;s terminal, retain terminal data, or disrupt production. We will
+          acknowledge valid reports as soon as practical and coordinate disclosure after affected
+          users are protected.
+        </p>
       </LegalSection>
 
       <LegalSection title="Immediate access revocation">

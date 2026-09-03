@@ -12,6 +12,9 @@
   --brand-blue-hover: #2f64d8;
   --brand-blue-bright: #477ff5;
   --brand-blue-soft: #e8efff;
+  /* Blue that clears 4.5:1 as running text on the canvas; the brand blue only
+     manages 4.3:1 there, so it stays reserved for fills and rings. */
+  --brand-blue-text: #2b5bd2;
   --brand-success: #277a4b;
   --brand-warning: #9a6414;
   --brand-danger: #b63838;
@@ -24,6 +27,7 @@
   --color-accent-from: var(--brand-blue-bright);
   --color-accent-to: var(--brand-blue);
   --color-accent-soft: var(--brand-blue-soft);
+  --color-accent-text: var(--brand-blue-text);
   --color-surface: var(--brand-surface-muted);
   --color-surface-strong: var(--brand-surface);
   --color-nav: var(--brand-ink);
@@ -61,6 +65,12 @@
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --z-scene: 1;
+  --z-footer-bar: 10;
+  --z-tooltip: 20;
+  --z-header: 80;
+  --z-skip: 100;
+  --z-modal: 200;
   --motion-fast: 160ms;
   --motion-mid: 320ms;
   --motion-slow: 640ms;
@@ -88,6 +98,7 @@
     --brand-blue-hover: #8db4ff;
     --brand-blue-bright: #477ff5;
     --brand-blue-soft: rgba(122, 167, 255, 0.14);
+    --brand-blue-text: var(--brand-blue);
     --brand-success: #72cf98;
     --brand-warning: #e3ae5d;
     --brand-danger: #ff9292;
@@ -100,6 +111,7 @@
     --color-accent-from: var(--brand-blue-bright);
     --color-accent-to: #356de8;
     --color-accent-soft: var(--brand-blue-soft);
+    --color-accent-text: var(--brand-blue-text);
     --color-surface: var(--brand-surface-muted);
     --color-surface-strong: var(--brand-surface);
     --color-nav: #f4f5f7;
@@ -145,11 +157,111 @@ a {
   text-decoration: none;
 }
 
+/* Anything clickable says so; browsers give <button> an arrow by default. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+summary {
+  cursor: pointer;
+}
+
+/* One focus ring for everything keyboard-reachable. Components may tighten the
+   offset, but nothing removes the ring without drawing its own. */
+:focus-visible {
+  outline: 2px solid var(--color-accent-pop);
+  outline-offset: 3px;
+}
+
+#main-content:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Keeps a short phrase on one line so a heading never ends on a lone word. */
+.noWrap {
+  white-space: nowrap;
+}
+
+/* Screen-reader-only text: kept in the accessibility tree, removed from view.
+   Shared by live regions, link disclosures and hidden headings site-wide. */
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p,
+li,
+dd,
+figcaption {
+  text-wrap: pretty;
+}
+
+time,
+code,
+kbd,
+[data-numeric] {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --brand-ink-muted: #3f434a;
+    --brand-border: #9a9da3;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --brand-ink-muted: #d3d7dd;
+      --brand-border: #6b717b;
+    }
+  }
+}
+
+/* Windows High Contrast drops backgrounds and shadows, so every card, panel
+   and control gets a system-colour border to keep its edge. */
+@media (forced-colors: active) {
+  .copyCommand,
+  .featureCard,
+  .landingFeatureCard,
+  .landingPriceCard,
+  .landingTrustGrid > article,
+  .landingCommands,
+  .dashboardPanel,
+  .dashboardCard,
+  .authCard,
+  .legalSections,
+  .legalIntroduction,
+  .skipLink,
+  .primaryAction,
+  .priceCta,
+  .navAction,
+  .textAction,
+  .social-btn,
+  .iosViewerCta {
+    border: 1px solid CanvasText;
+  }
+
+  :focus-visible {
+    outline-color: Highlight;
+  }
+}
+
 .skipLink {
   position: fixed;
-  top: 10px;
-  left: 10px;
-  z-index: 100;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(10px, env(safe-area-inset-left));
+  z-index: var(--z-skip);
   padding: 12px 16px;
   border-radius: var(--radius-pill);
   background: var(--color-text);
@@ -162,6 +274,8 @@ a {
 
 .skipLink:focus {
   transform: translateY(0);
+  outline: 2px solid var(--color-accent-pop);
+  outline-offset: 2px;
 }
 
 .authShell {
@@ -272,20 +386,19 @@ a {
   overflow: hidden;
 }
 
-/* Motion primitives. A blurred rise for anything that arrives, a spring pop for
-   confirmations, a breath for live indicators. Every scene and page reuses these
-   three so the whole site moves with one accent. */
+/* Motion primitives. A rise for anything that arrives and a spring pop for
+   confirmations. Every scene and page reuses these two so the whole site moves
+   with one accent. Opacity and transform only: blur is expensive to animate and
+   a known trigger for motion sensitivity. */
 @keyframes riseIn {
   from {
     opacity: 0;
     transform: translateY(16px);
-    filter: blur(7px);
   }
 
   to {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
   }
 }
 
@@ -303,19 +416,6 @@ a {
   to {
     opacity: 1;
     transform: scale(1);
-  }
-}
-
-@keyframes breathe {
-  0%,
-  100% {
-    opacity: 0.42;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.3);
   }
 }
 
@@ -614,8 +714,8 @@ a {
      properties so a scene reveal can keep transform to itself. */
   transition:
     filter var(--motion-fast) ease,
-    translate 240ms var(--ease-spring),
-    scale 240ms var(--ease-spring),
+    translate var(--motion-fast) var(--ease-spring),
+    scale var(--motion-fast) var(--ease-spring),
     opacity var(--motion-fast) ease;
 }
 
@@ -764,12 +864,10 @@ a {
   background: #131720;
 }
 
+/* Painted in CSS; see the Wallpaper section of hero-demo.css. */
 .macWallpaper {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .macMenuBar {
@@ -971,260 +1069,65 @@ a {
   overflow: hidden;
   flex-direction: column;
   border-radius: 14.18cqw;
-  background: #fff;
+  background: #000;
   color: #000;
   container: iosscreen / size;
 }
 
-/* Height is twice the island's centre line, so flex centring drops the clock
-   and the indicators on exactly the same axis as the island. */
+/* iOS 17 status bar on a Dynamic Island phone, in points of a 393pt display
+   (1pt = 0.2545cqw of the screen). The island is 126x37pt, 11pt from the top;
+   the clock is centred in the left ear and the indicators in the right one,
+   all on the island's centre line, so the row is twice that centre (29.5pt). */
 .iosStatus {
   position: relative;
-  display: flex;
+  display: grid;
   flex-shrink: 0;
+  grid-template-columns: minmax(0, 1fr) 32.06cqw minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
-  height: 15.88cqw;
-  padding: 0 10cqw 0 13cqw;
+  height: 15.02cqw;
   color: #000;
-  font-size: 4.6cqw;
-  font-weight: 590;
+  font-size: 4.33cqw;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.iosStatusTime {
+  justify-self: center;
+  line-height: 1;
 }
 
 .iosIsland {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 30.65cqw;
-  height: 8.64cqw;
-  border-radius: 4.32cqw;
+  display: block;
+  width: 100%;
+  height: 9.42cqw;
+  border-radius: 4.71cqw;
   background: #000;
-  transform: translate(-50%, -50%);
-}
-
-.iosIsland::after {
-  position: absolute;
-  top: 50%;
-  right: 9.8%;
-  width: 8.6%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: #131720;
-  content: "";
-  transform: translateY(-50%);
 }
 
 .iosStatusIcons {
   display: inline-flex;
   align-items: center;
-  gap: 1.9cqw;
+  justify-self: center;
+  gap: 1.78cqw;
 }
 
-/* Widths follow the iOS point sizes of each glyph (1pt = 0.29cqw of the screen). */
+/* Glyph boxes are the system's: cellular 19.2pt, Wi-Fi 17.1pt, battery 27.4pt. */
 .iosStatusIcons svg {
   display: block;
   height: auto;
 }
 
 .iosSignal {
-  width: 5.08cqw;
+  width: 4.89cqw;
 }
 
 .iosWifi {
-  width: 4.47cqw;
+  width: 4.35cqw;
 }
 
 .iosBattery {
-  width: 7.16cqw;
-}
-
-.iosTopBar {
-  position: relative;
-  display: flex;
-  flex-shrink: 0;
-  align-items: flex-start;
-  justify-content: space-between;
-  height: 21.65cqw;
-  padding: 0 3.98cqw;
-}
-
-.iosGlass,
-.iosBack,
-.iosName,
-.iosRound,
-.iosField {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 100px;
-  backdrop-filter: blur(5cqw);
-  background: rgba(247, 247, 247, 0.92);
-  box-shadow: 0 1.5cqw 4cqw rgba(0, 0, 0, 0.1);
-}
-
-.iosBack {
-  z-index: 1;
-  gap: 1.7cqw;
-  height: 9.95cqw;
-  padding: 0 1.9cqw 0 2.8cqw;
-  color: #3a3a3c;
-}
-
-.iosBack svg {
-  width: 3.1cqw;
-  height: 5.6cqw;
-}
-
-.iosBack b {
-  display: grid;
-  place-items: center;
-  width: 6cqw;
-  height: 6cqw;
-  border-radius: 50%;
-  background: #3a3a3c;
-  color: #fff;
-  font-size: 3.4cqw;
-  font-weight: 700;
-}
-
-.iosIdentity {
-  position: absolute;
-  left: 50%;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transform: translateX(-50%);
-}
-
-.iosAvatar {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  overflow: hidden;
-  width: 14.93cqw;
-  height: 14.93cqw;
-  border-radius: 50%;
-  background: #0e0e10;
-  box-shadow: 0 0.62cqw 0.5cqw rgba(0, 0, 0, 0.1);
-  place-items: center;
-}
-
-.iosAvatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.iosName {
-  gap: 1cqw;
-  height: 7.96cqw;
-  margin-top: -1.28cqw;
-  padding: 0 1.7cqw 0 3.4cqw;
-  color: #000;
-  font-size: 4.23cqw;
-  font-weight: 700;
-}
-
-.iosName svg {
-  width: 1.9cqw;
-  height: 3.4cqw;
-  color: rgba(60, 60, 67, 0.6);
-}
-
-.iosRound {
-  z-index: 1;
-  width: 9.95cqw;
-  height: 9.95cqw;
-  color: #3a3a3c;
-}
-
-.iosRound svg {
-  width: 4.5cqw;
-  height: 4.5cqw;
-}
-
-.iosTopBar .iosRound svg {
-  width: 7.3cqw;
-  height: 4.7cqw;
-}
-
-.iosTranscript {
-  display: flex;
-  min-height: 0;
-  flex: 1;
-  flex-direction: column;
-  gap: 1cqw;
-  padding: 1cqw 3.98cqw 0;
-}
-
-.iosTime {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1cqw;
-  color: rgba(60, 60, 67, 0.6);
-  font-size: 2.74cqw;
-  line-height: 5.5cqw;
-}
-
-.iosTime strong {
-  font-weight: 510;
-}
-
-.iosBubble {
-  max-width: 75.7%;
-  padding: 2.24cqw 2.99cqw;
-  border-radius: 4.6cqw;
-  font-size: 4.24cqw;
-  line-height: 1.294;
-}
-
-.iosBubble.isIn {
-  align-self: flex-start;
-  background: rgba(120, 120, 128, 0.16);
-}
-
-.iosBubble.isOut {
-  align-self: flex-end;
-  background: #0088ff;
-  color: #fff;
-}
-
-.iosCompose {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 2.99cqw;
-  padding: 1cqw 6.98cqw 6.98cqw;
-}
-
-.iosField {
-  flex: 1;
-  justify-content: flex-start;
-  height: 9.95cqw;
-  padding: 0 4.48cqw;
-  color: #d9d9d9;
-  font-size: 4.24cqw;
-  font-weight: 510;
-}
-
-.heroVideo {
-  position: absolute;
-  inset: 8% 18% 18% 9%;
-  z-index: 5;
-  width: auto;
-  height: auto;
-  border: 0;
-  border-radius: 18px;
-  object-fit: cover;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 500ms ease;
-}
-
-.heroVideo.isReady {
-  opacity: 1;
+  width: 6.97cqw;
 }
 
 .terminalChrome,
@@ -1357,9 +1260,9 @@ a {
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   transition:
-    border-color 220ms var(--ease-out-soft),
-    box-shadow 220ms var(--ease-out-soft),
-    translate 260ms var(--ease-out-soft);
+    border-color var(--motion-fast) var(--ease-out-soft),
+    box-shadow var(--motion-fast) var(--ease-out-soft),
+    translate 180ms var(--ease-out-soft);
 }
 
 .featureCard:hover {
@@ -1640,21 +1543,18 @@ a {
   20% {
     opacity: 0;
     transform: translateY(6px) scale(0.92);
-    filter: blur(4px);
   }
 
   32%,
   86% {
     opacity: 1;
     transform: translateY(0) scale(1);
-    filter: blur(0);
   }
 
   96%,
   100% {
     opacity: 0;
     transform: translateY(0) scale(1);
-    filter: blur(3px);
   }
 }
 
@@ -1935,17 +1835,19 @@ a {
 }
 
 .artTypeMask {
+  transform-box: fill-box;
+  transform-origin: left center;
   animation: artTypeLine 2.4s steps(14, end) infinite;
 }
 
 @keyframes artTypeLine {
   0% {
-    width: 0;
+    transform: scaleX(0);
   }
 
   58%,
   100% {
-    width: 88px;
+    transform: scaleX(1);
   }
 }
 
@@ -2087,12 +1989,12 @@ a {
 }
 
 .priceAmount small {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   letter-spacing: -0.01em;
 }
 
 .priceCardPro .priceAmount strong {
-  color: var(--color-accent-pop);
+  color: var(--color-accent-text);
 }
 
 .priceLead {
@@ -2139,7 +2041,7 @@ a {
 .priceCardPro .priceList li::before {
   border-color: color-mix(in srgb, var(--color-accent-pop) 28%, transparent);
   background: color-mix(in srgb, var(--color-accent-pop) 8%, transparent);
-  color: var(--color-accent-pop);
+  color: var(--color-accent-text);
 }
 
 .priceCta {
@@ -2253,6 +2155,18 @@ a {
   box-shadow: 0 0 0 2px var(--color-accent-soft);
 }
 
+/* Clipboard blocked: the text is selected for a manual copy, and the button
+   says so instead of pretending it worked. */
+.copyCommand.isFailed {
+  border-color: color-mix(in srgb, var(--color-warning, var(--brand-warning)) 55%, transparent);
+}
+
+.copyCommand.isFailed .copyCommandHint {
+  opacity: 1;
+  translate: 0 0;
+  color: var(--brand-warning);
+}
+
 .copyCommand.isCopied .copyCommandIcon {
   animation: popIn 420ms var(--ease-spring);
 }
@@ -2280,28 +2194,30 @@ a {
 .copyCommand:hover .copyCommandPrompt,
 .copyCommand:focus-visible .copyCommandPrompt,
 .copyCommand.isCopied .copyCommandPrompt {
-  color: var(--color-accent-pop);
+  color: var(--color-accent-text);
 }
 
+/* Wraps instead of scrolling so the code never becomes a keyboard-unreachable
+   scroll region inside the button. */
 .copyCommandText {
   min-width: 0;
   flex: 1;
-  overflow-x: auto;
-  white-space: nowrap;
-  scrollbar-width: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .copyCommandHint {
   color: var(--color-text-muted);
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   user-select: none;
   opacity: 0;
   translate: 8px 0;
   transition:
-    opacity 200ms var(--ease-out-soft),
-    translate 240ms var(--ease-out-soft);
+    opacity var(--motion-fast) var(--ease-out-soft),
+    translate 180ms var(--ease-out-soft);
 }
 
 .copyCommand:hover .copyCommandHint,
@@ -2331,7 +2247,7 @@ a {
 }
 
 .copyCommand.isCopied .copyCommandIcon {
-  color: var(--color-accent-pop);
+  color: var(--color-accent-text);
   opacity: 1;
 }
 
@@ -2342,13 +2258,14 @@ a {
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: 10;
-  height: var(--footer-h);
+  z-index: var(--z-footer-bar);
+  height: calc(var(--footer-h) + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 0 var(--page-pad);
+  padding: 0 max(var(--page-pad), env(safe-area-inset-right)) env(safe-area-inset-bottom)
+    max(var(--page-pad), env(safe-area-inset-left));
   border-top: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text-muted);
@@ -2365,6 +2282,7 @@ a {
 
 .builtBy {
   display: inline-flex;
+  min-height: 24px;
   align-items: center;
   gap: 8px;
   color: inherit;
@@ -2526,8 +2444,8 @@ a {
   padding: 3px 8px;
   border-radius: var(--radius-pill);
   background: var(--color-accent-soft);
-  color: var(--color-accent-pop);
-  font-size: 0.625rem;
+  color: var(--color-accent-text);
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -2631,8 +2549,8 @@ a {
   cursor: pointer;
   transition:
     filter var(--motion-fast) ease,
-    translate 240ms var(--ease-spring),
-    scale 240ms var(--ease-spring),
+    translate var(--motion-fast) var(--ease-spring),
+    scale var(--motion-fast) var(--ease-spring),
     opacity var(--motion-fast) ease;
   text-decoration: none;
 }
@@ -2756,7 +2674,7 @@ a {
   padding: 5px 8px;
   border-radius: var(--radius-pill);
   background: color-mix(in srgb, currentColor 16%, transparent);
-  font-size: 0.625rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1;
@@ -2795,11 +2713,14 @@ a {
   text-transform: none;
 }
 
-.siteFooterGroup nav {
+.siteFooterGroup ul {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .siteFooterGroup a,
@@ -3158,7 +3079,7 @@ a {
   }
 
   .copyCommand {
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
 
   .copyCommandHint {
@@ -3177,13 +3098,15 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Motion is switched off rather than shortened: a 0.01ms loop still runs a
+     frame per cycle and blurred entrances still flash. Every animated element
+     is authored so its resting state is the one that carries meaning. */
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    animation: none !important;
+    transition: none !important;
   }
 
   /* Dropping the animations entirely leaves each illustration in its authored
@@ -3194,7 +3117,7 @@ a {
   }
 
   .artTypeMask {
-    width: 88px;
+    transform: scaleX(1);
   }
 
   .artCaret {

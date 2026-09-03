@@ -1,14 +1,29 @@
 import type { Metadata } from "next";
+import { IosViewerCta } from "../../../components/ios-viewer-cta";
 import { getToken } from "../../../lib/auth-server";
 import { getDashboardBillingState } from "../../../lib/dashboard-server";
 import { DashboardPageHeader } from "../dashboard-page-header";
 import { DashboardBillingActions } from "./billing-client";
+import { PlanCard } from "./plan-card";
 
 export const metadata: Metadata = {
   title: "Billing",
   description: "Manage Wrapper billing and Pro checkout.",
   robots: { index: false, follow: false },
 };
+
+const FREE_FEATURES = [
+  "Wrap zsh, bash, and fish",
+  "Attach from the same computer",
+  "Sessions stay on your machine",
+] as const;
+
+const PRO_FEATURES = [
+  "Everything in Free",
+  "Attach from another device",
+  "Share a session, revoke anytime",
+  "iPhone viewer app",
+] as const;
 
 export default async function DashboardBillingPage({
   searchParams,
@@ -32,42 +47,25 @@ export default async function DashboardBillingPage({
       />
 
       <div className="dashboardBillingGrid">
-        <article className="dashboardPanel">
-          <div className="dashboardPanelHeader">
-            <div>
-              <span className="dashboardPanelLabel">
-                {plan === "free" ? "Current plan" : "Included"}
-              </span>
-              <h2>Free</h2>
-            </div>
-            <strong className="dashboardPlanPrice">$0</strong>
-          </div>
-          <ul className="dashboardFeatureList">
-            <li>Wrap zsh, bash, and fish</li>
-            <li>Attach from the same computer</li>
-            <li>Sessions stay on your machine</li>
-          </ul>
-        </article>
-
-        <article className="dashboardPanel dashboardProPanel">
-          <div className="dashboardPanelHeader">
-            <div>
-              <span className="dashboardPanelLabel">
-                {plan === "pro" ? "Current plan" : "Remote access"}
-              </span>
-              <h2>Pro</h2>
-            </div>
-            <p className="dashboardPlanPrice">
-              <strong>$20</strong>
-              <span>/ month</span>
-            </p>
-          </div>
-          <ul className="dashboardFeatureList">
-            <li>Everything in Free</li>
-            <li>Attach from another device</li>
-            <li>Share a session, revoke anytime</li>
-          </ul>
-        </article>
+        <PlanCard
+          name="Free"
+          label={plan === "free" ? "Current plan" : "Included"}
+          price="$0"
+          period="forever"
+          summary="Your shell, on this machine."
+          features={FREE_FEATURES}
+        />
+        <PlanCard
+          name="Pro"
+          label={plan === "pro" ? "Current plan" : "Remote access"}
+          price="$20"
+          period="/ month"
+          summary="Your shell, from another device."
+          features={PRO_FEATURES}
+          highlighted
+        >
+          <IosViewerCta variant="text" />
+        </PlanCard>
       </div>
 
       <DashboardBillingActions token={token} plan={plan} canManageBilling={canManageBilling} />

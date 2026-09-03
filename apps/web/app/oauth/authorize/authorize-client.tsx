@@ -5,6 +5,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { ConfirmDialog } from "../../../components/confirm-dialog";
 import { SocialSignInButtons } from "../../../components/social-sign-in";
 import { authClient } from "../../../lib/auth-client";
 
@@ -68,6 +69,7 @@ export function DeviceAuthorizeClient({
   const [status, setStatus] = useState<string | null>(null);
   const [deviceInfo, setDeviceInfo] = useState<GetDeviceCodeInfoResponse>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(true);
+  const [confirmDeny, setConfirmDeny] = useState(false);
 
   const client = useMemo(() => {
     if (!convexUrl) return null;
@@ -155,6 +157,7 @@ export function DeviceAuthorizeClient({
     setBusy(true);
     setError(null);
     setStatus(null);
+    setConfirmDeny(false);
     try {
       if (action === "approve") {
         const result = await client.mutation(approveDeviceCodeRef, { user_code: normalized });
@@ -198,43 +201,52 @@ export function DeviceAuthorizeClient({
         </>
       ) : null}
 
-      <label className="authLabel" htmlFor="device-user-code">
-        User code
-      </label>
-      <input
-        id="device-user-code"
-        className="authInput authCodeInput"
-        value={userCode}
-        onChange={(e) => {
-          setUserCode(e.target.value);
-          setDeviceInfo(null);
-          setStatus(null);
-          setError(null);
+      <form
+        className="authCodeForm"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void lookupCode();
         }}
-        placeholder="ABCD-1234"
-        autoComplete="off"
-        autoCapitalize="characters"
-        spellCheck={false}
-        maxLength={32}
-      />
+      >
+        <label className="authLabel" htmlFor="device-user-code">
+          User code
+        </label>
+        <input
+          id="device-user-code"
+          className="authInput authCodeInput"
+          value={userCode}
+          onChange={(e) => {
+            setUserCode(e.target.value);
+            setDeviceInfo(null);
+            setStatus(null);
+            setError(null);
+          }}
+          placeholder="ABCD-1234"
+          autoComplete="one-time-code"
+          autoCapitalize="characters"
+          spellCheck={false}
+          inputMode="text"
+          maxLength={32}
+          aria-invalid={error && !deviceInfo ? true : undefined}
+          aria-describedby={`device-user-code-hint${error ? " device-auth-error" : ""}`}
+        />
+        <p id="device-user-code-hint" className="authHint">
+          The code printed by <code>wrapper auth login</code>, for example ABCD-1234.
+        </p>
 
-      <div className="authActions">
-        <button
-          type="button"
-          className="social-btn"
-          onClick={() => void lookupCode()}
-          disabled={busy}
-        >
-          {busy ? "Checking…" : "Check code"}
-        </button>
-      </div>
+        <div className="authActions">
+          <button type="submit" className="social-btn" disabled={busy}>
+            {busy ? "Checking…" : "Check code"}
+          </button>
+        </div>
+      </form>
 
       {deviceInfo ? (
         <section className="authInfo" aria-label="Device authorization request">
           <div className="deviceRequestHeader">
             <strong>Device request found</strong>
             <span className="deviceStatus" data-status={deviceInfo.status}>
-              {deviceInfo.status}
+              {STATUS_LABEL[deviceInfo.status]}
             </span>
           </div>
           <dl className="deviceRequestDetails">
@@ -273,7 +285,8 @@ export function DeviceAuthorizeClient({
             <button
               type="button"
               className="social-btn social-btn-danger"
-              onClick={() => void performDecision("deny")}
+              aria-haspopup="dialog"
+              onClick={() => setConfirmDeny(true)}
               disabled={busy || !authenticated}
             >
               Deny
@@ -281,11 +294,17 @@ export function DeviceAuthorizeClient({
           </div>
         </div>
       ) : null}
-      {status ? (
-        <output className="authSuccess" aria-live="polite">
-          {status}
-        </output>
-      ) : null}
+      <ConfirmDialog
+        open={confirmDeny}
+        danger
+        title="Deny this device?"
+        description={`The CLI waiting on code ${deviceInfo?.userCode ?? userCode} will be told the request was refused and will have to start over.`}
+        confirmLabel="Deny device"
+        onConfirm={() => void performDecision("deny")}
+        onCancel={() => setConfirmDeny(false)}
+      />
+      {busy ? <output className="visuallyHidden">Working…</output> : null}
+      {status ? <output className="authSuccess">{status}</output> : null}
       {status === "Device code approved" || deviceInfo?.status === "approved" ? (
         <Link
           className="social-btn social-btn-primary"
@@ -295,13 +314,19 @@ export function DeviceAuthorizeClient({
         </Link>
       ) : null}
       {error ? (
-        <p className="authError" role="alert">
+        <p id="device-auth-error" className="authError" role="alert">
           {error}
         </p>
       ) : null}
     </div>
   );
 }
+
+const STATUS_LABEL: Record<NonNullable<GetDeviceCodeInfoResponse>["status"], string> = {
+  pending: "Awaiting your decision",
+  approved: "Approved",
+  denied: "Denied",
+};
 
 function normalizeUserCode(raw: string): string {
   const normalized = raw.trim().toUpperCase().replaceAll(/\s+/g, "-");

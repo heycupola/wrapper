@@ -13,7 +13,7 @@ export default function TermsOfServicePage() {
   return (
     <LegalPage
       title="Terms of Service"
-      lastUpdated="August 26, 2026"
+      lastUpdated="2026-08-26"
       introduction="These Terms form an agreement between you and Cupola Labs, LLC concerning Wrapper, its CLI, website, backend, relay, documentation, and mobile clients (collectively, the Service). By creating an account or using the Service, you agree to these Terms and the Privacy Policy."
     >
       <LegalSection title="Eligibility and accounts">

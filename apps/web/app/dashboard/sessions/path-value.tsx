@@ -26,17 +26,20 @@ export function DashboardPathValue({ value }: { value: string }) {
   }
 
   return (
-    <button
-      type="button"
-      className="dashboardPathValue"
-      aria-label="Copy working directory"
-      aria-describedby={tooltipId}
-      onClick={() => void copy()}
-    >
-      <code>{value}</code>
-      <span id={tooltipId} className="dashboardPathTooltip" role="tooltip">
-        {copied ? "Copied" : value}
-      </span>
-    </button>
+    <>
+      <button
+        type="button"
+        className={`dashboardPathValue ${copied ? "isCopied" : ""}`}
+        aria-label={`Copy working directory ${value}`}
+        aria-describedby={tooltipId}
+        onClick={() => void copy()}
+      >
+        <code>{value}</code>
+        <span id={tooltipId} className="dashboardPathTooltip" role="tooltip">
+          {copied ? "Copied" : value}
+        </span>
+      </button>
+      <output className="visuallyHidden">{copied ? "Working directory copied" : ""}</output>
+    </>
   );
 }

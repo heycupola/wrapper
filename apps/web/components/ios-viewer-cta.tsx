@@ -1,4 +1,5 @@
 import { getIosAppTarget } from "../lib/ios-app";
+import { NewTabNote } from "./external-link";
 
 type IosViewerCtaVariant = "badge" | "primary" | "secondary" | "link" | "text";
 
@@ -36,6 +37,7 @@ export function IosViewerCta({ variant = "badge", className, note = false }: Ios
         {storeLike ? <AppleMark /> : null}
         <span>{target.label}</span>
         {target.beta && storeLike ? <span className="iosViewerCtaBetaMark">Beta</span> : null}
+        {target.external ? <NewTabNote /> : null}
       </a>
       {note ? <small className="iosViewerCtaNote">{target.note}</small> : null}
     </span>

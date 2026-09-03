@@ -49,7 +49,12 @@ html.lenis body {
 
 .landingScroller {
   width: 100%;
-  outline: none;
+}
+
+/* The skip link lands here; the ring sits inside the edge so the fixed header
+   and footer bar never clip it. */
+.landingScroller:focus-visible {
+  outline-offset: -3px;
 }
 
 .landingTrack {
@@ -97,9 +102,9 @@ html.lenis body {
 
 .landingHeroTitle {
   max-width: 720px;
-  font-size: clamp(3.5rem, min(5.4vw, 9vh), 5rem);
-  line-height: 0.94;
-  letter-spacing: -0.065em;
+  font-size: clamp(2.6rem, min(3.45vw, 7.4vh), 3.5rem);
+  line-height: 0.96;
+  letter-spacing: -0.06em;
 }
 
 .landingSectionTitle {
@@ -141,7 +146,7 @@ html.lenis body {
 }
 
 .landingTextLink:hover {
-  color: var(--color-accent-pop);
+  color: var(--color-accent-text);
   text-decoration-color: currentColor;
 }
 
@@ -175,28 +180,33 @@ html.lenis body {
   padding-bottom: 0;
 }
 
+/* The hero is the one section allowed past --content-max: the MacBook bleeds
+   off the left edge of the viewport and the copy keeps a readable column on
+   the right. --hero-bleed is the distance from the inner box to that edge. */
 .landingHeroInner {
+  --hero-max: 1680px;
+  --hero-bleed: max(var(--page-pad), (100vw - var(--hero-max)) / 2);
   display: grid;
-  grid-template-columns: minmax(350px, 0.78fr) minmax(600px, 1.22fr);
-  gap: clamp(28px, 4vw, 72px);
+  grid-template-columns: minmax(0, 1fr) clamp(320px, 27vw, 460px);
+  gap: clamp(24px, 3.5vw, 64px);
   align-items: center;
+  width: min(100%, var(--hero-max));
 }
 
 .landingHeroCopy {
   position: relative;
   z-index: 3;
   align-self: center;
-  padding-bottom: 7vh;
+  padding-bottom: 4vh;
 }
 
 .landingHeroMedia {
   position: relative;
-  align-self: end;
-  width: calc(100% + 7vw);
-  height: min(78dvh, 780px);
+  z-index: 2;
+  align-self: stretch;
+  min-width: 0;
   min-height: 560px;
-  margin-right: -7vw;
-  pointer-events: none;
+  margin-left: calc(-1 * var(--hero-bleed));
 }
 
 .connectionSteps {
@@ -269,7 +279,7 @@ html.lenis body {
   background: var(--color-surface-strong);
   color: var(--color-text-muted);
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   box-shadow: 0 16px 40px -28px color-mix(in srgb, var(--color-text) 55%, transparent);
   transform: translateX(-50%);
 }
@@ -318,6 +328,18 @@ html.lenis body {
 .connectionPacket {
   fill: var(--color-accent-pop);
   filter: drop-shadow(0 0 5px var(--color-accent-pop));
+  offset-path: path("M126 148 C 276 148, 520 148, 674 148");
+  animation: connectionPacket 2.8s linear infinite;
+}
+
+@keyframes connectionPacket {
+  from {
+    offset-distance: 0%;
+  }
+
+  to {
+    offset-distance: 100%;
+  }
 }
 
 @keyframes connectionDash {
@@ -549,122 +571,140 @@ html.lenis body {
   position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   width: 100%;
-  max-width: 740px;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-strong);
-  box-shadow: var(--color-shadow);
+  max-width: 780px;
 }
 
 .landingPriceCard {
   display: flex;
-  min-height: 500px;
+  min-height: 0;
   flex-direction: column;
-  padding: clamp(24px, 3vw, 36px);
-  background: color-mix(in srgb, var(--color-surface-strong) 92%, transparent);
+  padding: clamp(28px, 3.4vw, 36px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-surface-strong) 88%, transparent);
+  box-shadow: 0 20px 46px -42px color-mix(in srgb, var(--color-text) 60%, transparent);
+  transition:
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease,
+    box-shadow var(--motion-mid) var(--ease-out-soft),
+    translate var(--motion-mid) var(--ease-out-soft);
 }
 
-.landingPriceCard + .landingPriceCard {
-  border-left: 1px solid var(--color-border);
+.landingPriceCard:hover {
+  z-index: 2;
+  border-color: color-mix(in srgb, var(--color-text) 22%, var(--color-border));
+  background: var(--color-surface-strong);
+  box-shadow: 0 26px 54px -38px color-mix(in srgb, var(--color-text) 42%, transparent);
+  translate: 0 -2px;
 }
 
 .landingPriceCardPro {
-  background: color-mix(in srgb, var(--color-accent-pop) 5%, var(--color-surface-strong));
+  border-color: color-mix(in srgb, var(--color-accent-pop) 36%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-pop) 8%, var(--color-surface-strong));
+  box-shadow: 0 24px 56px -38px color-mix(in srgb, var(--color-accent-pop) 42%, transparent);
+}
+
+.landingPriceCardPro:hover {
+  border-color: color-mix(in srgb, var(--color-accent-pop) 52%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-pop) 11%, var(--color-surface-strong));
+  box-shadow: 0 28px 60px -34px color-mix(in srgb, var(--color-accent-pop) 52%, transparent);
 }
 
 .landingPriceCard > header {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  min-height: 116px;
-}
-
-.landingPriceCard header > div {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
+  display: grid;
   gap: 10px;
 }
 
-.landingPriceCard header > div > span {
-  font-size: 1rem;
-  font-weight: 700;
+.landingPriceCard h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
   letter-spacing: -0.04em;
 }
 
 .landingPriceCard header small {
   display: inline-flex;
-  margin-left: 5px;
-  padding: 4px 7px;
+  padding: 5px 10px;
   border-radius: var(--radius-pill);
   background: var(--color-accent-soft);
-  color: var(--color-accent-pop);
-  font-size: 0.58rem;
+  /* Darkened so the 12px badge clears 4.5:1 on the soft accent background. */
+  color: color-mix(in srgb, var(--color-accent-pop) 78%, var(--color-text));
+  font-size: 0.75rem;
   font-weight: 600;
-  vertical-align: 2px;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
-.landingPriceCard header > div p {
-  max-width: 190px;
+.landingPriceCard header > p:not(.landingPrice) {
+  max-width: 28ch;
   color: var(--color-text-muted);
-  font-size: 0.75rem;
-  line-height: 1.42;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
 }
 
 .landingPrice {
+  font-variant-numeric: tabular-nums;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  flex: none;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .landingPrice strong {
-  font-size: clamp(2rem, 3vw, 2.75rem);
+  font-size: clamp(2.75rem, 4.2vw, 3.5rem);
   font-weight: 600;
-  line-height: 0.9;
-  letter-spacing: -0.065em;
+  line-height: 0.95;
+  letter-spacing: -0.06em;
 }
 
 .landingPrice span {
   color: var(--color-text-muted);
-  font-size: 0.65rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .landingPriceCardPro .landingPrice strong {
-  color: var(--color-accent-pop);
+  color: var(--color-accent-text);
 }
 
 .landingPriceCard ul {
   display: grid;
   gap: 14px;
-  margin: 6px 0 30px;
-  padding-top: 24px;
+  margin: 8px 0 28px;
+  padding-top: 22px;
   border-top: 1px solid var(--color-border);
   list-style: none;
 }
 
 .landingPriceCard li {
   display: grid;
-  grid-template-columns: 17px minmax(0, 1fr);
-  gap: 9px;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
   align-items: start;
-  font-size: 0.78rem;
-  line-height: 1.38;
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
 }
 
 .landingPriceCard li::before {
   display: grid;
-  width: 16px;
-  height: 16px;
-  margin-top: 1px;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
   border: 1px solid color-mix(in srgb, var(--color-text) 15%, transparent);
   border-radius: 50%;
   color: var(--color-text-muted);
   content: "✓";
-  font-size: 0.5rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   place-items: center;
 }
@@ -672,26 +712,27 @@ html.lenis body {
 .landingPriceCardPro li::before {
   border-color: color-mix(in srgb, var(--color-accent-pop) 40%, transparent);
   background: var(--color-accent-soft);
-  color: var(--color-accent-pop);
+  color: var(--color-accent-text);
 }
 
 .landingPriceCta {
   display: inline-flex;
-  min-height: 46px;
+  min-height: 48px;
   align-items: center;
   justify-content: center;
   margin-top: auto;
-  padding: 0 16px;
+  padding: 0 20px;
   border: 0;
   border-radius: var(--radius-pill);
   background: #e8e8e8;
   color: var(--color-text);
-  font-size: 0.78rem;
+  font-size: 0.9375rem;
   font-weight: 600;
+  letter-spacing: -0.02em;
   transition:
     filter var(--motion-fast) ease,
-    translate 240ms var(--ease-spring),
-    scale 240ms var(--ease-spring);
+    translate var(--motion-fast) var(--ease-spring),
+    scale var(--motion-fast) var(--ease-spring);
 }
 
 .landingPriceCta:hover {
@@ -756,7 +797,7 @@ html.lenis body {
   border: 1px solid var(--color-border);
   border-radius: 9px;
   background: color-mix(in srgb, var(--color-surface-strong) 72%, transparent);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   place-items: center;
 }
@@ -829,11 +870,23 @@ html.lenis body {
   background: var(--color-surface-strong);
 }
 
-.landingInstallNote {
+.landingInstallNote,
+.landingInstallHint,
+.landingPriceCardNote {
   margin-top: 0;
   color: var(--color-text-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.45;
+}
+
+/* Two commands is a choice; one line says which to pick. */
+.landingInstallHint {
+  margin-top: -4px;
+}
+
+.landingPriceCardNote {
+  margin-top: 10px;
+  text-align: center;
 }
 
 .iosViewerCtaWrap {
@@ -873,7 +926,7 @@ html.lenis body {
   padding: 3px 6px;
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.16);
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -924,14 +977,14 @@ html.lenis body {
 .iosViewerCtaSecondary:hover,
 .iosViewerCtaLink:hover,
 .iosViewerCtaText:hover {
-  color: var(--color-accent-pop);
+  color: var(--color-accent-text);
   text-decoration-color: currentColor;
 }
 
 .iosViewerCtaNote {
   max-width: 320px;
   color: var(--color-text-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.45;
 }
 
@@ -973,16 +1026,33 @@ html.lenis body {
   justify-content: space-between;
   gap: 24px;
   color: var(--color-text-muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
 }
 
-.landingFinalFooter nav {
+.landingFinalFooter nav ul {
   display: flex;
+  flex-wrap: wrap;
   gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .landingFinalFooter a {
   transition: color var(--motion-fast) ease;
+}
+
+/* Fingers, not pointers: give the dense footer links a 44px hit area without
+   changing how they read on a desktop. */
+@media (pointer: coarse) {
+  .landingFinalFooter a,
+  .landingTextLink,
+  .iosViewerCtaLink,
+  .iosViewerCtaText {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
 }
 
 .landingFinalFooter a:hover {
@@ -1021,7 +1091,9 @@ html.lenis body {
   .landingHeader {
     position: fixed;
     min-height: var(--header-h);
-    padding-block: 12px;
+    padding-block: max(12px, env(safe-area-inset-top)) 12px;
+    padding-inline: max(var(--page-pad), env(safe-area-inset-left))
+      max(var(--page-pad), env(safe-area-inset-right));
     border-bottom-color: transparent;
     background: color-mix(in srgb, var(--color-bg) 92%, transparent);
     backdrop-filter: blur(18px) saturate(1.1);
@@ -1078,17 +1150,14 @@ html.lenis body {
   .landingScroller.isHorizontal .revealItem {
     opacity: 0;
     transform: translateY(18px);
-    filter: blur(6px);
     transition:
       opacity var(--motion-slow) var(--ease-out-quint) var(--reveal-delay, 0ms),
-      transform var(--motion-slow) var(--ease-out-quint) var(--reveal-delay, 0ms),
-      filter var(--motion-slow) var(--ease-out-quint) var(--reveal-delay, 0ms);
+      transform var(--motion-slow) var(--ease-out-quint) var(--reveal-delay, 0ms);
   }
 
   .landingScroller.isHorizontal .landingSection.hasEntered .revealItem {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
   }
 
   .landingScroller.isHorizontal .revealStack > .revealItem:nth-child(2) {
@@ -1111,11 +1180,9 @@ html.lenis body {
   .landingScroller.isHorizontal .landingPriceGrid > article {
     opacity: 0;
     transform: translateY(20px);
-    filter: blur(5px);
     transition:
       opacity var(--motion-slow) var(--ease-out-quint),
       transform var(--motion-slow) var(--ease-out-quint),
-      filter var(--motion-slow) var(--ease-out-quint),
       border-color var(--motion-fast) ease,
       background-color var(--motion-fast) ease,
       box-shadow var(--motion-mid) var(--ease-out-soft),
@@ -1126,7 +1193,6 @@ html.lenis body {
   .landingScroller.isHorizontal .landingSection.hasEntered .landingPriceGrid > article {
     opacity: 1;
     transform: translateY(0);
-    filter: blur(0);
   }
 
   .landingScroller.isHorizontal .landingSection.hasEntered .landingTrustGrid > article:nth-child(2),
@@ -1170,7 +1236,7 @@ html.lenis body {
   }
 
   .landingHeroTitle {
-    font-size: clamp(3.15rem, min(5.6vw, 9.5vh), 4.45rem);
+    font-size: clamp(2.4rem, min(3.6vw, 7.6vh), 3.2rem);
   }
 
   .landingSectionTitle {
@@ -1178,7 +1244,6 @@ html.lenis body {
   }
 
   .landingHeroMedia {
-    height: 76dvh;
     min-height: 470px;
   }
 
@@ -1206,20 +1271,16 @@ html.lenis body {
   }
 
   .landingFeatureCard p {
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
 
   .landingPriceCard {
-    min-height: 430px;
-    padding: 22px;
-  }
-
-  .landingPriceCard > header {
-    min-height: 98px;
+    padding: 24px;
   }
 
   .landingPriceCard ul {
-    gap: 10px;
+    gap: 12px;
+    margin-bottom: 22px;
     padding-top: 18px;
   }
 
@@ -1230,12 +1291,7 @@ html.lenis body {
 
 @media (max-width: 1200px) {
   .landingHeroInner {
-    grid-template-columns: minmax(320px, 0.75fr) minmax(540px, 1.25fr);
-  }
-
-  .landingHeroMedia {
-    width: calc(100% + 4vw);
-    margin-right: -4vw;
+    grid-template-columns: minmax(0, 1fr) clamp(300px, 30vw, 360px);
   }
 
   .landingSplit,
@@ -1263,6 +1319,8 @@ html.lenis body {
     padding-block: clamp(72px, 10vw, 112px);
     overflow: hidden;
     contain: paint;
+    /* Anchor jumps (#start, #pricing) land under the sticky header otherwise. */
+    scroll-margin-top: var(--header-h, 64px);
   }
 
   .landingHero {
@@ -1296,25 +1354,17 @@ html.lenis body {
     font-size: clamp(2.6rem, 8vw, 4rem);
   }
 
+  .landingHeroCopy {
+    order: -1;
+  }
+
   .landingHeroMedia {
-    width: 100%;
-    height: clamp(390px, 67vw, 580px);
+    align-self: auto;
+    width: calc(100% + var(--page-pad));
+    height: auto;
     min-height: 0;
-    margin: 0;
-  }
-
-  .landingHero .macbook {
-    top: 100%;
-    left: 52%;
-    width: 136%;
-    margin-top: -48%;
-  }
-
-  .landingHero .iphone {
-    top: 100%;
-    right: 4%;
-    width: 39%;
-    margin-top: -58%;
+    margin: 0 0 0 calc(-1 * var(--page-pad));
+    aspect-ratio: 100 / 68;
   }
 
   .landingConnectionVisual {
@@ -1357,6 +1407,7 @@ html.lenis body {
 
 @media (max-width: 760px) {
   .landingSection {
+    padding-block: clamp(56px, 14vw, 72px);
     padding-right: 20px;
     padding-left: 20px;
   }
@@ -1387,20 +1438,12 @@ html.lenis body {
     min-height: 48px;
   }
 
+  /* Stacked scene (hero-demo.css): the Mac's height plus the phone's, less
+     the sliver where the phone overlaps the Mac's base. */
   .landingHeroMedia {
-    height: 330px;
-  }
-
-  .landingHero .macbook {
-    left: 58%;
-    width: 155%;
-    margin-top: -54%;
-  }
-
-  .landingHero .iphone {
-    right: 1%;
-    width: 51%;
-    margin-top: -71%;
+    width: 100%;
+    margin-left: 0;
+    aspect-ratio: 100 / 178;
   }
 
   .landingSplit,
@@ -1410,40 +1453,89 @@ html.lenis body {
   }
 
   .connectionFlow {
-    min-height: 390px;
+    min-height: 340px;
+    max-width: 100%;
     border-radius: var(--radius-md);
   }
 
   .connectionStatus {
-    top: 9%;
+    top: 10px;
+    max-width: calc(100% - 16px);
+    min-height: 32px;
+    padding: 0 12px;
+    overflow: hidden;
+    font-size: 0.6875rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .connectionRoutes {
+    inset: 12% 0 18%;
+    width: 100%;
+    height: 70%;
   }
 
   .connectionNode {
-    top: 34%;
-    width: 90px;
+    top: 30%;
+    width: max-content;
+    max-width: min(42%, 118px);
   }
 
   .connectionViewer {
-    left: 1%;
+    left: 10px;
   }
 
   .connectionHost {
-    right: 1%;
+    right: 10px;
+  }
+
+  .connectionNode small {
+    font-size: 0.5rem;
+  }
+
+  .connectionNode strong {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 0.625rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .connectionPhone {
+    width: 34px;
+    height: 58px;
+    border-radius: 10px;
   }
 
   .connectionLaptop {
-    width: 84px;
-    height: 56px;
+    width: 56px;
+    height: 38px;
+    border-radius: 8px 8px 3px 3px;
+  }
+
+  .connectionLaptop::after {
+    right: 0;
+    bottom: -5px;
+    left: 0;
+    height: 5px;
   }
 
   .connectionDirectLabel {
-    top: 37%;
+    top: 33%;
     font-size: 0.5rem;
   }
 
   .connectionRelay {
-    bottom: 12%;
-    min-width: 136px;
+    bottom: 10px;
+    min-width: 0;
+    max-width: calc(100% - 20px);
+    gap: 6px;
+    padding: 10px 14px 8px;
+  }
+
+  .connectionRelay span {
+    font-size: 0.5rem;
+    text-align: center;
   }
 
   .landingTrustGrid {
@@ -1466,21 +1558,31 @@ html.lenis body {
   .landingFeatureCardWide .cardArt {
     width: 100%;
     max-width: none;
-    min-height: 120px;
+    max-height: none;
+    min-height: 70px;
+    flex: 1;
+    align-self: auto;
   }
 
   .landingPriceGrid {
     grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
   }
 
   .landingPriceCard {
-    min-height: 450px;
-    padding: 26px 22px;
+    padding: 28px 24px;
   }
 
-  .landingPriceCard + .landingPriceCard {
-    border-top: 1px solid var(--color-border);
-    border-left: 0;
+  .landingPriceCard h3 {
+    font-size: 1.375rem;
+  }
+
+  .landingPrice strong {
+    font-size: clamp(3rem, 14vw, 3.5rem);
+  }
+
+  .landingPriceCta {
+    width: 100%;
   }
 
   .landingInstallPanel {
@@ -1491,7 +1593,7 @@ html.lenis body {
   .landingCommands .copyCommand {
     min-height: 56px;
     padding-inline: 13px;
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -1511,6 +1613,138 @@ html.lenis body {
     width: 100%;
     justify-content: center;
   }
+
+  .connectionFlow {
+    min-height: 300px;
+  }
+
+  .connectionNode {
+    top: 28%;
+    max-width: min(40%, 104px);
+  }
+
+  .connectionViewer {
+    left: 8px;
+  }
+
+  .connectionHost {
+    right: 8px;
+  }
+
+  .connectionLaptop {
+    width: 48px;
+    height: 32px;
+  }
+
+  .connectionLaptop::after {
+    right: 0;
+    bottom: -4px;
+    left: 0;
+    height: 4px;
+  }
+
+  .connectionRelay {
+    padding: 8px 12px 7px;
+  }
+}
+
+/* ── Arrival ───────────────────────────────────────────────────────────────
+   First paint and scroll reveals. Everything here is opacity + transform, runs
+   once, and is skipped entirely under reduced motion (see globals.css). */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Chrome settles first, then the hero copy, then the devices. The copy uses
+     an animation rather than the section reveal because the hero is already
+     "entered" when the page hydrates, so a transition would never run. */
+  .landingHeader {
+    animation: landingChromeIn var(--motion-slow) var(--ease-out-quint) backwards;
+  }
+
+  .landingFooterBar {
+    animation: landingChromeIn var(--motion-slow) var(--ease-out-quint) 320ms backwards;
+  }
+
+  .landingHeroCopy > .revealItem {
+    animation: riseIn var(--motion-slow) var(--ease-out-quint) backwards;
+    animation-delay: calc(120ms + var(--arrive, 0) * 80ms);
+  }
+
+  .landingHeroCopy > .revealItem:nth-child(2) {
+    --arrive: 1;
+  }
+
+  .landingHeroCopy > .revealItem:nth-child(3) {
+    --arrive: 2;
+  }
+
+  .landingHeroCopy > .revealItem:nth-child(4) {
+    --arrive: 3;
+  }
+
+  .demoStage .macbook {
+    animation: deviceIn 820ms var(--ease-out-quint) 80ms backwards;
+  }
+
+  .demoStage .iphone {
+    animation: deviceIn 820ms var(--ease-out-quint) 260ms backwards;
+  }
+
+  /* Stacked layout: items hide until the observer in horizontal-scroll.tsx
+     marks them, then rise in place. Cards keep their hover transitions since
+     this is an animation, not a transition on the same properties. */
+  .landingScroller.isStacked
+    .landingSection:not(.landingHero)
+    :is(.revealItem, .landingTrustGrid > article, .landingPriceGrid > article):not(.isRevealed) {
+    opacity: 0;
+  }
+
+  .landingScroller.isStacked .landingSection:not(.landingHero) .isRevealed {
+    animation: riseIn var(--motion-slow) var(--ease-out-quint) backwards;
+    animation-delay: var(--reveal-delay, 0ms);
+  }
+
+  .landingScroller.isStacked .revealStack > .revealItem:nth-child(2),
+  .landingScroller.isStacked .landingTrustGrid > article:nth-child(2),
+  .landingScroller.isStacked .landingPriceGrid > article:nth-child(2) {
+    --reveal-delay: 70ms;
+  }
+
+  .landingScroller.isStacked .revealStack > .revealItem:nth-child(3),
+  .landingScroller.isStacked .landingTrustGrid > article:nth-child(3) {
+    --reveal-delay: 130ms;
+  }
+
+  .landingScroller.isStacked .revealStack > .revealItem:nth-child(4),
+  .landingScroller.isStacked .landingTrustGrid > article:nth-child(4) {
+    --reveal-delay: 190ms;
+  }
+
+  .landingScroller.isStacked .revealStack > .revealItem:nth-child(5),
+  .landingScroller.isStacked .landingTrustGrid > article:nth-child(5) {
+    --reveal-delay: 250ms;
+  }
+}
+
+@keyframes landingChromeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes deviceIn {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1522,10 +1756,17 @@ html.lenis body {
     animation: none;
     stroke-dasharray: none;
   }
+
+  .landingPriceCard:hover,
+  .landingPriceCardPro:hover {
+    translate: none;
+  }
 }
 
 @media (forced-colors: active) {
-  .landingPriceCtaPrimary {
+  .landingPriceCtaPrimary,
+  .landingPriceCard,
+  .landingPriceCardPro {
     border: 1px solid ButtonText;
   }
 
