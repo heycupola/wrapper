@@ -586,13 +586,16 @@
 }
 
 /* A frosted pill under the handwriting keeps it legible over the busiest
-   parts of the wallpaper without turning the note into a UI card. */
+   parts of the wallpaper without turning the note into a UI card. The tint
+   is set for the light wallpaper, whose pale sky and warm corner sit right
+   under the note (white on them needs about half-strength navy to clear
+   4.5:1); the dark wallpaper below eases it off. */
 .demoNote {
   max-width: 60cqw;
   margin: 0;
   padding: 0.35cqw 1cqw 0.45cqw;
   border-radius: 1.4cqw;
-  background: rgba(8, 20, 48, 0.28);
+  background: rgba(8, 20, 48, 0.55);
   color: #fff;
   font-family: var(--font-hand), "Bradley Hand", "Segoe Print", cursive;
   font-size: 2.45cqw;
@@ -627,8 +630,10 @@
   scale: -1 -1;
 }
 
+/* Waiting notes step back a little; in colour, not opacity, so the tint
+   behind them keeps doing its job. */
 .demoNote.isQuiet {
-  opacity: 0.82;
+  color: rgba(255, 255, 255, 0.86);
 }
 
 .demoNoteArrow {
@@ -1931,59 +1936,94 @@
 
 /* ── Compact stage (stacked layout) ────────────────────────────────────── */
 
+/* Stacked under the copy, the pair keeps the desktop composition and its
+   centring, but with no column of text beside it the phone can take a larger
+   share of the Mac's width (the pair grows to match) and the terminal's type
+   steps up, so both stay legible on a tablet held upright. The stage is sized
+   by the hero media's aspect ratio (landing.css), so the Mac hangs from the
+   top and the phone's bottom edge lands just inside it. */
 @media (max-width: 1023px), (prefers-reduced-motion: reduce) {
-  /* Stacked, the Mac is wider than the stage and bleeds a little off both
-     sides, so the pair is pinned to the left rather than centred. */
   .demoStage {
-    --mw: 108cqw;
-    --bleed: calc(var(--mw) * 0.06);
-    --pw: calc(var(--mw) * 0.3);
+    --pair: 1.135;
+    --pw: calc(var(--mw) * 0.36);
+    --mac-top: 0px;
   }
 
-  /* Stacked, the stage is sized to its contents, so anchor to the bottom. */
-  .demoStage .macbook {
-    top: auto;
-    bottom: calc(var(--mw) * 0.03);
-    left: calc(-1 * var(--bleed));
-  }
-
-  .demoStage .iphone {
-    top: auto;
-    right: 0.5cqw;
-    bottom: 0;
-    left: auto;
+  .demoMacWindow .macContent {
+    font-size: 1.9cqw;
   }
 }
 
-/* Phones: side by side the pair would be thumbnails, so the scene stacks.
-   The Mac takes the full width with the terminal filling its display, and
-   the phone sits below at two thirds of the width, large enough for its own
-   controls to be tapped. The hero media's aspect ratio (landing.css) is what
-   gives the stage the height for both. */
+/* Phones: anything MacBook-shaped at this width has a display 170px tall,
+   which fits neither the terminal nor the note. So the scene flips to match
+   the visitor, who is holding a phone: the MacBook is reduced to its display
+   (bezel, notch and rounded corners, no chassis), drawn taller than 16:10 so
+   the terminal shows seven lines above the note, and the iPhone becomes the
+   main object, most of the width and cropped to its upper part, fading out
+   below the join button. The two overlap by a sliver so they read as one
+   scene. The hero media's aspect ratio (landing.css) is what gives the stage
+   the height for both. */
 @media (max-width: 760px) {
   .demoStage {
     --mw: 100cqw;
-    --pw: 60cqw;
+    --pw: 86cqw;
   }
 
+  /* Nearly square: seven lines of terminal, then a two-line note with its
+     pill button, all above where the phone overlaps the panel. */
   .demoStage .macbook {
     top: 0;
     bottom: auto;
     left: 0;
+    aspect-ratio: 1 / 0.96;
+  }
+
+  .demoStage .macbookLid {
+    inset: 0;
+    border-radius: 3.4cqw;
+  }
+
+  .demoStage .macbookScreen {
+    inset: 1.1cqw;
+    border-radius: 2.4cqw;
+  }
+
+  .demoStage .macbookNotch {
+    top: 1.1cqw;
+  }
+
+  .demoStage .macbookBase {
+    display: none;
   }
 
   .demoStage .iphone {
     top: auto;
-    right: auto;
+    right: 0;
     bottom: 0;
-    left: 20cqw;
+    left: auto;
+    aspect-ratio: 402 / 600;
+    /* The lower part of the phone fades out rather than being cut; the mask
+       also clips the shell's overhang and the drop shadow, so the shadow goes. */
+    filter: none;
+    mask-image: linear-gradient(to bottom, #000 80%, transparent 97%);
+  }
+
+  /* The shell reaches past the mask by more than its corner radius, so the
+     crop shows a phone that continues: no bottom edge, no corner starting to
+     curve inside the fade. The ring, bezel and screen are 100% tall and
+     follow; what they push lower (home indicator, key bar) is under the mask. */
+  .demoStage .iphoneShell {
+    bottom: -20cqw;
   }
 
   .demoStage .macWindow {
-    top: 9%;
+    top: 7%;
     left: 4%;
     width: 92%;
-    height: 62%;
+    height: 58%;
+    /* The window's corners scale with the screen; at this size the desktop
+       ratio gives 5px, too tight for 14px type. */
+    border-radius: 2.6cqw;
   }
 
   /* At phone widths the Dock would compete with the note for the strip under
@@ -1992,13 +2032,21 @@
     display: none;
   }
 
+  /* Menu titles keep the desktop widths, so the height only goes up enough
+     to stay visible at 3px: taller and they turn from dashes into blobs next
+     to the notch. The Apple mark, a 4px smudge at the desktop ratio, grows. */
   .macMenuPill,
   .macMenuDot {
-    height: 1.4cqw;
+    height: 0.95cqw;
   }
 
   .macMenuDot {
-    width: 1.4cqw;
+    width: 0.95cqw;
+  }
+
+  .macMenuIcon {
+    width: 2cqw;
+    height: 2cqw;
   }
 
   /* The Mac is now the width of a phone screen, so everything inside it is
@@ -2043,7 +2091,7 @@
   }
 
   .demoGuide {
-    top: 73%;
+    top: 67%;
     right: 4%;
     left: 4%;
   }
@@ -2053,6 +2101,24 @@
     padding: 1cqw 2.6cqw 1.2cqw;
     border-radius: 3cqw;
     font-size: 4.2cqw;
+  }
+
+  /* The phone is below the panel here, not beside it, so the arrows that
+     point at it turn to point down-right. */
+  .demoNoteArrow.isTrailing {
+    scale: -1 -1;
+    vertical-align: -0.15em;
+    animation-name: demoArrowNudgeDown;
+  }
+
+  @keyframes demoArrowNudgeDown {
+    0%,
+    100% {
+      translate: 0 0;
+    }
+    45% {
+      translate: 0.1em 0.08em;
+    }
   }
 
   /* Pressed keys echo in the title bar's free right half rather than under
@@ -2068,6 +2134,70 @@
     height: 8cqw;
     min-width: 8cqw;
     font-size: 4cqw;
+  }
+}
+
+/* ── Touch input ───────────────────────────────────────────────────────── */
+
+/* The guide's notes carry a keyboard phrasing and a touch phrasing; one of
+   them shows. The query is the complement of the scripts' `(hover: hover) and
+   (pointer: fine)` (use-coarse-pointer.ts), written out so it also holds
+   before hydration and in browsers without `not (…)` media queries. */
+.demoWhenTouch {
+  display: none;
+}
+
+@media (hover: none), (pointer: coarse), (pointer: none) {
+  .demoWhenKeys {
+    display: none;
+  }
+
+  .demoWhenTouch {
+    display: inline;
+  }
+
+  /* Without a keyboard the shell is display only (product-demo.tsx drops the
+     hidden input, the drag grip and the keycaps): the window stops advertising
+     affordances it no longer has, and the title bar gives the page its scroll
+     back. */
+  .demoMacWindow .macTitlebar {
+    cursor: default;
+    touch-action: auto;
+  }
+
+  .demoMacWindow .macContent {
+    cursor: default;
+  }
+
+  /* The button is the one way through the loop here, so it stops being an
+     underlined word in the handwriting and becomes a pill: a 40px target in
+     the page's sans, on its own line under the note's sentence. */
+  .demoNoteAction {
+    display: flex;
+    width: fit-content;
+    min-height: 40px;
+    align-items: center;
+    padding: 0 16px;
+    margin: 0.4em 0 0.1em;
+    border-radius: 999px;
+    background: #fff;
+    color: #10254d;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    box-shadow: 0 0.15cqw 0.6cqw rgba(0, 20, 60, 0.35);
+    transition: scale var(--motion-fast) ease;
+  }
+
+  .demoNoteAction:active {
+    scale: 0.97;
+  }
+
+  .demoNoteAction:focus-visible {
+    outline-offset: 2px;
   }
 }
 
@@ -2224,6 +2354,10 @@
     outline-color: #7aa7ff;
   }
 
+  .demoNote {
+    background: rgba(8, 20, 48, 0.34);
+  }
+
   /* Keycaps read as dark keys on a dark keyboard. */
   .demoKeys kbd,
   .demoKeycap {
@@ -2262,10 +2396,6 @@
   .demoKeycap {
     opacity: 1;
     transform: none;
-  }
-
-  .demoNote.isQuiet {
-    opacity: 0.82;
   }
 }
 

@@ -54,7 +54,16 @@ const SESSION_CWD = `${DEMO_HOME_DIR}/projects/api`;
  * on the stack. Sheets present the way iOS does: the list shrinks into a card
  * on black while the system status bar stays put above everything.
  */
-export function PhoneApp({ state, send }: { state: DemoState; send: DemoSend }) {
+export function PhoneApp({
+  state,
+  send,
+  touch = false,
+}: {
+  state: DemoState;
+  send: DemoSend;
+  /** No keyboard at hand: the terminal is display only (see MacTerminal). */
+  touch?: boolean;
+}) {
   const { screen } = state.viewer;
   const isDetail = screen === "terminal";
   const hasSheet = screen === "join" || screen === "settings";
@@ -70,7 +79,7 @@ export function PhoneApp({ state, send }: { state: DemoState; send: DemoSend }) 
         {overlay ? <PreparationOverlay state={state} send={send} /> : null}
       </div>
       <div className="iosPage iosDetailPage" inert={!isDetail}>
-        <TerminalScreen state={state} send={send} active={isDetail} />
+        <TerminalScreen state={state} send={send} active={isDetail} touch={touch} />
       </div>
       <div className="iosSheetDim" aria-hidden="true" />
       <div
@@ -490,10 +499,12 @@ function TerminalScreen({
   state,
   send,
   active,
+  touch,
 }: {
   state: DemoState;
   send: DemoSend;
   active: boolean;
+  touch: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [ctrlArmed, setCtrlArmed] = useState(false);
@@ -552,15 +563,25 @@ function TerminalScreen({
       <div
         className="iosTerminalBody demoScrollback"
         ref={scrollRef}
-        onPointerDown={(event) => {
-          if (event.button !== 0) return;
-          if (window.getSelection()?.toString()) return;
-          event.preventDefault();
-          focus();
-        }}
+        onPointerDown={
+          touch
+            ? undefined
+            : (event) => {
+                if (event.button !== 0) return;
+                if (window.getSelection()?.toString()) return;
+                event.preventDefault();
+                focus();
+              }
+        }
       >
-        <TerminalLines lines={state.lines} input={state.input} cwd={state.cwd} focused={focused} />
-        <input {...inputProps} />
+        <TerminalLines
+          lines={state.lines}
+          input={state.input}
+          cwd={state.cwd}
+          focused={focused}
+          showCaret={!touch}
+        />
+        {touch ? null : <input {...inputProps} />}
         {link === "connecting" ? (
           <div className="iosStage">
             <Spinner className="isLarge" />
@@ -579,8 +600,13 @@ function TerminalScreen({
         <KeyCap icon={ArrowUp} label="Up arrow" onPress={() => sendKey("ArrowUp")} />
         <KeyCap icon={ArrowRight} label="Right arrow" onPress={focus} />
         <KeyCap icon={Ellipsis} label="Terminal symbols" onPress={focus} />
-        <i className="iosKeySeparator" aria-hidden="true" />
-        <KeyCap icon={Keyboard} label="Show keyboard" onPress={focus} />
+        {/* The keyboard key would open nothing where there is no input. */}
+        {touch ? null : (
+          <>
+            <i className="iosKeySeparator" aria-hidden="true" />
+            <KeyCap icon={Keyboard} label="Show keyboard" onPress={focus} />
+          </>
+        )}
       </div>
       <i className="iosHomeIndicator" aria-hidden="true" />
     </div>
