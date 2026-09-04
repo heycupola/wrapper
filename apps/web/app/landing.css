@@ -1359,13 +1359,16 @@ html.lenis body {
     order: -1;
   }
 
+  /* Stacked scene (hero-demo.css): the pair is centred in the column, so the
+     media box stays on the page grid. Its height is the phone's, which at 36%
+     of the Mac's width hangs to 0.78 of it; the ratio leaves a little over. */
   .landingHeroMedia {
     align-self: auto;
-    width: calc(100% + var(--page-pad));
+    width: 100%;
     height: auto;
     min-height: 0;
-    margin: 0 0 0 calc(-1 * var(--page-pad));
-    aspect-ratio: 100 / 68;
+    margin: 0;
+    aspect-ratio: 100 / 70;
   }
 
   .landingConnectionVisual {
@@ -1439,12 +1442,13 @@ html.lenis body {
     min-height: 48px;
   }
 
-  /* Stacked scene (hero-demo.css): the Mac's height plus the phone's, less
-     the sliver where the phone overlaps the Mac's base. */
+  /* Phone scene (hero-demo.css): the Mac display panel (0.96 of the width)
+     plus the cropped phone (0.86 wide at 402:600, so 1.284 tall), less the
+     sliver where the phone overlaps the panel's bottom edge (~0.054). */
   .landingHeroMedia {
     width: 100%;
     margin-left: 0;
-    aspect-ratio: 100 / 178;
+    aspect-ratio: 100 / 219;
   }
 
   .landingSplit,

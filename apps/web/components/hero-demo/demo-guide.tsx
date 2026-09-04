@@ -1,15 +1,22 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { type DemoState, type GuideStep, guideStep } from "./demo-session";
 import type { DemoSend, Keycap } from "./use-demo-session";
 
 /**
  * Handwritten margin notes that nudge the visitor through the loop. Each
- * note is also the fallback for people who cannot type the prefix (touch
- * screens, keyboard layouts where `\` needs AltGr): clicking it performs the
- * same action the keys would, and the keycap trail still shows the keys. The
- * container is a polite live region so each new note is read out as the loop
- * advances, not only seen.
+ * note is also the fallback for people who cannot type the prefix (keyboard
+ * layouts where `\` needs AltGr): clicking it performs the same action the
+ * keys would, and the keycap trail still shows the keys.
+ *
+ * Every note carries two phrasings. With a keyboard it names the chord and
+ * offers the button as a shortcut; on touch there are no keys to press, so the
+ * chord goes and the button, drawn as a pill, becomes the one way through.
+ * Which phrasing shows is decided by CSS (`.demoWhenKeys` / `.demoWhenTouch`
+ * in hero-demo.css) on the same pointer query the scripts use, so the note is
+ * right from the first paint rather than after hydration. The container is a
+ * polite live region so each new note is read out as the loop advances.
  */
 export function DemoGuide({ state, send }: { state: DemoState; send: DemoSend }) {
   const step = guideStep(state);
@@ -26,14 +33,15 @@ function Note({ step, send }: { step: GuideStep; send: DemoSend }) {
       return (
         <p className="demoNote">
           <HandArrow />
-          share this session: press <Keys caps={"⌃ \\"} /> then <Keys caps="s" /> or{" "}
-          <button
-            type="button"
-            className="demoNoteAction"
+          <Keyboard>
+            share this session: press <Keys caps={"⌃ \\"} /> then <Keys caps="s" /> or{" "}
+          </Keyboard>
+          <Touch>nothing leaves the Mac until you share it </Touch>
+          <Action
             onClick={() => send({ type: "hostCommand", command: "share" })}
-          >
-            share for me
-          </button>
+            keyboard="share for me"
+            touch="Share this session"
+          />
         </p>
       );
     case "sharing":
@@ -46,15 +54,20 @@ function Note({ step, send }: { step: GuideStep; send: DemoSend }) {
     case "tap":
       return (
         <p className="demoNote">
-          it just showed up on the phone — tap the session{" "}
-          <button
-            type="button"
-            className="demoNoteAction"
+          <Keyboard>it just showed up on the phone — tap the session </Keyboard>
+          {/* On touch the pill takes its own line, so the arrow at the phone
+              closes the sentence instead of trailing the button. */}
+          <Touch>
+            it just showed up on the phone — tap the session, or <HandArrow trailing />
+          </Touch>
+          <Action
             onClick={() => send({ type: "tapSession" })}
-          >
-            or tap it for me
-          </button>
-          <HandArrow trailing />
+            keyboard="or tap it for me"
+            touch="Open it for me"
+          />
+          <Keyboard>
+            <HandArrow trailing />
+          </Keyboard>
         </p>
       );
     case "connecting":
@@ -68,35 +81,71 @@ function Note({ step, send }: { step: GuideStep; send: DemoSend }) {
       return (
         <p className="demoNote">
           <HandArrow />
-          keep typing — it&apos;s live on both.{" "}
-          <span className="demoNoteChord">
-            <Keys caps={"⌃ \\ u"} />{" "}
-            <button
-              type="button"
-              className="demoNoteAction"
-              onClick={() => send({ type: "hostCommand", command: "unshare" })}
-            >
-              closes the share
-            </button>
-          </span>
+          <Keyboard>
+            keep typing — it&apos;s live on both.{" "}
+            <span className="demoNoteChord">
+              <Keys caps={"⌃ \\ u"} />{" "}
+            </span>
+          </Keyboard>
+          <Touch>it&apos;s live on both — the same shell, keystroke for keystroke. </Touch>
+          <Action
+            onClick={() => send({ type: "hostCommand", command: "unshare" })}
+            keyboard="closes the share"
+            touch="Close the share"
+          />
         </p>
       );
     case "done":
       return (
         <p className="demoNote">
           that&apos;s the whole loop — nothing left the Mac until you said so.{" "}
-          <button type="button" className="demoNoteAction" onClick={() => send({ type: "reset" })}>
-            start over ↺
-          </button>
+          <Action
+            onClick={() => send({ type: "reset" })}
+            keyboard="start over ↺"
+            touch="Start over ↺"
+          />
         </p>
       );
   }
 }
 
+/** Shown only when a keyboard and a fine pointer are at hand. */
+function Keyboard({ children }: { children: ReactNode }) {
+  return <span className="demoWhenKeys">{children}</span>;
+}
+
+/** Shown only on touch. */
+function Touch({ children }: { children: ReactNode }) {
+  return <span className="demoWhenTouch">{children}</span>;
+}
+
+/**
+ * The note's one control. A single button so there is one tab stop; the two
+ * labels inside it are toggled by the same CSS as the surrounding text, so a
+ * screen reader only ever meets the one that is showing.
+ */
+function Action({
+  onClick,
+  keyboard,
+  touch,
+}: {
+  onClick: () => void;
+  keyboard: string;
+  touch: string;
+}) {
+  return (
+    <button type="button" className="demoNoteAction" onClick={onClick}>
+      <Keyboard>{keyboard}</Keyboard>
+      <Touch>{touch}</Touch>
+    </button>
+  );
+}
+
 /**
  * A sketched arrow, drawn with a slightly bowed shaft and an open head so it
  * matches the handwritten notes. Leading arrows point up-left at the window;
- * trailing ones are mirrored to point up-right at the phone.
+ * trailing ones are mirrored to point up-right at the phone (and turned to
+ * point down-right where the phone sits below the panel, see hero-demo.css).
  */
 function HandArrow({ trailing = false }: { trailing?: boolean }) {
   return (
