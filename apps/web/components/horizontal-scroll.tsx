@@ -371,9 +371,20 @@ export function HorizontalScroll({
       applyRequestedSection();
     };
 
+    // The header's Install button while already on the landing page: glide
+    // back to the hero like any in-page link instead of jumping. If the story
+    // has not been measured yet (first paint) fall back to the pending path.
     const onOpenInstallScene = () => {
-      pendingScene = INSTALL_SCENE_ID;
-      applyRequestedSection();
+      const section = document.getElementById(INSTALL_SCENE_ID);
+      if (!section || (horizontalActive && measuredSections.length === 0)) {
+        pendingScene = INSTALL_SCENE_ID;
+        applyRequestedSection();
+        return;
+      }
+      pendingScene = null;
+      lockedOffset = null;
+      clearLandingScene(INSTALL_SCENE_ID);
+      scrollToSection(section, true, reducedMotionQuery.matches);
     };
 
     resizeObserver = new ResizeObserver(scheduleMeasure);

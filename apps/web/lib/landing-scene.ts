@@ -1,5 +1,6 @@
 export const LANDING_SCENE_KEY = "wrapper:landing-scene";
-export const INSTALL_SCENE_ID = "start";
+/** The install command lives in the hero, so "install" links open the first scene. */
+export const INSTALL_SCENE_ID = "intro";
 export const OPEN_INSTALL_SCENE_EVENT = "wrapper:open-install-scene";
 const MEMORY_TTL_MS = 2500;
 
