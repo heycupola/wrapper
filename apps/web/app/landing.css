@@ -30,16 +30,9 @@ html.lenis body {
   background: var(--color-bg);
 }
 
-.landingActions,
-.landingTextLink {
+.landingActions {
   display: inline-flex;
   align-items: center;
-}
-
-.landingButtonLarge {
-  min-height: 50px;
-  padding-inline: 22px;
-  font-size: 0.875rem;
 }
 
 .landingExperience {
@@ -119,6 +112,7 @@ html.lenis body {
   font-size: clamp(1rem, 1.35vw, 1.125rem);
   line-height: 1.52;
   letter-spacing: -0.025em;
+  text-wrap: pretty;
 }
 
 .landingLead {
@@ -131,23 +125,10 @@ html.lenis body {
   margin-top: 24px;
 }
 
+/* The link that closes a section's copy is a plain `Button variant="link"`;
+   this class only places it. */
 .landingTextLink {
-  min-height: 44px;
   margin-top: 24px;
-  color: var(--color-text);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-decoration: underline;
-  text-decoration-color: var(--color-border);
-  text-underline-offset: 6px;
-  transition:
-    color var(--motion-fast) ease,
-    text-decoration-color var(--motion-fast) ease;
-}
-
-.landingTextLink:hover {
-  color: var(--color-accent-text);
-  text-decoration-color: currentColor;
 }
 
 .landingActions {
@@ -158,21 +139,17 @@ html.lenis body {
   flex-wrap: wrap;
 }
 
+/* The one small print: under a field, under a plan's button, under a badge. */
 .landingMicrocopy {
-  margin-top: 16px;
+  margin: 0;
   color: var(--color-text-muted);
   font-size: 0.75rem;
-  font-weight: 500;
+  line-height: 1.45;
 }
 
 .landingHeroViewer.iosViewerCtaWrap {
   display: inline-flex;
   align-items: stretch;
-}
-
-.landingHeroViewer .iosViewerCta {
-  min-height: 50px;
-  padding-inline: 22px;
 }
 
 .landingHero {
@@ -188,9 +165,15 @@ html.lenis body {
    the viewport edge. */
 .landingHeroInner {
   --hero-max: 1680px;
+  /* The copy column never drops below what the one-line install command
+     needs at 13px mono: prompt, 44 characters, icon and padding. Both
+     measures are variables because the copy's vertical alignment below
+     derives the stage width from them. */
+  --hero-copy-w: clamp(480px, 33vw, 520px);
+  --hero-gap: clamp(24px, 3.5vw, 64px);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(320px, 27vw, 460px);
-  gap: clamp(24px, 3.5vw, 64px);
+  grid-template-columns: minmax(0, 1fr) var(--hero-copy-w);
+  gap: var(--hero-gap);
   align-items: center;
   width: min(100%, var(--hero-max));
 }
@@ -226,12 +209,36 @@ html.lenis body {
   align-items: start;
 }
 
-.connectionSteps li > span {
+/* Each bullet lights while the diagram is on its step. At rest, and with motion
+   off, the story has settled on the direct path. `:where()` keeps these below
+   the section's data-live pause rule, which is what holds them at frame zero
+   until the scene is active; the `animation` shorthand would otherwise reset
+   play-state to running. */
+.connectionSteps :where(li > span) {
+  --conn-on: 0;
   width: 6px;
   height: 6px;
   margin-top: 7px;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--color-text) 24%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--color-accent-pop) calc(var(--conn-on) * 100%),
+    color-mix(in srgb, var(--color-text) 24%, transparent)
+  );
+  box-shadow: 0 0 0 calc(var(--conn-on) * 3px) var(--color-accent-soft);
+}
+
+.connectionSteps :where(li:nth-child(1) > span) {
+  animation: connPhaseChecking var(--conn-story) linear both;
+}
+
+.connectionSteps :where(li:nth-child(2) > span) {
+  --conn-on: 1;
+  animation: connPhaseDirect var(--conn-story) linear both;
+}
+
+.connectionSteps :where(li:nth-child(3) > span) {
+  animation: connPhaseRelay var(--conn-story) linear both;
 }
 
 .connectionSteps li > div {
@@ -265,14 +272,37 @@ html.lenis body {
   box-shadow: var(--color-shadow);
 }
 
+/* ── Connection story ──────────────────────────────────────────────────────
+   One clock, four phases, played once when the scene is active (the section's
+   `data-live` pause holds it at frame zero until then, and `both` keeps the
+   last frame after). Every track below is a percentage of --conn-story:
+
+     0–12%   checking   ticket verified, nothing moves yet
+    12–50%   direct     path comes up, a packet crosses it
+    50–83%   relay      direct drops, the fallback carries a packet instead
+    83–100%  direct     path returns and settles solid
+
+   Base styles are the resting state so motion off shows the same picture. The
+   clock sits on the section because the copy's step bullets run on it too. */
+.landingConnection {
+  --conn-story: 9.6s;
+}
+
+@property --conn-on {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
 .connectionStatus {
   position: absolute;
   top: 13%;
   left: 50%;
   z-index: 4;
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: auto auto;
   align-items: center;
-  gap: 9px;
+  column-gap: 9px;
   min-height: 36px;
   padding: 0 14px;
   border: 1px solid var(--color-border);
@@ -285,12 +315,105 @@ html.lenis body {
   transform: translateX(-50%);
 }
 
-.connectionStatus > span {
+/* Grey while the ticket is checked, blue once a path is live. */
+.connectionStatusDot {
+  --conn-on: 1;
+  grid-area: 1 / 1;
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--color-accent-pop);
-  box-shadow: 0 0 0 4px var(--color-accent-soft);
+  background: color-mix(
+    in srgb,
+    var(--color-accent-pop) calc(var(--conn-on) * 100%),
+    color-mix(in srgb, var(--color-text) 30%, transparent)
+  );
+  box-shadow: 0 0 0 calc(var(--conn-on) * 4px) var(--color-accent-soft);
+  animation: connDotLive var(--conn-story) linear both;
+}
+
+/* The three labels share one cell; the widest sets the pill's width. */
+.connectionStatusLabel {
+  --conn-on: 0;
+  grid-area: 1 / 2;
+  font-weight: inherit;
+  white-space: nowrap;
+  opacity: var(--conn-on);
+}
+
+.connectionStatusLabel.isChecking {
+  animation: connPhaseChecking var(--conn-story) linear both;
+}
+
+.connectionStatusLabel.isDirect {
+  --conn-on: 1;
+  animation: connPhaseDirect var(--conn-story) linear both;
+}
+
+.connectionStatusLabel.isRelay {
+  animation: connPhaseRelay var(--conn-story) linear both;
+}
+
+@keyframes connPhaseChecking {
+  0%,
+  11% {
+    --conn-on: 1;
+  }
+
+  13%,
+  100% {
+    --conn-on: 0;
+  }
+}
+
+@keyframes connPhaseDirect {
+  0%,
+  11% {
+    --conn-on: 0;
+  }
+
+  13%,
+  49% {
+    --conn-on: 1;
+  }
+
+  51%,
+  82% {
+    --conn-on: 0;
+  }
+
+  84%,
+  100% {
+    --conn-on: 1;
+  }
+}
+
+@keyframes connPhaseRelay {
+  0%,
+  49% {
+    --conn-on: 0;
+  }
+
+  51%,
+  82% {
+    --conn-on: 1;
+  }
+
+  84%,
+  100% {
+    --conn-on: 0;
+  }
+}
+
+@keyframes connDotLive {
+  0%,
+  11% {
+    --conn-on: 0;
+  }
+
+  13%,
+  100% {
+    --conn-on: 1;
+  }
 }
 
 .connectionRoutes {
@@ -304,6 +427,7 @@ html.lenis body {
 
 .connectionRouteBase,
 .connectionRouteLive,
+.connectionRouteRelayLive,
 .connectionRouteFallback {
   fill: none;
   vector-effect: non-scaling-stroke;
@@ -314,11 +438,20 @@ html.lenis body {
   stroke-width: 2;
 }
 
+/* Dashes march while the path carries traffic; once the story settles the
+   dashes close up into a solid line, which is also how it rests. */
 .connectionRouteLive {
+  stroke: var(--color-accent-pop);
+  stroke-width: 2.5;
+  animation: connDirectRoute var(--conn-story) linear both;
+}
+
+.connectionRouteRelayLive {
   stroke: var(--color-accent-pop);
   stroke-dasharray: 7 8;
   stroke-width: 2.5;
-  animation: connectionDash 1.1s linear infinite;
+  opacity: 0;
+  animation: connRelayRoute var(--conn-story) linear both;
 }
 
 .connectionRouteFallback {
@@ -328,24 +461,119 @@ html.lenis body {
 
 .connectionPacket {
   fill: var(--color-accent-pop);
+  opacity: 0;
   filter: drop-shadow(0 0 5px var(--color-accent-pop));
-  offset-path: path("M126 148 C 276 148, 520 148, 674 148");
-  animation: connectionPacket 2.8s linear infinite;
 }
 
-@keyframes connectionPacket {
-  from {
+.connectionPacketDirect {
+  offset-path: path("M126 148 C 276 148, 520 148, 674 148");
+  animation: connDirectPacket var(--conn-story) linear both;
+}
+
+.connectionPacketRelay {
+  offset-path: path("M126 155 C 286 185, 274 288, 400 288 C 526 288, 514 185, 674 155");
+  animation: connRelayPacket var(--conn-story) linear both;
+}
+
+@keyframes connDirectRoute {
+  0%,
+  12% {
+    opacity: 0;
+    stroke-dasharray: 7 8;
+    stroke-dashoffset: 0;
+  }
+
+  17% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 1;
+    stroke-dasharray: 7 8;
+    stroke-dashoffset: -60;
+  }
+
+  55%,
+  83% {
+    opacity: 0;
+    stroke-dasharray: 7 8;
+  }
+
+  88% {
+    opacity: 1;
+    stroke-dasharray: 7 8;
+    stroke-dashoffset: -105;
+  }
+
+  100% {
+    opacity: 1;
+    stroke-dasharray: 15 0;
+    stroke-dashoffset: -120;
+  }
+}
+
+@keyframes connRelayRoute {
+  0%,
+  50% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+
+  55%,
+  83% {
+    opacity: 1;
+  }
+
+  88%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -60;
+  }
+}
+
+@keyframes connDirectPacket {
+  0%,
+  19% {
+    opacity: 0;
     offset-distance: 0%;
   }
 
-  to {
+  20% {
+    opacity: 1;
+  }
+
+  35% {
+    opacity: 1;
+    offset-distance: 100%;
+  }
+
+  36%,
+  100% {
+    opacity: 0;
     offset-distance: 100%;
   }
 }
 
-@keyframes connectionDash {
-  to {
-    stroke-dashoffset: -15;
+@keyframes connRelayPacket {
+  0%,
+  56% {
+    opacity: 0;
+    offset-distance: 0%;
+  }
+
+  57% {
+    opacity: 1;
+  }
+
+  77% {
+    opacity: 1;
+    offset-distance: 100%;
+  }
+
+  78%,
+  100% {
+    opacity: 0;
+    offset-distance: 100%;
   }
 }
 
@@ -538,8 +766,7 @@ html.lenis body {
   line-height: 1.42;
 }
 
-.landingFeatureCard code,
-.landingStepList code {
+.landingFeatureCard code {
   padding: 1px 5px;
   border-radius: 5px;
   background: color-mix(in srgb, var(--color-text) 7%, transparent);
@@ -716,176 +943,228 @@ html.lenis body {
   color: var(--color-accent-text);
 }
 
-.landingPriceCta {
-  display: inline-flex;
-  min-height: 48px;
-  align-items: center;
-  justify-content: center;
+.landingPriceCard .btn {
   margin-top: auto;
-  padding: 0 20px;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: #e8e8e8;
+}
+
+.landingQuestions {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Questions is a split like connection and pricing, mirrored: the title and
+   the list carry the left, the one card on the right is the visual. */
+.landingQuestionsInner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(340px, 0.82fr);
+  gap: clamp(56px, 7vw, 112px);
+  align-items: center;
+}
+
+.landingQuestionsMain {
+  display: flex;
+  width: 100%;
+  max-width: 640px;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* The right column: the form, then the footer as a short column of links
+   under it, the way a small product site closes. */
+.landingQuestionsAside {
+  display: grid;
+  width: 100%;
+  max-width: 440px;
+  gap: 32px;
+  justify-self: end;
+  justify-items: start;
+}
+
+/* The hero carries the install itself: one command line whose Copy button
+   is the page's primary action, a footnote that also swaps to Homebrew, then
+   the viewer badge and a quiet docs link. 32 / 12 / 24 so the command reads
+   as the action and the rest as its footnotes. */
+.landingHeroInstall {
+  display: grid;
+  width: 100%;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+/* Shaped like the terminal window beside it: a header that picks the
+   method, a body that holds the command. One hairline around both. */
+.installCta {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface-strong) 84%, transparent);
   color: var(--color-text);
-  font-size: 0.9375rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  transition:
-    filter var(--motion-fast) ease,
-    translate var(--motion-fast) var(--ease-spring),
-    scale var(--motion-fast) var(--ease-spring);
 }
 
-.landingPriceCta:hover {
-  filter: brightness(0.97);
-  translate: 0 -1px;
+/* The two methods split the header in equal halves. The raised half uses the
+   body's surface so the selected tab and the command read as one piece. */
+.installCta .installCtaTabs {
+  --segmented-raised: var(--color-surface-strong);
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--color-text) 5%, transparent);
 }
 
-.landingPriceCta:active {
-  translate: 0 0;
-  scale: 0.985;
+.installCta .installCtaTabs .segmentedOption {
+  flex: 1;
+  min-height: 34px;
+  border-radius: calc(var(--radius-sm) - 5px);
+  font-size: 0.8125rem;
 }
 
-.landingPriceCtaPrimary {
-  background: var(--color-accent-to);
-  color: #fff;
+.installCta .installCtaTabs .segmentedOption[aria-selected="true"] {
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--brand-ink) 8%, transparent);
 }
 
-.landingPriceCtaPrimary:hover {
-  filter: brightness(0.97);
+/* The body is one button: press anywhere on the line to copy. Nothing in it
+   changes shape; only the glyph at the end says what happened. */
+.installCtaLine {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 8px 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--motion-fast) ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  .landingPriceCta:not(.landingPriceCtaPrimary) {
-    background: #1c1c20;
+@media (hover: hover) {
+  .installCtaLine:hover {
+    background: color-mix(in srgb, var(--color-text) 4%, transparent);
   }
 }
 
-.landingStart {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding-bottom: 104px;
+.installCtaLine:focus-visible {
+  outline-offset: -3px;
 }
 
-.landingStartInner {
-  display: grid;
-  grid-template-columns: minmax(340px, 0.86fr) minmax(500px, 1.14fr);
-  gap: clamp(56px, 8vw, 124px);
-  align-items: center;
-}
-
-.landingStepList {
-  display: grid;
-  gap: 15px;
-  width: 100%;
-  max-width: 470px;
-  margin-top: 30px;
-  list-style: none;
-}
-
-.landingStepList li {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 13px;
-  align-items: start;
-}
-
-.landingStepList li > span {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--color-border);
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--color-surface-strong) 72%, transparent);
-  font-size: 0.75rem;
-  font-weight: 700;
-  place-items: center;
-}
-
-.landingStepList li > div {
-  display: grid;
-  gap: 3px;
-}
-
-.landingStepList strong {
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.landingStepList small {
+.installCtaPrompt {
   color: var(--color-text-muted);
-  font-size: 0.75rem;
-  line-height: 1.45;
+  user-select: none;
 }
 
-.landingInstallPanel {
-  position: relative;
-  display: flex;
-  width: 100%;
+.installCtaCommand {
   min-width: 0;
-  flex-direction: column;
-  gap: 28px;
-  padding: clamp(28px, 4vw, 48px);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--color-surface-strong) 84%, transparent);
-  box-shadow: var(--color-shadow);
+  flex: 1;
+  font: inherit;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
-.landingInstallMethods {
-  display: contents;
+/* The glyph is the only feedback, so the line never reflows: copy → check,
+   muted → accent. The prompt turns with it. */
+.installCtaHint {
+  display: inline-flex;
+  flex: none;
+  color: var(--color-text-muted);
+  transition: color var(--motion-fast) ease;
 }
 
-.landingInstallMethod {
+.installCtaLine.isCopied .installCtaHint,
+.installCtaLine.isCopied .installCtaPrompt {
+  color: var(--color-accent-text);
+}
+
+.installCtaLine.isFailed .installCtaHint {
+  color: var(--brand-warning);
+}
+
+.installCtaHintIcon {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.35;
+}
+
+.landingHero .landingActions {
+  margin-top: 24px;
+  gap: 12px;
+}
+
+/* The hero shows the command itself, so the header's Install button only
+   appears once the story has scrolled past it. The wrapper's grid track
+   collapses to zero so the links beside it slide into the space instead of
+   leaving a hole. Two steps, never overlapping: the button fades out in
+   place first, then the empty track closes; on the way back the track opens
+   first, then the button fades in. The button is never visible while its box
+   is moving or being clipped, so there is no edge to notice. The 6px padding
+   keeps the focus ring inside the clip box; the negative margins cancel it. */
+.landingHeaderInstall {
+  --install-slide: var(--motion-mid);
+  --install-fade: var(--motion-fast);
   display: grid;
-  gap: 14px;
-}
-
-.landingInstallLabel {
-  margin-bottom: 0;
-  color: var(--color-text);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.landingCommands {
-  display: grid;
-  width: 100%;
-  min-width: 0;
-  gap: 10px;
-}
-
-.landingCommands .copyCommand {
-  min-width: 0;
-  min-height: 60px;
+  grid-template-columns: 1fr;
+  margin: -6px;
+  padding: 6px;
   overflow: hidden;
-  border-color: var(--color-border);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--color-bg) 68%, transparent);
-  font-family: var(--font-mono);
+  transition:
+    grid-template-columns var(--install-slide) var(--ease-out-soft),
+    margin-left var(--install-slide) var(--ease-out-soft),
+    opacity var(--install-fade) ease var(--install-slide),
+    visibility 0s;
 }
 
-.landingCommands .copyCommand:hover {
-  border-color: color-mix(in srgb, var(--color-accent-pop) 34%, var(--color-border));
-  background: var(--color-surface-strong);
+/* The button's own padding would hold the track open, so it folds too. */
+.landingHeaderInstall > .btn {
+  min-width: 0;
+  transition:
+    padding var(--install-slide) var(--ease-out-soft),
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
-.landingInstallNote,
-.landingInstallHint,
-.landingPriceCardNote {
-  margin-top: 0;
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-  line-height: 1.45;
+/* Hidden: the track is 0, the wrapper padding is what remains (12px), and
+   the left margin also swallows the nav gap (8px) so the neighbours close up
+   fully. */
+.landingPage:has(.landingScroller.isHorizontal .landingHero.isActive) .landingHeaderInstall {
+  grid-template-columns: 0fr;
+  margin-left: -20px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--install-fade) ease,
+    grid-template-columns var(--install-slide) var(--ease-out-soft) var(--install-fade),
+    margin-left var(--install-slide) var(--ease-out-soft) var(--install-fade),
+    visibility 0s calc(var(--install-fade) + var(--install-slide));
 }
 
-/* Two commands is a choice; one line says which to pick. */
-.landingInstallHint {
-  margin-top: -4px;
+.landingPage:has(.landingScroller.isHorizontal .landingHero.isActive) .landingHeaderInstall > .btn {
+  padding-inline: 0;
+  transition:
+    padding var(--install-slide) var(--ease-out-soft) var(--install-fade),
+    background-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
-.landingPriceCardNote {
+@media (prefers-reduced-motion: reduce) {
+  .landingHeaderInstall,
+  .landingHeaderInstall > .btn,
+  .landingPage:has(.landingScroller.isHorizontal .landingHero.isActive) .landingHeaderInstall {
+    transition: none;
+  }
+}
+
+.landingPriceCard .landingMicrocopy {
   margin-top: 10px;
   text-align: center;
 }
@@ -896,90 +1175,20 @@ html.lenis body {
   justify-items: start;
 }
 
-.iosViewerCta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  line-height: 1;
-  text-decoration: none;
-}
-
-.iosViewerCta svg {
-  display: block;
-  width: 14px;
-  height: 18px;
-  overflow: visible;
-  flex-shrink: 0;
-  fill: currentColor;
-}
-
-.iosViewerCta > span {
-  display: block;
-  line-height: 1;
-}
-
+/* The store pill is the Apple provider button; only the beta mark is its
+   own. The mark is a tint of the label colour, so it survives both themes
+   and the hover fill without a filter washing it out. */
 .iosViewerCtaBetaMark {
   display: inline-flex;
   align-items: center;
   margin-left: 2px;
   padding: 3px 6px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.16);
+  background: color-mix(in srgb, currentColor 14%, transparent);
   font-size: 0.7rem;
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.iosViewerCtaStore {
-  padding: 0 16px;
-  border-radius: var(--radius-pill);
-  background: #000;
-  color: #fff;
-  font-size: 0.875rem;
-  font-weight: 590;
-  letter-spacing: -0.02em;
-}
-
-.iosViewerCtaStore:hover {
-  filter: brightness(1.15);
-}
-
-.iosViewerCtaPrimary.iosViewerCtaDocs {
-  padding: 0 18px;
-  border-radius: var(--radius-pill);
-  background: var(--color-accent-to);
-  color: #fff;
-  font-weight: 510;
-  text-decoration: none;
-}
-
-.iosViewerCtaPrimary.iosViewerCtaDocs:hover {
-  filter: brightness(0.97);
-  color: #fff;
-  text-decoration: none;
-}
-
-.iosViewerCtaBadge.iosViewerCtaDocs,
-.iosViewerCtaSecondary,
-.iosViewerCtaLink,
-.iosViewerCtaText {
-  color: var(--color-text);
-  font-size: 0.875rem;
-  font-weight: 510;
-  text-decoration: underline;
-  text-decoration-color: var(--color-border);
-  text-underline-offset: 4px;
-}
-
-.iosViewerCtaBadge.iosViewerCtaDocs:hover,
-.iosViewerCtaSecondary:hover,
-.iosViewerCtaLink:hover,
-.iosViewerCtaText:hover {
-  color: var(--color-accent-text);
-  text-decoration-color: currentColor;
 }
 
 .iosViewerCtaNote {
@@ -1005,50 +1214,10 @@ html.lenis body {
   align-items: center;
 }
 
-@media (prefers-color-scheme: dark) {
-  .iosViewerCtaStore {
-    background: #fff;
-    color: #000;
-  }
-
-  .iosViewerCtaStore .iosViewerCtaBetaMark {
-    background: rgba(0, 0, 0, 0.08);
-  }
-}
-
-.landingFinalFooter {
-  position: absolute;
-  right: var(--page-pad);
-  bottom: 22px;
-  left: var(--page-pad);
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-}
-
-.landingFinalFooter nav ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.landingFinalFooter a {
-  transition: color var(--motion-fast) ease;
-}
-
-/* Fingers, not pointers: give the dense footer links a 44px hit area without
+/* Fingers, not pointers: give the dense links a 44px hit area without
    changing how they read on a desktop. */
 @media (pointer: coarse) {
-  .landingFinalFooter a,
   .landingTextLink,
-  .iosViewerCtaLink,
   .iosViewerCtaText {
     display: inline-flex;
     align-items: center;
@@ -1056,8 +1225,64 @@ html.lenis body {
   }
 }
 
+/* Footer as a column under the form: a hairline like the FAQ's, the
+   copyright and maker on one line, the links one per line in two short
+   groups, and the one sentence the product stands on. */
+.landingFinalFooter {
+  display: grid;
+  width: 100%;
+  gap: 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.landingFinalFooterMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+}
+
+.landingFinalFooterCopy {
+  color: var(--color-text);
+}
+
+.landingFinalFooter nav ul {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Product links, then a breath, then the legal pair. */
+.landingFinalFooter nav li:nth-child(5) {
+  margin-top: 10px;
+}
+
+.landingFinalFooter a {
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  transition: color var(--motion-fast) ease;
+}
+
 .landingFinalFooter a:hover {
   color: var(--color-text);
+}
+
+.landingFinalFooterNote {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+@media (pointer: coarse) {
+  .landingFinalFooter a {
+    min-height: 36px;
+  }
 }
 
 .landingMobileFooter {
@@ -1082,12 +1307,6 @@ html.lenis body {
   animation-play-state: running;
 }
 
-.landingTextLink:focus-visible,
-.landingPriceCta:focus-visible {
-  outline: 2px solid var(--color-accent-pop);
-  outline-offset: 3px;
-}
-
 @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
   .landingHeader {
     position: fixed;
@@ -1104,11 +1323,14 @@ html.lenis body {
     min-height: 100dvh;
   }
 
+  /* `clip`, not `hidden`: a hidden box is still a scroll container, so the
+     browser's own jump to `/#questions` would scroll it sideways on top of
+     the track transform and land two scenes off. */
   .landingScroller.isHorizontal {
     position: sticky;
     top: 0;
     height: 100dvh;
-    overflow: hidden;
+    overflow: clip;
     contain: paint;
   }
 
@@ -1135,17 +1357,39 @@ html.lenis body {
     padding-bottom: 0;
   }
 
-  .landingScroller.isHorizontal .landingStart {
-    padding-bottom: 92px;
+  /* The copy lines up with the devices, not with the column. The stage hangs
+     the pair from 8% of its height and the pair (Mac plus the phone that
+     overhangs its base) is 0.634 of the Mac's width tall, so its centre sits
+     at 8cqh + 0.317 × Mac width. The Mac width is the stage formula from
+     hero-demo.css, with the stage width derived from the inner's grid: the
+     inner becomes a size container so both axes are readable here. The copy
+     then centres itself in a box exactly twice that tall, which puts its own
+     centre on the devices' centre at every viewport. */
+  .landingScroller.isHorizontal .landingHeroInner {
+    container: hero / size;
+  }
+
+  .landingScroller.isHorizontal .landingHeroCopy {
+    --hero-stage-w: calc(100cqw - var(--hero-copy-w) - var(--hero-gap));
+    --hero-mac-w: min(calc(var(--hero-stage-w) / 1.065), 126cqh);
+    --hero-device-center: calc(8cqh + var(--hero-mac-w) * 0.317);
+    display: flex;
+    height: calc(2 * var(--hero-device-center));
+    flex-direction: column;
+    align-self: start;
+    /* `safe`: if the copy is taller than the box (short, narrow windows) it
+       starts at the top of the column instead of rising under the header. */
+    justify-content: safe center;
+    padding-bottom: 0;
+  }
+
+  .landingMobileFooter {
+    display: none;
   }
 
   .landingScroller.isHorizontal .landingSectionInner {
     height: 100%;
     min-height: 0;
-  }
-
-  .landingMobileFooter {
-    display: none;
   }
 
   .landingScroller.isHorizontal .revealItem {
@@ -1196,6 +1440,27 @@ html.lenis body {
     transform: translateY(0);
   }
 
+  /* Each scene arrives its own way rather than every block rising the same
+     18px. The connection diagram slides in with the track, from the right and
+     a beat behind its copy; the trust cards settle from slightly smaller. */
+  .landingScroller.isHorizontal .landingConnectionVisual.revealItem {
+    --reveal-delay: 140ms;
+    transform: translateX(40px);
+    transition-duration: 860ms;
+  }
+
+  .landingScroller.isHorizontal .landingSection.hasEntered .landingConnectionVisual.revealItem {
+    transform: translateX(0);
+  }
+
+  .landingScroller.isHorizontal .landingTrustGrid > article {
+    transform: translateY(12px) scale(0.965);
+  }
+
+  .landingScroller.isHorizontal .landingSection.hasEntered .landingTrustGrid > article {
+    transform: translateY(0) scale(1);
+  }
+
   .landingScroller.isHorizontal .landingSection.hasEntered .landingTrustGrid > article:nth-child(2),
   .landingScroller.isHorizontal
     .landingSection.hasEntered
@@ -1230,10 +1495,6 @@ html.lenis body {
   .landingScroller.isHorizontal .landingSection {
     padding-top: 76px;
     padding-bottom: 40px;
-  }
-
-  .landingScroller.isHorizontal .landingStart {
-    padding-bottom: 76px;
   }
 
   .landingHeroTitle {
@@ -1291,13 +1552,18 @@ html.lenis body {
 }
 
 @media (max-width: 1200px) {
+  /* Narrow desktops: the column shrinks to what the command needs at 12px. */
   .landingHeroInner {
-    grid-template-columns: minmax(0, 1fr) clamp(300px, 30vw, 360px);
+    --hero-copy-w: 440px;
+  }
+
+  .installCtaLine {
+    font-size: 0.75rem;
   }
 
   .landingSplit,
   .landingTrustInner,
-  .landingStartInner {
+  .landingQuestionsInner {
     gap: 48px;
   }
 }
@@ -1320,7 +1586,7 @@ html.lenis body {
     padding-block: clamp(72px, 10vw, 112px);
     overflow: hidden;
     contain: paint;
-    /* Anchor jumps (#start, #pricing) land under the sticky header otherwise. */
+    /* Anchor jumps (#pricing, #questions) land under the sticky header otherwise. */
     scroll-margin-top: var(--header-h, 64px);
   }
 
@@ -1333,7 +1599,7 @@ html.lenis body {
   .landingHeroInner,
   .landingSplit,
   .landingTrustInner,
-  .landingStartInner {
+  .landingQuestionsInner {
     grid-template-columns: minmax(0, 1fr);
     gap: clamp(44px, 8vw, 76px);
   }
@@ -1396,10 +1662,6 @@ html.lenis body {
     max-width: 760px;
   }
 
-  .landingStart {
-    padding-bottom: 72px;
-  }
-
   .landingFinalFooter {
     display: none;
   }
@@ -1438,10 +1700,6 @@ html.lenis body {
     align-items: stretch;
   }
 
-  .landingButtonLarge {
-    min-height: 48px;
-  }
-
   /* Phone scene (hero-demo.css): the Mac display panel (0.96 of the width)
      plus the cropped phone (0.86 wide at 402:600, so 1.284 tall), less the
      sliver where the phone overlaps the panel's bottom edge (~0.054). */
@@ -1453,7 +1711,7 @@ html.lenis body {
 
   .landingSplit,
   .landingTrustInner,
-  .landingStartInner {
+  .landingQuestionsInner {
     gap: 42px;
   }
 
@@ -1585,21 +1843,6 @@ html.lenis body {
   .landingPrice strong {
     font-size: clamp(3rem, 14vw, 3.5rem);
   }
-
-  .landingPriceCta {
-    width: 100%;
-  }
-
-  .landingInstallPanel {
-    padding: 24px 16px;
-    border-radius: var(--radius-md);
-  }
-
-  .landingCommands .copyCommand {
-    min-height: 56px;
-    padding-inline: 13px;
-    font-size: 0.75rem;
-  }
 }
 
 @media (max-width: 420px) {
@@ -1613,9 +1856,25 @@ html.lenis body {
     width: 100%;
   }
 
+  .landingActions .btn {
+    justify-self: stretch;
+  }
+
   .landingHeroViewer,
   .landingHeroViewer .iosViewerCta {
     width: 100%;
+    justify-content: center;
+  }
+
+  /* Phones: the badge takes the row, the docs link centres under it with a
+     finger-sized hit area. */
+  .landingHero .landingActions {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .landingHero .landingActions .btn[data-variant="link"] {
+    min-height: 44px;
     justify-content: center;
   }
 
@@ -1753,15 +2012,8 @@ html.lenis body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .connectionPacket {
-    display: none;
-  }
-
-  .connectionRouteLive {
-    animation: none;
-    stroke-dasharray: none;
-  }
-
+  /* The global rule drops the story; the base styles already draw its ending
+     (direct path solid, packets gone, "direct" label, second bullet lit). */
   .landingPriceCard:hover,
   .landingPriceCardPro:hover {
     translate: none;
@@ -1769,13 +2021,12 @@ html.lenis body {
 }
 
 @media (forced-colors: active) {
-  .landingPriceCtaPrimary,
   .landingPriceCard,
   .landingPriceCardPro {
     border: 1px solid ButtonText;
   }
 
-  .connectionStatus > span {
+  .connectionStatusDot {
     background: Highlight;
   }
 }

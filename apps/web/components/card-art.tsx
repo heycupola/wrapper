@@ -130,37 +130,7 @@ export function RevokeArt() {
   );
 }
 
-export function TicketArt() {
-  return (
-    <svg className="cardArt" viewBox="0 0 200 100" data-live aria-hidden="true">
-      <g className="artTicket">
-        <g filter="url(#artDrop)">
-          <path
-            className="artFace"
-            d="M44 22h112a7 7 0 0 1 7 7v13a9 9 0 0 0 0 18v13a7 7 0 0 1-7 7H44a7 7 0 0 1-7-7V60a9 9 0 0 0 0-18V29a7 7 0 0 1 7-7Z"
-          />
-        </g>
-        <path className="artPerf" d="M126 29v42" />
-        <text className="artMono artTicketSerial" x="50" y="46">
-          TKT-7N4K
-        </text>
-        <path className="artMeterTrack" d="M50 58h62" />
-        <path className="artMeter" d="M50 58h62" />
-        {/* Kept short of x=154, where the notch bites into the stub. */}
-        <g className="artBars">
-          <path d="M132 40v22M136.5 40v22M141 40v22M145.5 40v22M150 40v22" />
-        </g>
-        {/* Stamped over the print, the way a spent ticket looks. */}
-        <g className="artStamp">
-          <rect x="50" y="39" width="62" height="24" rx="5" />
-          <text x="81" y="55" textAnchor="middle">
-            USED
-          </text>
-        </g>
-      </g>
-    </svg>
-  );
-}
+// The ticket card runs on a real sixty-second clock; see ticket-art.tsx.
 
 export function ShellArt() {
   return (
@@ -185,9 +155,11 @@ export function ShellArt() {
       <text className="artShellPrompt artShellFish" x="16" y="47">
         ~ ❯
       </text>
-      {/* A real command revealed a character at a time by a growing clip. */}
+      {/* A real command revealed a character at a time by a clip that grows from
+          its left edge (artTypeLine scales it from 0). The rect must have its
+          full width here: a scale cannot grow a zero-width box. */}
       <clipPath id="artTypeClip">
-        <rect className="artTypeMask" x="52" y="36" width="0" height="16" />
+        <rect className="artTypeMask" x="52" y="36" width="92" height="16" />
       </clipPath>
       <text className="artCommand" x="52" y="47" clipPath="url(#artTypeClip)">
         wrapper attach

@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useId, useRef } from "react";
+import { Button } from "./ui/button";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -94,22 +95,18 @@ export function ConfirmDialog({
         </p>
         {children}
         <div className="authActions confirmDialogActions">
-          <button
-            type="button"
-            className="social-btn"
-            data-dialog-cancel
-            disabled={busy}
-            onClick={onCancel}
-          >
+          <Button data-dialog-cancel disabled={busy} onClick={onCancel}>
             {cancelLabel}
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className={`social-btn ${danger ? "social-btn-danger dangerAction" : "social-btn-primary"}`}
-            disabled={confirmDisabled || busy}
+            variant="primary"
+            tone={danger ? "danger" : "default"}
+            disabled={confirmDisabled}
+            loading={busy}
           >
             {busy && busyLabel ? busyLabel : confirmLabel}
-          </button>
+          </Button>
         </div>
       </form>
     </dialog>

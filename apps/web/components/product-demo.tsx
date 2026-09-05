@@ -7,6 +7,7 @@ import { type DemoAction, guideStep, hostTransport } from "./hero-demo/demo-sess
 import { MacTerminal } from "./hero-demo/mac-terminal";
 import { PhoneApp } from "./hero-demo/phone-app";
 import { useWrapperAnnouncements } from "./hero-demo/terminal-view";
+import { useAwayNotice } from "./hero-demo/use-away-notice";
 import { useCoarsePointer } from "./hero-demo/use-coarse-pointer";
 import { useDemoAutoplay } from "./hero-demo/use-demo-autoplay";
 import { useDemoSession } from "./hero-demo/use-demo-session";
@@ -33,6 +34,7 @@ export function ProductDemo() {
   // keycap trail, which annotate the window, move with it.
   const drag = useWindowDrag(windowRef);
   const { stop } = useDemoAutoplay(stageRef, state, send, touch);
+  const awayNotice = useAwayNotice(stageRef);
   // Anything the visitor does ends the scripted run before it is applied.
   const sendFromVisitor = useCallback(
     (action: DemoAction) => {
@@ -69,7 +71,7 @@ export function ProductDemo() {
               drag={drag}
               touch={touch}
             />
-            <DemoGuide state={state} send={sendFromVisitor} />
+            <DemoGuide state={state} send={sendFromVisitor} notice={awayNotice} />
             {touch ? null : <KeycapTrail keycaps={keycaps} />}
             <MacDock />
           </div>

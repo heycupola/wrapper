@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getIosAppTarget } from "../lib/ios-app";
+import { QUESTIONS_SECTION_ID } from "../lib/release-notes";
 import { CupolaMark } from "./cupola-mark";
 import { ExternalLink } from "./external-link";
-import { InstallWrapperLink } from "./install-wrapper-link";
 
 function footerGroups() {
   const ios = getIosAppTarget();
@@ -15,8 +15,8 @@ function footerGroups() {
           label: "Docs",
           external: true,
         },
-        { href: "/#start", label: "Install" },
         { href: ios.href, label: ios.navLabel, external: ios.external },
+        { href: `/#${QUESTIONS_SECTION_ID}`, label: "FAQ and release notes" },
         { href: "https://github.com/heycupola/wrapper", label: "GitHub", external: true },
       ],
     },
@@ -39,15 +39,6 @@ function footerGroups() {
   ];
 }
 
-function IosViewerCompactLink() {
-  const ios = getIosAppTarget();
-  return ios.external ? (
-    <ExternalLink href={ios.href}>{ios.navLabel}</ExternalLink>
-  ) : (
-    <Link href={ios.href}>{ios.navLabel}</Link>
-  );
-}
-
 function BuiltBy() {
   return (
     <ExternalLink className="builtBy" href="https://cupo.la" aria-label="Built by Cupola">
@@ -57,32 +48,37 @@ function BuiltBy() {
   );
 }
 
+/**
+ * The compact variant is a short column of links under the release-notes
+ * form in the last horizontal scene; the full variant closes the stacked
+ * page.
+ */
 export function SiteFooter({ compact = false }: { compact?: boolean }) {
   if (compact) {
+    const ios = getIosAppTarget();
     return (
       <footer className="landingFinalFooter">
-        <div className="landingFooterMeta">
-          <span>© {new Date().getFullYear()} Wrapper</span>
+        <div className="landingFinalFooterMeta">
+          <span className="landingFinalFooterCopy">© {new Date().getFullYear()} Wrapper</span>
           <BuiltBy />
         </div>
         <nav aria-label="Footer">
           <ul>
             <li>
+              <ExternalLink href="https://docs.wrapper.sh">Docs</ExternalLink>
+            </li>
+            <li>
               <Link href="/dashboard">Dashboard</Link>
             </li>
             <li>
-              <IosViewerCompactLink />
+              {ios.external ? (
+                <ExternalLink href={ios.href}>{ios.navLabel}</ExternalLink>
+              ) : (
+                <Link href={ios.href}>{ios.navLabel}</Link>
+              )}
             </li>
             <li>
               <ExternalLink href="https://github.com/heycupola/wrapper">GitHub</ExternalLink>
-            </li>
-            <li>
-              <ExternalLink
-                href="https://x.com/heycupola"
-                aria-label="Cupola on X (opens in a new tab)"
-              >
-                X
-              </ExternalLink>
             </li>
             <li>
               <Link href="/privacy-policy">Privacy</Link>
@@ -92,6 +88,7 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
             </li>
           </ul>
         </nav>
+        <p className="landingFinalFooterNote">Terminal sharing is always opt-in.</p>
       </footer>
     );
   }
@@ -108,8 +105,6 @@ export function SiteFooter({ compact = false }: { compact?: boolean }) {
                   <li key={link.href}>
                     {link.external ? (
                       <ExternalLink href={link.href}>{link.label}</ExternalLink>
-                    ) : link.href === "/#start" ? (
-                      <InstallWrapperLink>{link.label}</InstallWrapperLink>
                     ) : (
                       <Link href={link.href}>{link.label}</Link>
                     )}

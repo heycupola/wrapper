@@ -81,6 +81,7 @@
   --z-footer-bar: 10;
   --z-tooltip: 20;
   --z-header: 80;
+  --z-consent: 90;
   --z-skip: 100;
   --z-modal: 200;
   --motion-fast: 160ms;
@@ -248,19 +249,12 @@ kbd,
   .landingFeatureCard,
   .landingPriceCard,
   .landingTrustGrid > article,
-  .landingCommands,
   .dashboardPanel,
   .dashboardCard,
   .authCard,
   .legalSections,
   .legalIntroduction,
-  .skipLink,
-  .primaryAction,
-  .priceCta,
-  .navAction,
-  .textAction,
-  .social-btn,
-  .iosViewerCta {
+  .skipLink {
     border: 1px solid CanvasText;
   }
 
@@ -354,11 +348,6 @@ kbd,
   flex-wrap: wrap;
 }
 
-.notFoundActions .primaryAction,
-.notFoundActions .textAction {
-  font-size: 0.9375rem;
-}
-
 .notFoundTerminal {
   min-height: 360px;
   overflow: hidden;
@@ -383,7 +372,6 @@ kbd,
   font-weight: 750;
 }
 
-.primaryAction,
 .inlineLink {
   display: inline-flex;
   align-items: center;
@@ -411,23 +399,6 @@ kbd,
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes popIn {
-  from {
-    opacity: 0;
-    transform: scale(0.72);
-  }
-
-  60% {
-    opacity: 1;
-    transform: scale(1.07);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -707,73 +678,6 @@ kbd,
   flex-wrap: wrap;
 }
 
-.primaryAction,
-.navAction,
-.textAction {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0 18px;
-  border: 0;
-  border-radius: var(--radius-pill);
-  font-size: 0.875rem;
-  font-weight: 510;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  white-space: nowrap;
-  /* Hover and press move the button with the standalone translate/scale
-     properties so a scene reveal can keep transform to itself. */
-  transition:
-    filter var(--motion-fast) ease,
-    translate var(--motion-fast) var(--ease-spring),
-    scale var(--motion-fast) var(--ease-spring),
-    opacity var(--motion-fast) ease;
-}
-
-.primaryAction {
-  background: var(--color-accent-to);
-  color: #fff;
-}
-
-.navAction {
-  background: var(--color-nav);
-  color: #fff;
-}
-
-.textAction {
-  background: #e5e5e5;
-  color: #000;
-}
-
-/* In dark mode the secondary pills go dark too, otherwise every button on the
-   page is a light capsule and the primary CTA loses its rank. */
-@media (prefers-color-scheme: dark) {
-  .navAction {
-    color: #0e0e10;
-  }
-
-  .textAction {
-    background: #1c1c20;
-    color: var(--color-text);
-  }
-}
-
-.primaryAction:hover,
-.navAction:hover,
-.textAction:hover {
-  filter: brightness(0.97);
-  translate: 0 -1px;
-}
-
-.primaryAction:active,
-.navAction:active,
-.textAction:active,
-.copyCommand:active {
-  translate: 0 0;
-  scale: 0.985;
-}
-
 .inlineLink {
   color: var(--color-text);
   font-size: 0.875rem;
@@ -789,7 +693,6 @@ kbd,
   width: fit-content;
 }
 
-.textAction:hover,
 .inlineLink:hover {
   text-decoration-color: var(--color-accent-pop);
 }
@@ -1312,6 +1215,10 @@ kbd,
 /* Illustrations. The drawing takes whatever height the card can spare, so a tall
    window gets a bigger diagram instead of more empty card. */
 .cardArt {
+  /* Each card tells its one thing once, on this clock, the first time its
+     scene is active (data-live holds frame zero until then, `both` keeps the
+     ending). Base styles are the ending, so motion off shows the same card. */
+  --art-story: 2.6s;
   width: 100%;
   /* Small floor, generous stretch: the drawing gives up height first so a short
      window still fits five cards between header and footer. */
@@ -1444,7 +1351,7 @@ kbd,
 }
 
 .artKeyPress {
-  animation: artKeyPress 5.2s var(--ease-out-soft) infinite;
+  animation: artKeyPress var(--art-story) var(--ease-out-soft) both;
 }
 
 .artKeySecond .artKeyPress {
@@ -1453,15 +1360,15 @@ kbd,
 
 @keyframes artKeyPress {
   0%,
-  4% {
+  8% {
     transform: translateY(0);
   }
 
-  9% {
+  18% {
     transform: translateY(2.6px);
   }
 
-  20%,
+  40%,
   100% {
     transform: translateY(0);
   }
@@ -1481,11 +1388,13 @@ kbd,
 
 /* Same path, same weight as the pipe, so the packet sits in it rather than on
    top of it. The glow is only a soft halo around that same segment. */
+/* Three laps, then the packet parks in the pipe; one lap is 74 units so the
+   parked position is where it started. */
 .artLoopGlow,
 .artLoopFlow {
   stroke: var(--color-accent-pop);
   stroke-dasharray: 17 57;
-  animation: artLoopFlow 2.4s linear infinite;
+  animation: artLoopFlow 2.4s linear 3 both;
 }
 
 .artLoopFlow {
@@ -1504,10 +1413,17 @@ kbd,
   }
 }
 
-/* Pointing at a card makes its traffic pick up. */
-.featureCard:hover .artLoopFlow,
-.featureCard:hover .artLoopGlow {
-  animation-duration: 1.5s;
+/* Pointing at the card is the one thing that moves traffic again. A second
+   keyframe name so the finished lap restarts rather than being retimed. */
+.landingFeatureCard:hover .artLoopFlow,
+.landingFeatureCard:hover .artLoopGlow {
+  animation: artLoopFlowHover 1.5s linear infinite;
+}
+
+@keyframes artLoopFlowHover {
+  to {
+    stroke-dashoffset: -74;
+  }
 }
 
 .artBlocked {
@@ -1544,60 +1460,51 @@ kbd,
   letter-spacing: 0.06em;
 }
 
+/* The second key lands at 28%; the code follows it. */
 .artCodeChip {
   transform-box: view-box;
   transform-origin: 100px 75px;
-  animation: artChipLand 5.2s var(--ease-spring) infinite;
+  animation: artChipLand var(--art-story) var(--ease-spring) both;
 }
 
 @keyframes artChipLand {
   0%,
-  20% {
+  30% {
     opacity: 0;
     transform: translateY(6px) scale(0.92);
   }
 
-  32%,
-  86% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-
-  96%,
+  46%,
   100% {
-    opacity: 0;
+    opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
-/* Revoke: the lock snaps shut, the open link sparks and pulls back. */
+/* Revoke: `u` goes down, the lock snaps shut, the open link sparks and pulls
+   back. It stays revoked. */
 .artShackle {
   stroke: color-mix(in srgb, var(--color-text) 38%, transparent);
   stroke-width: 4.5;
   stroke-linecap: butt;
   transform-box: view-box;
   transform-origin: 111px 30px;
-  animation: artShackleShut 5.2s var(--ease-spring) infinite;
+  animation: artShackleShut var(--art-story) var(--ease-spring) both;
 }
 
 @keyframes artShackleShut {
   0%,
-  10% {
+  18% {
     transform: translateY(-5px) rotate(-14deg);
   }
 
-  22% {
+  30% {
     transform: translateY(0) rotate(3deg);
   }
 
-  30%,
-  90% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  98%,
+  40%,
   100% {
-    transform: translateY(-5px) rotate(-14deg);
+    transform: translateY(0) rotate(0deg);
   }
 }
 
@@ -1625,8 +1532,10 @@ kbd,
 .artLinkLive {
   stroke: var(--color-accent-pop);
   stroke-width: 2.6;
+  opacity: 0.16;
+  transform: scaleX(0.62);
   transform-box: view-box;
-  animation: artLinkPull 5.2s var(--ease-out-quint) infinite;
+  animation: artLinkPull var(--art-story) var(--ease-out-quint) both;
 }
 
 .artLinkLeft {
@@ -1645,21 +1554,15 @@ kbd,
 
 @keyframes artLinkPull {
   0%,
-  22% {
+  26% {
     opacity: 1;
     transform: scaleX(1);
   }
 
-  44%,
-  90% {
+  52%,
+  100% {
     opacity: 0.16;
     transform: scaleX(0.62);
-  }
-
-  98%,
-  100% {
-    opacity: 1;
-    transform: scaleX(1);
   }
 }
 
@@ -1668,69 +1571,63 @@ kbd,
   opacity: 0;
   transform-box: view-box;
   transform-origin: 103px 64px;
-  animation: artSpark 5.2s var(--ease-out-quint) infinite;
+  animation: artSpark var(--art-story) var(--ease-out-quint) both;
 }
 
 @keyframes artSpark {
   0%,
-  22% {
+  26% {
     opacity: 0;
     transform: scale(0.2);
   }
 
-  26% {
+  31% {
     opacity: 0.55;
     transform: scale(1);
   }
 
-  38%,
+  46%,
   100% {
     opacity: 0;
     transform: scale(1.8);
   }
 }
 
-/* Ticket: a stub with a barcode, sixty seconds of life, then it is spent and the
-   next one drops in. */
+/* Ticket: a stub with a barcode and sixty real seconds of life. The clock lives
+   in ticket-art.tsx: it sets the meter's offset once a second and flips the
+   ticket to `expired`, and a fresh one drops in after the spent one has been
+   read. Only the entrance, the drain and the stamp are drawn here. */
 .artTicket {
   transform-box: view-box;
   transform-origin: 100px 51px;
-  animation: artTicketCycle 6s var(--ease-out-quint) infinite;
+  animation: artTicketIn var(--motion-slow) var(--ease-out-quint) both;
 }
 
-@keyframes artTicketCycle {
-  0% {
+@keyframes artTicketIn {
+  from {
     opacity: 0;
     transform: translateY(-7px);
   }
 
-  5%,
-  88% {
+  to {
     opacity: 1;
     transform: translateY(0);
   }
-
-  96%,
-  100% {
-    opacity: 0;
-    transform: translateY(7px);
-  }
 }
 
-.artTicketSerial {
-  animation: artTicketSpend 6s var(--ease-out-soft) infinite;
+.artTicketSerial,
+.artTicketClock {
+  transition: fill-opacity var(--motion-mid) ease;
 }
 
-@keyframes artTicketSpend {
-  0%,
-  62% {
-    fill-opacity: 0.5;
-  }
+/* Small enough that "60s" fits between the meter's end (x 90) and x 112. */
+.artTicketClock {
+  font-size: 8.5px;
+}
 
-  72%,
-  100% {
-    fill-opacity: 0.18;
-  }
+.artTicket[data-phase="expired"] .artTicketSerial,
+.artTicket[data-phase="expired"] .artTicketClock {
+  fill-opacity: 0.18;
 }
 
 .artBars path {
@@ -1745,30 +1642,25 @@ kbd,
   stroke-width: 3;
 }
 
+/* Drains one second at a time; the linear transition fills in between ticks
+   so the bar moves continuously instead of stepping. */
 .artMeter {
   stroke: var(--color-accent-pop);
   stroke-width: 3;
-  stroke-dasharray: 62;
-  animation: artMeterDrain 6s linear infinite;
-}
-
-@keyframes artMeterDrain {
-  0%,
-  4% {
-    stroke-dashoffset: 0;
-  }
-
-  62%,
-  100% {
-    stroke-dashoffset: 62;
-  }
+  /* Matches METER_LENGTH in ticket-art.tsx. */
+  stroke-dasharray: 40;
+  transition: stroke-dashoffset 1s linear;
 }
 
 .artStamp {
   opacity: 0;
   transform-box: view-box;
   transform-origin: 81px 51px;
-  animation: artStampIn 6s var(--ease-spring) infinite;
+  transform: rotate(-9deg) scale(1.45);
+}
+
+.artTicket[data-phase="expired"] .artStamp {
+  animation: artStampIn var(--motion-mid) var(--ease-spring) both;
 }
 
 .artStamp rect {
@@ -1779,38 +1671,32 @@ kbd,
 
 .artStamp text {
   fill-opacity: 0.55;
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
 }
 
 @keyframes artStampIn {
-  0%,
-  62% {
+  from {
     opacity: 0;
     transform: rotate(-9deg) scale(1.45);
   }
 
-  70%,
-  90% {
+  to {
     opacity: 0.62;
-    transform: rotate(-9deg) scale(1);
-  }
-
-  96%,
-  100% {
-    opacity: 0;
     transform: rotate(-9deg) scale(1);
   }
 }
 
-/* Shell: the same command typed at three different prompts. */
+/* Shell: the same command typed once at each of three prompts, 2.4s a prompt,
+   then left on the last one with its output. The caret keeps blinking; a
+   resting shell is still a running one. */
 .artShellPrompt {
   fill: color-mix(in srgb, var(--color-accent-pop) 70%, var(--color-text));
   font-size: 11px;
   font-weight: 590;
   opacity: 0;
-  animation: artShellCycle 7.2s var(--ease-out-soft) infinite;
+  animation: artShellTurn 7.2s var(--ease-out-soft) both;
 }
 
 .artShellZsh {
@@ -1822,10 +1708,11 @@ kbd,
 }
 
 .artShellFish {
+  animation-name: artShellLast;
   animation-delay: 4.8s;
 }
 
-@keyframes artShellCycle {
+@keyframes artShellTurn {
   0% {
     opacity: 0;
   }
@@ -1841,6 +1728,17 @@ kbd,
   }
 }
 
+@keyframes artShellLast {
+  0% {
+    opacity: 0;
+  }
+
+  4%,
+  100% {
+    opacity: 1;
+  }
+}
+
 .artCommand {
   fill-opacity: 0.62;
   font-size: 11px;
@@ -1849,7 +1747,7 @@ kbd,
 .artTypeMask {
   transform-box: fill-box;
   transform-origin: left center;
-  animation: artTypeLine 2.4s steps(14, end) infinite;
+  animation: artTypeLine 2.4s steps(14, end) 3 both;
 }
 
 @keyframes artTypeLine {
@@ -1865,9 +1763,10 @@ kbd,
 
 .artCaret {
   fill: var(--color-accent-pop);
+  transform: translateX(88px);
   transform-box: view-box;
   animation:
-    artCaretMove 2.4s steps(14, end) infinite,
+    artCaretMove 2.4s steps(14, end) 3 both,
     artCaretBlink 1.06s steps(1) infinite;
 }
 
@@ -1894,8 +1793,10 @@ kbd,
   }
 }
 
+/* Clears with each new prompt and comes back once the line is typed. */
 .artOutput {
-  animation: artOutputLine 2.4s var(--ease-out-soft) infinite;
+  fill-opacity: 0.38;
+  animation: artOutputLine 2.4s var(--ease-out-soft) 3 both;
 }
 
 @keyframes artOutputLine {
@@ -1906,14 +1807,8 @@ kbd,
   }
 
   68%,
-  90% {
-    fill-opacity: 0.38;
-    transform: translateY(0);
-  }
-
-  98%,
   100% {
-    fill-opacity: 0;
+    fill-opacity: 0.38;
     transform: translateY(0);
   }
 }
@@ -2056,33 +1951,6 @@ kbd,
   color: var(--color-accent-text);
 }
 
-.priceCta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 40px;
-  margin-top: auto;
-  padding: 10px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--color-text);
-  font-size: 0.8125rem;
-  font-weight: 510;
-  letter-spacing: -0.02em;
-}
-
-.priceCardPro .priceCta {
-  border-color: transparent;
-  background: var(--color-accent-to);
-  color: #fff;
-}
-
-.priceCta:hover {
-  filter: brightness(0.97);
-}
-
 .stepList {
   display: grid;
   gap: 12px;
@@ -2149,22 +2017,21 @@ kbd,
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 0.8125rem;
   text-align: left;
   cursor: pointer;
-  transition:
-    border-color 200ms var(--ease-out-soft),
-    box-shadow 240ms var(--ease-out-soft),
-    background-color 200ms var(--ease-out-soft);
+  transition: border-color var(--motion-fast) ease;
 }
 
 .copyCommand:hover {
-  border-color: color-mix(in srgb, var(--color-text) 16%, transparent);
+  border-color: color-mix(in srgb, var(--color-text) 22%, transparent);
 }
 
+/* Copied: the border and the prompt turn blue, the icon becomes a check and
+   the word "copied" appears. Confirmation is the one place blue belongs. */
 .copyCommand.isCopied {
-  box-shadow: 0 0 0 2px var(--color-accent-soft);
+  border-color: var(--color-accent-pop);
 }
 
 /* Clipboard blocked: the text is selected for a manual copy, and the button
@@ -2175,20 +2042,10 @@ kbd,
 
 .copyCommand.isFailed .copyCommandHint {
   opacity: 1;
-  translate: 0 0;
   color: var(--brand-warning);
 }
 
-.copyCommand.isCopied .copyCommandIcon {
-  animation: popIn 420ms var(--ease-spring);
-}
-
 .copyCommand:focus-visible,
-.priceCta:focus-visible,
-.primaryAction:focus-visible,
-.navAction:focus-visible,
-.social-btn:focus-visible,
-.textAction:focus-visible,
 .inlineLink:focus-visible,
 .navText:focus-visible,
 .siteFooterGroup a:focus-visible,
@@ -2200,11 +2057,9 @@ kbd,
 .copyCommandPrompt {
   color: var(--color-text-muted);
   user-select: none;
-  transition: color 200ms var(--ease-out-soft);
+  transition: color var(--motion-fast) ease;
 }
 
-.copyCommand:hover .copyCommandPrompt,
-.copyCommand:focus-visible .copyCommandPrompt,
 .copyCommand.isCopied .copyCommandPrompt {
   color: var(--color-accent-text);
 }
@@ -2219,24 +2074,17 @@ kbd,
   white-space: pre-wrap;
 }
 
+/* The hint only speaks after a click; on hover the icon is enough. */
 .copyCommandHint {
-  color: var(--color-text-muted);
+  color: var(--color-accent-text);
   font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   user-select: none;
   opacity: 0;
-  translate: 8px 0;
-  transition:
-    opacity var(--motion-fast) var(--ease-out-soft),
-    translate 180ms var(--ease-out-soft);
+  transition: opacity var(--motion-fast) ease;
 }
 
-.copyCommand:hover .copyCommandHint,
-.copyCommand:focus-visible .copyCommandHint,
 .copyCommand.isCopied .copyCommandHint {
   opacity: 1;
-  translate: 0 0;
 }
 
 .copyCommandIcon {
@@ -2247,15 +2095,15 @@ kbd,
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 1.35;
-  opacity: 0.38;
+  opacity: 0.45;
   transition:
-    opacity 200ms var(--ease-out-soft),
-    color 200ms var(--ease-out-soft);
+    opacity var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 .copyCommand:hover .copyCommandIcon,
 .copyCommand:focus-visible .copyCommandIcon {
-  opacity: 0.75;
+  opacity: 0.8;
 }
 
 .copyCommand.isCopied .copyCommandIcon {
@@ -2532,152 +2380,6 @@ kbd,
   }
 }
 
-.social-btn:disabled {
-  opacity: 0.48;
-  cursor: not-allowed;
-}
-
-.social-buttons {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.social-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 0 18px;
-  font-size: 0.875rem;
-  font-weight: 510;
-  font-family: inherit;
-  letter-spacing: -0.02em;
-  line-height: 1;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: #e5e5e5;
-  color: #000;
-  cursor: pointer;
-  transition:
-    filter var(--motion-fast) ease,
-    translate var(--motion-fast) var(--ease-spring),
-    scale var(--motion-fast) var(--ease-spring),
-    opacity var(--motion-fast) ease;
-  text-decoration: none;
-}
-
-.social-btn:hover {
-  filter: brightness(0.97);
-  translate: 0 -1px;
-}
-
-.social-btn:active {
-  translate: 0 0;
-  scale: 0.985;
-}
-
-.githubSignInButton {
-  background: #24292f;
-  color: #fff;
-}
-
-.githubSignInButton:hover {
-  filter: brightness(1.12);
-}
-
-.googleSignInButton {
-  background: #fff;
-  color: #1f1f1f;
-  box-shadow: inset 0 0 0 1px #dadce0;
-}
-
-.googleSignInButton:hover {
-  filter: none;
-  background: #f8f9fa;
-}
-
-.appleSignInButton {
-  min-height: 44px;
-  background: #000;
-  color: #fff;
-  font-weight: 600;
-}
-
-.appleSignInButton:hover {
-  filter: brightness(1.15);
-}
-
-@media (prefers-color-scheme: dark) {
-  .social-btn:not(.social-btn-primary):not(.social-btn-danger):not(.githubSignInButton):not(
-      .googleSignInButton
-    ):not(.appleSignInButton) {
-    background: #1c1c20;
-    color: var(--color-text);
-  }
-
-  .githubSignInButton {
-    background: #24292f;
-    box-shadow: inset 0 0 0 1px #3d444d;
-  }
-
-  .googleSignInButton {
-    background: #fff;
-    color: #1f1f1f;
-    box-shadow: inset 0 0 0 1px #8e918f;
-  }
-
-  .appleSignInButton {
-    background: #fff;
-    color: #000;
-  }
-
-  .appleSignInButton:hover {
-    background: #e6e6e6;
-  }
-}
-
-.social-btn-primary {
-  background: var(--color-accent-to);
-  color: #fff;
-}
-
-.social-btn-primary:hover {
-  filter: brightness(0.97);
-}
-
-.social-btn-danger {
-  color: #a92323;
-}
-
-.social-btn-danger:hover {
-  background: rgba(191, 48, 48, 0.12);
-}
-
-@media (prefers-color-scheme: dark) {
-  .social-btn-danger {
-    background: #1c1c20;
-    color: #ff9393;
-  }
-
-  .social-btn-danger:hover {
-    background: rgba(191, 48, 48, 0.18);
-  }
-}
-
-.social-btn svg {
-  display: block;
-  width: 16px;
-  height: 16px;
-  overflow: visible;
-  flex-shrink: 0;
-}
-
-.social-btn > span {
-  display: block;
-  line-height: 1;
-}
-
 .lastUsedLoginBadge {
   display: inline-flex;
   flex-shrink: 0;
@@ -2691,16 +2393,6 @@ kbd,
   letter-spacing: 0.02em;
   line-height: 1;
   white-space: nowrap;
-}
-
-.githubSignInButton svg,
-.appleSignInButton svg {
-  fill: currentColor;
-}
-
-.appleSignInButton svg {
-  width: 14px;
-  height: 18px;
 }
 
 .siteFooter {
@@ -3075,12 +2767,6 @@ kbd,
 }
 
 @media (max-width: 480px) {
-  .hNav .textAction,
-  .hNav .navAction {
-    padding: 10px 12px;
-    font-size: 0.8125rem;
-  }
-
   .iphone {
     width: 52%;
     margin-top: -74%;
@@ -3097,16 +2783,6 @@ kbd,
   .copyCommandHint {
     display: none;
   }
-
-  .social-buttons {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .social-btn {
-    width: 100%;
-    justify-content: center;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3122,10 +2798,17 @@ kbd,
   }
 
   /* Dropping the animations entirely leaves each illustration in its authored
-     state, which is the one that tells the story: link open, lock shut, ticket
-     full. Only the typed line needs a resting length of its own. */
+     state, which is where each story ends: code landed, lock shut and link
+     pulled back, ticket full, command typed with its output. */
   .cardArt * {
     animation: none;
+  }
+
+  /* The ticket still keeps real time; only the stamp's entrance is gone, so
+     its stamped state has to be spelled out. */
+  .artTicket[data-phase="expired"] .artStamp {
+    opacity: 0.62;
+    transform: rotate(-9deg) scale(1);
   }
 
   .artTypeMask {

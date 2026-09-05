@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { authClient } from "../lib/auth-client";
 import { type AuthProvider, getSignInProviders } from "../lib/auth-providers";
+import { Button } from "./ui/button";
 
 type SocialSignInButtonsProps = {
   appleEnabled: boolean;
@@ -49,13 +50,10 @@ function AppleMark() {
   );
 }
 
-const PROVIDERS: Record<
-  AuthProvider,
-  { className: string; label: string; Mark: typeof GitHubMark }
-> = {
-  github: { className: "githubSignInButton", label: "Continue with GitHub", Mark: GitHubMark },
-  google: { className: "googleSignInButton", label: "Continue with Google", Mark: GoogleMark },
-  apple: { className: "appleSignInButton", label: "Continue with Apple", Mark: AppleMark },
+const PROVIDERS: Record<AuthProvider, { label: string; Mark: typeof GitHubMark }> = {
+  github: { label: "Continue with GitHub", Mark: GitHubMark },
+  google: { label: "Continue with Google", Mark: GoogleMark },
+  apple: { label: "Continue with Apple", Mark: AppleMark },
 };
 
 export function SocialSignInButtons({
@@ -72,21 +70,21 @@ export function SocialSignInButtons({
   return (
     <div className="socialSignIn">
       {providers.map((provider) => {
-        const { Mark, className, label } = PROVIDERS[provider];
+        const { Mark, label } = PROVIDERS[provider];
         const isLastUsed = lastUsed === provider;
 
         return (
-          <button
+          <Button
             key={provider}
-            type="button"
-            className={`social-btn ${className}`}
+            variant="ink"
+            data-provider={provider}
             disabled={disabled}
             onClick={() => onSignIn(provider)}
           >
             <Mark />
             <span>{label}</span>
             {isLastUsed ? <span className="lastUsedLoginBadge">Last used</span> : null}
-          </button>
+          </Button>
         );
       })}
     </div>
