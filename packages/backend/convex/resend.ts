@@ -9,6 +9,7 @@ import {
   CollaboratorAddedEmail,
   GracePeriodStartedEmail,
   PlanUpgradedEmail,
+  ReleaseNotesConfirmEmail,
   WelcomeEmail,
 } from "./lib/emails/index.ts";
 import { createLogger } from "./lib/logger.ts";
@@ -66,6 +67,11 @@ type EmailData =
       userName: string;
     }
   | {
+      kind: EmailKind.ReleaseNotesConfirm;
+      confirmUrl: string;
+      unsubscribeUrl: string;
+    }
+  | {
       kind: EmailKind.Welcome;
       userName: string;
     };
@@ -113,6 +119,13 @@ async function renderEmailTemplate(data: EmailData): Promise<string> {
           dashboardUrl: getDashboardUrl(),
         }),
       );
+    case EmailKind.ReleaseNotesConfirm:
+      return await render(
+        ReleaseNotesConfirmEmail({
+          confirmUrl: data.confirmUrl,
+          unsubscribeUrl: data.unsubscribeUrl,
+        }),
+      );
     case EmailKind.Welcome:
       return await render(
         WelcomeEmail({
@@ -139,6 +152,8 @@ function getEmailSubject(kind: EmailKind): string {
       return "Your Wrapper plan has changed";
     case EmailKind.PlanUpgraded:
       return "Welcome to Wrapper Pro";
+    case EmailKind.ReleaseNotesConfirm:
+      return "Confirm your address for Wrapper release notes";
     case EmailKind.Welcome:
       return "Welcome to Wrapper";
   }
@@ -207,12 +222,19 @@ export const sendEmailDirect = async (
   const from = getFromAddress(data.kind);
   const subject = getEmailSubject(data.kind);
   const html = await renderEmailTemplate(data);
+  // Marketing-adjacent mail advertises its unsubscribe link in the header so
+  // inbox clients can surface it without opening the message.
+  const headers =
+    data.kind === EmailKind.ReleaseNotesConfirm
+      ? { "List-Unsubscribe": `<${data.unsubscribeUrl}>` }
+      : undefined;
 
   const { data: resendData, error } = await getResendSdk().emails.send({
     from,
     to,
     subject,
     html,
+    headers,
     tags: [{ name: "kind", value: data.kind }],
   });
 

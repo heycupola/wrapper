@@ -29,5 +29,11 @@ crons.daily(
   internal.webhook._cleanupOldEvents,
   {},
 );
+crons.daily(
+  "sweep unconfirmed release-note signups",
+  { hourUTC: 4, minuteUTC: 30 },
+  internal.releaseNotes.sweepExpiredPending,
+  {},
+);
 
 export default crons;

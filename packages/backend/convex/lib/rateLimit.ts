@@ -14,6 +14,18 @@ export const rateLimitKeys = {
   issueViewerTicketForUser(userId: string): string {
     return `issueViewerTicket:user:${userId}`;
   },
+  releaseNotes: {
+    subscribeGlobalMinute: "releaseNotes:subscribe:global:minute",
+    subscribeGlobalHour: "releaseNotes:subscribe:global:hour",
+    subscribeClient(bucket: string): string {
+      return `releaseNotes:subscribe:client:${bucket}`;
+    },
+    subscribeEmail(bucket: string): string {
+      return `releaseNotes:subscribe:email:${bucket}`;
+    },
+    confirmGlobal: "releaseNotes:confirm:global",
+    unsubscribeGlobal: "releaseNotes:unsubscribe:global",
+  },
 };
 
 export function getUserRateLimitKeys(userId: string): string[] {
