@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { Button } from "../../../components/ui/button";
 import { authClient } from "../../../lib/auth-client";
 
 const CONFIRM_WORD = "DELETE";
@@ -54,14 +55,9 @@ export function DashboardDeletion() {
         </p>
       </div>
 
-      <button
-        type="button"
-        className="social-btn social-btn-danger dangerAction"
-        aria-haspopup="dialog"
-        onClick={() => setOpen(true)}
-      >
+      <Button variant="primary" tone="danger" aria-haspopup="dialog" onClick={() => setOpen(true)}>
         Delete profile and data
-      </button>
+      </Button>
 
       <ConfirmDialog
         open={open}

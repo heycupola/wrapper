@@ -1,9 +1,10 @@
-import Link from "next/link";
-import { ExternalLink } from "../../components/external-link";
+import { PageView } from "../../components/page-view";
+import { Button } from "../../components/ui/button";
 
 export function DashboardPageHeader({
   title,
   description,
+  analyticsPage,
   actionHref,
   actionLabel,
   actionVariant = "secondary",
@@ -11,30 +12,24 @@ export function DashboardPageHeader({
 }: {
   title: string;
   description: string;
+  analyticsPage: string;
   actionHref?: string;
   actionLabel?: string;
   actionVariant?: "primary" | "secondary";
   actionExternal?: boolean;
 }) {
-  const actionClass = actionVariant === "primary" ? "primaryAction" : "textAction";
-
   return (
     <header className="dashboardPageHeader">
+      <PageView page={analyticsPage} />
       <div>
         <h1>{title}</h1>
         <p>{description}</p>
       </div>
       {actionHref && actionLabel ? (
         <div className="dashboardPageActions">
-          {actionExternal ? (
-            <ExternalLink className={actionClass} href={actionHref}>
-              {actionLabel}
-            </ExternalLink>
-          ) : (
-            <Link className={actionClass} href={actionHref}>
-              {actionLabel}
-            </Link>
-          )}
+          <Button variant={actionVariant} href={actionHref} external={actionExternal}>
+            {actionLabel}
+          </Button>
         </div>
       ) : null}
     </header>

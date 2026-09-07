@@ -44,6 +44,7 @@ export default async function DashboardBillingPage({
       <DashboardPageHeader
         title="Billing"
         description="Open secure billing controls or start a Wrapper Pro checkout."
+        analyticsPage="billing"
       />
 
       <div className="dashboardBillingGrid">

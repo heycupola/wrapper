@@ -5,8 +5,12 @@ import { makeFunctionReference } from "convex/server";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 import { CopyCommand } from "../../components/copy-command";
-import { NewTabNote } from "../../components/external-link";
+import { InstallCommands } from "../../components/install-commands";
+import { IosViewerCta } from "../../components/ios-viewer-cta";
+import { PageView } from "../../components/page-view";
+import { Button } from "../../components/ui/button";
 import type { IosAppTarget } from "../../lib/ios-app";
+import { trackWebEvent } from "../../lib/posthog";
 
 type Screen = "install" | "auth" | "context";
 
@@ -80,12 +84,14 @@ export function OnboardingClient({
   async function advance(): Promise<void> {
     if (screen === "install") {
       setError(null);
+      trackWebEvent("web_onboarding_step_completed", { step: "install" });
       setScreen("auth");
       return;
     }
 
     if (screen === "auth") {
       setError(null);
+      trackWebEvent("web_onboarding_step_completed", { step: "auth" });
       setScreen("context");
       return;
     }
@@ -103,6 +109,10 @@ export function OnboardingClient({
         sourceOther: source === "other" ? sourceOther.trim() || undefined : undefined,
         teamSize: teamSize.trim() || undefined,
       });
+      trackWebEvent("web_onboarding_completed", {
+        source: source.trim() || null,
+        teamSize: teamSize.trim() || null,
+      });
       router.push("/dashboard");
       router.refresh();
     } catch {
@@ -116,6 +126,7 @@ export function OnboardingClient({
 
   return (
     <div className="onboardingSimple">
+      <PageView page="onboarding" />
       {/* Each step swaps the heading; the live region reads the new step out so
           the change is not only visual. */}
       <header className="authPageHeader" aria-live="polite" aria-atomic="true">
@@ -131,29 +142,14 @@ export function OnboardingClient({
       {screen === "install" ? (
         <div className="onboardingInstall">
           <div className="onboardingCommands">
-            <CopyCommand
-              command="brew install heycupola/tap/wrapper"
-              label="Copy Homebrew install command"
-            />
-            <CopyCommand
-              command="curl -fsSL https://wrapper.sh/install | bash"
-              label="Copy curl install command"
-            />
+            <InstallCommands />
             <CopyCommand command="wrapper install" label="Copy shell hook command" />
           </div>
           <p className="onboardingInstallHint">
-            Use Homebrew or the script, not both. Then open a new terminal after{" "}
-            <code>wrapper install</code> so the hook can wrap your shell.
+            Install with curl or brew, then open a new terminal after <code>wrapper install</code>{" "}
+            so the hook can wrap your shell.
           </p>
-          <a
-            className="iosViewerCta iosViewerCtaText onboardingViewerCta"
-            href={iosViewer.href}
-            target={iosViewer.external ? "_blank" : undefined}
-            rel={iosViewer.external ? "noopener noreferrer" : undefined}
-          >
-            {iosViewer.label}
-            {iosViewer.external ? <NewTabNote /> : null}
-          </a>
+          <IosViewerCta variant="text" className="onboardingViewerCta" target={iosViewer} />
         </div>
       ) : null}
 
@@ -219,14 +215,14 @@ export function OnboardingClient({
         </div>
       ) : null}
 
-      <button
-        type="button"
-        className="primaryAction onboardingNext"
-        disabled={busy}
+      <Button
+        variant="primary"
+        className="onboardingNext"
+        loading={busy}
         onClick={() => void advance()}
       >
         {busy ? "Saving…" : screen === "context" ? "Continue" : "Next"}
-      </button>
+      </Button>
 
       <output className="visuallyHidden">{busy ? "Saving your answers…" : ""}</output>
       {error ? (
