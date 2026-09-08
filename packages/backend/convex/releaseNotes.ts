@@ -276,7 +276,8 @@ export const confirm = mutation({
   },
 });
 
-/** One-click unsubscribe from the link in every email. Idempotent. */
+/** Unsubscribe from the link in every email. Idempotent. The page asks for a
+ *  click so mail scanners cannot drop the subscriber on GET. */
 export const unsubscribe = mutation({
   args: { token: v.string() },
   returns: v.object({ ok: v.boolean() }),

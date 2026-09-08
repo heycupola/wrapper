@@ -4,6 +4,7 @@ const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY ?? "";
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://telemetry.wrapper.sh";
 
 let initialized = false;
+const pendingEvents: Array<{ event: string; properties?: Record<string, unknown> }> = [];
 
 export function isPostHogConfigured(): boolean {
   return POSTHOG_KEY.length > 0;
@@ -31,10 +32,18 @@ export function initPostHog(options?: { persistCookies?: boolean }): void {
   });
 
   initialized = true;
+  for (const item of pendingEvents) {
+    posthog.capture(item.event, item.properties);
+  }
+  pendingEvents.length = 0;
 }
 
 export function trackWebEvent(event: string, properties?: Record<string, unknown>): void {
-  if (!POSTHOG_KEY || !initialized) return;
+  if (!POSTHOG_KEY) return;
+  if (!initialized) {
+    pendingEvents.push({ event, properties });
+    return;
+  }
   posthog.capture(event, properties);
 }
 
