@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AuthShell } from "../../../components/auth-shell";
 import { ReleaseNotesAction } from "../../../components/release-notes-action";
 import { ReleaseNotesMoment } from "../../../components/release-notes-moment";
 
@@ -20,5 +21,13 @@ export default async function ConfirmReleaseNotesPage({
   if (!/^[0-9a-f]{64}$/.test(token)) {
     return <ReleaseNotesMoment variant={INVALID} />;
   }
-  return <ReleaseNotesAction action="confirm" token={token} />;
+  return (
+    <AuthShell
+      title="Confirm this address?"
+      description="Mail scanners can open the link first. Press confirm so the list only changes after you do."
+      size="compact"
+    >
+      <ReleaseNotesAction action="confirm" token={token} />
+    </AuthShell>
+  );
 }
