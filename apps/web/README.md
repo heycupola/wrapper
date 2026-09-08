@@ -7,8 +7,9 @@ login flow.
 ## What it does
 
 - **Landing page** (`app/page.tsx` + `components/horizontal-landing.tsx`): a
-  five-part desktop product narrative covering the hero, connection path,
-  explicit control, pricing, and installation. At 1024px and above, a `100dvh`
+  five-part desktop product narrative covering the hero (with the install
+  command), connection path, explicit control, pricing, and a closing FAQ +
+  release-notes signup. At 1024px and above, a `100dvh`
   sticky viewport maps each vertical scroll pixel directly to horizontal track
   movement; Lenis smooths the native wheel input and
   `requestAnimationFrame` writes the compositor-backed `translate3d`. The track
@@ -16,11 +17,16 @@ login flow.
   section back to its vertical document coordinate without adding visible
   navigation chrome. Dashboard Install links remember the install scene and
   open `/` without a hash, then lock that last scene until the track and Lenis
-  catch up. In-page hero/header CTAs still use `#start`.
+  catch up. Install links point at `#intro`, where the hero shows the `curl`
+  command; the header's Install button collapses while that scene is active
+  and glides back to it when clicked. `#questions` opens the FAQ and signup
+  scene.
   Below 1024px, and whenever reduced motion is requested, the same semantic DOM
   becomes a normal vertical story with no pinning or smooth-scroll runtime.
   Visual tokens, motion rules, and voice guidance live in [`BRAND.md`](BRAND.md).
-  The start panel keeps CLI install (`brew` / `curl`) as the host path and adds
+  The hero's install block is shaped like a terminal window: a header split
+  into two equal tabs (`curl`, Homebrew) and a body with the command; pressing the
+  line copies it. It adds
   an iOS viewer CTA labeled **Get iOS viewer**. While the viewer is in
   TestFlight (or falling back to docs), the CTA keeps a Beta tag; the App Store
   listing drops that tag. `NEXT_PUBLIC_IOS_APP_URL` should be the public
@@ -49,6 +55,9 @@ login flow.
 - **Legal and support** (`app/privacy-policy`, `app/terms-of-service`,
   `app/support`): Wrapper-specific terminal data flow, service terms, support
   channels, and private vulnerability reporting.
+
+The website uses Vercel Web Analytics for anonymized page views. Optional
+PostHog web analytics stays off while `NEXT_PUBLIC_POSTHOG_KEY` is empty.
 
 ## How it connects to the rest of Wrapper
 

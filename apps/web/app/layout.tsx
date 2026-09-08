@@ -1,9 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Caveat, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./controls.css";
 import "./surfaces.css";
 import "./landing.css";
 import "./hero-demo.css";
+import "./questions.css";
+import { Analytics } from "@vercel/analytics/next";
+import { PostHogProvider } from "../components/posthog-provider";
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -87,7 +91,10 @@ export default function RootLayout({
         <a className="skipLink" href="#main-content">
           Skip to main content
         </a>
-        {children}
+        <PostHogProvider>
+          {children}
+          <Analytics />
+        </PostHogProvider>
       </body>
     </html>
   );
