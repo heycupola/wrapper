@@ -22,11 +22,7 @@ export default async function ConfirmReleaseNotesPage({
     return <ReleaseNotesMoment variant={INVALID} />;
   }
   return (
-    <AuthShell
-      title="Confirm this address?"
-      description="Mail scanners can open the link first. Press confirm so the list only changes after you do."
-      size="compact"
-    >
+    <AuthShell size="compact">
       <ReleaseNotesAction action="confirm" token={token} />
     </AuthShell>
   );

@@ -22,11 +22,7 @@ export default async function UnsubscribeReleaseNotesPage({
     return <ReleaseNotesMoment variant={INVALID} />;
   }
   return (
-    <AuthShell
-      title="Stop release notes?"
-      description="This only runs after you press the button, so a preview of the mail cannot drop you from the list."
-      size="compact"
-    >
+    <AuthShell size="compact">
       <ReleaseNotesAction action="unsubscribe" token={token} />
     </AuthShell>
   );
