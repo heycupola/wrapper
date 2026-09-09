@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Button } from "../../../components/ui/button";
 import { DashboardPageHeader } from "../dashboard-page-header";
 import { DashboardDeletion } from "./data-client";
 
@@ -15,6 +15,7 @@ export default function DashboardDataPage() {
       <DashboardPageHeader
         title="Data & deletion"
         description="Understand what Wrapper stores and permanently remove your profile and owned data."
+        analyticsPage="data"
       />
 
       <div className="dashboardDataGrid">
@@ -44,9 +45,7 @@ export default function DashboardDataPage() {
             Unshared terminal traffic stays on the host. Sharing is initiated and revoked from the
             shell you control.
           </p>
-          <Link className="textAction" href="/privacy-policy">
-            Read the privacy policy
-          </Link>
+          <Button href="/privacy-policy">Read the privacy policy</Button>
         </section>
       </div>
 
@@ -58,9 +57,7 @@ export default function DashboardDataPage() {
             available as a self-service control.
           </p>
         </div>
-        <Link className="textAction" href="/support">
-          Contact support
-        </Link>
+        <Button href="/support">Contact support</Button>
       </section>
 
       <DashboardDeletion />

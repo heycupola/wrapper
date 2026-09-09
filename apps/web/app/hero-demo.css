@@ -160,8 +160,9 @@
     linear-gradient(160deg, var(--wp-pale) 0%, var(--wp-mid) 44%, var(--wp-deep) 100%);
 }
 
-/* Three blurred swells slightly larger than the screen so their edges never
-   show while they drift. */
+/* Three blurred swells slightly larger than the screen. They used to drift on
+   a 42s loop; nobody could see it move and it kept a compositor layer alive
+   for the whole visit, so they hold still. */
 .macWallpaper::before {
   position: absolute;
   inset: -18%;
@@ -170,8 +171,7 @@
     radial-gradient(30% 42% at 24% 78%, var(--wp-swell-b) 0%, transparent 70%),
     radial-gradient(50% 32% at 60% 90%, var(--wp-swell-c) 0%, transparent 70%);
   content: "";
-  animation: wallpaperDrift 42s ease-in-out infinite alternate;
-  will-change: transform;
+  transform: rotate(-1deg) scale(1.03);
 }
 
 /* Ribbons: crisp-edged diagonals give the eye something to hold on to. */
@@ -191,15 +191,6 @@
     transparent 89%
   );
   content: "";
-}
-
-@keyframes wallpaperDrift {
-  from {
-    transform: translate3d(-3%, -2%, 0) rotate(-2deg) scale(1);
-  }
-  to {
-    transform: translate3d(3%, 2.5%, 0) rotate(2deg) scale(1.06);
-  }
 }
 
 /* The phone stands in front of the Mac's lower-right corner, its bottom

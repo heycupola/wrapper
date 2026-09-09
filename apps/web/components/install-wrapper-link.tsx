@@ -1,24 +1,30 @@
 "use client";
 
-import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   INSTALL_SCENE_ID,
   OPEN_INSTALL_SCENE_EVENT,
   rememberLandingScene,
 } from "../lib/landing-scene";
+import { Button, type ButtonSize, type ButtonVariant } from "./ui/button";
 
 export function InstallWrapperLink({
+  variant = "primary",
+  size,
   className,
   children,
 }: {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   className?: string;
   children: ReactNode;
 }) {
   return (
-    <Link
+    <Button
+      variant={variant}
+      size={size}
       className={className}
-      href="/#start"
+      href={`/#${INSTALL_SCENE_ID}`}
       scroll={false}
       onClick={(event) => {
         if (
@@ -41,6 +47,6 @@ export function InstallWrapperLink({
       }}
     >
       {children}
-    </Link>
+    </Button>
   );
 }

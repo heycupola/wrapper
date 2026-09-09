@@ -148,7 +148,12 @@ http.route({
         const emailKind = tags.kind as EmailKind;
         const emailId = tags.emailId;
 
-        if (userId && emailKind && emailKind !== EmailKind.AccountDeleted) {
+        if (
+          userId &&
+          emailKind &&
+          emailKind !== EmailKind.AccountDeleted &&
+          emailKind !== EmailKind.ReleaseNotesConfirm
+        ) {
           await ctx.runMutation(internal.user._handleEmailDelivered, {
             userId,
             emailKind,

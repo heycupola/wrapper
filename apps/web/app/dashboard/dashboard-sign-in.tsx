@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { PageView } from "../../components/page-view";
 import { SocialSignInButtons } from "../../components/social-sign-in";
 import { authClient } from "../../lib/auth-client";
+import { trackWebEvent } from "../../lib/posthog";
 
 export function DashboardSignIn({ appleEnabled }: { appleEnabled: boolean }) {
   const pathname = usePathname();
@@ -14,6 +16,7 @@ export function DashboardSignIn({ appleEnabled }: { appleEnabled: boolean }) {
   async function signInWith(provider: "apple" | "github" | "google"): Promise<void> {
     setPending(true);
     setError(null);
+    trackWebEvent("web_login_started", { provider });
     try {
       const result = await authClient.signIn.social({
         provider,
@@ -21,6 +24,7 @@ export function DashboardSignIn({ appleEnabled }: { appleEnabled: boolean }) {
       });
       if (result.error) throw result.error;
     } catch (caught) {
+      trackWebEvent("web_login_failed", { provider });
       setError(caught instanceof Error ? caught.message : "Sign in could not be started.");
       setPending(false);
     }
@@ -28,6 +32,7 @@ export function DashboardSignIn({ appleEnabled }: { appleEnabled: boolean }) {
 
   return (
     <div className="dashboardSignIn">
+      <PageView page="sign_in" />
       <SocialSignInButtons
         appleEnabled={appleEnabled}
         disabled={pending}

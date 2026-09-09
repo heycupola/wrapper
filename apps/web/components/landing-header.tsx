@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { BrandMark } from "./brand-mark";
 import { ExternalLink } from "./external-link";
+import { InstallWrapperLink } from "./install-wrapper-link";
+import { Button } from "./ui/button";
 
 type SiteHeaderProps = {
   variant?: "marketing" | "internal";
@@ -29,6 +31,12 @@ export async function SiteHeader({
         <nav className="siteNav" aria-label={marketing ? "Primary navigation" : "Page navigation"}>
           {marketing ? (
             <>
+              {/* A plain hash link: the landing's scroll runtime turns it into
+                  a glide to the pricing scene, and it is a normal anchor jump
+                  in the stacked layout. */}
+              <a href="#pricing" className="siteNavText">
+                Pricing
+              </a>
               <Link href="/dashboard" className="siteNavText">
                 Dashboard
               </Link>
@@ -55,14 +63,14 @@ export async function SiteHeader({
                   </span>
                 )}
               </a>
-              <a className="primaryAction" href="#start">
-                Install Wrapper
-              </a>
+              <span className="landingHeaderInstall">
+                <InstallWrapperLink size="sm">Install Wrapper</InstallWrapperLink>
+              </span>
             </>
           ) : (
-            <Link href={actionHref} className="textAction">
+            <Button variant="secondary" size="sm" href={actionHref}>
               {actionLabel}
-            </Link>
+            </Button>
           )}
         </nav>
       ) : null}

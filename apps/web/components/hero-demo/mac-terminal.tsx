@@ -1,12 +1,58 @@
 "use client";
 
-import { type RefObject, useRef } from "react";
+import { type RefObject, useEffect, useRef } from "react";
 import { type DemoState, hostTitle, hostTransport } from "./demo-session";
 import { TerminalLines, useStickToBottom, useTerminalInput } from "./terminal-view";
 import type { DemoSend } from "./use-demo-session";
 import type { useWindowDrag } from "./use-window-drag";
 
 type Drag = ReturnType<typeof useWindowDrag>;
+
+/**
+ * The guide says "press ⌃\ then s", so the chord should work before the
+ * visitor has clicked into the window. While the window is on screen and no
+ * other field has focus, ⌃\ anywhere on the page focuses the shell and arms
+ * it; the `s` that follows lands in the terminal as usual. Only the prefix is
+ * claimed globally — plain letters keep belonging to the page.
+ */
+function usePagePrefix(
+  windowRef: RefObject<HTMLElement | null>,
+  focus: () => void,
+  send: DemoSend,
+  enabled: boolean,
+) {
+  useEffect(() => {
+    if (!enabled) return;
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (!event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.key !== "\\" && event.key !== "|") return;
+      if (event.defaultPrevented) return;
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')
+      ) {
+        return;
+      }
+      const node = windowRef.current;
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      if (
+        rect.bottom <= 0 ||
+        rect.right <= 0 ||
+        rect.top >= window.innerHeight ||
+        rect.left >= window.innerWidth
+      ) {
+        return;
+      }
+      event.preventDefault();
+      focus();
+      send({ type: "key", key: "\\", ctrl: true });
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [enabled, focus, send, windowRef]);
+}
 
 /**
  * The terminal window on the Mac. With a keyboard and a fine pointer it is a
@@ -32,6 +78,7 @@ export function MacTerminal({
   const { focus, inputProps } = useTerminalInput("mac", send);
   const focused = state.focus === "mac";
   useStickToBottom(scrollRef, state.lines.length + state.input.length);
+  usePagePrefix(windowRef, focus, send, !touch);
 
   return (
     <section

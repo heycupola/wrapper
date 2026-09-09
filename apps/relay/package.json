@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "convex": "1.43.0",
-    "hono": "4.13.1"
+    "hono": "4.13.7"
   },
   "devDependencies": {
     "@repo/protocol": "*",

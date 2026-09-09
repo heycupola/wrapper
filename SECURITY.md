@@ -34,12 +34,16 @@ never be attached to a public GitHub issue.
 
 ## Audited dependency exceptions
 
-`GHSA-jmr9-qjv8-65gv` has no fixed upstream `extract-zip` release. Wrapper only
-receives it through Mint's development-time Puppeteer toolchain and applies
+`GHSA-jmr9-qjv8-65gv` and `GHSA-7pqw-9j4j-h8q3` have no fixed upstream
+`extract-zip` release. Wrapper only receives them through Mint's development-time
+Puppeteer toolchain and applies
 [`patches/extract-zip@2.0.1.patch`](./patches/extract-zip@2.0.1.patch) to reject
 symlink targets outside the extraction root. CI regression-tests that patch
-before allowing the advisory-specific audit exception. Remove the exception
-when Mint no longer resolves the affected package.
+before allowing those advisory-specific audit exceptions.
+
+`GHSA-vwc7-r8mq-g2x9` is the same Mint toolchain path through `adm-zip@0.6.0`,
+which has no patched release. Remove these exceptions when Mint no longer
+resolves the affected packages.
 
 ## Security boundaries
 

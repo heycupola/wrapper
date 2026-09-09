@@ -5,6 +5,7 @@ import AccountDeletedEmail from "../convex/lib/emails/account_deleted";
 import CollaboratorAddedEmail from "../convex/lib/emails/collaborator_added";
 import GracePeriodStartedEmail from "../convex/lib/emails/grace_period_started";
 import PlanUpgradedEmail from "../convex/lib/emails/plan_upgraded";
+import ReleaseNotesConfirmEmail from "../convex/lib/emails/release_notes_confirm";
 import WelcomeEmail from "../convex/lib/emails/welcome";
 import { EmailKind } from "../convex/lib/types";
 
@@ -16,6 +17,7 @@ describe("email templates", () => {
       EmailKind.CollaboratorAdded,
       EmailKind.GracePeriodStarted,
       EmailKind.PlanUpgraded,
+      EmailKind.ReleaseNotesConfirm,
       EmailKind.Welcome,
     ]);
 
@@ -62,5 +64,17 @@ describe("email templates", () => {
     );
     expect(collaborator).toContain("given access to a session");
     expect(collaborator).toContain("share code");
+
+    const confirm = await render(
+      ReleaseNotesConfirmEmail({
+        confirmUrl: "https://example/confirm?token=abc",
+        unsubscribeUrl: "https://example/unsubscribe?token=def",
+      }),
+    );
+    expect(confirm).toContain("Confirm this address");
+    expect(confirm).toContain("release notes");
+    expect(confirm).toContain("https://example/confirm?token=abc");
+    expect(confirm).toContain("https://example/unsubscribe?token=def");
+    expect(confirm).toContain("48 hours");
   });
 });

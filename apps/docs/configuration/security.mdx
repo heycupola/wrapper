@@ -96,6 +96,10 @@ Anonymous CLI telemetry is disabled by default. Enable it explicitly with:
 wrapper telemetry enable
 ```
 
+The website uses Vercel Web Analytics for anonymized page views. It does not use
+cookies. PostHog is not used on the website while `NEXT_PUBLIC_POSTHOG_KEY` is
+empty.
+
 Telemetry must never include terminal input or output, share codes, relay
 tickets, or authentication tokens.
 

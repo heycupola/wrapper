@@ -19,6 +19,7 @@ import {
   SHARE_LATENCY_MS,
   TICKET_LATENCY_MS,
 } from "../components/hero-demo/demo-session";
+import { formatAway } from "../components/hero-demo/use-away-notice";
 
 const type = (text: string): DemoAction[] => [...text].map((key) => ({ type: "key", key }));
 const enter: DemoAction = { type: "key", key: "Enter" };
@@ -325,5 +326,15 @@ describe("hero demo share → attach → unshare loop", () => {
     assert.equal(state.viewer.screen, "list");
     assert.equal(guideStep(state), "share");
     assert.ok(state.lines.some((line) => line.text === "git status" && line.kind === "command"));
+  });
+});
+
+describe("hero demo away note", () => {
+  test("says how long the visitor was gone the way a person would", () => {
+    assert.equal(formatAway(4200), "4s");
+    assert.equal(formatAway(42_000), "42s");
+    assert.equal(formatAway(60_000), "1m");
+    assert.equal(formatAway(192_000), "3m 12s");
+    assert.equal(formatAway(3_840_000), "1h 04m");
   });
 });

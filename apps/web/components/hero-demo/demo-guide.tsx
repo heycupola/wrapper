@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { type DemoState, type GuideStep, guideStep } from "./demo-session";
+import { type AwayNotice, formatAway } from "./use-away-notice";
 import type { DemoSend, Keycap } from "./use-demo-session";
 
 /**
@@ -17,13 +18,47 @@ import type { DemoSend, Keycap } from "./use-demo-session";
  * in hero-demo.css) on the same pointer query the scripts use, so the note is
  * right from the first paint rather than after hydration. The container is a
  * polite live region so each new note is read out as the loop advances.
+ *
+ * When the visitor comes back from another tab, the step's note yields for a
+ * moment to a note about the absence (`useAwayNotice`), then returns.
  */
-export function DemoGuide({ state, send }: { state: DemoState; send: DemoSend }) {
+export function DemoGuide({
+  state,
+  send,
+  notice = null,
+}: {
+  state: DemoState;
+  send: DemoSend;
+  notice?: AwayNotice | null;
+}) {
   const step = guideStep(state);
   return (
     <div className="demoGuide" data-step={step} aria-live="polite">
-      <Note key={step} step={step} send={send} />
+      {notice ? (
+        <AwayNote key={`away-${notice.id}`} state={state} notice={notice} />
+      ) : (
+        <Note key={step} step={step} send={send} />
+      )}
     </div>
+  );
+}
+
+/**
+ * The claim on the page is "still running"; this is the moment it is checked.
+ * The wording follows the session: attached viewers are still attached, an
+ * open share is still open, and an idle shell is simply still there.
+ */
+function AwayNote({ state, notice }: { state: DemoState; notice: AwayNotice }) {
+  const status = state.viewer.attached
+    ? "still running, still attached"
+    : state.shared
+      ? "still running, still shared"
+      : "still running";
+  return (
+    <p className="demoNote isQuiet">
+      <HandArrow />
+      {status} — you were away {formatAway(notice.awayMs)}
+    </p>
   );
 }
 

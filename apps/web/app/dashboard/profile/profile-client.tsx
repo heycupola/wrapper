@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { Button } from "../../../components/ui/button";
 import { authClient } from "../../../lib/auth-client";
 import type { DashboardPlan } from "../../../lib/dashboard-server";
+import { trackWebEvent } from "../../../lib/posthog";
 
 export function DashboardProfile({ plan }: { plan: DashboardPlan | null }) {
   const { data: session, isPending } = authClient.useSession();
@@ -18,6 +20,7 @@ export function DashboardProfile({ plan }: { plan: DashboardPlan | null }) {
     try {
       const result = await authClient.signOut();
       if (result.error) throw result.error;
+      trackWebEvent("web_logout");
       window.location.assign("/");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Sign out failed. Please try again.");
@@ -60,14 +63,9 @@ export function DashboardProfile({ plan }: { plan: DashboardPlan | null }) {
             {isPending ? "Loading session…" : `Signed in${user?.email ? ` as ${user.email}` : ""}.`}
           </p>
         </div>
-        <button
-          type="button"
-          className="social-btn"
-          disabled={signingOut}
-          onClick={() => void signOut()}
-        >
+        <Button loading={signingOut} onClick={() => void signOut()}>
           {signingOut ? "Signing out…" : "Sign out"}
-        </button>
+        </Button>
         <output className="visuallyHidden">{signingOut ? "Signing out…" : ""}</output>
         {error ? (
           <p className="authError" role="alert">

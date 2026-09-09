@@ -4,10 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { ConfirmDialog } from "../../../components/confirm-dialog";
+import { PageView } from "../../../components/page-view";
 import { SocialSignInButtons } from "../../../components/social-sign-in";
+import { Button } from "../../../components/ui/button";
 import { authClient } from "../../../lib/auth-client";
+import { trackWebEvent } from "../../../lib/posthog";
 
 type GetDeviceCodeInfoArgs = {
   user_code: string;
@@ -163,9 +165,11 @@ export function DeviceAuthorizeClient({
         const result = await client.mutation(approveDeviceCodeRef, { user_code: normalized });
         setNeedsOnboarding(result.needsOnboarding);
         setStatus("Device code approved");
+        trackWebEvent("web_device_approved");
       } else {
         await client.mutation(denyDeviceCodeRef, { user_code: normalized });
         setStatus("Device code denied");
+        trackWebEvent("web_device_denied");
       }
       const info = await client.mutation(getDeviceCodeInfoRef, { user_code: normalized });
       setDeviceInfo(info);
@@ -178,17 +182,20 @@ export function DeviceAuthorizeClient({
 
   async function signInWith(provider: "apple" | "github" | "google"): Promise<void> {
     setError(null);
+    trackWebEvent("web_login_started", { provider });
     const result = await authClient.signIn.social({
       provider,
       callbackURL: callbackUrl,
     });
     if (result.error?.message) {
+      trackWebEvent("web_login_failed", { provider });
       setError(result.error.message);
     }
   }
 
   return (
     <div className="authCard">
+      <PageView page="authorize" />
       {!authenticated ? (
         <>
           <p className="authHint">
@@ -235,9 +242,9 @@ export function DeviceAuthorizeClient({
         </p>
 
         <div className="authActions">
-          <button type="submit" className="social-btn" disabled={busy}>
+          <Button type="submit" loading={busy}>
             {busy ? "Checking…" : "Check code"}
-          </button>
+          </Button>
         </div>
       </form>
 
@@ -274,23 +281,21 @@ export function DeviceAuthorizeClient({
         <div className="authDecision">
           <p className="authHint">This grants the Wrapper CLI access to your Wrapper profile.</p>
           <div className="authActions">
-            <button
-              type="button"
-              className="social-btn social-btn-primary"
+            <Button
+              variant="primary"
               onClick={() => void performDecision("approve")}
               disabled={busy || !authenticated}
             >
               Approve device
-            </button>
-            <button
-              type="button"
-              className="social-btn social-btn-danger"
+            </Button>
+            <Button
+              tone="danger"
               aria-haspopup="dialog"
               onClick={() => setConfirmDeny(true)}
               disabled={busy || !authenticated}
             >
               Deny
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
@@ -306,12 +311,9 @@ export function DeviceAuthorizeClient({
       {busy ? <output className="visuallyHidden">Working…</output> : null}
       {status ? <output className="authSuccess">{status}</output> : null}
       {status === "Device code approved" || deviceInfo?.status === "approved" ? (
-        <Link
-          className="social-btn social-btn-primary"
-          href={needsOnboarding ? "/onboarding" : "/dashboard"}
-        >
+        <Button variant="primary" href={needsOnboarding ? "/onboarding" : "/dashboard"}>
           {needsOnboarding ? "Continue to onboarding" : "Continue to dashboard"}
-        </Link>
+        </Button>
       ) : null}
       {error ? (
         <p id="device-auth-error" className="authError" role="alert">

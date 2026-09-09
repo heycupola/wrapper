@@ -91,6 +91,14 @@ recommended branch protection settings are in [`OPERATIONS.md`](./OPERATIONS.md)
 | `FROM_EMAIL_ADDRESS_PERSONAL`               | `Can from Wrapper <can@wrapper.sh>` | same |
 | `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID`     | `can_share_relay`        | `can_share_relay`           |
 | `WRAPPER_RELAY_HOST_TICKET_TTL_MS` etc.     | optional (has defaults)  | optional (has defaults)     |
+| `RELEASE_NOTES_INGEST_SECRET`               | random secret, same value as the web app | random secret, same value as the web app |
+
+`RELEASE_NOTES_INGEST_SECRET` gates `releaseNotes:subscribe` (the landing-page
+release-notes signup). The web app's route handler adds a hashed client address
+for per-visitor rate limits and
+sign the call with this secret; without it anyone could call Convex directly and
+choose their own bucket. When unset (local dev) the check is skipped and only the
+global and per-email windows apply.
 
 ### relay: Fly secrets (`flyctl secrets set KEY=value --app <app>`)
 
@@ -112,6 +120,9 @@ build time):
 | `NEXT_PUBLIC_APPLE_AUTH_ENABLED` | `true` after Apple OAuth is configured | `true` after Apple OAuth is configured | `false` unless testing Apple OAuth |
 | `NEXT_PUBLIC_IOS_APP_URL`        | TestFlight public join URL until App Store | same, or empty for docs fallback | empty uses the mobile viewer guide |
 | `NEXT_PUBLIC_IOS_APP_LABEL`      | optional CTA override                  | optional CTA override                  | optional CTA override              |
+| `NEXT_PUBLIC_POSTHOG_KEY`        | unused for now; empty keeps PostHog web off | empty | empty |
+| `NEXT_PUBLIC_POSTHOG_HOST`       | unused while the key is empty              | `https://telemetry.wrapper.sh`         | `https://telemetry.wrapper.sh`     |
+| `RELEASE_NOTES_INGEST_SECRET`    | same value as prod Convex              | same value as dev Convex               | optional                           |
 
 `NEXT_PUBLIC_*` is baked at build time. After creating a TestFlight public
 link, set Production `NEXT_PUBLIC_IOS_APP_URL` to

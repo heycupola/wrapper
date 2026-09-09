@@ -67,7 +67,7 @@
 
 .githubNavAction {
   display: inline-flex;
-  min-height: 44px;
+  min-height: 36px;
   align-items: center;
   gap: 8px;
   padding: 0 14px;
@@ -114,9 +114,7 @@
 .siteBrand:focus-visible,
 .siteNavText:focus-visible,
 .githubNavAction:focus-visible,
-.siteHeader .primaryAction:focus-visible,
-.siteHeader .navAction:focus-visible,
-.siteHeader .textAction:focus-visible {
+.siteHeader .btn:focus-visible {
   outline: 2px solid var(--color-accent-pop);
   outline-offset: 3px;
 }
@@ -248,7 +246,7 @@
   gap: 8px;
 }
 
-.socialSignIn .social-btn {
+.socialSignIn .btn {
   width: 100%;
   min-height: 48px;
   justify-content: flex-start;
@@ -427,7 +425,7 @@
     flex-direction: column-reverse;
   }
 
-  .confirmDialogActions .social-btn {
+  .confirmDialogActions .btn {
     width: 100%;
   }
 }
@@ -680,8 +678,7 @@
   font-weight: 590;
 }
 
-.dashboardEmptyState .primaryAction {
-  width: fit-content;
+.dashboardEmptyState .btn {
   margin-top: 8px;
 }
 
@@ -711,15 +708,10 @@
   text-underline-offset: 3px;
 }
 
-.dashboardNotice .iosViewerCtaStore {
-  color: #fff;
+/* The notice underlines its links; the store pill is a button, not a link. */
+.dashboardNotice .btn {
+  color: var(--btn-fg);
   text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  .dashboardNotice .iosViewerCtaStore {
-    color: #000;
-  }
 }
 
 .dashboardBillingGrid,
@@ -1076,21 +1068,6 @@
   color: var(--brand-danger);
 }
 
-.dashboardDangerPanel .social-btn.social-btn-danger,
-.dangerAction {
-  width: fit-content;
-  justify-self: start;
-  background: #b63838;
-  color: #fff;
-}
-
-.dashboardDangerPanel .social-btn.social-btn-danger:hover,
-.dangerAction:hover {
-  background: #a32f2f;
-  color: #fff;
-  filter: none;
-}
-
 .authMain {
   position: relative;
   z-index: 1;
@@ -1238,18 +1215,11 @@
   text-underline-offset: 4px;
 }
 
-.authActions,
-.social-buttons {
+.authActions {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.social-btn:disabled {
-  opacity: 0.48;
-  cursor: not-allowed;
-  translate: 0 0;
 }
 
 .authInfo,
@@ -1490,9 +1460,6 @@
     min-height: 44px;
   }
 
-  .siteHeader .primaryAction,
-  .siteHeader .navAction,
-  .siteHeader .textAction,
   .githubNavAction {
     min-height: 44px;
   }
@@ -1774,12 +1741,8 @@
     gap: 7px;
   }
 
-  .siteHeader .primaryAction,
-  .siteHeader .navAction,
-  .siteHeader .textAction,
   .githubNavAction {
-    min-height: 42px;
-    padding-inline: 14px;
+    padding-inline: 12px;
     font-size: 0.75rem;
   }
 
@@ -1819,16 +1782,13 @@
     font-size: clamp(2rem, 10vw, 2.8rem);
   }
 
-  .authActions,
-  .social-buttons {
+  .authActions {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .authActions .social-btn,
-  .social-buttons .social-btn {
+  .authActions .btn {
     width: 100%;
-    justify-content: center;
   }
 
   .siteFooter {
@@ -1917,8 +1877,7 @@
 }
 
 @media (max-width: 420px) {
-  .siteHeaderMarketing .siteBrand > span:last-child,
-  .siteHeaderMarketing .textAction {
+  .siteHeaderMarketing .siteBrand > span:last-child {
     display: none;
   }
 
@@ -1940,12 +1899,6 @@
   .legalIntroduction,
   .notFoundTerminal {
     border: 1px solid CanvasText;
-  }
-
-  .primaryAction,
-  .navAction,
-  .social-btn-primary {
-    border: 1px solid ButtonText;
   }
 }
 
@@ -2062,4 +2015,44 @@
     content: " (" attr(href) ")";
     font-size: 0.85em;
   }
+}
+
+.analyticsConsent {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: max(16px, env(safe-area-inset-left));
+  z-index: var(--z-consent);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  max-width: 42rem;
+  margin-inline: auto;
+  padding: 16px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface-strong);
+  box-shadow: 0 18px 40px -28px color-mix(in srgb, var(--brand-ink) 55%, transparent);
+}
+
+.analyticsConsent p {
+  flex: 1 1 16rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.analyticsConsent a {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.analyticsConsentActions {
+  display: flex;
+  flex: none;
+  gap: 8px;
 }
