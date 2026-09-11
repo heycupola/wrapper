@@ -2,7 +2,7 @@ import { runShellHost } from "./shell-host";
 
 /**
  * `wrapper share [cmd...]` — wrap `$SHELL` (or a command) and share it.
- * Does not patch rc files. If this process is already inside a wrapped
+ * Does not patch your shell config. If this process is already inside a wrapped
  * shell, tell the user to press the prefix instead of nesting.
  */
 export interface ShareOptions {

@@ -7,7 +7,7 @@ import { env } from "../util/env";
 import { paths } from "../util/paths";
 
 /**
- * `wrapper install` — optional rc hook so every new shell is wrapped.
+ * `wrapper install` — optional: wrap every new shell by patching shell config.
  * Sharing does not require this. Prefer `wrapper share` unless you want
  * every terminal attachable.
  */
@@ -115,7 +115,7 @@ export async function runInstall(opts: InstallOptions): Promise<void> {
   const logFile = join(getLogsDir(), env.isDev ? "debug.log" : "wrapper.log");
   p.note(
     [
-      "Sharing does not need this hook. Use `wrapper share` from any unwrapped terminal.",
+      "Sharing does not need this. Use `wrapper share` from any unwrapped terminal.",
       "Run `source <rc-file>` or open a new terminal to start wrapping every shell.",
       `Logs: ${logFile}`,
       `Sessions: ${paths.sessionsRegistry()}`,
@@ -155,7 +155,7 @@ async function promptForShells(detected: DetectedShell[]): Promise<SupportedShel
   const initialValue = detected.filter((s) => s.isDefault).map((s) => s.name);
 
   const choice = await p.multiselect<SupportedShell>({
-    message: "Which shells should Wrapper hook into?",
+    message: "Which shells should Wrapper add a line to?",
     options,
     initialValues: initialValue.length > 0 ? initialValue : [detected[0]!.name],
     required: false,

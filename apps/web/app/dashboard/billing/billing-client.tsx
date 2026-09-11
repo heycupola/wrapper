@@ -8,6 +8,7 @@ import { ProIntervalSwitch } from "../../../components/pro-interval-switch";
 import { Button } from "../../../components/ui/button";
 import { segmentedPanelId, segmentedTabId } from "../../../components/ui/segmented";
 import { getSafeBillingPortalUrl, getSafeCheckoutUrl } from "../../../lib/billing-url";
+import { FREE_PLAN_FEATURES, PRO_PLAN_FEATURES } from "../../../lib/plan-features";
 import { trackWebEvent } from "../../../lib/posthog";
 import { PRO_PRICE, PRO_SUMMARY, type BillingInterval } from "../../../lib/pro-pricing";
 import { PlanCard } from "./plan-card";
@@ -23,19 +24,6 @@ const checkoutRef = makeFunctionReference<
   { successUrl?: string; interval?: "month" | "year" },
   { checkoutUrl: string }
 >("billing:createProCheckout");
-
-const FREE_FEATURES = [
-  "No rc hook required",
-  "Attach from the same computer",
-  "Sessions stay on your machine until you share",
-] as const;
-
-const PRO_FEATURES = [
-  "Everything in Free",
-  "Attach from another device",
-  "Share a session, revoke anytime",
-  "iPhone viewer app",
-] as const;
 
 export function DashboardBilling({
   token,
@@ -106,6 +94,10 @@ export function DashboardBilling({
         ? "Upgrade — $99/year"
         : "Upgrade — $15/month";
 
+  const intervalSwitch = (
+    <ProIntervalSwitch id={switchId} size="sm" value={interval} onChange={setInterval} />
+  );
+
   return (
     <>
       <div className="dashboardBillingGrid">
@@ -115,7 +107,7 @@ export function DashboardBilling({
           price="$0"
           period="forever"
           summary="Your shell, on this machine."
-          features={FREE_FEATURES}
+          features={FREE_PLAN_FEATURES}
         />
         <PlanCard
           name="Pro"
@@ -123,16 +115,12 @@ export function DashboardBilling({
           price={price.amount}
           period={price.period}
           summary={PRO_SUMMARY}
-          features={PRO_FEATURES}
+          features={PRO_PLAN_FEATURES}
           highlighted
           priceId={plan === "free" ? panelId : undefined}
           priceLabelledBy={plan === "free" ? tabId : undefined}
           priceRate={plan === "free" ? (price.rate ?? undefined) : undefined}
-          priceControls={
-            plan === "free" ? (
-              <ProIntervalSwitch id={switchId} size="sm" value={interval} onChange={setInterval} />
-            ) : null
-          }
+          priceControls={plan === "free" ? intervalSwitch : null}
         >
           <IosViewerCta variant="text" />
         </PlanCard>

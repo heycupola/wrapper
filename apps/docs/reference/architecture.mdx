@@ -34,7 +34,7 @@ flowchart LR
 
 ## Session lifecycle
 
-1. `wrapper share` or `wrapper run` starts `wrapper shell-host` (rc hook is optional).
+1. `wrapper share` or `wrapper run` starts `wrapper shell-host` (`wrapper install` is optional).
 2. Host creates a PTY, binds loopback WebSocket + token, and registers locally.
 3. Unshared hosts send nothing to Convex.
 4. Local viewers attach with the registry token. No Convex row is required.

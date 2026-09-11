@@ -22,7 +22,7 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
   },
   {
     id: "shell-hook",
-    question: "Does Wrapper hook my shell?",
+    question: "Does Wrapper change my shell config?",
     answer:
       "No. `wrapper share` wraps one session. `wrapper install` is optional if you want every new terminal wrapped. Remove it with `wrapper uninstall`.",
     link: {
@@ -41,7 +41,7 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
     id: "free-vs-pro",
     question: "What exactly is free?",
     answer:
-      "Everything on one machine, with no rc hook required. Pro is $99/year ($8.25/month) or $15/month and covers another device, a share code, and the iOS viewer.",
+      "Everything on one machine. Does not patch your shell config. Pro is $99/year ($8.25/month) or $15/month: another device, a Linux host, and the iOS viewer.",
     link: { href: "/#pricing", label: "Compare the plans" },
   },
   {

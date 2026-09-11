@@ -1,7 +1,7 @@
 import { runShellHost } from "./shell-host";
 
 /**
- * `wrapper run -- <cmd>` — wrap one command without patching rc files.
+ * `wrapper run -- <cmd>` — wrap one command without patching your shell config.
  * Stays local until the host presses share, unless `--share` is set.
  */
 export interface RunOptions {

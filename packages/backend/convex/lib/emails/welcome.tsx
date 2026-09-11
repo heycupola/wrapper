@@ -67,7 +67,7 @@ export const WelcomeEmail = ({
               Start a host with <span style={code}>wrapper share</span>
             </Text>
             <Text style={listItemLast}>
-              No rc hook required. Share only when you want a remote viewer
+              Does not patch your shell config. Share only when you want a remote viewer
             </Text>
           </Section>
           <Button style={button} href={dashboardUrl}>

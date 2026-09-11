@@ -23,13 +23,13 @@ Command Line Tools on the Mac are older than Homebrew expects.
 
 The curl installer does not go through Homebrew, so it is unaffected.
 
-## Shell hook not wrapping
+## Every-terminal wrap not running
 
 Symptoms: `wrapper status` is empty after install.
 
 1. Run `wrapper share` (or `wrapper install` once if you want every terminal wrapped).
 2. Confirm `wrapper status` shows a live session.
-3. Check that `WRAPPER_DISABLE` is unset if you expected the optional rc hook.
+3. Check that `WRAPPER_DISABLE` is unset if you expected the optional install snippet.
 
 ## Sign-in fails
 

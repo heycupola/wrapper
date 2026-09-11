@@ -17,7 +17,8 @@ type Screen = "install" | "auth" | "context";
 const SCREEN_COPY: Record<Screen, { title: string; description: ReactNode }> = {
   install: {
     title: "Install Wrapper",
-    description: "Install the CLI, sign in, then share a session. No rc hook required.",
+    description:
+      "Install the CLI, sign in, then share a session. Does not patch your shell config.",
   },
   auth: {
     title: "Connect the CLI",
@@ -148,7 +149,7 @@ export function OnboardingClient({
           <p className="onboardingInstallHint">
             Install with curl or brew, then <code>wrapper auth login</code> and{" "}
             <code>wrapper share</code>. <code>wrapper install</code> is optional if you want every
-            new terminal wrapped.
+            new terminal wrapped. Preview it with <code>wrapper install --dry-run</code>.
           </p>
           <IosViewerCta variant="text" className="onboardingViewerCta" target={iosViewer} />
         </div>

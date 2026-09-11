@@ -42,8 +42,8 @@ if (!isLogsRead) {
 }
 
 // Show the first-run banner + telemetry consent ONLY for interactive,
-// user-initiated invocations. Skip it for `shell-host` (rc hook entry point)
-// and for `init` (dotfile evaluation), neither of which has a user watching.
+// user-initiated invocations. Skip it for `shell-host` (started from wrapper
+// install) and for `init` (dotfile evaluation), neither of which has a user watching.
 const isQuietEntry =
   isInformationalEntry ||
   subcommand === "shell-host" ||
@@ -59,7 +59,7 @@ if (!isQuietEntry && isFirstRun()) {
   console.error();
   console.error(`  ${pc.dim("Get started:")}`);
   console.error(
-    `    ${pc.dim("$")} ${pc.cyan("wrapper share")}      ${pc.dim("Wrap this shell and share it (no rc hook)")}`,
+    `    ${pc.dim("$")} ${pc.cyan("wrapper share")}      ${pc.dim("Wrap this shell and share it (does not patch your shell config)")}`,
   );
   console.error(
     `    ${pc.dim("$")} ${pc.cyan("wrapper status")}     ${pc.dim("List active sessions")}`,
@@ -83,7 +83,7 @@ program
 
 program
   .command("install")
-  .description("Optional: wrap every new terminal by patching rc files")
+  .description("Optional: wrap every new terminal by patching your shell config")
   .option("-s, --shell <list>", "comma-separated list of shells (zsh,bash,fish)")
   .option("--all", "install for every detected shell")
   .option("-i, --interactive", "always show the picker, even with one shell")
@@ -101,7 +101,7 @@ program
 
 program
   .command("uninstall")
-  .description("Remove Wrapper hooks from your shell rc files")
+  .description("Remove Wrapper from your shell config")
   .option("-s, --shell <list>", "comma-separated list of shells (zsh,bash,fish)")
   .option("--all", "uninstall from every detected shell")
   .option("-y, --yes", "skip the confirmation prompt")
@@ -115,7 +115,7 @@ program
 
 program
   .command("init")
-  .description("Print the eval/source snippet for the given shell (used by rc hook)")
+  .description("Print the eval/source snippet for the given shell (used by wrapper install)")
   .argument("<shell>", `one of: ${SUPPORTED_SHELLS.join(", ")}`)
   .action(async (rawShell: string) => {
     const shell = rawShell.toLowerCase() as SupportedShell;
@@ -128,7 +128,7 @@ program
 
 program
   .command("share")
-  .description("Wrap a shell or command and share it (does not patch rc files)")
+  .description("Wrap a shell or command and share it (does not patch your shell config)")
   .argument("[command...]", "command to wrap (defaults to $SHELL)")
   .option("-p, --port <number>", "force a specific port (default: OS-assigned)")
   .action(async (command: string[], raw) => {
@@ -140,7 +140,7 @@ program
 
 program
   .command("run")
-  .description("Wrap one command without sharing (no rc hook)")
+  .description("Wrap one command without sharing (does not patch your shell config)")
   .argument("<command...>", "command to wrap, e.g. claude")
   .option("-p, --port <number>", "force a specific port (default: OS-assigned)")
   .option("--share", "share immediately after the host starts")

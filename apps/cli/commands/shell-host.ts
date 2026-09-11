@@ -153,7 +153,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     });
     process.stderr.write(
       "wrapper: nested shell-host detected; aborting to avoid a fork bomb. " +
-        "Make sure your rc hook sets WRAPPER_WRAPPED=1 before exec.\n",
+        "Make sure wrapper install sets WRAPPER_WRAPPED=1 before exec.\n",
     );
     process.exit(2);
   }

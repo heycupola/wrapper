@@ -115,9 +115,12 @@ short, literal sentences:
 - “Your terminal, still running. Wherever you are.”
 - “Nothing leaves until you say so.”
 - “Local is free. Remote is Pro.”
+- “Does not patch your shell config.”
 - Featured Pro price is $99/year ($8.25/month). Monthly is $15.
 - The Yearly / Monthly switch sits on the Pro card, next to the price it
   changes. Yearly is selected first.
+- Pricing bullets stay short. Unknown terms (share, attach, revoke, shell
+  config) get a hover/focus definition; click pins it open.
 
 Avoid generic claims such as “revolutionary,” “effortless,” or “military-grade.”
 Explain the mechanism instead.

@@ -2,8 +2,10 @@
 
 import { useId, useState } from "react";
 import { INSTALL_SCENE_ID } from "../lib/landing-scene";
+import { FREE_PLAN_FEATURES, PRO_PLAN_FEATURES } from "../lib/plan-features";
 import { PRO_PRICE, PRO_SUMMARY, type BillingInterval } from "../lib/pro-pricing";
 import { IosViewerCta } from "./ios-viewer-cta";
+import { PlanFeatureText } from "./plan-feature-text";
 import { ProIntervalSwitch } from "./pro-interval-switch";
 import { Button } from "./ui/button";
 import { segmentedPanelId, segmentedTabId } from "./ui/segmented";
@@ -28,9 +30,11 @@ export function LandingPricingCards() {
           <p className="landingPriceLead">Your shell, on this machine.</p>
         </header>
         <ul>
-          <li>No rc hook required</li>
-          <li>Attach from the same computer</li>
-          <li>Sessions stay on your machine until you share</li>
+          {FREE_PLAN_FEATURES.map((feature) => (
+            <li key={feature.label}>
+              <PlanFeatureText feature={feature} />
+            </li>
+          ))}
         </ul>
         <Button size="lg" block href={INSTALL_HREF}>
           Install Wrapper
@@ -71,9 +75,11 @@ export function LandingPricingCards() {
           <p className="landingPriceLead">{PRO_SUMMARY}</p>
         </header>
         <ul>
-          <li>Everything in Free</li>
-          <li>Attach from another device</li>
-          <li>Share a session, revoke anytime</li>
+          {PRO_PLAN_FEATURES.map((feature) => (
+            <li key={feature.label}>
+              <PlanFeatureText feature={feature} />
+            </li>
+          ))}
           <li>
             <IosViewerCta variant="text" />
           </li>

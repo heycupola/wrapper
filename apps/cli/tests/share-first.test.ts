@@ -13,7 +13,7 @@ describe("share-first CLI surface", () => {
     expect(out).toContain("WRAPPER_DISABLE");
   });
 
-  test("--help lists share and run without requiring an rc hook", () => {
+  test("--help lists share and run without patching shell config", () => {
     const result = Bun.spawnSync(
       [process.execPath, join(import.meta.dir, "..", "index.ts"), "--help"],
       {
@@ -26,7 +26,7 @@ describe("share-first CLI surface", () => {
     const help = result.stdout.toString();
     expect(help).toContain("share");
     expect(help).toContain("run");
-    expect(help).toMatch(/does not\s+patch rc files/);
+    expect(help).toMatch(/does not\s+patch your shell config/);
   });
 
   test("share inside a wrapped shell exits without nesting", () => {
@@ -46,7 +46,7 @@ describe("share-first CLI surface", () => {
     expect(result.stderr.toString()).toContain("already wrapped");
   });
 
-  test("install dry-run block names the rc hook without wrapping logic", () => {
+  test("install dry-run block writes the init snippet without wrapping logic", () => {
     const block = renderBlock("zsh");
     expect(block).toContain("# >>> wrapper init >>>");
     expect(block).toContain("wrapper init zsh");

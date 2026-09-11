@@ -1,6 +1,6 @@
 # Wrapper
 
-> Share a live terminal from your phone, on demand. No rc hook required.
+> Share a live terminal from your phone, on demand. Does not patch your shell config.
 
 `wrapper share` wraps one shell (or `wrapper run -- claude` wraps one command)
 so an authenticated device can mirror it. Your prompt, plugins, and history
@@ -141,9 +141,9 @@ cd apps/cli && NODE_ENV=development bun run index.ts shell-host
 
 `NODE_ENV=development` moves every on-disk path into a `wrapper-dev` namespace
 under XDG state (or `%APPDATA%\wrapper-dev\` on Windows), points the relay and
-auth URLs at localhost, mirrors logs to stderr, and writes rc-file patches into
+auth URLs at localhost, mirrors logs to stderr, and writes shell-config patches into
 a throwaway directory. A developer running the CLI locally can never corrupt a
-real installation's registry, logs, or rc files.
+real installation's registry, logs, or shell config.
 
 Setting `CI` to any value disables telemetry and console output. For the full
 list of CLI environment variables, see

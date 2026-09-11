@@ -1,6 +1,6 @@
 ---
 title: "Quickstart"
-description: "Install Wrapper, share a session, and attach. No rc hook required."
+description: "Install Wrapper, share a session, and attach. Does not patch your shell config."
 ---
 
 Wrapper supports macOS and Linux. On Windows, use WSL.
@@ -49,7 +49,7 @@ See [Mobile viewer](/guides/mobile-viewer).
 
 ## Share a session
 
-No rc hook is required:
+`wrapper share` does not patch your shell config:
 
 ```bash
 wrapper auth login
@@ -64,10 +64,10 @@ wrapper run -- claude
 
 Prefer a remote Linux box? See [Remote Linux box](/guides/linux-remote).
 
-## Optional shell hook
+## Optional: wrap every new terminal
 
-`wrapper install` is optional. It patches rc files so every new interactive
-shell is wrapped. Sharing does not need this.
+`wrapper install` is optional. It adds a line to your shell config so every new
+interactive shell is wrapped. Sharing does not need this.
 
 ```bash
 wrapper install --dry-run

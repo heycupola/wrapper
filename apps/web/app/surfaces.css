@@ -721,9 +721,8 @@
   gap: 16px;
 }
 
-/* Plans are one short row each, the way Cursor's dashboard lists them: name
-   and price on the first line, a one-sentence summary, and a "What's
-   included" trigger whose tooltip carries the full list. */
+/* Billing cards match landing: name and price, a one-sentence summary, then
+   the feature list. Unknown terms use the same hover/pin tooltip as landing. */
 .dashboardBillingGrid .dashboardPlanCard {
   gap: 10px;
   padding: 18px 20px;
@@ -809,6 +808,35 @@
   letter-spacing: -0.015em;
 }
 
+.dashboardPlanFeatures {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboardPlanFeatures li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 8px;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  letter-spacing: -0.015em;
+}
+
+.dashboardPlanFeatures li::before {
+  color: var(--color-text-muted);
+  content: "✓";
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.dashboardProPanel .dashboardPlanFeatures li::before {
+  color: var(--color-accent-text);
+}
+
 .dashboardPlanFoot {
   display: flex;
   flex-wrap: wrap;
@@ -818,63 +846,56 @@
   margin-top: 2px;
 }
 
-.dashboardPlanInfo {
-  position: relative;
+.dashboardPlanFoot .iosViewerCtaWrap {
   display: inline-flex;
 }
 
-.dashboardPlanInfoButton {
-  display: inline-flex;
-  min-height: 28px;
-  align-items: center;
-  gap: 6px;
-  padding: 0 8px 0 6px;
-  margin-left: -6px;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--color-text-muted);
-  font: inherit;
+.dashboardPlanFoot .iosViewerCtaText,
+.dashboardPlanFeatures .iosViewerCtaText {
+  min-height: 24px;
   font-size: var(--text-sm);
-  font-weight: 510;
-  letter-spacing: -0.01em;
-  transition:
-    color var(--motion-fast) var(--ease-out-quint),
-    background-color var(--motion-fast) var(--ease-out-quint);
 }
 
-.dashboardPlanInfoButton svg {
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
+.termTip {
+  display: inline;
 }
 
-.dashboardPlanInfoButton:hover,
-.dashboardPlanInfo[data-pinned] .dashboardPlanInfoButton {
-  background: color-mix(in srgb, var(--color-text) 6%, transparent);
-  color: var(--color-text);
+.termTipButton {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 3px;
+  cursor: help;
 }
 
-.dashboardPlanInfoButton:focus-visible {
+.termTipButton:hover,
+.termTip[data-pinned] .termTipButton {
+  text-decoration-color: currentColor;
+}
+
+.termTipButton:focus-visible {
   outline: 2px solid var(--color-accent-pop);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
-.dashboardPlanTooltip {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  z-index: var(--z-tooltip);
-  width: max-content;
-  max-width: min(300px, 80vw);
-  padding: 10px 12px 10px 12px;
+.termTipBubble {
+  position: fixed;
+  z-index: calc(var(--z-header) + 1);
+  margin: 0;
+  padding: 10px 12px;
   border-radius: 10px;
   background: var(--color-text);
   color: var(--color-bg);
   font-size: var(--text-sm);
+  font-weight: 400;
   line-height: var(--leading-body);
   letter-spacing: -0.01em;
   box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.35);
@@ -888,46 +909,21 @@
   pointer-events: none;
 }
 
-.dashboardPlanTooltip ul {
-  display: grid;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.dashboardPlanTooltip li {
-  display: grid;
-  grid-template-columns: 12px minmax(0, 1fr);
-  gap: 8px;
-}
-
-.dashboardPlanTooltip li::before {
-  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
-  content: "✓";
-  font-weight: 700;
-}
-
-.dashboardPlanInfo:hover .dashboardPlanTooltip,
-.dashboardPlanInfo:focus-within .dashboardPlanTooltip,
-.dashboardPlanInfo[data-pinned] .dashboardPlanTooltip {
+.termTipBubble[data-visible] {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
   transition-delay: 0s;
-}
-
-.dashboardPlanInfo[data-pinned] .dashboardPlanTooltip {
   pointer-events: auto;
 }
 
-.dashboardPlanFoot .iosViewerCtaWrap {
-  display: inline-flex;
-}
-
-.dashboardPlanFoot .iosViewerCtaText {
-  min-height: 24px;
-  font-size: var(--text-sm);
+@media (prefers-reduced-motion: reduce) {
+  .termTipBubble {
+    transform: none;
+    transition:
+      opacity var(--motion-fast) linear,
+      visibility 0s linear var(--motion-fast);
+  }
 }
 
 .dashboardProPanel {

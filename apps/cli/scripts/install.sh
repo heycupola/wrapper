@@ -222,4 +222,4 @@ if [[ ":$PATH:" != *":${BIN_DIR}:"* ]]; then
 fi
 
 echo "Run 'wrapper auth login' then 'wrapper share' to get started."
-echo "Sharing does not patch your shell rc files. Optional: wrapper install --dry-run"
+echo "Sharing does not patch your shell config. Optional: wrapper install --dry-run"

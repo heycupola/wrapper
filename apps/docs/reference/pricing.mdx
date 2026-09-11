@@ -7,8 +7,8 @@ description: "Local is free. Remote is Pro."
 
 | Plan | Price                       | Includes                                                                                     |
 | ---- | --------------------------- | -------------------------------------------------------------------------------------------- |
-| Free | $0                          | Wrap a session on demand. Attach from the same computer. Nothing leaves until you share.     |
-| Pro  | $99 / year (or $15 / month) | Everything in Free. Attach from another device. Share a session, revoke anytime. iOS viewer. |
+| Free | $0                          | Wrap a session on demand. Attach from the same computer. Nothing leaves until you share. |
+| Pro  | $99 / year (or $15 / month) | Everything in Free. Attach from another device. Share and revoke. Linux host. iOS viewer. |
 
 Yearly is the featured price ($8.25 / month). Monthly is $15 and does not
 require a yearly commitment. The landing [pricing](https://www.wrapper.sh/#pricing)
@@ -21,7 +21,7 @@ first Pro checkout; free accounts only see upgrade.
 
 ## Free
 
-- No rc hook required (`wrapper share` or `wrapper run -- <cmd>`)
+- Does not patch your shell config (`wrapper share` or `wrapper run -- <cmd>`)
 - Attach from another terminal on the same computer
 - Unshared sessions stay on your machine (loopback, no Convex, no relay)
 
@@ -32,6 +32,7 @@ Local attach does not require Pro or a Wrapper account.
 - Everything in Free
 - Attach from another device
 - Share a session from the host (`wrapper share` or `Ctrl+\` then `s`), revoke anytime (`Ctrl+\` then `u`)
+- Host on a remote Linux box. Your laptop does not have to run Wrapper
 - iOS viewer for iPhone and iPad
 
 Autumn product ids: `pro` (monthly) and `pro_yearly` (yearly). Both grant

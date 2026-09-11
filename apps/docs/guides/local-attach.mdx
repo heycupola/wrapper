@@ -9,7 +9,7 @@ never leaves the machine and never uses the Fly relay.
 ## Before you attach
 
 1. Install the CLI.
-2. Run `wrapper share` or `wrapper run -- <cmd>` (no rc hook required).
+2. Run `wrapper share` or `wrapper run -- <cmd>` (does not patch your shell config).
 3. Confirm a live session:
 
 ```bash
@@ -61,8 +61,8 @@ inner shell exits.
 | ------------------------- | ------------------------ | ----------------------------------------------- |
 | No sessions listed        | No host running          | Run `wrapper share`                             |
 | Access denied             | Missing local token      | Use `wrapper attach --id` from `wrapper status` |
-| Attach connects then dies | Nested / duplicate hooks | `wrapper uninstall` then use `wrapper share`    |
-| Need an unwrapped shell   | Optional hook always on  | `WRAPPER_DISABLE=1 zsh`                         |
+| Attach connects then dies | Nested / duplicate wrap  | `wrapper uninstall` then use `wrapper share`    |
+| Need an unwrapped shell   | Optional wrap always on  | `WRAPPER_DISABLE=1 zsh`                         |
 
 Debug with:
 
