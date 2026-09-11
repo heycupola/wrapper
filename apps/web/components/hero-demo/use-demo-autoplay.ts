@@ -57,7 +57,9 @@ export function useDemoAutoplay(
   // so the state machine's own latencies (relay, ticket, P2P) still pace it.
   const step = guideStep(state);
   const sendRef = useRef(send);
-  sendRef.current = send;
+  useEffect(() => {
+    sendRef.current = send;
+  }, [send]);
   useEffect(() => {
     if (!enabled || phase !== "playing") return;
     const timers: number[] = [];

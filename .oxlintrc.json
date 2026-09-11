@@ -39,7 +39,8 @@
     "react/react-in-jsx-scope": "off",
     "import/no-unassigned-import": "off",
     "react-perf/jsx-no-new-function-as-prop": "off",
-    "nextjs/no-page-custom-font": "warn"
+    "nextjs/no-page-custom-font": "warn",
+    "react/set-state-in-effect": "warn"
   },
   "overrides": [
     {
