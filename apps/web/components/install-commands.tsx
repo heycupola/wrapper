@@ -24,7 +24,7 @@ const METHODS: readonly {
     value: "brew",
     label: "brew",
     command: "brew install heycupola/tap/wrapper",
-    copyLabel: "Copy Homebrew install command",
+    copyLabel: "Copy brew install command",
   },
 ];
 
