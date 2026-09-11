@@ -3,7 +3,9 @@
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { useMemo, useState } from "react";
+import { Button } from "../../../components/ui/button";
 import { getSafeBillingPortalUrl, getSafeCheckoutUrl } from "../../../lib/billing-url";
+import { trackWebEvent } from "../../../lib/posthog";
 
 const billingPortalRef = makeFunctionReference<
   "action",
@@ -59,6 +61,7 @@ export function DashboardBillingActions({
     if (!client) return setError("Wrapper billing services are temporarily unavailable.");
     setPending("checkout");
     setError(null);
+    trackWebEvent("web_upgrade_started");
     try {
       const successUrl = new URL("/plan/upgraded", window.location.origin).toString();
       const result = await client.action(checkoutRef, { successUrl });
@@ -87,24 +90,23 @@ export function DashboardBillingActions({
       </div>
       <div className="authActions">
         {plan === "free" ? (
-          <button
-            type="button"
-            className="social-btn social-btn-primary"
+          <Button
+            variant="primary"
             disabled={pending !== null}
+            loading={pending === "checkout"}
             onClick={() => void startCheckout()}
           >
             {pending === "checkout" ? "Starting checkout…" : "Upgrade to Pro"}
-          </button>
+          </Button>
         ) : null}
         {canManageBilling ? (
-          <button
-            type="button"
-            className="social-btn"
+          <Button
             disabled={pending !== null}
+            loading={pending === "portal"}
             onClick={() => void openPortal()}
           >
             {pending === "portal" ? "Opening portal…" : "Manage billing"}
-          </button>
+          </Button>
         ) : null}
       </div>
       <output className="visuallyHidden">

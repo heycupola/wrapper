@@ -1,14 +1,41 @@
-import Link from "next/link";
-import { ArtDefs, LoopbackArt, RevokeArt, ShareArt, ShellArt, TicketArt } from "./card-art";
+import { FAQ_ITEMS, plainAnswer } from "../lib/faq-content";
+import { INSTALL_SCENE_ID } from "../lib/landing-scene";
+import { QUESTIONS_SECTION_ID } from "../lib/release-notes";
+import { ArtDefs, LoopbackArt, RevokeArt, ShareArt, ShellArt } from "./card-art";
 import { ConnectionFlow } from "./connection-flow";
-import { CopyCommand } from "./copy-command";
+import { FaqAccordion } from "./faq/faq-accordion";
 import { HorizontalScroll } from "./horizontal-scroll";
+import { InstallCta } from "./install-cta";
 import { IosViewerCta } from "./ios-viewer-cta";
 import { LandingHeader } from "./landing-header";
 import { ProductDemo } from "./product-demo";
+import { ReleaseNotesSignup } from "./release-notes-signup";
 import { SiteFooter } from "./site-footer";
+import { Button } from "./ui/button";
+import { TicketArt } from "./ticket-art";
 
-const storySectionIds = ["intro", "connection", "trust", "pricing", "start"] as const;
+const storySectionIds = [
+  INSTALL_SCENE_ID,
+  "connection",
+  "trust",
+  "pricing",
+  QUESTIONS_SECTION_ID,
+] as const;
+
+const INSTALL_HREF = `#${INSTALL_SCENE_ID}`;
+
+/* Module scoped so the JSON is built once, not per render. */
+const FAQ_JSON_LD = {
+  __html: JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ_ITEMS.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: plainAnswer(item.answer) },
+    })),
+  }),
+};
 
 export function HorizontalLanding() {
   return (
@@ -17,7 +44,11 @@ export function HorizontalLanding() {
       <LandingHeader />
 
       <HorizontalScroll sectionIds={storySectionIds}>
-        <section id="intro" className="landingSection landingHero" aria-labelledby="intro-title">
+        <section
+          id={INSTALL_SCENE_ID}
+          className="landingSection landingHero"
+          aria-labelledby="intro-title"
+        >
           <div className="landingSectionInner landingHeroInner">
             <div className="landingHeroMedia revealItem">
               <ProductDemo />
@@ -35,13 +66,15 @@ export function HorizontalLanding() {
                 Keep your real shell on your machine. Reach it from another device only when you
                 explicitly share it.
               </p>
-              <div className="landingActions revealItem">
-                <a className="primaryAction landingButtonLarge" href="#start">
-                  Install Wrapper
-                </a>
-                <IosViewerCta variant="badge" className="landingHeroViewer" />
+              <div className="landingHeroInstall revealItem">
+                <InstallCta />
               </div>
-              <p className="landingMicrocopy revealItem">macOS and Linux · iOS viewer beta</p>
+              <div className="landingActions revealItem">
+                <IosViewerCta variant="badge" className="landingHeroViewer" />
+                <Button variant="link" href="https://docs.wrapper.sh/guides/installation" external>
+                  Other ways to install
+                </Button>
+              </div>
             </div>
           </div>
         </section>
@@ -62,7 +95,8 @@ export function HorizontalLanding() {
                 Interactive traffic takes the shortest secure path. Signaling and fallback remain
                 authenticated end to end.
               </p>
-              <ol className="connectionSteps revealItem">
+              {/* The bullets follow the diagram's story (landing.css, --conn-story). */}
+              <ol className="connectionSteps revealItem" data-live>
                 <li>
                   <span />
                   <div>
@@ -85,9 +119,9 @@ export function HorizontalLanding() {
                   </div>
                 </li>
               </ol>
-              <Link href="/privacy-policy" className="landingTextLink revealItem">
+              <Button variant="link" href="/privacy-policy" className="landingTextLink revealItem">
                 Read the data-flow details
-              </Link>
+              </Button>
             </div>
 
             <div className="landingConnectionVisual revealItem">
@@ -108,9 +142,9 @@ export function HorizontalLanding() {
                 Your process, filesystem, credentials, and history stay on the host. Sharing takes
                 two keys and ends with two more.
               </p>
-              <Link href="/privacy-policy" className="landingTextLink revealItem">
+              <Button variant="link" href="/privacy-policy" className="landingTextLink revealItem">
                 How terminal data moves
-              </Link>
+              </Button>
             </div>
 
             <div className="landingTrustGrid">
@@ -173,9 +207,9 @@ export function HorizontalLanding() {
                 Use Wrapper on this machine for free. Upgrade only when a session needs to cross
                 networks.
               </p>
-              <a className="landingTextLink revealItem" href="#start">
+              <Button variant="link" href={INSTALL_HREF} className="landingTextLink revealItem">
                 Install the free CLI
-              </a>
+              </Button>
             </div>
 
             <div className="landingPriceGrid">
@@ -193,9 +227,9 @@ export function HorizontalLanding() {
                   <li>Attach from the same computer</li>
                   <li>Sessions stay on your machine</li>
                 </ul>
-                <a className="landingPriceCta" href="#start">
+                <Button size="lg" block href={INSTALL_HREF}>
                   Install Wrapper
-                </a>
+                </Button>
               </article>
 
               <article
@@ -220,89 +254,51 @@ export function HorizontalLanding() {
                     <IosViewerCta variant="text" />
                   </li>
                 </ul>
-                <Link className="landingPriceCta landingPriceCtaPrimary" href="/dashboard">
+                <Button variant="primary" size="lg" block href="/dashboard">
                   Choose Pro
-                </Link>
-                <p className="landingPriceCardNote">Sign in to upgrade from the dashboard.</p>
+                </Button>
+                <p className="landingMicrocopy">Sign in to upgrade from the dashboard.</p>
               </article>
             </div>
           </div>
         </section>
 
-        <section id="start" className="landingSection landingStart" aria-labelledby="start-title">
-          <div className="landingSectionInner landingStartInner">
-            <div className="landingSectionCopy revealStack">
-              <h2 id="start-title" className="landingSectionTitle revealItem">
-                Your shell is already
+        <section
+          id={QUESTIONS_SECTION_ID}
+          className="landingSection landingQuestions"
+          aria-labelledby="questions-title"
+        >
+          <div className="landingSectionInner landingQuestionsInner">
+            <div className="landingQuestionsMain revealStack">
+              <h2 id="questions-title" className="landingSectionTitle revealItem">
+                Questions,
                 <br />
-                the right shell.
+                answered plainly.
               </h2>
-              <p className="landingBody revealItem">
-                Install once. Remote access remains off until you explicitly share.
-              </p>
-              <ol className="landingStepList revealItem">
-                <li>
-                  <span>1</span>
-                  <div>
-                    <strong>Install</strong>
-                    <small>macOS or Linux. zsh, bash, or fish.</small>
-                  </div>
-                </li>
-                <li>
-                  <span>2</span>
-                  <div>
-                    <strong>Open a terminal</strong>
-                    <small>Every interactive shell is wrapped invisibly.</small>
-                  </div>
-                </li>
-                <li>
-                  <span>3</span>
-                  <div>
-                    <strong>Share when you choose</strong>
-                    <small>
-                      <code>Ctrl+\ s</code> to open, <code>Ctrl+\ u</code> to close.
-                    </small>
-                  </div>
-                </li>
-              </ol>
+              <FaqAccordion className="revealItem" />
+              <Button
+                variant="link"
+                href="https://docs.wrapper.sh"
+                external
+                className="landingTextLink revealItem"
+              >
+                More answers in the docs
+              </Button>
             </div>
 
-            <div className="landingInstallPanel revealStack">
-              <div className="landingInstallMethods">
-                <div className="landingInstallMethod revealItem">
-                  <p className="landingInstallLabel">Host · Mac or Linux</p>
-                  <div className="landingCommands">
-                    <CopyCommand
-                      command="brew install heycupola/tap/wrapper"
-                      label="Copy Homebrew install command"
-                    />
-                    <CopyCommand
-                      command="curl -fsSL https://wrapper.sh/install | bash"
-                      label="Copy curl install command"
-                    />
-                  </div>
-                  <p className="landingInstallHint">
-                    Homebrew if you have it; the script does the same on any Mac or Linux box.
-                  </p>
-                </div>
-                <div className="landingInstallMethod revealItem">
-                  <p className="landingInstallLabel">Viewer · iPhone or iPad beta</p>
-                  <IosViewerCta variant="badge" note />
-                </div>
-              </div>
-              <p className="landingInstallNote revealItem">
-                Remote access is opt-in and stays disabled until you share.
-              </p>
+            <div className="landingQuestionsAside revealItem">
+              <ReleaseNotesSignup />
+              <SiteFooter compact />
             </div>
           </div>
-
-          <SiteFooter compact />
         </section>
       </HorizontalScroll>
 
       <div className="landingMobileFooter">
         <SiteFooter />
       </div>
+
+      <script type="application/ld+json" dangerouslySetInnerHTML={FAQ_JSON_LD} />
     </div>
   );
 }

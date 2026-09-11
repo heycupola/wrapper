@@ -1,0 +1,355 @@
+/* The last horizontal scene: a hairline FAQ under the scene title on the
+   left, one card for release notes on the right, plus the confirm and
+   unsubscribe pages that reuse the receipt styling. The scene has a fixed
+   height on desktop, so the list is sized to fit one viewport with one answer
+   open. Spacing follows the 4px scale: 8 / 12 / 16 / 24 / 32. */
+
+/* ── Intake bits ─────────────────────────────────────────────────────────── */
+
+/* Honeypot: off-canvas rather than display:none, since some form fillers skip
+   invisible fields and we want them to fill this one. */
+.intakeTrap {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intakeStatus {
+  display: block;
+  min-height: 1.25em;
+  color: var(--color-accent-text);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.intakeStatus.isError {
+  color: #b42318;
+}
+
+/* ── FAQ ─────────────────────────────────────────────────────────────────── */
+
+.faqList {
+  width: 100%;
+  margin: 32px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--color-border);
+  list-style: none;
+}
+
+.faqItem {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.faqQuestion {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.faqQuestion button {
+  display: grid;
+  width: 100%;
+  min-height: 48px;
+  grid-template-columns: minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 510;
+  letter-spacing: -0.015em;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--motion-fast) ease;
+}
+
+@media (hover: hover) {
+  .faqQuestion button:hover {
+    color: var(--color-accent-text);
+  }
+}
+
+.faqQuestion button:focus-visible {
+  outline: 2px solid var(--color-accent-pop);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* A mono plus that becomes a minus: the same glyph family as the prompt. */
+.faqMark {
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.faqItem.isOpen .faqMark {
+  color: var(--color-text);
+}
+
+.faqAnswer {
+  display: grid;
+  max-width: 560px;
+  gap: 10px;
+  padding: 0 32px 16px 0;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+/* `display: grid` would otherwise beat the UA rule for the hidden attribute. */
+.faqAnswer[hidden] {
+  display: none;
+}
+
+.faqAnswer p {
+  margin: 0;
+}
+
+.faqAnswer code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.84em;
+}
+
+.landingQuestionsMain > .landingTextLink {
+  margin-top: 16px;
+}
+
+/* ── Release notes ───────────────────────────────────────────────────────── */
+
+/* No card: a heading, the field, one line under it, straight on the canvas.
+   The right column's structure comes from the footer column beneath it. */
+.notifyBlock {
+  display: grid;
+  width: 100%;
+  gap: 16px;
+}
+
+.notifyTitle {
+  margin: 0;
+  font-size: clamp(1.25rem, 1.7vw, 1.5rem);
+  font-weight: 590;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+/* Field, error line (only when it has something to say), footnote. */
+.notifyField,
+.notifyDone {
+  display: grid;
+  gap: 8px;
+}
+
+.notifyDone {
+  justify-items: start;
+}
+
+.notifyRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.notifyEmail {
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  outline: none;
+  background: color-mix(in srgb, var(--color-surface-strong) 88%, transparent);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9375rem;
+  transition:
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
+}
+
+.notifyEmail::placeholder {
+  color: var(--color-text-muted);
+}
+
+.notifyEmail:hover {
+  border-color: color-mix(in srgb, var(--color-text) 18%, transparent);
+}
+
+.notifyEmail:focus-visible {
+  border-color: var(--color-accent-pop);
+  background: var(--color-surface-strong);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.notifyEmail[aria-invalid="true"] {
+  border-color: #b42318;
+}
+
+.notifyEmail:read-only {
+  color: var(--color-text-muted);
+}
+
+/* The submit is a `.btn`; it matches the 48px input beside it. */
+.notifyRow .btn {
+  justify-self: stretch;
+  align-self: stretch;
+  min-height: 48px;
+}
+
+.notifyBlock .intakeStatus {
+  margin: 0;
+  min-height: 0;
+}
+
+.notifyBlock .intakeStatus:empty {
+  display: none;
+}
+
+/* Post-submit receipt, set like CLI output so the card ends in the product's
+   own voice. */
+.notifyReceipt {
+  display: grid;
+  width: 100%;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-bg) 68%, transparent);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.notifyReceiptLine {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.notifyReceiptLine > span {
+  color: var(--color-accent-text);
+  font-weight: 600;
+}
+
+.notifyReceiptLine.isOk {
+  color: var(--color-accent-text);
+}
+
+.notifyReceiptLine.isMuted {
+  color: var(--color-text-muted);
+}
+
+.notifyReceiptLine.isErr {
+  color: #b42318;
+}
+
+.notifyReceiptStandalone {
+  width: 100%;
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: no-preference) {
+  .notifyReceipt {
+    animation: riseIn var(--motion-mid) var(--ease-out-quint) backwards;
+  }
+}
+
+/* ── Themes ──────────────────────────────────────────────────────────────── */
+
+@media (prefers-color-scheme: dark) {
+  .intakeStatus.isError,
+  .notifyReceiptLine.isErr {
+    color: #ff9393;
+  }
+
+  .notifyEmail[aria-invalid="true"] {
+    border-color: #ff9393;
+  }
+}
+
+@media (forced-colors: active) {
+  .faqItem.isOpen .faqMark {
+    color: Highlight;
+  }
+}
+
+/* ── Fitting the scene ───────────────────────────────────────────────────── */
+
+/* Short desktop viewports: tighter rows so seven questions plus one open
+   answer still clear the compact footer. */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .landingQuestions .landingSectionTitle {
+    font-size: clamp(2.25rem, 6.2vh, 3rem);
+  }
+
+  .faqList {
+    margin-top: 20px;
+  }
+
+  .faqQuestion button {
+    min-height: 40px;
+    padding-block: 8px;
+    font-size: 0.875rem;
+  }
+
+  .faqAnswer {
+    max-width: none;
+    padding-bottom: 12px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .landingQuestionsMain > .landingTextLink {
+    min-height: 32px;
+    margin-top: 4px;
+  }
+
+  .landingQuestionsAside {
+    gap: 24px;
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 1023px), (prefers-reduced-motion: reduce) {
+  .landingQuestionsAside {
+    max-width: 560px;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .faqList {
+    margin-top: 24px;
+  }
+
+  .faqAnswer {
+    padding-right: 0;
+  }
+
+  .notifyRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .landingQuestionsAside {
+    max-width: none;
+  }
+}

@@ -1,12 +1,17 @@
-import { getIosAppTarget } from "../lib/ios-app";
-import { NewTabNote } from "./external-link";
+import { getIosAppTarget, type IosAppTarget } from "../lib/ios-app";
+import { Button, type ButtonSize } from "./ui/button";
 
-type IosViewerCtaVariant = "badge" | "primary" | "secondary" | "link" | "text";
+type IosViewerCtaVariant = "badge" | "text";
 
 type IosViewerCtaProps = {
+  /** `badge` is the black App Store style pill; `text` an underlined word. */
   variant?: IosViewerCtaVariant;
+  size?: ButtonSize;
   className?: string;
   note?: boolean;
+  /** Client components pass the target in, since the public env is only
+      inlined for literal `process.env.NEXT_PUBLIC_*` reads on the client. */
+  target?: IosAppTarget;
 };
 
 function AppleMark() {
@@ -17,33 +22,39 @@ function AppleMark() {
   );
 }
 
-export function IosViewerCta({ variant = "badge", className, note = false }: IosViewerCtaProps) {
-  const target = getIosAppTarget();
-  const storeLike = variant === "badge" || variant === "primary";
-  const classes = [
-    "iosViewerCta",
-    `iosViewerCta${capitalize(variant)}`,
-    storeLike ? "iosViewerCtaStore" : "iosViewerCtaDocs",
-  ].join(" ");
-
+export function IosViewerCta({
+  variant = "badge",
+  size,
+  className,
+  note = false,
+  target = getIosAppTarget(),
+}: IosViewerCtaProps) {
   return (
     <span className={["iosViewerCtaWrap", className].filter(Boolean).join(" ")}>
-      <a
-        className={classes}
-        href={target.href}
-        target={target.external ? "_blank" : undefined}
-        rel={target.external ? "noopener noreferrer" : undefined}
-      >
-        {storeLike ? <AppleMark /> : null}
-        <span>{target.label}</span>
-        {target.beta && storeLike ? <span className="iosViewerCtaBetaMark">Beta</span> : null}
-        {target.external ? <NewTabNote /> : null}
-      </a>
+      {variant === "badge" ? (
+        <Button
+          variant="ink"
+          size={size}
+          data-provider="apple"
+          className="iosViewerCta iosViewerCtaStore"
+          href={target.href}
+          external={target.external}
+        >
+          <AppleMark />
+          <span>{target.label}</span>
+          {target.beta ? <span className="iosViewerCtaBetaMark">Beta</span> : null}
+        </Button>
+      ) : (
+        <Button
+          variant="link"
+          className="iosViewerCta iosViewerCtaText"
+          href={target.href}
+          external={target.external}
+        >
+          {target.label}
+        </Button>
+      )}
       {note ? <small className="iosViewerCtaNote">{target.note}</small> : null}
     </span>
   );
-}
-
-function capitalize(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { SiteHeader } from "../components/landing-header";
 import { SiteFooter } from "../components/site-footer";
+import { Button } from "../components/ui/button";
 
 export const metadata: Metadata = {
   title: "Page not found",
@@ -22,12 +22,12 @@ export default function NotFound() {
             unaffected.
           </p>
           <nav className="notFoundActions" aria-label="Page recovery">
-            <Link className="primaryAction" href="/">
+            <Button variant="primary" size="lg" href="/">
               Back to Wrapper
-            </Link>
-            <Link className="textAction" href="/support">
+            </Button>
+            <Button size="lg" href="/support">
               Visit support
-            </Link>
+            </Button>
           </nav>
         </section>
 

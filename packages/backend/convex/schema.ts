@@ -103,4 +103,27 @@ export default defineSchema({
   })
     .index("by_eventId_source", ["eventId", "source"])
     .index("by_processedAt", ["processedAt"]),
+  // Landing-page "hear about it when it ships" signups. One row per
+  // normalized address; a signup is only counted once the confirmation link
+  // from the double opt-in email has been opened.
+  releaseNoteSubscriber: defineTable({
+    email: v.string(),
+    source: v.string(),
+    status: v.union(v.literal("pending"), v.literal("confirmed"), v.literal("unsubscribed")),
+    // SHA-256 of the single-use confirmation token; cleared once used.
+    confirmTokenHash: v.optional(v.string()),
+    confirmExpiresAt: v.optional(v.number()),
+    // Long-lived opaque token embedded in every email. Stored as-is because it
+    // has to be re-read for each send and only grants the right to unsubscribe.
+    unsubscribeToken: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    confirmSentAt: v.optional(v.number()),
+    confirmedAt: v.optional(v.number()),
+    unsubscribedAt: v.optional(v.number()),
+  })
+    .index("by_email", ["email"])
+    .index("by_confirmTokenHash", ["confirmTokenHash"])
+    .index("by_unsubscribeToken", ["unsubscribeToken"])
+    .index("by_status_confirmExpiresAt", ["status", "confirmExpiresAt"]),
 });

@@ -19,6 +19,7 @@ export default async function DashboardProfilePage() {
       <DashboardPageHeader
         title="Profile"
         description="The identity currently attached to Wrapper and its authenticated services."
+        analyticsPage="profile"
       />
       <DashboardProfile plan={billing?.plan ?? null} />
     </>

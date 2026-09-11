@@ -10,6 +10,7 @@ export enum EmailKind {
   CollaboratorAdded = "collaborator-added",
   GracePeriodStarted = "grace-period-started",
   PlanUpgraded = "plan-upgraded",
+  ReleaseNotesConfirm = "release-notes-confirm",
   Welcome = "welcome",
 }
 

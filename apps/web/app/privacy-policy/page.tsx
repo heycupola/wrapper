@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      lastUpdated="2026-08-26"
+      lastUpdated="2026-09-08"
       introduction="Wrapper is a remote terminal sharing service operated by Cupola Labs, LLC. Your terminal stays on your machine until you explicitly share it. This policy explains the metadata Wrapper stores, how terminal traffic moves between peers, which providers help us operate the service, and the controls available to you."
     >
       <LegalSection title="Information we collect">
@@ -60,10 +60,11 @@ export default function PrivacyPolicyPage() {
         <p>
           Autumn and Stripe process subscription and payment information. Wrapper does not store
           payment-card details. Resend sends transactional account emails such as welcome, plan
-          change, and deletion notices. Anonymous CLI telemetry is disabled by default and is sent
-          to PostHog only after you run <code>wrapper telemetry enable</code>. Telemetry is designed
-          not to include terminal input, output, share codes, relay tickets, or authentication
-          tokens.
+          change, and deletion notices. The website uses Vercel Web Analytics for anonymized page
+          views. Anonymous CLI telemetry is disabled by default and is sent to PostHog only after
+          you run <code>wrapper telemetry enable</code>. Neither website analytics nor CLI telemetry
+          is designed to include terminal input, output, share codes, relay tickets, or
+          authentication tokens.
         </p>
       </LegalSection>
 
@@ -84,7 +85,7 @@ export default function PrivacyPolicyPage() {
           <li>Route explicitly shared terminal sessions between authorized peers.</li>
           <li>Maintain session liveness, prevent abuse, and investigate service failures.</li>
           <li>Process subscriptions and provide account support.</li>
-          <li>Improve Wrapper using optional anonymous telemetry.</li>
+          <li>Improve Wrapper using anonymized website analytics and optional CLI telemetry.</li>
           <li>Comply with applicable legal obligations.</li>
         </ul>
       </LegalSection>
@@ -93,7 +94,7 @@ export default function PrivacyPolicyPage() {
         <ul>
           <li>Convex for backend functions, authentication data, and session metadata.</li>
           <li>Fly.io for the authenticated WebSocket relay.</li>
-          <li>Vercel for the Wrapper website.</li>
+          <li>Vercel for the Wrapper website and anonymized Web Analytics.</li>
           <li>Apple, GitHub, and Google for optional social authentication.</li>
           <li>Autumn and Stripe for subscriptions and payment processing.</li>
           <li>Resend for transactional account and billing emails.</li>
@@ -138,9 +139,9 @@ export default function PrivacyPolicyPage() {
 
       <LegalSection title="Cookies and similar storage">
         <p>
-          The web application uses essential cookies for authentication and session security. We do
-          not use advertising or cross-site marketing cookies. Optional CLI telemetry preference is
-          stored locally on your device.
+          The web application uses essential cookies for authentication and session security. Vercel
+          Web Analytics does not use cookies. We do not use advertising or cross-site marketing
+          cookies. Optional CLI telemetry preference is stored locally on your device.
         </p>
       </LegalSection>
 

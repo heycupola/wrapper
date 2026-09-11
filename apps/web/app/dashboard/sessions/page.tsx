@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ExternalLink } from "../../../components/external-link";
 import { IosViewerCta } from "../../../components/ios-viewer-cta";
 import { LocalTime } from "../../../components/local-time";
 import { InstallWrapperLink } from "../../../components/install-wrapper-link";
+import { Button } from "../../../components/ui/button";
 import { getToken } from "../../../lib/auth-server";
 import { getDashboardSessions } from "../../../lib/dashboard-server";
 import { DashboardPageHeader } from "../dashboard-page-header";
@@ -26,6 +26,7 @@ export default async function DashboardSessionsPage() {
       <DashboardPageHeader
         title="Sessions"
         description="Host sessions currently reporting as active for your profile."
+        analyticsPage="sessions"
         actionHref="/oauth/authorize"
         actionLabel="Authorize a device"
       />
@@ -37,15 +38,15 @@ export default async function DashboardSessionsPage() {
             Your host sessions are unaffected. Reload in a moment, or check the status of the
             Wrapper services.
           </p>
-          <Link className="primaryAction" href="/dashboard/sessions">
+          <Button variant="primary" href="/dashboard/sessions">
             Reload sessions
-          </Link>
+          </Button>
         </section>
       ) : sessions.length === 0 ? (
         <section className="dashboardEmptyState">
           <strong>No active sessions</strong>
           <p>Install Wrapper and open an interactive shell to create the first host session.</p>
-          <InstallWrapperLink className="primaryAction">Install Wrapper</InstallWrapperLink>
+          <InstallWrapperLink>Install Wrapper</InstallWrapperLink>
         </section>
       ) : (
         <ul className="dashboardSessionCards" aria-label="Active host sessions">

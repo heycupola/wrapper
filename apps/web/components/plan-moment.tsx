@@ -1,7 +1,15 @@
-import Link from "next/link";
+"use client";
+
+import { useEffect } from "react";
+import { trackWebEvent } from "../lib/posthog";
+import { Button } from "./ui/button";
 
 export function PlanMoment({ variant }: { variant: "upgraded" | "cancelled" }) {
   const upgraded = variant === "upgraded";
+
+  useEffect(() => {
+    trackWebEvent(upgraded ? "web_subscription_completed" : "web_subscription_cancelled");
+  }, [upgraded]);
 
   return (
     <section className="planMomentCard" data-variant={variant} aria-labelledby="plan-moment-title">
@@ -32,21 +40,17 @@ export function PlanMoment({ variant }: { variant: "upgraded" | "cancelled" }) {
       <div className="planMomentActions">
         {upgraded ? (
           <>
-            <Link className="primaryAction" href="/dashboard/sessions">
+            <Button variant="primary" href="/dashboard/sessions">
               View sessions
-            </Link>
-            <Link className="textAction" href="/dashboard/billing">
-              Billing
-            </Link>
+            </Button>
+            <Button href="/dashboard/billing">Billing</Button>
           </>
         ) : (
           <>
-            <Link className="primaryAction" href="/dashboard/billing">
+            <Button variant="primary" href="/dashboard/billing">
               Back to billing
-            </Link>
-            <Link className="textAction" href="/dashboard/sessions">
-              View sessions
-            </Link>
+            </Button>
+            <Button href="/dashboard/sessions">View sessions</Button>
           </>
         )}
       </div>

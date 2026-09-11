@@ -70,13 +70,30 @@ gradients anywhere in the product.
 
 ## Controls
 
+Every action renders through `components/ui/button.tsx`; the styles live in
+`app/controls.css` and are keyed by `data-variant`, `data-tone` and
+`data-size`. Nothing else on the site draws its own button.
+
 - Buttons use full pills, solid fills, and no decorative glow.
-- Primary actions use the accessible Wrapper blue.
-- Navigation actions use the dark/light ink color.
-- Secondary actions use a quiet neutral fill.
-- Hover moves at most `1px`; press scales to `0.985`.
-- Provider and destructive actions keep their semantic black/white and danger
-  treatments while sharing the same control height and focus ring.
+- `primary` is the accessible Wrapper blue and appears once per view.
+- `ink` is the navigation colour: dark on the light canvas, light on the dark
+  one. Provider sign-in builds on it with each platform's own black, white
+  and grey (`data-provider`).
+- `secondary` is a quiet neutral fill mixed from ink and surface, so it reads
+  the same on the canvas and on a card. It is the default.
+- `ghost` has no fill until hover; `link` is an underlined word with no box.
+- `tone="danger"` recolours any variant: a filled red for the confirming
+  action, red text on the neutral fill for the quiet one.
+- Heights: `sm` 36px for dense chrome such as the header (44px on touch),
+  `md` 44px by default, `lg` 50px for the hero and pricing.
+- Icons sit at 18px before the label; a loading button keeps its width and
+  turns a ring beside the label.
+- Hover changes the fill and moves at most `1px`; press scales to `0.985`.
+  Disabled drops to 48% opacity and stops moving.
+- `components/ui/segmented.tsx` is the switch for two to four peers where one
+  is in effect (install method, a billing period). The track is the
+  `secondary` fill; the chosen option is raised in the surface colour. It is
+  not a navigation control.
 
 ## Motion
 
