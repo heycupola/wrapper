@@ -248,6 +248,9 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   }
 
   let shared = false;
+  /** Bumped on share, unshare, and shutdown so in-flight async work can bail. */
+  let shareOp = 0;
+  let shuttingDown = false;
   let shareCode: string | null = null;
   let relayBridge: RelayHostBridge | null = null;
   let relayConnected = false;
@@ -382,14 +385,21 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     trackEvent("session_shared");
   }
 
+  function shareAbandoned(op: number): boolean {
+    return shuttingDown || op !== shareOp;
+  }
+
   const startRelayBridge = async (): Promise<void> => {
     // `relayStarting` is flipped by the share command before this runs, so a
     // second prefix+s cannot race the in-flight setup. Always clear it here.
+    const op = shareOp;
     try {
       if (relayBridge) return;
+      if (shareAbandoned(op)) return;
 
       if (backend.status !== "ready") {
         // Local-only share (no relay); allowed without a Pro plan.
+        if (shareAbandoned(op)) return;
         commitShared();
         announce(
           `wrapper • shared • ${sessionTag}`,
@@ -400,6 +410,10 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
 
       paintRestingTitle();
       const opened = await ensureCloudSession();
+      if (shareAbandoned(op)) {
+        if (shuttingDown) await closeCloudSession("shutdown");
+        return;
+      }
       if (!opened) {
         announce(
           `wrapper • shared • ${sessionTag}`,
@@ -414,8 +428,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         // ticket so viewer authorization is synchronized rather than racing the
         // periodic fire-and-forget heartbeat. Only the code hash is stored.
         await backend.client.mutation(setShareCodeRef, { sessionId, code });
+        if (shareAbandoned(op)) return;
         await backend.client.mutation(setRelayStateRef, { sessionId, relayState: "connecting" });
+        if (shareAbandoned(op)) return;
         const issued = await backend.client.action(issueHostRelayTicketRef, { sessionId });
+        if (shareAbandoned(op)) return;
         relayBridge = startRelayHostBridge({
           relayUrl: env.relayUrl,
           ticket: issued.ticket,
@@ -446,6 +463,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
               .catch(() => {});
           },
         });
+        if (shareAbandoned(op)) return;
         shareCode = code;
         commitShared();
         announce(`wrapper • shared • ${sessionTag}`, "session shared via relay");
@@ -540,6 +558,8 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         // actually takes effect, so a denied relay share (e.g. no Pro plan)
         // never leaves the session marked as shared. Flip `relayStarting`
         // synchronously so a second prefix+s cannot race the in-flight setup.
+        // Bump `shareOp` so an in-flight unshare cannot close the new share.
+        shareOp += 1;
         relayStarting = true;
         paintRestingTitle();
         announce(`wrapper • sharing • ${sessionTag}`, "sharing…");
@@ -560,11 +580,14 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         shareInviteTimer = null;
         setSessionShared(sessionId, false);
         trackEvent("session_unshared");
+        const unshareOp = ++shareOp;
         void (async () => {
           await stopRelayBridge();
+          if (unshareOp !== shareOp) return;
           if (backend.status === "ready") {
             await backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
           }
+          if (unshareOp !== shareOp) return;
           await closeCloudSession("unshared");
         })();
         announce("", "session unshared");
@@ -641,10 +664,10 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     handlePrefixCommand("share");
   }
 
-  let shuttingDown = false;
   const shutdown = async (reason: ShutdownReason): Promise<number> => {
     if (shuttingDown) return 0;
     shuttingDown = true;
+    shareOp += 1;
     log.debug("shell-host shutting down", { sessionId, reason });
     stopHeartbeat();
     if (shareInviteTimer) clearTimeout(shareInviteTimer);

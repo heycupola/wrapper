@@ -9,6 +9,7 @@ const VIEWPORT_PAD = 12;
 export function TermTip({ children, definition }: { children: ReactNode; definition: string }) {
   const tooltipId = useId();
   const wrapRef = useRef<HTMLSpanElement>(null);
+  const bubbleRef = useRef<HTMLParagraphElement>(null);
   const hideTimer = useRef<number | null>(null);
   const [pinned, setPinned] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -54,9 +55,44 @@ export function TermTip({ children, definition }: { children: ReactNode; definit
   }, [cancelHide]);
 
   useEffect(() => {
+    if (!visible) return;
+    function onMove() {
+      measure();
+    }
+    window.addEventListener("scroll", onMove, true);
+    window.addEventListener("resize", onMove);
+    document.addEventListener("wheel", onMove, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener("scroll", onMove, true);
+      window.removeEventListener("resize", onMove);
+      document.removeEventListener("wheel", onMove, true);
+    };
+  }, [visible, measure]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const bubble = bubbleRef.current;
+    if (!bubble) return;
+    function enter() {
+      cancelHide();
+      setHovered(true);
+    }
+    function leave() {
+      scheduleHide();
+    }
+    bubble.addEventListener("mouseenter", enter);
+    bubble.addEventListener("mouseleave", leave);
+    return () => {
+      bubble.removeEventListener("mouseenter", enter);
+      bubble.removeEventListener("mouseleave", leave);
+    };
+  }, [visible, coords, cancelHide, scheduleHide]);
+
+  useEffect(() => {
     if (!pinned) return;
     function onPointerDown(event: PointerEvent) {
-      if (wrapRef.current?.contains(event.target as Node)) return;
+      const target = event.target as Node;
+      if (wrapRef.current?.contains(target) || bubbleRef.current?.contains(target)) return;
       setPinned(false);
     }
     function onKeyDown(event: KeyboardEvent) {
@@ -93,6 +129,7 @@ export function TermTip({ children, definition }: { children: ReactNode; definit
       {visible && coords
         ? createPortal(
             <p
+              ref={bubbleRef}
               id={tooltipId}
               role="tooltip"
               className="termTipBubble"
