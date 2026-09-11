@@ -30,7 +30,9 @@ export function useDemoSession() {
   const [state, dispatch] = useReducer(reduceDemo, undefined, () => createDemoState(clock()));
   const [keycaps, setKeycaps] = useState<Keycap[]>([]);
   const stateRef = useRef(state);
-  stateRef.current = state;
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
   const keycapId = useRef(0);
 
   const pushKeycap = useCallback((label: string) => {

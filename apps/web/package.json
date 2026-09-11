@@ -19,7 +19,7 @@
     "@convex-dev/better-auth": "0.12.5",
     "@vercel/analytics": "^1.6.1",
     "better-auth": "1.6.26",
-    "convex": "1.43.0",
+    "convex": "1.45.0",
     "lenis": "^1.3.26",
     "next": "catalog:",
     "posthog-js": "catalog:",
