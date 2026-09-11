@@ -826,6 +826,10 @@
   letter-spacing: -0.015em;
 }
 
+.dashboardPlanFeatures li > * {
+  min-width: 0;
+}
+
 .dashboardPlanFeatures li::before {
   color: var(--color-text-muted);
   content: "✓";
@@ -856,6 +860,10 @@
   font-size: var(--text-sm);
 }
 
+.planFeatureText {
+  min-width: 0;
+}
+
 .termTip {
   display: inline;
 }
@@ -869,10 +877,12 @@
   color: inherit;
   font: inherit;
   letter-spacing: inherit;
+  line-height: inherit;
   text-decoration: underline;
   text-decoration-style: dotted;
   text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
   text-underline-offset: 3px;
+  white-space: nowrap;
   cursor: help;
 }
 
