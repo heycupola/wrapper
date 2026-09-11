@@ -12,7 +12,7 @@ import { feature, item, plan } from "atmn";
  * match WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID (default "can_share_relay") that
  * the backend checks in `convex/relay.ts`.
  *
- * List price: `pro` is $15/month and `pro_yearly` is $99/year. Both grant the
+ * List price: `pro_yearly` is $99/year and `pro` is $15/month. Both grant the
  * same feature. After editing, sync Autumn:
  *   bunx atmn push
  *   bunx atmn push --prod

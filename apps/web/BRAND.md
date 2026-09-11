@@ -115,7 +115,9 @@ short, literal sentences:
 - “Your terminal, still running. Wherever you are.”
 - “Nothing leaves until you say so.”
 - “Local is free. Remote is Pro.”
-- Featured Pro price is $99/year; monthly is $15.
+- Featured Pro price is $99/year ($8.25/month). Monthly is $15.
+- The Yearly / Monthly switch sits on the Pro card, next to the price it
+  changes. Yearly is selected first.
 
 Avoid generic claims such as “revolutionary,” “effortless,” or “military-grade.”
 Explain the mechanism instead.

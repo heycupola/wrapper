@@ -737,6 +737,43 @@
   gap: 12px;
 }
 
+.dashboardPlanOffer {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  flex: none;
+}
+
+.dashboardPlanOffer[data-interval] > div {
+  display: grid;
+  justify-items: end;
+  grid-template-rows: auto 1.35em;
+  gap: 2px;
+}
+
+.dashboardPlanRate {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboardPlanRate strong {
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  font-weight: 590;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.dashboardPlanRate span {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
 .dashboardPlanName {
   display: grid;
   gap: 2px;

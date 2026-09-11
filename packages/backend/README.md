@@ -147,8 +147,10 @@ step could be layered on later if watch-only viewers are needed.
 ## Billing (Autumn)
 
 - Relay sharing is gated by the `can_share_relay` feature on Pro.
-- List price: **$15/month** (`pro`) and **$99/year** (`pro_yearly`). Checkout
-  defaults to yearly. Both products grant the same entitlement.
+- List price: **$99/year** (`pro_yearly`) and **$15/month** (`pro`). Checkout
+  defaults to yearly. Both products grant the same entitlement. The landing
+  page and dashboard billing expose a Yearly / Monthly switch on the Pro card;
+  `createProCheckout` takes `interval: "year" | "month"`.
 - Plans are defined as code in `autumn.config.ts` and pushed with `bunx atmn`.
 - The entitlement check fails open on billing-provider errors so a billing
   outage cannot break the core sharing flow. This is a deliberate availability

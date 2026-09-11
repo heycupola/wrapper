@@ -243,7 +243,7 @@ credentials that could have been reached, and follow the incident process.
 
 ## Autumn products and existing subscribers
 
-Pro list price is `$15/month` (`pro`) and `$99/year` (`pro_yearly`). After editing
+Pro list price is `$99/year` (`pro_yearly`) and `$15/month` (`pro`). After editing
 [`packages/backend/autumn.config.ts`](./packages/backend/autumn.config.ts):
 
 ```bash

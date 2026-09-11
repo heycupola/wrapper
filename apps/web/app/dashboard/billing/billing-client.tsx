@@ -2,10 +2,15 @@
 
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
+import { IosViewerCta } from "../../../components/ios-viewer-cta";
+import { ProIntervalSwitch } from "../../../components/pro-interval-switch";
 import { Button } from "../../../components/ui/button";
+import { segmentedPanelId, segmentedTabId } from "../../../components/ui/segmented";
 import { getSafeBillingPortalUrl, getSafeCheckoutUrl } from "../../../lib/billing-url";
 import { trackWebEvent } from "../../../lib/posthog";
+import { PRO_PRICE, PRO_SUMMARY, type BillingInterval } from "../../../lib/pro-pricing";
+import { PlanCard } from "./plan-card";
 
 const billingPortalRef = makeFunctionReference<
   "action",
@@ -19,7 +24,20 @@ const checkoutRef = makeFunctionReference<
   { checkoutUrl: string }
 >("billing:createProCheckout");
 
-export function DashboardBillingActions({
+const FREE_FEATURES = [
+  "No rc hook required",
+  "Attach from the same computer",
+  "Sessions stay on your machine until you share",
+] as const;
+
+const PRO_FEATURES = [
+  "Everything in Free",
+  "Attach from another device",
+  "Share a session, revoke anytime",
+  "iPhone viewer app",
+] as const;
+
+export function DashboardBilling({
   token,
   plan,
   canManageBilling,
@@ -28,8 +46,13 @@ export function DashboardBillingActions({
   plan: "free" | "pro";
   canManageBilling: boolean;
 }) {
+  const switchId = useId();
+  const [interval, setInterval] = useState<BillingInterval>("year");
   const [pending, setPending] = useState<"portal" | "checkout" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const price = PRO_PRICE[interval];
+  const panelId = segmentedPanelId(switchId, interval);
+  const tabId = segmentedTabId(switchId, interval);
 
   const client = useMemo(() => {
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -57,7 +80,7 @@ export function DashboardBillingActions({
     }
   }
 
-  async function startCheckout(interval: "month" | "year"): Promise<void> {
+  async function startCheckout(): Promise<void> {
     if (!client) return setError("Wrapper billing services are temporarily unavailable.");
     setPending("checkout");
     setError(null);
@@ -76,56 +99,90 @@ export function DashboardBillingActions({
     }
   }
 
+  const checkoutLabel =
+    pending === "checkout"
+      ? "Starting checkout…"
+      : interval === "year"
+        ? "Upgrade — $99/year"
+        : "Upgrade — $15/month";
+
   return (
-    <section className="dashboardActionPanel" aria-labelledby="billing-actions-title">
-      <div>
-        <h2 id="billing-actions-title">Billing actions</h2>
-        <p>
-          {plan === "pro"
-            ? canManageBilling
-              ? "Use Stripe to manage invoices, payment details, and cancellation."
-              : "You're on Pro. A paid checkout is what creates a Stripe portal for invoices."
-            : "Upgrade to Pro when a session needs to leave this machine."}
-        </p>
+    <>
+      <div className="dashboardBillingGrid">
+        <PlanCard
+          name="Free"
+          label={plan === "free" ? "Current plan" : "Included"}
+          price="$0"
+          period="forever"
+          summary="Your shell, on this machine."
+          features={FREE_FEATURES}
+        />
+        <PlanCard
+          name="Pro"
+          label={plan === "pro" ? "Current plan" : "Remote access"}
+          price={price.amount}
+          period={price.period}
+          summary={PRO_SUMMARY}
+          features={PRO_FEATURES}
+          highlighted
+          priceId={plan === "free" ? panelId : undefined}
+          priceLabelledBy={plan === "free" ? tabId : undefined}
+          priceRate={plan === "free" ? (price.rate ?? undefined) : undefined}
+          priceControls={
+            plan === "free" ? (
+              <ProIntervalSwitch id={switchId} size="sm" value={interval} onChange={setInterval} />
+            ) : null
+          }
+        >
+          <IosViewerCta variant="text" />
+        </PlanCard>
       </div>
-      <div className="authActions">
-        {plan === "free" ? (
-          <>
+
+      <section className="dashboardActionPanel" aria-labelledby="billing-actions-title">
+        <div>
+          <h2 id="billing-actions-title">Billing actions</h2>
+          <p>
+            {plan === "pro"
+              ? canManageBilling
+                ? "Use Stripe to manage invoices, payment details, and cancellation."
+                : "You're on Pro. A paid checkout is what creates a Stripe portal for invoices."
+              : "Pick yearly or monthly on the Pro card, then upgrade when a session needs to leave this machine."}
+          </p>
+        </div>
+        <div className="authActions">
+          {plan === "free" ? (
             <Button
               variant="primary"
               disabled={pending !== null}
               loading={pending === "checkout"}
-              onClick={() => void startCheckout("year")}
+              onClick={() => void startCheckout()}
             >
-              {pending === "checkout" ? "Starting checkout…" : "Upgrade — $99/year"}
+              {checkoutLabel}
             </Button>
-            <Button disabled={pending !== null} onClick={() => void startCheckout("month")}>
-              $15/month
+          ) : null}
+          {canManageBilling ? (
+            <Button
+              disabled={pending !== null}
+              loading={pending === "portal"}
+              onClick={() => void openPortal()}
+            >
+              {pending === "portal" ? "Opening portal…" : "Manage billing"}
             </Button>
-          </>
+          ) : null}
+        </div>
+        <output className="visuallyHidden">
+          {pending === "checkout"
+            ? "Starting Pro checkout, you will be taken to Stripe."
+            : pending === "portal"
+              ? "Opening the billing portal."
+              : ""}
+        </output>
+        {error ? (
+          <p className="authError" role="alert">
+            {error}
+          </p>
         ) : null}
-        {canManageBilling ? (
-          <Button
-            disabled={pending !== null}
-            loading={pending === "portal"}
-            onClick={() => void openPortal()}
-          >
-            {pending === "portal" ? "Opening portal…" : "Manage billing"}
-          </Button>
-        ) : null}
-      </div>
-      <output className="visuallyHidden">
-        {pending === "checkout"
-          ? "Starting Pro checkout, you will be taken to Stripe."
-          : pending === "portal"
-            ? "Opening the billing portal."
-            : ""}
-      </output>
-      {error ? (
-        <p className="authError" role="alert">
-          {error}
-        </p>
-      ) : null}
-    </section>
+      </section>
+    </>
   );
 }

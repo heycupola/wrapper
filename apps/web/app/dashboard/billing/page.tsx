@@ -1,29 +1,14 @@
 import type { Metadata } from "next";
-import { IosViewerCta } from "../../../components/ios-viewer-cta";
 import { getToken } from "../../../lib/auth-server";
 import { getDashboardBillingState } from "../../../lib/dashboard-server";
 import { DashboardPageHeader } from "../dashboard-page-header";
-import { DashboardBillingActions } from "./billing-client";
-import { PlanCard } from "./plan-card";
+import { DashboardBilling } from "./billing-client";
 
 export const metadata: Metadata = {
   title: "Billing",
-  description: "Manage Wrapper billing and Pro checkout.",
+  description: "Choose yearly or monthly Pro, or open the billing portal.",
   robots: { index: false, follow: false },
 };
-
-const FREE_FEATURES = [
-  "No rc hook required",
-  "Attach from the same computer",
-  "Sessions stay on your machine until you share",
-] as const;
-
-const PRO_FEATURES = [
-  "Everything in Free",
-  "Attach from another device",
-  "Share a session, revoke anytime",
-  "iPhone viewer app",
-] as const;
 
 export default async function DashboardBillingPage({
   searchParams,
@@ -43,33 +28,11 @@ export default async function DashboardBillingPage({
     <>
       <DashboardPageHeader
         title="Billing"
-        description="Open secure billing controls or start a Wrapper Pro checkout."
+        description="Yearly is $99. Monthly is $15. Upgrade when a session needs to leave this machine."
         analyticsPage="billing"
       />
 
-      <div className="dashboardBillingGrid">
-        <PlanCard
-          name="Free"
-          label={plan === "free" ? "Current plan" : "Included"}
-          price="$0"
-          period="forever"
-          summary="Your shell, on this machine."
-          features={FREE_FEATURES}
-        />
-        <PlanCard
-          name="Pro"
-          label={plan === "pro" ? "Current plan" : "Remote access"}
-          price="$99"
-          period="/ year"
-          summary="Your shell, from another device. $15/month is available at checkout."
-          features={PRO_FEATURES}
-          highlighted
-        >
-          <IosViewerCta variant="text" />
-        </PlanCard>
-      </div>
-
-      <DashboardBillingActions token={token} plan={plan} canManageBilling={canManageBilling} />
+      <DashboardBilling token={token} plan={plan} canManageBilling={canManageBilling} />
 
       {canManageBilling ? (
         <aside className="dashboardNotice">

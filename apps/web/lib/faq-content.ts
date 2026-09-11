@@ -41,7 +41,7 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
     id: "free-vs-pro",
     question: "What exactly is free?",
     answer:
-      "Everything on one machine, with no rc hook required. Pro is $99/year or $15/month and covers another device, a share code, and the iOS viewer.",
+      "Everything on one machine, with no rc hook required. Pro is $99/year ($8.25/month) or $15/month and covers another device, a share code, and the iOS viewer.",
     link: { href: "/#pricing", label: "Compare the plans" },
   },
   {

@@ -37,8 +37,11 @@ login flow.
   opens the profile page, and incomplete onboarding redirects to the required
   setup flow before dashboard content renders. Sessions use the real
   `session:listActive` query, while billing reuses the existing protected
-  checkout and portal actions. Profile shows the current Free or Pro plan. The
-  workspace stays on a flat canvas and uses no invented metrics.
+  checkout and portal actions. Profile shows the current Free or Pro plan. Free
+  accounts pick Yearly ($99) or Monthly ($15) on the Pro card; yearly is
+  selected first and shows $8.25/month under the list price. Checkout follows
+  that interval. The workspace stays on a flat canvas and uses no invented
+  metrics.
 - **Device login approval** (`app/oauth/authorize`): the page the CLI sends you
   to during `wrapper auth login`. It reads the `user_code` from the URL,
   confirms your identity through Better Auth, presents the request as structured

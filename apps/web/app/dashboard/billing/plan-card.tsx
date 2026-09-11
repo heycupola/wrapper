@@ -10,6 +10,13 @@ type PlanCardProps = {
   summary: string;
   features: readonly string[];
   highlighted?: boolean;
+  /** When this card is driven by a period switch, the price is the tabpanel. */
+  priceId?: string;
+  priceLabelledBy?: string;
+  /** Yearly as a monthly rate, shown under the list price. */
+  priceRate?: { amount: string; period: string };
+  /** The control that changes the price, such as a billing period switch. */
+  priceControls?: ReactNode;
   children?: ReactNode;
 };
 
@@ -26,6 +33,10 @@ export function PlanCard({
   summary,
   features,
   highlighted = false,
+  priceId,
+  priceLabelledBy,
+  priceRate,
+  priceControls,
   children,
 }: PlanCardProps) {
   const baseId = useId();
@@ -60,10 +71,25 @@ export function PlanCard({
           <span className="dashboardPanelLabel">{label}</span>
           <h2 id={titleId}>{name}</h2>
         </div>
-        <p className="dashboardPlanPrice">
-          <strong>{price}</strong>
-          <span>{period}</span>
-        </p>
+        <div className="dashboardPlanOffer" data-interval={priceControls ? "" : undefined}>
+          <div
+            id={priceId}
+            role={priceId ? "tabpanel" : undefined}
+            aria-labelledby={priceLabelledBy}
+          >
+            <p className="dashboardPlanPrice">
+              <strong>{price}</strong>
+              <span>{period}</span>
+            </p>
+            {priceRate ? (
+              <p className="dashboardPlanRate">
+                <strong>{priceRate.amount}</strong>
+                <span>{priceRate.period}</span>
+              </p>
+            ) : null}
+          </div>
+          {priceControls}
+        </div>
       </div>
       <p className="dashboardPriceLead">{summary}</p>
       <div className="dashboardPlanFoot">
