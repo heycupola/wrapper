@@ -22,7 +22,7 @@
     "@react-email/components": "^1.0.2",
     "@react-email/render": "^2.0.0",
     "@useautumn/convex": "0.0.23",
-    "better-auth": "1.7.3",
+    "better-auth": "1.6.26",
     "convex": "1.45.0",
     "convex-helpers": "0.1.124",
     "jose": "^6.2.12",
