@@ -2,25 +2,14 @@ import * as p from "@clack/prompts";
 import { getLogsDir, trackEvent } from "@repo/logger";
 import { join } from "node:path";
 import { detectAvailableShells, type DetectedShell, type SupportedShell } from "../shell/detect";
-import { patchRc, type PatchResult } from "../shell/rc-edit";
+import { patchRc, renderBlock, type PatchResult } from "../shell/rc-edit";
 import { env } from "../util/env";
 import { paths } from "../util/paths";
 
 /**
- * `wrapper install` — patch the user's rc files so every new shell session
- * is wrapped automatically.
- *
- * UX:
- *   1. Detect every supported shell installed on this machine.
- *   2. If none, fail with a clear message.
- *   3. If exactly one and it's `$SHELL`, patch it directly (zero friction).
- *   4. Otherwise, present a multi-select with the default shell pre-checked.
- *
- * Flags:
- *   --shell <name>[,<name>]   patch only the listed shells (no prompt)
- *   --all                     patch every detected shell (no prompt)
- *   --interactive             always prompt, even if there is only one shell
- *   --yes                     skip the confirmation prompt at the end
+ * `wrapper install` — optional: wrap every new shell by patching shell config.
+ * Sharing does not require this. Prefer `wrapper share` unless you want
+ * every terminal attachable.
  */
 
 export interface InstallOptions {
@@ -28,6 +17,7 @@ export interface InstallOptions {
   all?: boolean;
   interactive?: boolean;
   yes?: boolean;
+  dryRun?: boolean;
 }
 
 export async function runInstall(opts: InstallOptions): Promise<void> {
@@ -59,10 +49,37 @@ export async function runInstall(opts: InstallOptions): Promise<void> {
     }
   }
 
+  p.log.info(
+    "Optional: wrap every new terminal. Sharing does not require this — use `wrapper share` instead.",
+  );
+
+  if (opts.dryRun) {
+    for (const name of chosen) {
+      const desc = detected.find((s) => s.name === name);
+      if (!desc) continue;
+      p.log.info(`${name}: would patch ${desc.rcFile}`);
+      p.note(renderBlock(name), desc.rcFile);
+    }
+    p.log.info("Remove later with `wrapper uninstall`. Skip one shell with WRAPPER_DISABLE=1.");
+    p.outro("Dry run — no files written.");
+    return;
+  }
+
   if (!opts.yes) {
+    p.note(
+      [
+        ...chosen.map((name) => {
+          const desc = detected.find((s) => s.name === name);
+          return desc ? `${desc.rcFile}` : name;
+        }),
+        "Backup created before the first write.",
+        "Remove with `wrapper uninstall`. Skip one shell with WRAPPER_DISABLE=1.",
+      ].join("\n"),
+      "Files",
+    );
     const confirm = await p.confirm({
-      message: `Patch ${chosen.length} rc file${chosen.length > 1 ? "s" : ""}? Each one is backed up before any change.`,
-      initialValue: true,
+      message: `Patch ${chosen.length} rc file${chosen.length > 1 ? "s" : ""}? This execs wrapper around new interactive shells.`,
+      initialValue: false,
     });
     if (p.isCancel(confirm) || !confirm) {
       p.cancel("Aborted.");
@@ -98,7 +115,8 @@ export async function runInstall(opts: InstallOptions): Promise<void> {
   const logFile = join(getLogsDir(), env.isDev ? "debug.log" : "wrapper.log");
   p.note(
     [
-      "Run `source <rc-file>` or open a new terminal to start wrapping.",
+      "Sharing does not need this. Use `wrapper share` from any unwrapped terminal.",
+      "Run `source <rc-file>` or open a new terminal to start wrapping every shell.",
       `Logs: ${logFile}`,
       `Sessions: ${paths.sessionsRegistry()}`,
     ].join("\n"),
@@ -137,7 +155,7 @@ async function promptForShells(detected: DetectedShell[]): Promise<SupportedShel
   const initialValue = detected.filter((s) => s.isDefault).map((s) => s.name);
 
   const choice = await p.multiselect<SupportedShell>({
-    message: "Which shells should Wrapper hook into?",
+    message: "Which shells should Wrapper add a line to?",
     options,
     initialValues: initialValue.length > 0 ? initialValue : [detected[0]!.name],
     required: false,

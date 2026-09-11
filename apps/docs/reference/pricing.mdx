@@ -5,30 +5,38 @@ description: "Local is free. Remote is Pro."
 
 ## Plans
 
-| Plan | Price       | Includes                                                                                |
-| ---- | ----------- | --------------------------------------------------------------------------------------- |
-| Free | $0          | Wrap zsh, bash, and fish. Attach from the same computer. Sessions stay on your machine. |
-| Pro  | $20 / month | Everything in Free. Attach from another device. Share a session, revoke anytime.        |
+| Plan | Price                       | Includes                                                                                  |
+| ---- | --------------------------- | ----------------------------------------------------------------------------------------- |
+| Free | $0                          | Wrap a session on demand. Attach from the same computer. Nothing leaves until you share.  |
+| Pro  | $99 / year (or $15 / month) | Everything in Free. Attach from another device. Share and revoke. Linux host. iOS viewer. |
 
-Upgrade from signed-in [dashboard billing](https://www.wrapper.sh/dashboard/billing).
+Yearly is the featured price ($8.25 / month). Monthly is $15 and does not
+require a yearly commitment. The landing [pricing](https://www.wrapper.sh/#pricing)
+scene and signed-in [dashboard billing](https://www.wrapper.sh/dashboard/billing)
+put a Yearly / Monthly switch on the Pro card. Checkout follows that choice and
+defaults to yearly.
+
 Profile shows Free or Pro. Stripe's customer portal is available after the
 first Pro checkout; free accounts only see upgrade.
 
 ## Free
 
-- Wrap `zsh`, `bash`, and `fish`
+- Does not patch your shell config (`wrapper share` or `wrapper run -- <cmd>`)
 - Attach from another terminal on the same computer
-- Sessions stay on your machine (loopback, no relay)
+- Unshared sessions stay on your machine (loopback, no Convex, no relay)
 
-Released binaries still require `wrapper auth login` as the session owner.
-Local attach does not require Pro.
+Local attach does not require Pro or a Wrapper account.
 
 ## Pro
 
 - Everything in Free
 - Attach from another device
-- Share a session from the host (`Ctrl+\` then `s`), revoke anytime (`Ctrl+\` then `u`)
+- Share a session from the host (`wrapper share` or `Ctrl+\` then `s`), revoke anytime (`Ctrl+\` then `u`)
+- Host on a remote Linux box. Your laptop does not have to run Wrapper
 - iOS viewer for iPhone and iPad
+
+Autumn product ids: `pro` (monthly) and `pro_yearly` (yearly). Both grant
+`can_share_relay`.
 
 How a remote session connects is in [Remote share](/guides/remote-share).
 
@@ -36,7 +44,8 @@ How a remote session connects is in [Remote share](/guides/remote-share).
 
 Billing checks the Autumn feature id `can_share_relay`. Operators can override
 the feature id with `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID` on the Convex
-deployment.
+deployment. Plan ids default to `pro` and `pro_yearly` (`WRAPPER_AUTUMN_PRO_PLAN_ID`,
+`WRAPPER_AUTUMN_PRO_YEARLY_PLAN_ID`).
 
 ## Related
 

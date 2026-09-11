@@ -29,19 +29,18 @@ The app requires iOS or iPadOS 18 or later and a shared host session.
 - a Wrapper account
 - the Wrapper CLI installed on a Mac or Linux host
 - an active wrapped shell
-- Pro, to attach from another device
+- Pro ($99/year or $15/month), to attach from another device
 
-See [Installation](/guides/installation) and
-[Authentication](/guides/auth) before continuing.
+See [Installation](/guides/installation),
+[Authentication](/guides/auth), and [Pricing](/reference/pricing) before continuing.
 
 ## Prepare the desktop host
 
-Sign in and start a wrapped shell:
+Sign in and share a session (does not patch your shell config):
 
 ```bash
 wrapper auth login
-wrapper install
-# Open a new shell after installation.
+wrapper share
 wrapper status
 ```
 
@@ -117,6 +116,9 @@ but the relay processes terminal frames after TLS termination. See
 Terminal content is covered when the app is inactive or captured. Returning
 after a longer background interruption requires Face ID, Touch ID, or the device
 passcode. Canceling authentication keeps the terminal locked.
+
+Locking or backgrounding the app must not crash the process. The relay or P2P
+link may drop; returning reconnects or asks you to open the session again.
 
 If device-owner authentication is unavailable, Wrapper keeps content covered
 and offers safe sign-out rather than revealing the terminal.

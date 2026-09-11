@@ -186,7 +186,9 @@ export const listActive = protectedQuery({
       .withIndex("by_owner_status", (q) => q.eq("ownerUserId", ctx.userId).eq("status", "active"))
       .collect();
 
-    return sessions.toSorted((a, b) => b.updatedAt - a.updatedAt);
+    return sessions
+      .filter((session) => session.shared === true)
+      .toSorted((a, b) => b.updatedAt - a.updatedAt);
   },
 });
 

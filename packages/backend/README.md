@@ -37,7 +37,7 @@ who may attach to which session.
 - `open`: create or re-open a host session (owner-only)
 - `heartbeat`: update liveness and share/port state (owner-only)
 - `close`: close a host session (owner-only)
-- `listActive`: list active sessions for the authenticated owner
+- `listActive`: list **shared** active sessions for the authenticated owner
 - `authorizeAttach`: allow attach only if the caller is the owner or the session
   is shared
 - `setShareCode`: owner-only; start sharing and store the SHA-256 of the access
@@ -146,7 +146,11 @@ step could be layered on later if watch-only viewers are needed.
 
 ## Billing (Autumn)
 
-- Relay sharing is gated by the `can_share_relay` feature on the Pro plan.
+- Relay sharing is gated by the `can_share_relay` feature on Pro.
+- List price: **$99/year** (`pro_yearly`) and **$15/month** (`pro`). Checkout
+  defaults to yearly. Both products grant the same entitlement. The landing
+  page and dashboard billing expose a Yearly / Monthly switch on the Pro card;
+  `createProCheckout` takes `interval: "year" | "month"`.
 - Plans are defined as code in `autumn.config.ts` and pushed with `bunx atmn`.
 - The entitlement check fails open on billing-provider errors so a billing
   outage cannot break the core sharing flow. This is a deliberate availability
@@ -192,7 +196,7 @@ change.
 ## Smoke checklist
 
 1. `wrapper auth login`
-2. Start a wrapped shell (`wrapper shell-host` or a normal wrapped terminal)
+2. `wrapper share` (or `wrapper run -- claude`; `wrapper install` is optional)
 3. `wrapper attach --id <sessionId>`
 4. Detach the viewer (`Ctrl+\`, then `d`)
 5. Exit the host shell and verify the session closes

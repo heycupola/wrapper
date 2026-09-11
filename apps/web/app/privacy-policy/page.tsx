@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      lastUpdated="2026-09-08"
+      lastUpdated="2026-09-11"
       introduction="Wrapper is a remote terminal sharing service operated by Cupola Labs, LLC. Your terminal stays on your machine until you explicitly share it. This policy explains the metadata Wrapper stores, how terminal traffic moves between peers, which providers help us operate the service, and the controls available to you."
     >
       <LegalSection title="Information we collect">
@@ -32,10 +32,11 @@ export default function PrivacyPolicyPage() {
 
         <h3>Session metadata</h3>
         <p>
-          Convex stores the session identifier, account owner, shell name, working directory,
-          process and port metadata, sharing and relay state, timestamps, and close reason. Share
-          codes and relay tickets are stored only as cryptographic hashes. Session metadata may be
-          sensitive, even though it is not terminal output.
+          Convex stores session metadata only after you share a session: identifier, account owner,
+          shell name, working directory, process and port metadata, sharing and relay state,
+          timestamps, and close reason. Unshared hosts send nothing to Convex. Share codes and relay
+          tickets are stored only as cryptographic hashes. Session metadata may be sensitive, even
+          though it is not terminal output.
         </p>
 
         <h3>Terminal content</h3>

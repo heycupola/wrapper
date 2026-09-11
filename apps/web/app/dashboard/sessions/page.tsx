@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { ExternalLink } from "../../../components/external-link";
 import { IosViewerCta } from "../../../components/ios-viewer-cta";
 import { LocalTime } from "../../../components/local-time";
-import { InstallWrapperLink } from "../../../components/install-wrapper-link";
 import { Button } from "../../../components/ui/button";
 import { getToken } from "../../../lib/auth-server";
 import { getDashboardSessions } from "../../../lib/dashboard-server";
@@ -25,7 +24,7 @@ export default async function DashboardSessionsPage() {
     <>
       <DashboardPageHeader
         title="Sessions"
-        description="Host sessions currently reporting as active for your profile."
+        description="Shared host sessions currently reporting as active for your profile."
         analyticsPage="sessions"
         actionHref="/oauth/authorize"
         actionLabel="Authorize a device"
@@ -45,8 +44,13 @@ export default async function DashboardSessionsPage() {
       ) : sessions.length === 0 ? (
         <section className="dashboardEmptyState">
           <strong>No active sessions</strong>
-          <p>Install Wrapper and open an interactive shell to create the first host session.</p>
-          <InstallWrapperLink>Install Wrapper</InstallWrapperLink>
+          <p>
+            No shared sessions yet. Run <code>wrapper share</code> on the host. Local unshared
+            sessions stay on the machine and do not appear here.
+          </p>
+          <Button variant="primary" href="https://docs.wrapper.sh/guides/remote-share" external>
+            How to share a session
+          </Button>
         </section>
       ) : (
         <ul className="dashboardSessionCards" aria-label="Active host sessions">

@@ -64,9 +64,11 @@ export const WelcomeEmail = ({
               Run <span style={code}>wrapper auth login</span>
             </Text>
             <Text style={listItem}>
-              Start a host with <span style={code}>wrapper shell-host</span>
+              Start a host with <span style={code}>wrapper share</span>
             </Text>
-            <Text style={listItemLast}>Share only when you want a remote viewer</Text>
+            <Text style={listItemLast}>
+              Does not patch your shell config. Share only when you want a remote viewer
+            </Text>
           </Section>
           <Button style={button} href={dashboardUrl}>
             Go to Dashboard
