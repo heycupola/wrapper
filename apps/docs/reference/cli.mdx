@@ -9,6 +9,7 @@ description: "Commands, flags, keybindings, and common workflows."
 
 ```bash
 wrapper install
+wrapper install --dry-run
 wrapper install --all
 wrapper install --shell=zsh,bash
 wrapper install --interactive
@@ -30,6 +31,10 @@ wrapper auth logout
 ### Sessions
 
 ```bash
+wrapper share
+wrapper share -- claude
+wrapper run -- claude
+wrapper run --share -- claude
 wrapper status
 wrapper attach
 wrapper attach --id <sessionId>
@@ -57,6 +62,7 @@ wrapper telemetry disable
 wrapper shell-host
 wrapper shell-host --shell /bin/zsh
 wrapper shell-host --port <number>
+wrapper shell-host --share
 bun run --cwd apps/cli dev:host
 ```
 
@@ -104,9 +110,8 @@ because that conflicts with alternate-screen tools.
 Local:
 
 ```bash
-wrapper install
-# new terminal
 wrapper auth login
+wrapper share
 wrapper status
 wrapper attach
 ```
@@ -114,6 +119,6 @@ wrapper attach
 Remote (Pro):
 
 ```bash
-# host: Ctrl+\ then s
+wrapper share
 wrapper attach --relay --id <sessionId>
 ```

@@ -67,6 +67,7 @@
         "group": "Guides",
         "pages": [
           "guides/installation",
+          "guides/linux-remote",
           "guides/auth",
           "guides/local-attach",
           "guides/remote-share",

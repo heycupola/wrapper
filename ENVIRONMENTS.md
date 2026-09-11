@@ -85,6 +85,7 @@ recommended branch protection settings are in [`OPERATIONS.md`](./OPERATIONS.md)
 | `AUTUMN_SECRET_KEY`                         | `am_sk_test_…` (sandbox) | `am_sk_live_…` (production) |
 | `AUTUMN_WEBHOOK_SECRET`                     | Autumn Svix signing secret | Autumn Svix signing secret |
 | `WRAPPER_AUTUMN_PRO_PLAN_ID`                | `pro`                    | `pro`                       |
+| `WRAPPER_AUTUMN_PRO_YEARLY_PLAN_ID`         | `pro_yearly`             | `pro_yearly`                |
 | `RESEND_API_KEY`                            | Resend test/live key     | Resend live key             |
 | `RESEND_WEBHOOK_SECRET`                     | Resend Svix signing secret | Resend Svix signing secret |
 | `FROM_EMAIL_ADDRESS`                        | `Wrapper <notifications@wrapper.sh>` | same |
@@ -240,6 +241,9 @@ value is set, landing CTAs stay **Get iOS viewer** with a Beta tag and open the
    bunx atmn push          # sandbox (dev)  -> am_sk_test_ key
    bunx atmn push --prod   # production     -> am_sk_live_ key
    ```
+
+   After a price change, move remaining `$20` monthly subscribers to `$15` or
+   yearly in Autumn so they match the public list price.
 
 7. **Docs**: `apps/docs` is connected to Mintlify at `https://docs.wrapper.sh`.
    Keep DNS, TLS, and representative page requests healthy after navigation or

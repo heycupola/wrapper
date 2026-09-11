@@ -36,12 +36,11 @@ See [Installation](/guides/installation) and
 
 ## Prepare the desktop host
 
-Sign in and start a wrapped shell:
+Sign in and share a session (no rc hook required):
 
 ```bash
 wrapper auth login
-wrapper install
-# Open a new shell after installation.
+wrapper share
 wrapper status
 ```
 
@@ -117,6 +116,9 @@ but the relay processes terminal frames after TLS termination. See
 Terminal content is covered when the app is inactive or captured. Returning
 after a longer background interruption requires Face ID, Touch ID, or the device
 passcode. Canceling authentication keeps the terminal locked.
+
+Locking or backgrounding the app must not crash the process. The relay or P2P
+link may drop; returning reconnects or asks you to open the session again.
 
 If device-owner authentication is unavailable, Wrapper keeps content covered
 and offers safe sign-out rather than revealing the terminal.

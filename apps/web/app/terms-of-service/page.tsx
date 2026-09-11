@@ -13,7 +13,7 @@ export default function TermsOfServicePage() {
   return (
     <LegalPage
       title="Terms of Service"
-      lastUpdated="2026-08-26"
+      lastUpdated="2026-09-11"
       introduction="These Terms form an agreement between you and Cupola Labs, LLC concerning Wrapper, its CLI, website, backend, relay, documentation, and mobile clients (collectively, the Service). By creating an account or using the Service, you agree to these Terms and the Privacy Policy."
     >
       <LegalSection title="Eligibility and accounts">
@@ -90,8 +90,9 @@ export default function TermsOfServicePage() {
       <LegalSection title="Your data">
         <p>
           You retain ownership of your terminal content and other data. You grant us the limited
-          rights needed to authenticate you, store session metadata, route explicitly shared
-          traffic, prevent abuse, and operate the Service.
+          rights needed to authenticate you, store session metadata for shared sessions, route
+          explicitly shared traffic, prevent abuse, and operate the Service. traffic, prevent abuse,
+          and operate the Service.
         </p>
         <p>
           Unshared terminal traffic stays local. Direct P2P traffic uses WebRTC encryption, while

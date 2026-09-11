@@ -15,7 +15,7 @@ const billingPortalRef = makeFunctionReference<
 
 const checkoutRef = makeFunctionReference<
   "action",
-  { successUrl?: string },
+  { successUrl?: string; interval?: "month" | "year" },
   { checkoutUrl: string }
 >("billing:createProCheckout");
 
@@ -57,14 +57,14 @@ export function DashboardBillingActions({
     }
   }
 
-  async function startCheckout(): Promise<void> {
+  async function startCheckout(interval: "month" | "year"): Promise<void> {
     if (!client) return setError("Wrapper billing services are temporarily unavailable.");
     setPending("checkout");
     setError(null);
     trackWebEvent("web_upgrade_started");
     try {
       const successUrl = new URL("/plan/upgraded", window.location.origin).toString();
-      const result = await client.action(checkoutRef, { successUrl });
+      const result = await client.action(checkoutRef, { successUrl, interval });
       const checkoutUrl = getSafeCheckoutUrl(result.checkoutUrl);
       if (!checkoutUrl) throw new Error("Unexpected checkout address.");
       window.location.assign(checkoutUrl);
@@ -90,14 +90,19 @@ export function DashboardBillingActions({
       </div>
       <div className="authActions">
         {plan === "free" ? (
-          <Button
-            variant="primary"
-            disabled={pending !== null}
-            loading={pending === "checkout"}
-            onClick={() => void startCheckout()}
-          >
-            {pending === "checkout" ? "Starting checkout…" : "Upgrade to Pro"}
-          </Button>
+          <>
+            <Button
+              variant="primary"
+              disabled={pending !== null}
+              loading={pending === "checkout"}
+              onClick={() => void startCheckout("year")}
+            >
+              {pending === "checkout" ? "Starting checkout…" : "Upgrade — $99/year"}
+            </Button>
+            <Button disabled={pending !== null} onClick={() => void startCheckout("month")}>
+              $15/month
+            </Button>
+          </>
         ) : null}
         {canManageBilling ? (
           <Button

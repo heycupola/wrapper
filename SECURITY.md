@@ -48,6 +48,7 @@ resolves the affected packages.
 ## Security boundaries
 
 - A session is local and owner-only until the host explicitly shares it.
+- Unshared hosts do not contact Convex. Session metadata is written only after share.
 - Non-owner relay viewers need the session id and share code.
 - Every accepted viewer can read and control the shared shell.
 - P2P traffic is encrypted between peers and exposes peer IP addresses.

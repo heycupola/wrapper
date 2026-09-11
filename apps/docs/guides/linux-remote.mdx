@@ -1,0 +1,94 @@
+---
+title: "Remote Linux box"
+description: "Run Wrapper on an always-on Linux host without putting a hook on your laptop."
+---
+
+A dedicated Linux machine, VPS, or devbox is the recommended host if you do
+not want Wrapper on your laptop. The phone is a viewer. The shell, files, and
+credentials stay on the box.
+
+This path does **not** patch `~/.zshrc`. You share one session at a time.
+
+## Install the CLI
+
+On the Linux host:
+
+```bash
+curl -fsSL https://wrapper.sh/install | bash
+```
+
+Supported installer targets: `linux-arm64` and `linux-x86_64`. Confirm with
+`wrapper --version`.
+
+## Sign in
+
+```bash
+wrapper auth login
+```
+
+Approve the device code in a browser. Headless boxes can print the URL and
+code; complete approval from any other device. See [Authentication](/guides/auth).
+
+## Share a session
+
+```bash
+wrapper share
+```
+
+Or wrap a specific command:
+
+```bash
+wrapper run -- claude
+# later, in that session: Ctrl+\ then s
+wrapper share -- claude
+```
+
+Press `Ctrl+\` then `s` if you started with `wrapper run` and want to share
+later. Unshare with `Ctrl+\` then `u`.
+
+`wrapper status` lists live sessions on this machine. Unshared sessions listen
+on `127.0.0.1` and do not contact Convex.
+
+## Attach from your phone
+
+Share the session, then open the iOS viewer. See [Mobile viewer](/guides/mobile-viewer).
+
+You do not need to put SSH keys on the phone. Wrapper shares **this** session
+only, not the whole machine.
+
+## Optional: systemd user unit
+
+A one-shot session (not a daemon wrapping every login):
+
+```ini
+# ~/.config/systemd/user/wrapper-share.service
+[Unit]
+Description=Wrapper shared shell
+
+[Service]
+ExecStart=%h/.wrapper/bin/wrapper share
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+```
+
+Enable with `systemctl --user enable --now wrapper-share.service`. This still
+starts one shared session, not every interactive shell.
+
+## Optional: wrap every terminal
+
+If you want every new shell on the box wrapped:
+
+```bash
+wrapper install --dry-run
+wrapper install
+```
+
+Remove later with `wrapper uninstall`. Skip one shell with `WRAPPER_DISABLE=1`.
+
+## Related
+
+- [Installation](/guides/installation)
+- [Remote share](/guides/remote-share)
+- [CLI reference](/reference/cli)

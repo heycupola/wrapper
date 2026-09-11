@@ -39,7 +39,11 @@ function shellName(path: string): string {
 
 export interface ShellHostOptions {
   shell?: string;
+  /** Spawn this argv instead of an interactive shell. */
+  argv?: string[];
   port?: number;
+  /** After the host is up, share immediately (`wrapper share`). */
+  shareOnStart?: boolean;
 }
 
 const SIGINT_EXIT = 130;
@@ -103,7 +107,7 @@ const issueHostRelayTicketRef = makeFunctionReference<
 >("relay:issueHostTicket");
 const createProCheckoutRef = makeFunctionReference<
   "action",
-  { successUrl?: string },
+  { successUrl?: string; interval?: "month" | "year" },
   { checkoutUrl: string }
 >("billing:createProCheckout");
 const setShareCodeRef = makeFunctionReference<
@@ -160,6 +164,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
 
   const session = new PtySession({
     shell: opts.shell,
+    argv: opts.argv,
     size: initialSize,
     env: {
       WRAPPER_WRAPPED: "1",
@@ -198,7 +203,10 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     process.exit(1);
   }
 
-  const resolvedShell = opts.shell ?? process.env.SHELL ?? "/bin/bash";
+  const resolvedShell =
+    opts.argv && opts.argv.length > 0
+      ? opts.argv.join(" ")
+      : (opts.shell ?? process.env.SHELL ?? "/bin/bash");
 
   log.info("shell-host started", {
     sessionId,
@@ -220,29 +228,14 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   });
 
   const backend = await resolveAuthedConvexClient();
-  if (backend.status === "ready") {
-    try {
-      await backend.client.mutation(sessionOpenRef, {
-        sessionId,
-        shell: resolvedShell,
-        cwd: process.cwd(),
-        port: server.port,
-        hostPid: process.pid,
-        shared: false,
-      });
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      log.warn("failed to open backend session record", { error: err.message });
-    }
-  } else if (backend.status === "missing_auth") {
+  if (backend.status === "missing_auth") {
     log.debug("convex url configured but no auth token found; backend sync disabled");
   } else if (backend.status === "auth_error") {
     log.warn("backend auth failed; backend sync disabled", { error: backend.error.message });
   }
 
-  // Keep the short-lived Convex JWT fresh for the whole life of the host. Without
-  // this, a session that outlives the initial token starts failing every backend
-  // call (heartbeats, share, close) with an expired-token error.
+  // Keep the short-lived Convex JWT fresh so a later share still works. Tokens
+  // are not session metadata; cwd/shell/pid stay off Convex until share.
   let authRefresh: AuthAutoRefresh | null = null;
   if (backend.status === "ready") {
     authRefresh = startAuthAutoRefresh({
@@ -282,25 +275,73 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shareInviteTimer = setTimeout(() => printShareInvite(attempt + 1), 500);
     shareInviteTimer.unref?.();
   }
-  const heartbeat = setInterval(() => {
-    if (backend.status !== "ready") return;
-    void backend.client
-      .mutation(sessionHeartbeatRef, {
+  let cloudOpened = false;
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
+
+  function startHeartbeat(): void {
+    if (heartbeat) return;
+    heartbeat = setInterval(() => {
+      if (backend.status !== "ready" || !cloudOpened) return;
+      void backend.client
+        .mutation(sessionHeartbeatRef, {
+          sessionId,
+          shared,
+          port: server.port,
+        })
+        .catch((error: unknown) => {
+          const err = error instanceof Error ? error : new Error(String(error));
+          if (/InvalidAuthHeader|expired|Unauthenticated/i.test(err.message)) {
+            void authRefresh?.refreshNow();
+          }
+          log.warn("session heartbeat failed", { error: err.message });
+        });
+    }, HEARTBEAT_INTERVAL_MS);
+    heartbeat.unref();
+  }
+
+  function stopHeartbeat(): void {
+    if (!heartbeat) return;
+    clearInterval(heartbeat);
+    heartbeat = null;
+  }
+
+  async function ensureCloudSession(): Promise<boolean> {
+    if (backend.status !== "ready") return false;
+    if (cloudOpened) return true;
+    try {
+      await backend.client.mutation(sessionOpenRef, {
         sessionId,
-        shared,
+        shell: resolvedShell,
+        cwd: process.cwd(),
         port: server.port,
-      })
-      .catch((error: unknown) => {
-        const err = error instanceof Error ? error : new Error(String(error));
-        // An expired JWT surfaces here first; kick a refresh so the next tick
-        // (and any share/close call) succeeds instead of looping on the error.
-        if (/InvalidAuthHeader|expired|Unauthenticated/i.test(err.message)) {
-          void authRefresh?.refreshNow();
-        }
-        log.warn("session heartbeat failed", { error: err.message });
+        hostPid: process.pid,
+        shared: false,
       });
-  }, HEARTBEAT_INTERVAL_MS);
-  heartbeat.unref();
+      cloudOpened = true;
+      startHeartbeat();
+      return true;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      log.warn("failed to open backend session record", { error: err.message });
+      return false;
+    }
+  }
+
+  async function closeCloudSession(reason: string): Promise<void> {
+    if (!cloudOpened || backend.status !== "ready") {
+      cloudOpened = false;
+      stopHeartbeat();
+      return;
+    }
+    cloudOpened = false;
+    stopHeartbeat();
+    try {
+      await backend.client.mutation(sessionCloseRef, { sessionId, reason });
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      log.warn("failed to close backend session record", { error: err.message });
+    }
+  }
 
   function currentTransport(): SessionTransportStatus {
     if (relayStarting && !shared) return "sharing";
@@ -358,6 +399,15 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       }
 
       paintRestingTitle();
+      const opened = await ensureCloudSession();
+      if (!opened) {
+        announce(
+          `wrapper • shared • ${sessionTag}`,
+          "session shared locally (relay unavailable: could not open backend session)",
+        );
+        commitShared();
+        return;
+      }
       const code = generateShareCode();
       try {
         // Persist the shared flag and the access-code hash before issuing the relay
@@ -418,6 +468,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
             detail: payload.message,
           });
           await backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
+          await closeCloudSession("pro_required");
           if (env.hudEnabled) setTitle("");
 
           const checkoutUrl = await fetchProCheckoutUrl(backend.client);
@@ -509,12 +560,13 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         shareInviteTimer = null;
         setSessionShared(sessionId, false);
         trackEvent("session_unshared");
-        if (backend.status === "ready") {
-          // Clears both `shared` and the stored code hash, revoking any
-          // outstanding viewer access immediately.
-          void backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
-        }
-        void stopRelayBridge();
+        void (async () => {
+          await stopRelayBridge();
+          if (backend.status === "ready") {
+            await backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
+          }
+          await closeCloudSession("unshared");
+        })();
         announce("", "session unshared");
         break;
       case "status":
@@ -585,27 +637,21 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   controlsHintTimer = setTimeout(showControlsHint, 500);
   controlsHintTimer.unref?.();
 
+  if (opts.shareOnStart) {
+    handlePrefixCommand("share");
+  }
+
   let shuttingDown = false;
   const shutdown = async (reason: ShutdownReason): Promise<number> => {
     if (shuttingDown) return 0;
     shuttingDown = true;
     log.debug("shell-host shutting down", { sessionId, reason });
-    clearInterval(heartbeat);
+    stopHeartbeat();
     if (shareInviteTimer) clearTimeout(shareInviteTimer);
     if (controlsHintTimer) clearTimeout(controlsHintTimer);
     authRefresh?.stop();
     await stopRelayBridge();
-    if (backend.status === "ready") {
-      try {
-        await backend.client.mutation(sessionCloseRef, {
-          sessionId,
-          reason,
-        });
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        log.warn("failed to close backend session record", { error: err.message });
-      }
-    }
+    await closeCloudSession(reason);
     if (env.hudEnabled) {
       clearTitle();
     }
@@ -650,7 +696,7 @@ function currentSize(): { cols: number; rows: number } {
 
 async function fetchProCheckoutUrl(client: ConvexHttpClient): Promise<string | null> {
   try {
-    const result = await client.action(createProCheckoutRef, {});
+    const result = await client.action(createProCheckoutRef, { interval: "year" });
     return result.checkoutUrl.length > 0 ? result.checkoutUrl : null;
   } catch (error) {
     log.warn("failed to create pro checkout link", {

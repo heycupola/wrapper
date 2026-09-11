@@ -241,6 +241,23 @@ Use this sequence unless a credential is already compromised:
 For a suspected compromise, revoke first, preserve redacted audit evidence, rotate downstream
 credentials that could have been reached, and follow the incident process.
 
+## Autumn products and existing subscribers
+
+Pro list price is `$15/month` (`pro`) and `$99/year` (`pro_yearly`). After editing
+[`packages/backend/autumn.config.ts`](./packages/backend/autumn.config.ts):
+
+```bash
+cd packages/backend
+bunx atmn push
+bunx atmn push --prod
+```
+
+Checkout defaults to yearly. Existing monthly subscribers who are still on the
+previous `$20` price should be moved to `$15/month` or offered yearly in the
+Autumn dashboard (or Stripe customer portal) so they are not stranded above the
+public list price. Record the operator, date, and customer count privately; do
+not copy customer emails or payment identifiers into this repository.
+
 Apple's client-secret JWT is generated and installed using the non-history pipeline in
 [`ENVIRONMENTS.md`](./ENVIRONMENTS.md#one-time-setup-checklist). Keep the `.p8` file outside
 the repository. Replacing `BETTER_AUTH_SECRET` can invalidate active sessions and must be a

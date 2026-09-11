@@ -26,6 +26,8 @@ describe("email templates", () => {
     );
     expect(welcome).toContain("Welcome to Wrapper");
     expect(welcome).toContain("wrapper auth login");
+    expect(welcome).toContain("wrapper share");
+    expect(welcome).not.toContain("wrapper shell-host");
     expect(welcome).not.toContain("7 days");
 
     const upgraded = await render(PlanUpgradedEmail({ userName: "Ada" }));

@@ -44,10 +44,9 @@ login flow.
   confirms your identity through Better Auth, presents the request as structured
   account information, and approves the device code so the CLI can finish
   logging in.
-- **Onboarding** (`app/onboarding`): a minimal one-question-at-a-time flow for
-  connecting the CLI, reviewing share/revoke controls, and optionally providing
-  constrained product context. Required state is still persisted through the
-  existing Convex `onboarding` handlers, without exposing internal progress UI.
+- **Onboarding** (`app/onboarding`): install the CLI, `wrapper share` (no rc
+  hook required), then optional product-context questions. Required state is
+  persisted through the existing Convex `onboarding` handlers.
 - **Auth API** (`app/api/auth/[...all]/route.ts`): the Better Auth handler that
   the client SDK talks to.
 - **Installer** (`app/install/route.ts`): canonical `https://wrapper.sh/install`

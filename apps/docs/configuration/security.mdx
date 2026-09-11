@@ -14,7 +14,8 @@ until its host explicitly shares it.
 - Every host generates a random 256-bit local token.
 - The token is stored in the owner's protected session registry.
 - A local connection without the token is rejected before reaching the PTY.
-- Released binaries authorize local attach against Convex as the session owner.
+- Released binaries authorize local attach with the loopback token. Convex is
+  not contacted until the host shares.
 
 Processes running as the same operating-system account, and root or
 administrator, remain inside the local trust boundary.
@@ -38,7 +39,8 @@ shape so session ids cannot be enumerated from error messages.
 
 ### Unshared
 
-Input and output stay on the host machine.
+Input, output, and session metadata stay on the host machine. Convex is not
+contacted until you share.
 
 ### Direct WebRTC
 

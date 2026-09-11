@@ -44,21 +44,23 @@ Supported installer targets today: `darwin-arm64`, `darwin-x86_64`,
 ## First session
 
 <Steps>
-  <Step title="Enable the shell hook">
-    ```bash
-    wrapper install
-    ```
-
-    Open a new terminal so `shell-host` wraps your shell.
-
-  </Step>
   <Step title="Sign in">
     ```bash
     wrapper auth login
     ```
 
-    Approve the device code in the browser. Released binaries expect an owner
-    login for local attach against production Convex.
+    Approve the device code in the browser. Local attach does not require
+    login. Remote share does.
+
+  </Step>
+  <Step title="Share a session">
+    ```bash
+    wrapper share
+    ```
+
+    No rc hook required. Wrap a command without sharing yet with
+    `wrapper run -- claude`. Optional: `wrapper install` wraps every new
+    terminal.
 
   </Step>
   <Step title="Attach locally">
@@ -70,7 +72,8 @@ Supported installer targets today: `darwin-arm64`, `darwin-x86_64`,
 
   </Step>
   <Step title="Share remotely (Pro)">
-    In the host terminal, press `Ctrl+\` then `s`. Join with:
+    `wrapper share` already shares. In a running host, press `Ctrl+\` then `s`.
+    Join with:
 
     ```bash
     wrapper attach --relay --id <sessionId>
@@ -104,5 +107,6 @@ HUD transport labels: `local`, `connecting`, `relay`, `p2p`, `offline`.
 - [Quickstart](/guides/installation)
 - [Authentication](/guides/auth)
 - [Local attach](/guides/local-attach)
+- [Remote Linux box](/guides/linux-remote)
 - [Remote share](/guides/remote-share)
 - [Security and privacy](/configuration/security)

@@ -13,9 +13,9 @@ export const metadata: Metadata = {
 };
 
 const FREE_FEATURES = [
-  "Wrap zsh, bash, and fish",
+  "No rc hook required",
   "Attach from the same computer",
-  "Sessions stay on your machine",
+  "Sessions stay on your machine until you share",
 ] as const;
 
 const PRO_FEATURES = [
@@ -59,9 +59,9 @@ export default async function DashboardBillingPage({
         <PlanCard
           name="Pro"
           label={plan === "pro" ? "Current plan" : "Remote access"}
-          price="$20"
-          period="/ month"
-          summary="Your shell, from another device."
+          price="$99"
+          period="/ year"
+          summary="Your shell, from another device. $15/month is available at checkout."
           features={PRO_FEATURES}
           highlighted
         >

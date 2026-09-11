@@ -152,7 +152,10 @@ export function HorizontalLanding() {
                 <LoopbackArt />
                 <div>
                   <h3>Local by default</h3>
-                  <p>Loopback only, with a per-session token. No relay or account required.</p>
+                  <p>
+                    Loopback only, with a per-session token. Unshared sessions send nothing to
+                    Convex, including metadata.
+                  </p>
                 </div>
               </article>
               <article className="landingFeatureCard">
@@ -223,9 +226,9 @@ export function HorizontalLanding() {
                   <p>Your shell, on this machine.</p>
                 </header>
                 <ul>
-                  <li>Wrap zsh, bash, and fish</li>
+                  <li>No rc hook required</li>
                   <li>Attach from the same computer</li>
-                  <li>Sessions stay on your machine</li>
+                  <li>Sessions stay on your machine until you share</li>
                 </ul>
                 <Button size="lg" block href={INSTALL_HREF}>
                   Install Wrapper
@@ -241,10 +244,10 @@ export function HorizontalLanding() {
                     Pro <small>Remote access</small>
                   </h3>
                   <p className="landingPrice">
-                    <strong>$20</strong>
-                    <span>/ month</span>
+                    <strong>$99</strong>
+                    <span>/ year</span>
                   </p>
-                  <p>Your shell, from another device.</p>
+                  <p>Your shell, from another device. $15/month if you prefer not to commit.</p>
                 </header>
                 <ul>
                   <li>Everything in Free</li>

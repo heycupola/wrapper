@@ -68,7 +68,7 @@ export function unpatchRc(rcFile: string): boolean {
   return true;
 }
 
-function renderBlock(shell: SupportedShell): string {
+export function renderBlock(shell: SupportedShell): string {
   const initLine = renderInitLine(shell);
   return [MARKER_BEGIN, MARKER_PREAMBLE, initLine, MARKER_END].join("\n");
 }

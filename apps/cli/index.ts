@@ -7,6 +7,8 @@ import { runAuthLogin, runAuthLogout, runAuthWhoami } from "./commands/auth";
 import { runInit } from "./commands/init";
 import { runInstall } from "./commands/install";
 import { runLogs } from "./commands/logs";
+import { runRun } from "./commands/run";
+import { runShare } from "./commands/share";
 import { runShellHost } from "./commands/shell-host";
 import { runStatus } from "./commands/status";
 import { telemetryDisable, telemetryEnable, telemetryStatus } from "./commands/telemetry";
@@ -57,7 +59,7 @@ if (!isQuietEntry && isFirstRun()) {
   console.error();
   console.error(`  ${pc.dim("Get started:")}`);
   console.error(
-    `    ${pc.dim("$")} ${pc.cyan("wrapper install")}    ${pc.dim("Hook Wrapper into your shell rc files")}`,
+    `    ${pc.dim("$")} ${pc.cyan("wrapper share")}      ${pc.dim("Wrap this shell and share it (no rc hook)")}`,
   );
   console.error(
     `    ${pc.dim("$")} ${pc.cyan("wrapper status")}     ${pc.dim("List active sessions")}`,
@@ -76,22 +78,24 @@ if (!isQuietEntry && isFirstRun()) {
 const program = new Command();
 program
   .name("wrapper")
-  .description("Wrapper - one command to make your terminal reachable from your phone")
+  .description("Wrapper - share a live terminal from your phone, on demand")
   .version(VERSION);
 
 program
   .command("install")
-  .description("Hook Wrapper into your shell rc files (interactive)")
+  .description("Optional: wrap every new terminal by patching rc files")
   .option("-s, --shell <list>", "comma-separated list of shells (zsh,bash,fish)")
   .option("--all", "install for every detected shell")
   .option("-i, --interactive", "always show the picker, even with one shell")
   .option("-y, --yes", "skip the confirmation prompt")
+  .option("--dry-run", "print the files and block that would be written")
   .action(async (raw) => {
     await runInstall({
       shellsCsv: raw.shell,
       all: Boolean(raw.all),
       interactive: Boolean(raw.interactive),
       yes: Boolean(raw.yes),
+      dryRun: Boolean(raw.dryRun),
     });
   });
 
@@ -123,14 +127,42 @@ program
   });
 
 program
+  .command("share")
+  .description("Wrap a shell or command and share it (does not patch rc files)")
+  .argument("[command...]", "command to wrap (defaults to $SHELL)")
+  .option("-p, --port <number>", "force a specific port (default: OS-assigned)")
+  .action(async (command: string[], raw) => {
+    await runShare({
+      command,
+      port: raw.port ? Number(raw.port) : undefined,
+    });
+  });
+
+program
+  .command("run")
+  .description("Wrap one command without sharing (no rc hook)")
+  .argument("<command...>", "command to wrap, e.g. claude")
+  .option("-p, --port <number>", "force a specific port (default: OS-assigned)")
+  .option("--share", "share immediately after the host starts")
+  .action(async (command: string[], raw) => {
+    await runRun({
+      command,
+      port: raw.port ? Number(raw.port) : undefined,
+      share: Boolean(raw.share),
+    });
+  });
+
+program
   .command("shell-host")
   .description("Wrap the current shell (used internally by `wrapper init`)")
   .option("-s, --shell <path>", "shell binary to spawn (defaults to $SHELL)")
   .option("-p, --port <number>", "force a specific port (default: OS-assigned)")
+  .option("--share", "share immediately after the host starts")
   .action(async (raw) => {
     await runShellHost({
       shell: raw.shell,
       port: raw.port ? Number(raw.port) : undefined,
+      shareOnStart: Boolean(raw.share),
     });
   });
 

@@ -84,7 +84,7 @@ describe("relay session access", () => {
       ErrorCode.UNAUTHORIZED,
     );
 
-    expect(await owner.query(api.session.listActive, {})).toHaveLength(1);
+    expect(await owner.query(api.session.listActive, {})).toHaveLength(0);
     expect(await viewer.query(api.session.listActive, {})).toEqual([]);
   });
 
@@ -118,6 +118,7 @@ describe("relay session access", () => {
       sessionId,
       code: "ABCD-EFGH",
     });
+    expect(await owner.query(api.session.listActive, {})).toHaveLength(1);
 
     await expectConvexError(
       () =>

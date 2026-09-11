@@ -8,10 +8,9 @@ never leaves the machine and never uses the Fly relay.
 
 ## Before you attach
 
-1. Install the CLI and run `wrapper install`.
-2. Open a wrapped host terminal.
-3. Sign in with `wrapper auth login` when using a released binary.
-4. Confirm a live session:
+1. Install the CLI.
+2. Run `wrapper share` or `wrapper run -- <cmd>` (no rc hook required).
+3. Confirm a live session:
 
 ```bash
 wrapper status
@@ -60,10 +59,10 @@ inner shell exits.
 
 | Symptom                   | Likely cause                    | Fix                                             |
 | ------------------------- | ------------------------------- | ----------------------------------------------- |
-| No sessions listed        | Hook not active                 | Open a new terminal after `wrapper install`     |
-| Access denied             | Not logged in, or not the owner | `wrapper auth login`, confirm `whoami`          |
-| Attach connects then dies | Nested / duplicate hooks        | `wrapper uninstall` then `wrapper install` once |
-| Need an unwrapped shell   | Hook always on                  | `WRAPPER_DISABLE=1 zsh`                         |
+| No sessions listed        | No host running                 | Run `wrapper share`                             |
+| Access denied             | Missing local token             | Use `wrapper attach --id` from `wrapper status` |
+| Attach connects then dies | Nested / duplicate hooks        | `wrapper uninstall` then use `wrapper share`    |
+| Need an unwrapped shell   | Optional hook always on         | `WRAPPER_DISABLE=1 zsh`                         |
 
 Debug with:
 
