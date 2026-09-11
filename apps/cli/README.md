@@ -223,7 +223,6 @@ wrapper install --shell=zsh,bash
 wrapper uninstall
 wrapper init <shell>
 ```
-```
 
 ### Internal
 
