@@ -1,28 +1,26 @@
 # Wrapper
 
-> One command to make any terminal you open reachable from your phone or another device.
+> Share a live terminal from your phone, on demand. Does not patch your shell config.
 
-Wrapper transparently wraps every interactive shell session you open
-(zsh, bash, or fish) so an authenticated device can mirror it on demand.
-The wrapping itself is invisible: your dotfiles, prompt, plugins, and
-history all behave exactly as before.
+`wrapper share` wraps one shell (or `wrapper run -- claude` wraps one command)
+so an authenticated device can mirror it. Your prompt, plugins, and history
+behave as before.
 
-A session never leaves your machine until you decide to share it. Inside
-a wrapped shell, `Ctrl+\ s` opens a relay tunnel and `Ctrl+\ u` closes it
-again. A second device then attaches to that session and sees the live
-terminal.
+A session never leaves your machine until you share it. Unshared hosts listen
+on `127.0.0.1` and do not contact Convex. `Ctrl+\ s` (or `wrapper share`)
+opens a relay tunnel; `Ctrl+\ u` closes it.
 
 ## How it works in one minute
 
-1. You open a terminal. Your rc file runs `wrapper shell-host`, which spawns
-   your real shell inside a pseudo-terminal (PTY) and starts a tiny local
-   WebSocket server bound to `127.0.0.1`. Nothing is exposed yet.
+1. You run `wrapper share`. It spawns your real shell inside a PTY and starts
+   a tiny local WebSocket server bound to `127.0.0.1`. Nothing is exposed yet
+   until share completes; metadata stays off Convex until then.
 2. From the same machine, `wrapper attach` connects to that local server and
    mirrors the session. The transport stays on loopback and does not need the
-   relay or Pro; released builds still authorize the signed-in session owner.
-3. When you press `Ctrl+\ s`, the CLI asks the Convex backend for a short-lived
-   host ticket, connects to the relay on Fly.io, marks the session shared, and
-   prints a secret share code. You join your own devices with
+   relay, Pro, or a Convex session row.
+3. When you share, the CLI opens a Convex session, asks for a short-lived
+   host ticket, connects to the relay on Fly.io, and prints a secret share
+   code. You join your own devices with
    `wrapper attach --relay --id <id>`; anyone else enters the code in a hidden
    prompt, so knowing the session id alone is not enough.
 4. By default viewer input prefers a direct WebRTC data channel for lower
@@ -87,7 +85,7 @@ The separate `apps/mobile` submodule now contains a Simulator-ready native
 iPhone/iPad viewer MVP: device authorization, owner and guest join flows,
 SwiftTerm rendering, relay transport, native WebRTC, and adaptive navigation.
 It uses Swift 6.0 language mode with complete strict concurrency on Xcode 26.
-CLI `v0.1.4` is published on GitHub Releases. Signed-device validation and App
+CLI `v0.2.0` is the share-first CLI. Signed-device validation and App
 Store review remain pre-release work.
 
 The active focus is operational hardening:
@@ -143,9 +141,9 @@ cd apps/cli && NODE_ENV=development bun run index.ts shell-host
 
 `NODE_ENV=development` moves every on-disk path into a `wrapper-dev` namespace
 under XDG state (or `%APPDATA%\wrapper-dev\` on Windows), points the relay and
-auth URLs at localhost, mirrors logs to stderr, and writes rc-file patches into
+auth URLs at localhost, mirrors logs to stderr, and writes shell-config patches into
 a throwaway directory. A developer running the CLI locally can never corrupt a
-real installation's registry, logs, or rc files.
+real installation's registry, logs, or shell config.
 
 Setting `CI` to any value disables telemetry and console output. For the full
 list of CLI environment variables, see

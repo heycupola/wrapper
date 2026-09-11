@@ -17,26 +17,31 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
     id: "output-path",
     question: "Does my terminal output go through your servers?",
     answer:
-      "On this machine, no: the host listens on loopback and sends nothing anywhere. A share goes directly over WebRTC when it can, else through an authenticated relay that keeps nothing.",
+      "Not until you share. Unshared hosts listen on loopback and send no bytes and no session metadata. A share uses WebRTC when it can, else an authenticated relay that keeps nothing.",
     link: { href: "/privacy-policy", label: "How terminal data moves" },
+  },
+  {
+    id: "shell-hook",
+    question: "Does Wrapper change my shell config?",
+    answer:
+      "No. `wrapper share` wraps one session. `wrapper install` is optional if you want every new terminal wrapped. Remove it with `wrapper uninstall`.",
+    link: {
+      href: "https://docs.wrapper.sh/guides/installation",
+      label: "Installation",
+      external: true,
+    },
   },
   {
     id: "uninvited-viewer",
     question: "Can someone attach without me noticing?",
     answer:
-      "No. Remote access stays off until you press `Ctrl+\\` then `s`, and a guest needs the code it prints. Tickets are single-use and expire in 60 seconds; `Ctrl+\\` then `u` ends the share.",
-  },
-  {
-    id: "prefix-key",
-    question: "Ctrl+\\ normally sends SIGQUIT. Does Wrapper take it over?",
-    answer:
-      "It becomes a prefix, like `Ctrl+b` in tmux. Press it twice to send the literal byte; unknown combos pass through, and `Ctrl+C`, `Ctrl+Z`, `Ctrl+D` always do. `WRAPPER_PREFIX` picks another key.",
+      "No. Remote access stays off until you share (`wrapper share` or `Ctrl+\\` then `s`). A guest needs the code it prints. `Ctrl+\\` then `u` ends the share.",
   },
   {
     id: "free-vs-pro",
     question: "What exactly is free?",
     answer:
-      "Everything on one machine: wrapping zsh, bash, and fish, and attaching from the same computer. Pro covers the part that crosses networks: another device, a share code, the iOS viewer.",
+      "Everything on one machine. Does not patch your shell config. Pro is $99/year ($8.25/month) or $15/month: another device, a Linux host, and the iOS viewer.",
     link: { href: "/#pricing", label: "Compare the plans" },
   },
   {

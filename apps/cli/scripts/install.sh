@@ -221,4 +221,5 @@ if [[ ":$PATH:" != *":${BIN_DIR}:"* ]]; then
   echo "Restart your shell or run: source ${profile}"
 fi
 
-echo "Run 'wrapper auth login' to get started."
+echo "Run 'wrapper auth login' then 'wrapper share' to get started."
+echo "Sharing does not patch your shell config. Optional: wrapper install --dry-run"

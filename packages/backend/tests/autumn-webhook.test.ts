@@ -43,6 +43,14 @@ describe("handleAutumnWebhookEvent", () => {
       type: "customer.products.updated",
       data: {
         scenario: "upgrade",
+        customer: { id: "user_yearly" },
+        updated_product: { id: "pro_yearly" },
+      },
+    });
+    await handleAutumnWebhookEvent(ctx, {
+      type: "customer.products.updated",
+      data: {
+        scenario: "upgrade",
         customer: { id: "user_other" },
         updated_product: { id: "other_plan" },
       },
@@ -56,7 +64,11 @@ describe("handleAutumnWebhookEvent", () => {
       },
     });
 
-    expect(scheduled.map((entry) => entry.args.userId)).toEqual(["user_upgrade", "user_downgrade"]);
+    expect(scheduled.map((entry) => entry.args.userId)).toEqual([
+      "user_upgrade",
+      "user_downgrade",
+      "user_yearly",
+    ]);
   });
 
   test("rejects a missing customer id", async () => {

@@ -7,6 +7,8 @@ import type { SessionStatus, TerminalSize } from "@repo/protocol";
 
 export interface PtySessionOptions {
   shell?: string;
+  /** When set, spawn this argv instead of an interactive `$SHELL -i`. */
+  argv?: string[];
   cwd?: string;
   env?: Record<string, string>;
   size?: TerminalSize;
@@ -118,8 +120,10 @@ export class PtySession extends EventEmitter<PtySessionEvents> {
 
   private spawn(opts: PtySessionOptions): void {
     const shell = opts.shell ?? process.env["SHELL"] ?? DEFAULT_SHELL;
-    // Force interactive shell behavior.
-    const args = isInteractiveShellPath(shell) ? ["-i"] : [];
+    const cmd: [string, ...string[]] =
+      opts.argv && opts.argv.length > 0
+        ? [opts.argv[0]!, ...opts.argv.slice(1)]
+        : [shell, ...(isInteractiveShellPath(shell) ? ["-i"] : [])];
     const env = {
       ...process.env,
       ...opts.env,
@@ -128,7 +132,7 @@ export class PtySession extends EventEmitter<PtySessionEvents> {
 
     try {
       this.terminal = new Terminal({
-        cmd: [shell, ...args],
+        cmd,
         size: this.currentSize,
         cwd: opts.cwd ?? process.cwd(),
         env,

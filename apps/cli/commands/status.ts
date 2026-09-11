@@ -17,6 +17,7 @@ export async function runStatus(): Promise<void> {
   if (sessions.length === 0) {
     process.stdout.write(
       `No live wrapper sessions (${env.label} environment).\n` +
+        `Start one with: wrapper share\n` +
         `Registry: ${paths.sessionsRegistry()}\n`,
     );
     return;
@@ -27,15 +28,25 @@ export async function runStatus(): Promise<void> {
     pid: String(s.pid),
     port: String(s.port),
     shared: s.shared ? "yes" : "no",
+    cloud: s.shared ? "yes" : "no",
     shell: shortShell(s.shell),
     cwd: shortenHome(s.cwd),
     started: relativeTime(s.createdAt),
   }));
 
-  const headers = ["ID", "PID", "PORT", "SHARED", "SHELL", "CWD", "STARTED"] as const;
+  const headers = ["ID", "PID", "PORT", "SHARED", "CLOUD", "SHELL", "CWD", "STARTED"] as const;
   type Column = (typeof headers)[number];
 
-  const cells = rows.map((r) => [r.id, r.pid, r.port, r.shared, r.shell, r.cwd, r.started]);
+  const cells = rows.map((r) => [
+    r.id,
+    r.pid,
+    r.port,
+    r.shared,
+    r.cloud,
+    r.shell,
+    r.cwd,
+    r.started,
+  ]);
   const widths = headers.map((h, i) =>
     Math.max(h.length, ...cells.map((row) => row[i]?.length ?? 0)),
   );
@@ -48,7 +59,8 @@ export async function runStatus(): Promise<void> {
   for (const row of cells) {
     process.stdout.write(`${renderRow(row)}\n`);
   }
-  process.stdout.write(`\nEnvironment: ${env.label}\n`);
+  process.stdout.write(`\nListen: 127.0.0.1 (loopback). Cloud: only while SHARED=yes.\n`);
+  process.stdout.write(`Environment: ${env.label}\n`);
 }
 
 function shortShell(path: string): string {

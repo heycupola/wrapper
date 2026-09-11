@@ -1,6 +1,6 @@
 {
   "name": "@repo/cli",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "private": true,
   "license": "MIT",
   "bin": {
@@ -36,9 +36,9 @@
     "@repo/protocol": "*",
     "@repo/terminal": "*",
     "commander": "^14.0.3",
-    "convex": "1.43.0",
+    "convex": "1.45.0",
     "picocolors": "catalog:",
-    "werift": "0.24.3"
+    "werift": "0.24.4"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",

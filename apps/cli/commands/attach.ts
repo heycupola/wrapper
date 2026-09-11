@@ -26,19 +26,6 @@ import { installShutdownHandlers } from "../util/signals";
 
 const log = createLogger("attach");
 
-type AuthorizeAttachArgs = {
-  sessionId: string;
-};
-
-type AuthorizeAttachResponse = {
-  ok: boolean;
-  sessionId: string;
-  port?: number;
-  shared: boolean;
-  isOwner: boolean;
-  updatedAt: number;
-};
-
 type IssueViewerTicketArgs = {
   sessionId: string;
   code?: string;
@@ -49,11 +36,6 @@ type IssueViewerTicketResponse = {
   expiresAt: number;
 };
 
-const authorizeAttachRef = makeFunctionReference<
-  "query",
-  AuthorizeAttachArgs,
-  AuthorizeAttachResponse
->("session:authorizeAttach");
 const issueViewerRelayTicketRef = makeFunctionReference<
   "action",
   IssueViewerTicketArgs,
@@ -261,7 +243,7 @@ async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null>
   const sessions = listSessions();
   if (sessions.length === 0) {
     process.stderr.write(
-      "[wrapper] no live sessions. Open a new terminal or run `wrapper shell-host`.\n",
+      "[wrapper] no live sessions. Run `wrapper share` or `wrapper run -- <cmd>`.\n",
     );
     return null;
   }
@@ -311,36 +293,16 @@ function shortenHome(path: string): string {
 async function ensureAttachAllowed(target: TargetSession): Promise<boolean> {
   if (!target.local || target.port === undefined) return false;
 
-  const backend = await resolveAuthedConvexClient();
-  // No backend configured: nothing to authorize against (pure local dev).
-  if (backend.status === "unconfigured") return true;
-  if (backend.status === "missing_auth") {
-    process.stderr.write("[wrapper] backend auth required. Run `wrapper auth login` first.\n");
-    return false;
-  }
-  if (backend.status === "auth_error") {
-    process.stderr.write(`[wrapper] backend auth failed: ${backend.error.message}\n`);
-    return false;
-  }
-
-  // A backend is configured but we couldn't resolve a session id (e.g. attach
-  // by an unknown port). We cannot verify ownership/sharing, so refuse rather
-  // than silently granting access.
-  if (target.id === "<unknown>") {
+  // Local attach is gated by the loopback token in sessions.json. Convex is
+  // not contacted until a session is shared, so unshared hosts have no row.
+  if (target.id === "<unknown>" && !target.localToken) {
     process.stderr.write(
-      "[wrapper] cannot authorize attach by port alone. Re-run with `--id <sessionId>`.\n",
+      "[wrapper] cannot attach by port alone without a local token. Re-run with `--id <sessionId>`.\n",
     );
     return false;
   }
 
-  try {
-    await backend.client.query(authorizeAttachRef, { sessionId: target.id });
-    return true;
-  } catch (error) {
-    const message = normalizeAttachAuthorizationError(error);
-    process.stderr.write(`[wrapper] attach authorization failed: ${message}\n`);
-    return false;
-  }
+  return true;
 }
 
 async function resolveAttachUrl(input: {

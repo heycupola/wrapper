@@ -1,6 +1,6 @@
 ---
 title: "Quickstart"
-description: "Install Wrapper, enable the shell hook, sign in, and run your first attach."
+description: "Install Wrapper, share a session, and attach. Does not patch your shell config."
 ---
 
 Wrapper supports macOS and Linux. On Windows, use WSL.
@@ -28,7 +28,7 @@ The installer downloads a release tarball from GitHub Releases, verifies
 `WRAPPER_INSTALL_DIR`). Optional pins:
 
 ```bash
-WRAPPER_VERSION=v0.1.0 curl -fsSL https://wrapper.sh/install | bash
+WRAPPER_VERSION=v0.2.0 curl -fsSL https://wrapper.sh/install | bash
 ```
 
 Confirm:
@@ -47,38 +47,37 @@ See [Mobile viewer](/guides/mobile-viewer).
 
 {/* TODO(image): Add /images/cli-install-success.webp here. Show a clean install followed by `wrapper --version` and the first controls hint in a new terminal. Capture both arm64 macOS and Linux only if the output differs. Priority P3: optional polish, not a launch requirement. */}
 
-## Enable the shell hook
+## Share a session
+
+`wrapper share` does not patch your shell config:
 
 ```bash
+wrapper auth login
+wrapper share
+```
+
+Wrap a command without sharing yet:
+
+```bash
+wrapper run -- claude
+```
+
+Prefer a remote Linux box? See [Remote Linux box](/guides/linux-remote).
+
+## Optional: wrap every new terminal
+
+`wrapper install` is optional. It adds a line to your shell config so every new
+interactive shell is wrapped. Sharing does not need this.
+
+```bash
+wrapper install --dry-run
 wrapper install
 ```
 
-Useful variants:
-
-```bash
-wrapper install --all
-wrapper install --shell=zsh,bash
-wrapper install --interactive
-```
-
-`install` writes a managed rc block that runs `exec wrapper shell-host` unless
-`WRAPPER_WRAPPED` or `WRAPPER_DISABLE` is set. Your prompt, history, plugins,
-and dotfiles continue to work.
-
-Open a **new** terminal after install. Nested or duplicated hooks cause hard to
-debug attach failures; prefer one managed block per shell.
-
-Skip wrapping for one shell:
-
-```bash
-WRAPPER_DISABLE=1 zsh
-```
-
-Remove the hook later with `wrapper uninstall`.
-
 ## Sign in
 
-Production attach and remote share need a Wrapper account:
+Remote share needs a Wrapper account. Local attach uses the loopback token
+only:
 
 ```bash
 wrapper auth login
@@ -99,16 +98,14 @@ wrapper attach
 ```
 
 Local attach uses loopback plus a per-session token from your session registry.
-It does **not** use the Fly relay and does **not** require Pro. Released
-binaries still expect you to be logged in as the session owner when talking to
-production Convex.
+It does **not** use the Fly relay, Convex, or Pro.
 
 See [Local attach](/guides/local-attach).
 
 ## Share remotely (Pro)
 
-In the host terminal, press `Ctrl+\` then `s`. Wrapper prints a share code and
-join command when the shell is idle.
+`wrapper share` shares immediately. In a running host, press `Ctrl+\` then `s`.
+Wrapper prints a share code and join command when the shell is idle.
 
 Owner join from any device:
 
@@ -123,5 +120,5 @@ Guest join uses the same command and a hidden share-code prompt. Press
   Every accepted viewer can read output and send input. There is no watch-only mode.
 </Warning>
 
-See [Remote share](/guides/remote-share) and
+See [Remote share](/guides/remote-share), [Pricing](/reference/pricing), and
 [Security and privacy](/configuration/security).

@@ -13,7 +13,7 @@ export default function TermsOfServicePage() {
   return (
     <LegalPage
       title="Terms of Service"
-      lastUpdated="2026-08-26"
+      lastUpdated="2026-09-11"
       introduction="These Terms form an agreement between you and Cupola Labs, LLC concerning Wrapper, its CLI, website, backend, relay, documentation, and mobile clients (collectively, the Service). By creating an account or using the Service, you agree to these Terms and the Privacy Policy."
     >
       <LegalSection title="Eligibility and accounts">
@@ -80,18 +80,20 @@ export default function TermsOfServicePage() {
         <p>
           Wrapper may provide free and paid plans. Paid subscriptions are billed in advance through
           Autumn and Stripe. Prices and plan limits may change with reasonable notice. Signed-in
-          users can open Stripe&apos;s billing portal from the{" "}
-          <Link href="/dashboard">Dashboard</Link> to manage or cancel a paid plan. The portal shows
-          the effective cancellation date before confirmation. If the portal is unavailable, contact
-          support. Fees are non-refundable except where required by law or expressly agreed by us.
+          users can open Stripe&apos;s billing portal from{" "}
+          <Link href="/dashboard/billing">Dashboard billing</Link> to manage or cancel a paid plan.
+          The portal shows the effective cancellation date before confirmation. If the portal is
+          unavailable, contact support. Fees are non-refundable except where required by law or
+          expressly agreed by us.
         </p>
       </LegalSection>
 
       <LegalSection title="Your data">
         <p>
           You retain ownership of your terminal content and other data. You grant us the limited
-          rights needed to authenticate you, store session metadata, route explicitly shared
-          traffic, prevent abuse, and operate the Service.
+          rights needed to authenticate you, store session metadata for shared sessions, route
+          explicitly shared traffic, prevent abuse, and operate the Service. traffic, prevent abuse,
+          and operate the Service.
         </p>
         <p>
           Unshared terminal traffic stays local. Direct P2P traffic uses WebRTC encryption, while

@@ -10,6 +10,16 @@ function getProPlanId(): string {
   return value.trim();
 }
 
+function getProYearlyPlanId(): string {
+  const value = process.env.WRAPPER_AUTUMN_PRO_YEARLY_PLAN_ID;
+  if (!value) return "pro_yearly";
+  return value.trim();
+}
+
+function isProProductId(productId: string | undefined): boolean {
+  return productId === getProPlanId() || productId === getProYearlyPlanId();
+}
+
 type AutumnScenario =
   | "new"
   | "upgrade"
@@ -53,7 +63,7 @@ export async function handleAutumnWebhookEvent(ctx: WebhookContext, event: Autum
   const scenario = event.data?.scenario;
   const productId = event.data?.updated_product?.id;
 
-  if (productId !== getProPlanId()) {
+  if (!isProProductId(productId)) {
     log.info("Ignoring non-Pro product update", { productId, scenario });
     return;
   }

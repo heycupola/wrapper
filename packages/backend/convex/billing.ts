@@ -64,6 +64,16 @@ function getProPlanId(): string {
   return value.trim();
 }
 
+function getProYearlyPlanId(): string {
+  const value = process.env.WRAPPER_AUTUMN_PRO_YEARLY_PLAN_ID;
+  if (!value) return "pro_yearly";
+  return value.trim();
+}
+
+function productIdForInterval(interval: "month" | "year"): string {
+  return interval === "year" ? getProYearlyPlanId() : getProPlanId();
+}
+
 function getRelayShareFeatureId(): string | null {
   const value = process.env.WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID;
   if (value === undefined) return "can_share_relay";
@@ -84,13 +94,15 @@ function getRelayShareFeatureId(): string | null {
 export const createProCheckout = protectedAction({
   args: {
     successUrl: v.optional(v.string()),
+    interval: v.optional(v.union(v.literal("month"), v.literal("year"))),
   },
   handler: async (ctx, args) => {
     const successUrl = args.successUrl
       ? requireAllowedUrl(args.successUrl, appOrigin, "checkout return")
       : undefined;
+    const interval = args.interval ?? "year";
     const result = await ctx.autumn.attach(ctx, {
-      productId: getProPlanId(),
+      productId: productIdForInterval(interval),
       forceCheckout: true,
       ...(successUrl ? { successUrl } : {}),
     });

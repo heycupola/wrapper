@@ -8,6 +8,7 @@ import { HorizontalScroll } from "./horizontal-scroll";
 import { InstallCta } from "./install-cta";
 import { IosViewerCta } from "./ios-viewer-cta";
 import { LandingHeader } from "./landing-header";
+import { LandingPricingCards } from "./landing-pricing";
 import { ProductDemo } from "./product-demo";
 import { ReleaseNotesSignup } from "./release-notes-signup";
 import { SiteFooter } from "./site-footer";
@@ -152,7 +153,10 @@ export function HorizontalLanding() {
                 <LoopbackArt />
                 <div>
                   <h3>Local by default</h3>
-                  <p>Loopback only, with a per-session token. No relay or account required.</p>
+                  <p>
+                    Loopback only, with a per-session token. Unshared sessions send nothing to
+                    Convex, including metadata.
+                  </p>
                 </div>
               </article>
               <article className="landingFeatureCard">
@@ -212,54 +216,7 @@ export function HorizontalLanding() {
               </Button>
             </div>
 
-            <div className="landingPriceGrid">
-              <article className="landingPriceCard" aria-labelledby="plan-free-title">
-                <header>
-                  <h3 id="plan-free-title">Free</h3>
-                  <p className="landingPrice">
-                    <strong>$0</strong>
-                    <span>forever</span>
-                  </p>
-                  <p>Your shell, on this machine.</p>
-                </header>
-                <ul>
-                  <li>Wrap zsh, bash, and fish</li>
-                  <li>Attach from the same computer</li>
-                  <li>Sessions stay on your machine</li>
-                </ul>
-                <Button size="lg" block href={INSTALL_HREF}>
-                  Install Wrapper
-                </Button>
-              </article>
-
-              <article
-                className="landingPriceCard landingPriceCardPro"
-                aria-labelledby="plan-pro-title"
-              >
-                <header>
-                  <h3 id="plan-pro-title">
-                    Pro <small>Remote access</small>
-                  </h3>
-                  <p className="landingPrice">
-                    <strong>$20</strong>
-                    <span>/ month</span>
-                  </p>
-                  <p>Your shell, from another device.</p>
-                </header>
-                <ul>
-                  <li>Everything in Free</li>
-                  <li>Attach from another device</li>
-                  <li>Share a session, revoke anytime</li>
-                  <li>
-                    <IosViewerCta variant="text" />
-                  </li>
-                </ul>
-                <Button variant="primary" size="lg" block href="/dashboard">
-                  Choose Pro
-                </Button>
-                <p className="landingMicrocopy">Sign in to upgrade from the dashboard.</p>
-              </article>
-            </div>
+            <LandingPricingCards />
           </div>
         </section>
 

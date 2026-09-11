@@ -49,7 +49,11 @@ def main() -> None:
                 )
 
             os.killpg(process.pid, signal.SIGTERM)
-            process.communicate(timeout=10)
+            try:
+                process.communicate(timeout=10)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.communicate(timeout=5)
         finally:
             if process.poll() is None:
                 os.killpg(process.pid, signal.SIGKILL)

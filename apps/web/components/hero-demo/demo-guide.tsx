@@ -71,7 +71,7 @@ function Note({ step, send }: { step: GuideStep; send: DemoSend }) {
           <Keyboard>
             share this session: press <Keys caps={"⌃ \\"} /> then <Keys caps="s" /> or{" "}
           </Keyboard>
-          <Touch>nothing leaves the Mac until you share it </Touch>
+          <Touch>nothing leaves the host until you share it </Touch>
           <Action
             onClick={() => send({ type: "hostCommand", command: "share" })}
             keyboard="share for me"
