@@ -5,16 +5,16 @@ description: "How CLI, Convex, relay, web, and protocol fit together."
 
 ## System components
 
-| Component           | Role                                                                    |
-| ------------------- | ----------------------------------------------------------------------- |
-| `apps/cli`          | Host shell, local attach, auth, relay bridge, WebRTC transport          |
-| `packages/backend`  | Convex auth, session lifecycle, tickets, onboarding, billing            |
-| `apps/relay`        | Authenticated WebSocket router and WebRTC signaling passthrough         |
+| Component           | Role                                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------------- |
+| `apps/cli`          | Host shell, local attach, auth, relay bridge, WebRTC transport                           |
+| `packages/backend`  | Convex auth, session lifecycle, tickets, onboarding, billing                             |
+| `apps/relay`        | Authenticated WebSocket router and WebRTC signaling passthrough                          |
 | `apps/web`          | Landing, device-login approval, onboarding, Pro checkout (yearly default), install proxy |
-| `packages/protocol` | Shared JSON message schema and codec (`protocolVersion: 1`)             |
-| `packages/terminal` | Bun-native PTY layer via `wrapper-pty-helper`                           |
-| `packages/logger`   | Logging and opt-in telemetry                                            |
-| `apps/mobile`       | Native iPhone/iPad viewer; TestFlight public beta                       |
+| `packages/protocol` | Shared JSON message schema and codec (`protocolVersion: 1`)                              |
+| `packages/terminal` | Bun-native PTY layer via `wrapper-pty-helper`                                            |
+| `packages/logger`   | Logging and opt-in telemetry                                                             |
+| `apps/mobile`       | Native iPhone/iPad viewer; TestFlight public beta                                        |
 
 ## High-level flow
 

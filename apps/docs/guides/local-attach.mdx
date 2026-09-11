@@ -57,12 +57,12 @@ inner shell exits.
 
 ## Common failures
 
-| Symptom                   | Likely cause             | Fix                                             |
-| ------------------------- | ------------------------ | ----------------------------------------------- |
-| No sessions listed        | No host running          | Run `wrapper share`                             |
-| Access denied             | Missing local token      | Use `wrapper attach --id` from `wrapper status` |
-| Attach connects then dies | Nested / duplicate wrap  | `wrapper uninstall` then use `wrapper share`    |
-| Need an unwrapped shell   | Optional wrap always on  | `WRAPPER_DISABLE=1 zsh`                         |
+| Symptom                   | Likely cause            | Fix                                             |
+| ------------------------- | ----------------------- | ----------------------------------------------- |
+| No sessions listed        | No host running         | Run `wrapper share`                             |
+| Access denied             | Missing local token     | Use `wrapper attach --id` from `wrapper status` |
+| Attach connects then dies | Nested / duplicate wrap | `wrapper uninstall` then use `wrapper share`    |
+| Need an unwrapped shell   | Optional wrap always on | `WRAPPER_DISABLE=1 zsh`                         |
 
 Debug with:
 
