@@ -9,6 +9,7 @@ import { PageView } from "../../../components/page-view";
 import { SocialSignInButtons } from "../../../components/social-sign-in";
 import { Button } from "../../../components/ui/button";
 import { authClient } from "../../../lib/auth-client";
+import { deviceClientLabel, normalizeUserCode } from "../../../lib/device-auth";
 import { trackWebEvent } from "../../../lib/posthog";
 
 type GetDeviceCodeInfoArgs = {
@@ -63,7 +64,11 @@ export function DeviceAuthorizeClient({
 }: DeviceAuthorizeClientProps) {
   const searchParams = useSearchParams();
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL ?? "";
-  const [userCode, setUserCode] = useState("");
+  const codeFromUrl = useMemo(
+    () => normalizeUserCode(searchParams.get("user_code") ?? ""),
+    [searchParams],
+  );
+  const [userCode, setUserCode] = useState(codeFromUrl);
   const [callbackUrl, setCallbackUrl] = useState("/oauth/authorize");
   const [busy, setBusy] = useState(false);
   const [hasAutoChecked, setHasAutoChecked] = useState(false);
@@ -82,18 +87,19 @@ export function DeviceAuthorizeClient({
     return instance;
   }, [convexUrl, initialToken]);
 
+  const showCodeForm = codeFromUrl ? hasAutoChecked && !deviceInfo && !busy : true;
+  const displayCode = deviceInfo?.userCode ?? userCode;
+  const clientLabel = deviceClientLabel(deviceInfo?.clientId);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     setCallbackUrl(window.location.href);
   }, []);
 
   useEffect(() => {
-    const fromUrl = searchParams.get("user_code");
-    if (!fromUrl) return;
-    const normalized = normalizeUserCode(fromUrl);
-    if (!normalized) return;
-    setUserCode((prev) => (prev.length > 0 ? prev : normalized));
-  }, [searchParams]);
+    if (!codeFromUrl) return;
+    setUserCode((prev) => (prev.length > 0 ? prev : codeFromUrl));
+  }, [codeFromUrl]);
 
   const lookupCode = useCallback(
     async (explicitCode?: string): Promise<void> => {
@@ -103,7 +109,7 @@ export function DeviceAuthorizeClient({
       }
       const normalized = explicitCode ?? normalizeUserCode(userCode);
       if (!normalized) {
-        setError("Enter a valid user code");
+        setError("Enter a valid user code.");
         return;
       }
 
@@ -113,7 +119,7 @@ export function DeviceAuthorizeClient({
       try {
         const info = await client.mutation(getDeviceCodeInfoRef, { user_code: normalized });
         setDeviceInfo(info);
-        if (!info) setError("Code not found or expired");
+        if (!info) setError("Code not found or expired.");
       } catch (err) {
         setError(normalizeError(err));
       } finally {
@@ -134,12 +140,10 @@ export function DeviceAuthorizeClient({
   }, [authenticated, client]);
 
   useEffect(() => {
-    if (!client) return;
-    if (!userCode) return;
-    if (hasAutoChecked) return;
+    if (!client || !codeFromUrl || hasAutoChecked) return;
     setHasAutoChecked(true);
-    void lookupCode(normalizeUserCode(userCode));
-  }, [client, hasAutoChecked, lookupCode, userCode]);
+    void lookupCode(codeFromUrl);
+  }, [client, codeFromUrl, hasAutoChecked, lookupCode]);
 
   async function performDecision(action: "approve" | "deny"): Promise<void> {
     if (!client) {
@@ -147,12 +151,12 @@ export function DeviceAuthorizeClient({
       return;
     }
     if (!authenticated || !initialToken) {
-      setError("You need to sign in before approving or denying a device code");
+      setError("Sign in before approving or denying this request.");
       return;
     }
     const normalized = normalizeUserCode(userCode);
     if (!normalized) {
-      setError("Enter a valid user code");
+      setError("Enter a valid user code.");
       return;
     }
 
@@ -164,11 +168,11 @@ export function DeviceAuthorizeClient({
       if (action === "approve") {
         const result = await client.mutation(approveDeviceCodeRef, { user_code: normalized });
         setNeedsOnboarding(result.needsOnboarding);
-        setStatus("Device code approved");
+        setStatus("Device approved.");
         trackWebEvent("web_device_approved");
       } else {
         await client.mutation(denyDeviceCodeRef, { user_code: normalized });
-        setStatus("Device code denied");
+        setStatus("Device denied.");
         trackWebEvent("web_device_denied");
       }
       const info = await client.mutation(getDeviceCodeInfoRef, { user_code: normalized });
@@ -198,9 +202,7 @@ export function DeviceAuthorizeClient({
       <PageView page="authorize" />
       {!authenticated ? (
         <>
-          <p className="authHint">
-            Sign in first to approve or deny this CLI device authorization request.
-          </p>
+          <p className="authHint">Sign in first to approve or deny this request.</p>
           <SocialSignInButtons
             appleEnabled={appleEnabled}
             onSignIn={(provider) => void signInWith(provider)}
@@ -208,45 +210,47 @@ export function DeviceAuthorizeClient({
         </>
       ) : null}
 
-      <form
-        className="authCodeForm"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void lookupCode();
-        }}
-      >
-        <label className="authLabel" htmlFor="device-user-code">
-          User code
-        </label>
-        <input
-          id="device-user-code"
-          className="authInput authCodeInput"
-          value={userCode}
-          onChange={(e) => {
-            setUserCode(e.target.value);
-            setDeviceInfo(null);
-            setStatus(null);
-            setError(null);
+      {showCodeForm ? (
+        <form
+          className="authCodeForm"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void lookupCode();
           }}
-          placeholder="ABCD-1234"
-          autoComplete="one-time-code"
-          autoCapitalize="characters"
-          spellCheck={false}
-          inputMode="text"
-          maxLength={32}
-          aria-invalid={error && !deviceInfo ? true : undefined}
-          aria-describedby={`device-user-code-hint${error ? " device-auth-error" : ""}`}
-        />
-        <p id="device-user-code-hint" className="authHint">
-          The code printed by <code>wrapper auth login</code>, for example ABCD-1234.
-        </p>
+        >
+          <label className="authLabel" htmlFor="device-user-code">
+            User code
+          </label>
+          <input
+            id="device-user-code"
+            className="authInput authCodeInput"
+            value={userCode}
+            onChange={(e) => {
+              setUserCode(e.target.value);
+              setDeviceInfo(null);
+              setStatus(null);
+              setError(null);
+            }}
+            placeholder="ABCD-1234"
+            autoComplete="one-time-code"
+            autoCapitalize="characters"
+            spellCheck={false}
+            inputMode="text"
+            maxLength={32}
+            aria-invalid={error && !deviceInfo ? true : undefined}
+            aria-describedby={`device-user-code-hint${error ? " device-auth-error" : ""}`}
+          />
+          <p id="device-user-code-hint" className="authHint">
+            The code shown on the device.
+          </p>
 
-        <div className="authActions">
-          <Button type="submit" loading={busy}>
-            {busy ? "Checking…" : "Check code"}
-          </Button>
-        </div>
-      </form>
+          <div className="authActions">
+            <Button type="submit" block loading={busy}>
+              Check code
+            </Button>
+          </div>
+        </form>
+      ) : null}
 
       {deviceInfo ? (
         <section className="authInfo" aria-label="Device authorization request">
@@ -265,34 +269,34 @@ export function DeviceAuthorizeClient({
             </div>
             <div>
               <dt>Client</dt>
-              <dd>{deviceInfo.clientId ?? "Wrapper CLI"}</dd>
+              <dd>{clientLabel}</dd>
             </div>
             <div>
               <dt>Requested access</dt>
               <dd>{deviceInfo.scope ?? "Wrapper access"}</dd>
             </div>
           </dl>
-          <p className="authHint">
-            Approve only if this code matches the Wrapper CLI request you started.
-          </p>
+          <p className="authHint">Approve only if this code matches the request on the device.</p>
         </section>
       ) : null}
-      {deviceInfo?.status === "pending" ? (
+      {deviceInfo?.status === "pending" && authenticated ? (
         <div className="authDecision">
-          <p className="authHint">This grants the Wrapper CLI access to your Wrapper profile.</p>
+          <p className="authHint">This grants that device access to your Wrapper profile.</p>
           <div className="authActions">
             <Button
               variant="primary"
+              block
               onClick={() => void performDecision("approve")}
-              disabled={busy || !authenticated}
+              disabled={busy}
             >
               Approve device
             </Button>
             <Button
               tone="danger"
+              block
               aria-haspopup="dialog"
               onClick={() => setConfirmDeny(true)}
-              disabled={busy || !authenticated}
+              disabled={busy}
             >
               Deny
             </Button>
@@ -303,15 +307,15 @@ export function DeviceAuthorizeClient({
         open={confirmDeny}
         danger
         title="Deny this device?"
-        description={`The CLI waiting on code ${deviceInfo?.userCode ?? userCode} will be told the request was refused and will have to start over.`}
+        description={`The device waiting on code ${displayCode} will be told the request was refused and will have to start over.`}
         confirmLabel="Deny device"
         onConfirm={() => void performDecision("deny")}
         onCancel={() => setConfirmDeny(false)}
       />
       {busy ? <output className="visuallyHidden">Working…</output> : null}
       {status ? <output className="authSuccess">{status}</output> : null}
-      {status === "Device code approved" || deviceInfo?.status === "approved" ? (
-        <Button variant="primary" href={needsOnboarding ? "/onboarding" : "/dashboard"}>
+      {status === "Device approved." || deviceInfo?.status === "approved" ? (
+        <Button variant="primary" block href={needsOnboarding ? "/onboarding" : "/dashboard"}>
           {needsOnboarding ? "Continue to onboarding" : "Continue to dashboard"}
         </Button>
       ) : null}
@@ -325,16 +329,10 @@ export function DeviceAuthorizeClient({
 }
 
 const STATUS_LABEL: Record<NonNullable<GetDeviceCodeInfoResponse>["status"], string> = {
-  pending: "Awaiting your decision",
+  pending: "Pending",
   approved: "Approved",
   denied: "Denied",
 };
-
-function normalizeUserCode(raw: string): string {
-  const normalized = raw.trim().toUpperCase().replaceAll(/\s+/g, "-");
-  if (normalized.length < 4 || normalized.length > 32) return "";
-  return /^[A-Z0-9-]+$/.test(normalized) ? normalized : "";
-}
 
 function normalizeError(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
