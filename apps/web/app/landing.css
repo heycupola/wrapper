@@ -964,6 +964,10 @@ html.lenis body {
   letter-spacing: -0.02em;
 }
 
+.landingPriceCard li > * {
+  min-width: 0;
+}
+
 .landingPriceCard li::before {
   display: grid;
   width: 20px;

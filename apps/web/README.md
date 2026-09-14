@@ -42,11 +42,11 @@ login flow.
   selected first and shows $8.25/month under the list price. Checkout follows
   that interval. The workspace stays on a flat canvas and uses no invented
   metrics.
-- **Device login approval** (`app/oauth/authorize`): the page the CLI sends you
-  to during `wrapper auth login`. It reads the `user_code` from the URL,
-  confirms your identity through Better Auth, presents the request as structured
-  account information, and approves the device code so the CLI can finish
-  logging in.
+- **Device login approval** (`app/oauth/authorize`): the page the CLI and iOS
+  viewer send you to during device authorization. It reads the `user_code` from
+  the URL when present, confirms your identity through Better Auth, presents
+  the request as structured account information, and approves the device code so
+  the waiting client can finish signing in.
 - **Onboarding** (`app/onboarding`): install the CLI, `wrapper share` (does not
   patch your shell config), then optional product-context questions. Required state is
   persisted through the existing Convex `onboarding` handlers.

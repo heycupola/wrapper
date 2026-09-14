@@ -106,10 +106,24 @@ export const approveDeviceCode = protectedMutation({
     user_code: v.string(),
   },
   handler: async (ctx, args) => {
+    const info = await ctx.runQuery(components.betterAuth.deviceAuth.getDeviceCodeInfo, {
+      user_code: args.user_code,
+    });
+
     await ctx.runMutation(components.betterAuth.deviceAuth.approveDeviceCode, {
       userId: ctx.userId,
       user_code: args.user_code,
     });
+
+    // Approving the iPhone and iPad viewer is not a CLI login. Keep the
+    // install step so a host still has to sign in with wrapper auth login.
+    if (info?.clientId === "wrapper-mobile-ios") {
+      const row = await ctx.db
+        .query("onboarding")
+        .withIndex("by_user", (q) => q.eq("userId", ctx.userId))
+        .first();
+      return { success: true, needsOnboarding: !row || row.status !== "completed" };
+    }
 
     const status = await applyOnboardingStep(ctx, "connectedCli");
     return { success: true, needsOnboarding: status !== "completed" };
