@@ -87,7 +87,8 @@ export function DeviceAuthorizeClient({
     return instance;
   }, [convexUrl, initialToken]);
 
-  const showCodeForm = codeFromUrl ? hasAutoChecked && !deviceInfo && !busy : true;
+  const showCodeForm = !deviceInfo;
+  const showCheckCode = !codeFromUrl || (hasAutoChecked && !busy);
   const displayCode = deviceInfo?.userCode ?? userCode;
   const clientLabel = deviceClientLabel(deviceInfo?.clientId);
 
@@ -244,11 +245,17 @@ export function DeviceAuthorizeClient({
             The code shown on the device.
           </p>
 
-          <div className="authActions">
-            <Button type="submit" block loading={busy}>
-              Check code
-            </Button>
-          </div>
+          {showCheckCode ? (
+            <div className="authActions">
+              <Button type="submit" block loading={busy}>
+                Check code
+              </Button>
+            </div>
+          ) : (
+            <p className="authHint" aria-live="polite">
+              Checking code…
+            </p>
+          )}
         </form>
       ) : null}
 
