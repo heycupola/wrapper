@@ -88,7 +88,7 @@ export function DeviceAuthorizeClient({
     return instance;
   }, [convexUrl, initialToken]);
 
-  const showCodeForm = !deviceInfo;
+  const showCodeForm = !deviceInfo && status !== "Device approved." && status !== "Device denied.";
   const showCheckCode = !codeFromUrl || (hasAutoChecked && !busy);
   const urlLookupPending = Boolean(codeFromUrl) && !deviceInfo && (!hasAutoChecked || busy);
   const displayCode = deviceInfo?.userCode ?? userCode;
@@ -182,7 +182,13 @@ export function DeviceAuthorizeClient({
         trackWebEvent("web_device_denied");
       }
       const info = await client.mutation(getDeviceCodeInfoRef, { user_code: normalized });
-      setDeviceInfo(info);
+      if (info) {
+        setDeviceInfo(info);
+      } else {
+        setDeviceInfo((prev) =>
+          prev ? { ...prev, status: action === "approve" ? "approved" : "denied" } : prev,
+        );
+      }
     } catch (err) {
       setError(normalizeError(err));
     } finally {
