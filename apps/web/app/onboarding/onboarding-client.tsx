@@ -18,7 +18,7 @@ const SCREEN_COPY: Record<Screen, { title: string; description: ReactNode }> = {
   install: {
     title: "Install Wrapper",
     description:
-      "Install the CLI, sign in, then share a session. Does not patch your shell config.",
+      "Install the CLI, sign in, then share a terminal. Wrapping every new terminal is optional.",
   },
   auth: {
     title: "Connect the CLI",

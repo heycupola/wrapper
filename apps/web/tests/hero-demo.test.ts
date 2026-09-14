@@ -51,7 +51,7 @@ describe("hero demo shell", () => {
     assert.deepEqual(state.history, ["git status"]);
     assert.equal(state.commandsRun, 1);
     assert.deepEqual(wrapperLines(state), [
-      "controls: Ctrl+\\ then s share | u unshare | ? status",
+      "controls: Ctrl+\\ then s share | u unshare | w typing | ? status",
     ]);
     assert.equal(hostTitle(state), `wrapper • host • ${DEMO_SESSION_TAG} • local`);
     assert.equal(guideStep(state), "share");

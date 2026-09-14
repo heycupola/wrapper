@@ -44,6 +44,8 @@ export const InputMessageSchema = z.object({
   type: z.literal("input"),
   sessionId: SessionIdSchema,
   data: z.string().max(MAX_TERMINAL_DATA_LENGTH),
+  /** Relay-stamped viewer peer id. Clients must not set this; the relay overwrites it. */
+  from: z.string().min(1).max(128).optional(),
 });
 export type InputMessage = z.infer<typeof InputMessageSchema>;
 
@@ -118,6 +120,22 @@ export const SignalMessageSchema = z.object({
 });
 export type SignalMessage = z.infer<typeof SignalMessageSchema>;
 
+/**
+ * Per-viewer typing capability. The relay emits this to the host when a viewer
+ * binds, and to that viewer so it can hide the keyboard. The host re-emits it
+ * to a viewer after toggling guest typing. Viewers cannot spoof it: the relay
+ * drops client-originated `viewer.caps` frames.
+ */
+export const ViewerCapsMessageSchema = z.object({
+  protocolVersion: ProtocolVersionSchema,
+  type: z.literal("viewer.caps"),
+  sessionId: SessionIdSchema,
+  peerId: z.string().min(1).max(128),
+  canInput: z.boolean(),
+  isOwner: z.boolean().optional(),
+});
+export type ViewerCapsMessage = z.infer<typeof ViewerCapsMessageSchema>;
+
 // ────────────────────────────────────────────────────────────────────────────
 // discriminated union
 // ────────────────────────────────────────────────────────────────────────────
@@ -132,5 +150,6 @@ export const WrapperMessageSchema = z.discriminatedUnion("type", [
   OutputMessageSchema,
   ErrorMessageSchema,
   SignalMessageSchema,
+  ViewerCapsMessageSchema,
 ]);
 export type WrapperMessage = z.infer<typeof WrapperMessageSchema>;

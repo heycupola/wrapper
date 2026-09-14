@@ -24,6 +24,8 @@ export interface RelayHostBridgeOptions {
 
 export interface RelayHostBridge {
   stop: () => Promise<void>;
+  /** Allow or deny typing from non-owner viewers already connected. */
+  setGuestInput: (allowed: boolean) => void;
 }
 
 export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBridge {
@@ -35,6 +37,7 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
   // unless enableP2P; output is fanned out to these in addition to the relay.
   const p2pPeers = new Map<string, { negotiation: Negotiation }>();
   const p2pChannels = new Map<string, Transport>();
+  const viewerCaps = new Map<string, { canInput: boolean; isOwner: boolean }>();
   let relayConnected = false;
 
   const reportTransport = (): void => {
@@ -65,6 +68,10 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
       if (msg.sessionId !== opts.sessionId) return;
       if (msg.type === "signal") {
         if (opts.enableP2P) handleSignal(msg);
+        return;
+      }
+      if (msg.type === "viewer.caps") {
+        rememberCaps(msg.peerId, msg.canInput, msg.isOwner === true);
         return;
       }
       handleInbound(msg);
@@ -113,11 +120,23 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
   opts.pty.on("data", onPtyData);
   opts.pty.on("exit", onPtyExit);
 
-  function handleInbound(msg: WrapperMessage): void {
+  function rememberCaps(peerId: string, canInput: boolean, isOwner: boolean): void {
+    viewerCaps.set(peerId, { canInput, isOwner });
+  }
+
+  function peerCanInput(peerId: string | undefined): boolean {
+    if (!peerId) return false;
+    return viewerCaps.get(peerId)?.canInput === true;
+  }
+
+  function handleInbound(msg: WrapperMessage, peerId?: string): void {
     switch (msg.type) {
-      case "input":
+      case "input": {
+        const from = peerId ?? msg.from;
+        if (!peerCanInput(from)) return;
         opts.pty.write(msg.data);
         break;
+      }
       case "resize":
         opts.pty.resize(msg.size);
         break;
@@ -127,6 +146,8 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
       case "output":
       case "session.opened":
       case "session.closed":
+      case "viewer.caps":
+      case "signal":
         break;
       default:
         break;
@@ -161,12 +182,9 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
         handlers: {
           onMessage: (data) => {
             const m = parseMessage(data as string | ArrayBuffer);
-            if (
-              m &&
-              m.sessionId === opts.sessionId &&
-              (m.type === "input" || m.type === "resize")
-            ) {
-              handleInbound(m);
+            if (!m || m.sessionId !== opts.sessionId) return;
+            if (m.type === "input" || m.type === "resize") {
+              handleInbound(m, peerId);
             }
           },
           onClose: () => {
@@ -219,6 +237,7 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
     for (const entry of p2pPeers.values()) entry.negotiation.cancel();
     p2pPeers.clear();
     p2pChannels.clear();
+    viewerCaps.clear();
     relayConnected = false;
     reportTransport();
     transport.close();
@@ -227,6 +246,22 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
   return {
     stop: async () => {
       close();
+    },
+    setGuestInput: (allowed: boolean) => {
+      for (const [peerId, caps] of viewerCaps) {
+        if (caps.isOwner) continue;
+        caps.canInput = allowed;
+        const frame = encodeMessage({
+          type: "viewer.caps",
+          sessionId: opts.sessionId,
+          peerId,
+          canInput: allowed,
+          isOwner: false,
+        });
+        if (transport.isOpen) transport.send(frame);
+        const dt = p2pChannels.get(peerId);
+        if (dt?.isOpen) dt.send(frame);
+      }
     },
   };
 }

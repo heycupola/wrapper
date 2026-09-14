@@ -18,4 +18,4 @@ export const PRO_PRICE = {
   },
 } as const;
 
-export const PRO_SUMMARY = "Your shell, from another device.";
+export const PRO_SUMMARY = "From your phone, or any other device.";

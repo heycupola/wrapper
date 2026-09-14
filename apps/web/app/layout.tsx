@@ -22,18 +22,26 @@ const caveat = Caveat({
 
 const SITE_NAME = "Wrapper";
 const SITE_DESCRIPTION =
-  "Keep your real shell on your machine and reach it from another device only when you explicitly share it.";
+  "Keep the real terminal on your computer. Open it from your phone only when you share.";
 const SITE_URL = "https://www.wrapper.sh";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: SITE_NAME,
   title: {
-    default: "Wrapper. Your terminal, wherever you are.",
+    default: "Wrapper. Your terminal, on your phone.",
     template: `%s / ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
-  keywords: ["wrapper", "remote terminal", "terminal sharing", "developer tools", "CLI", "shell"],
+  keywords: [
+    "wrapper",
+    "terminal sharing",
+    "iphone terminal",
+    "remote terminal",
+    "developer tools",
+    "CLI",
+    "shell",
+  ],
   authors: [{ name: "Cupola", url: "https://cupo.la" }],
   creator: "Cupola",
   referrer: "origin-when-cross-origin",
@@ -46,13 +54,13 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: "Wrapper. Your terminal, wherever you are.",
+    title: "Wrapper. Your terminal, on your phone.",
     description: SITE_DESCRIPTION,
     images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: SITE_DESCRIPTION }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Wrapper. Your terminal, wherever you are.",
+    title: "Wrapper. Your terminal, on your phone.",
     description: SITE_DESCRIPTION,
     creator: "@heycupola",
     site: "@heycupola",

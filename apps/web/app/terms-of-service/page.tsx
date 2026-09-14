@@ -28,9 +28,10 @@ export default function TermsOfServicePage() {
       <LegalSection title="The Service">
         <p>
           Wrapper lets a host run a local terminal session and, only after an explicit share action,
-          allow authenticated viewers to read and control that session. The Service includes device
-          authentication, session metadata, relay tickets, WebSocket relay, optional direct WebRTC
-          transport, billing, documentation, and related clients.
+          allow authenticated viewers to watch that session. Viewers cannot type unless the host
+          allows it. The Service includes device authentication, session metadata, relay tickets,
+          WebSocket relay, optional direct WebRTC transport, billing, documentation, and related
+          clients.
         </p>
         <p>
           Features may change, be suspended, or be discontinued. Preview and beta functionality may
@@ -46,7 +47,8 @@ export default function TermsOfServicePage() {
             Treat session ids, share codes, authentication tokens, and relay tickets as secrets.
           </li>
           <li>
-            Every viewer accepted into a shared session can see terminal output and send commands.
+            Every viewer accepted into a shared session can see terminal output. They cannot type
+            unless the host allows it. The host always can.
           </li>
           <li>
             You are responsible for commands, data changes, credentials, and consequences arising

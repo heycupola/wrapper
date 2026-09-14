@@ -95,7 +95,7 @@ describe("release-notes signup", () => {
     });
 
     const confirmed = await t.query(internal.releaseNotes._listConfirmed, {});
-    expect(confirmed.map((row) => row.email)).toEqual(["confirm@example.com"]);
+    expect(confirmed.map((row: { email: string }) => row.email)).toEqual(["confirm@example.com"]);
 
     const unsubscribeToken = await t.run(
       async (ctx) => (await ctx.db.query("releaseNoteSubscriber").first())!.unsubscribeToken,

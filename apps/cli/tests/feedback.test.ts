@@ -21,7 +21,18 @@ describe("session HUD", () => {
         p2pPeerCount: 2,
         armed: true,
       }),
-    ).toBe("● host • ABC123 • p2p x2 | s share • u unshare • ? status");
+    ).toBe("● host • ABC123 • p2p x2 | s share • u unshare • w typing • ? status");
+  });
+
+  test("shows watch-only access while shared", () => {
+    expect(
+      formatSessionHud({
+        role: "host",
+        sessionTag: "ABC123",
+        transport: "relay",
+        guestAccess: "view",
+      }),
+    ).toBe("wrapper • host • ABC123 • relay • view");
   });
 
   test("formats sharing transport while share is in flight", () => {
@@ -48,7 +59,7 @@ describe("session HUD", () => {
   test("provides discoverability hints for both roles", () => {
     expect(formatControlsHint("host")).toContain("Ctrl+\\");
     expect(formatControlsHint("host", "Ctrl+G")).toContain("Ctrl+G");
-    expect(formatControlsHint("host")).toContain("s share");
+    expect(formatControlsHint("host")).toContain("w typing");
     expect(formatControlsHint("viewer")).toContain("d detach");
   });
 });

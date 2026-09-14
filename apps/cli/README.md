@@ -171,8 +171,9 @@ Sharing is capability-based, so only people you explicitly invite can join:
 
 Behaviors to know once viewers join:
 
-- **Shared control:** every connected viewer can type into the same shell. This
-  is intended for pair-prompting. There is no watch-only viewer mode yet.
+- **Watch by default:** people who join with the share code see the screen and
+  cannot type unless you press `Ctrl+\` `w` or started with `--writable`. You
+  always type, including from your phone.
 - **Multiple viewers:** many viewers can attach to one session at once; host
   output is broadcast to all of them (and fanned out over each P2P channel).
 - **Consensus resize:** the terminal is sized to the smallest connected viewer,
@@ -203,6 +204,7 @@ wrapper auth login
 wrapper share
 wrapper run -- claude
 wrapper status
+wrapper notify
 wrapper attach
 wrapper attach --id <sessionId>
 wrapper attach --port <port>
@@ -252,13 +254,14 @@ own OSC title, Wrapper repaints the session HUD immediately afterward. Set
 
 Inside host shell:
 
-| Keys              | Action                    |
-| ----------------- | ------------------------- |
-| `Ctrl+\` `s`      | share + print share code  |
-| `Ctrl+\` `u`      | unshare + revoke access   |
-| `Ctrl+\` `?`      | status overlay            |
-| `Ctrl+\` `Ctrl+\` | send literal control byte |
-| `Ctrl+\` `Esc`    | cancel prefix mode        |
+| Keys              | Action                     |
+| ----------------- | -------------------------- |
+| `Ctrl+\` `s`      | share + print share code   |
+| `Ctrl+\` `u`      | unshare + revoke access    |
+| `Ctrl+\` `w`      | allow or deny guest typing |
+| `Ctrl+\` `?`      | status overlay             |
+| `Ctrl+\` `Ctrl+\` | send literal control byte  |
+| `Ctrl+\` `Esc`    | cancel prefix mode         |
 
 Inside attach viewer:
 

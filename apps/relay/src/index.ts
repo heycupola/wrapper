@@ -15,6 +15,8 @@ type ConsumeTicketResponse = {
   role: RelayRole;
   userId: string;
   expiresAt: number;
+  canInput: boolean;
+  isOwner: boolean;
 };
 
 type WsData = {
@@ -121,6 +123,8 @@ async function authorizeSocket(ws: ServerWebSocket<WsData>): Promise<void> {
       peer: ws,
       role: consumed.role,
       sessionId: consumed.sessionId,
+      canInput: consumed.role === "host" ? true : consumed.canInput,
+      isOwner: consumed.role === "host" ? true : consumed.isOwner,
     });
     ws.data.authorized = true;
     log.debug("socket authorized", {

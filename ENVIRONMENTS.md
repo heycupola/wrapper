@@ -91,6 +91,8 @@ recommended branch protection settings are in [`OPERATIONS.md`](./OPERATIONS.md)
 | `FROM_EMAIL_ADDRESS`                        | `Wrapper <notifications@wrapper.sh>` | same |
 | `FROM_EMAIL_ADDRESS_PERSONAL`               | `Can from Wrapper <can@wrapper.sh>` | same |
 | `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID`     | `can_share_relay`        | `can_share_relay`           |
+| `APNS_KEY_ID` / `APNS_TEAM_ID` / `APNS_KEY_P8` | optional; phone alerts stay off without these | same |
+| `APNS_BUNDLE_ID`                            | `sh.wrapper.mobile`      | `sh.wrapper.mobile`         |
 | `WRAPPER_RELAY_HOST_TICKET_TTL_MS` etc.     | optional (has defaults)  | optional (has defaults)     |
 | `RELEASE_NOTES_INGEST_SECRET`               | random secret, same value as the web app | random secret, same value as the web app |
 
