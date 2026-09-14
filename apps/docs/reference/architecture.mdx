@@ -60,6 +60,10 @@ Wire messages are JSON validated with Zod in `@repo/protocol`. Common types:
 - `attach` / `detach`
 - `error`
 - `signal` (WebRTC SDP and ICE)
+- `viewer.caps` (whether that viewer may type)
+
+The relay stamps `from` on `input` and drops guest typing unless `canInput` is
+true. The host enforces the same rule on P2P input.
 
 Frames have explicit size caps (wire and terminal payload limits) before parse
 and fan-out.
@@ -70,7 +74,7 @@ and fan-out.
 - The owner joins a shared session without a share code.
 - A non-owner needs the session id, share code, and a valid ticket.
 - Access failures use a uniform denial shape.
-- Every accepted viewer can read output and send input.
+- People you invite see output. They cannot type unless the host allows it.
 
 See [Security and privacy](/configuration/security),
 [Transports](/reference/transports), and [Pricing](/reference/pricing).

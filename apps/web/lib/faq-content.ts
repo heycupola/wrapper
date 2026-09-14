@@ -7,10 +7,10 @@ export type FaqItem = {
 };
 
 /**
- * The landing FAQ. Six short answers that fit one screen next to the
- * release-notes card; the docs carry the long form. Keep each answer to two
- * lines at 560px (about 180 characters) so any item can be open without the
- * scene overflowing on a 720px-tall viewport.
+ * The landing FAQ. Short answers that fit next to the release-notes card; the
+ * docs carry the long form. Keep each answer to two lines at 560px (about 180
+ * characters) so any item can be open without the scene overflowing on a
+ * 720px-tall viewport.
  */
 export const FAQ_ITEMS: readonly FaqItem[] = [
   {
@@ -32,10 +32,16 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
     },
   },
   {
-    id: "uninvited-viewer",
-    question: "Can someone attach without me noticing?",
+    id: "guest-typing",
+    question: "Can someone else type?",
     answer:
-      "No. Remote access stays off until you share (`wrapper share` or `Ctrl+\\` then `s`). A guest needs the code it prints. `Ctrl+\\` then `u` ends the share.",
+      "Not unless you allow it. Watching is the default. Remote access stays off until you share (`wrapper share` or `Ctrl+\\` then `s`).",
+  },
+  {
+    id: "any-tool",
+    question: "Is this just for Claude Code?",
+    answer:
+      "No. Anything in your terminal. Claude, Codex, vim, a build, a server. The tool does not matter.",
   },
   {
     id: "free-vs-pro",
@@ -51,15 +57,10 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
       "The viewer is in TestFlight beta now and App Store review is the next step. Leave an address on the right and you get one email when it lands.",
   },
   {
-    id: "open-source",
-    question: "Is Wrapper open source?",
+    id: "needs-you",
+    question: "Will my phone ping me?",
     answer:
-      "Yes. The CLI, web app, backend, and relay live in one MIT-licensed monorepo, so you can read the code that handles your bytes before installing it.",
-    link: {
-      href: "https://github.com/heycupola/wrapper",
-      label: "Read the source",
-      external: true,
-    },
+      "Yes, when the terminal needs you. The alert names the session. It does not include what is on screen.",
   },
 ];
 

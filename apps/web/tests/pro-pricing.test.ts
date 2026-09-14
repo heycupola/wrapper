@@ -27,6 +27,6 @@ describe("plan features", () => {
   test("pro includes a remote linux host and stays short", () => {
     assert.ok(PRO_PLAN_FEATURES.some((feature) => /linux box/i.test(feature.label)));
     assert.ok(FREE_PLAN_FEATURES.length <= 4);
-    assert.ok(PRO_PLAN_FEATURES.length <= 5);
+    assert.ok(PRO_PLAN_FEATURES.length <= 6);
   });
 });

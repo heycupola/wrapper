@@ -74,10 +74,20 @@ export default function PrivacyPolicyPage() {
           <li>You must explicitly share a session before a remote viewer can join.</li>
           <li>Your own authenticated devices may join your sessions without a share code.</li>
           <li>Another user needs the session id and the share code supplied by you.</li>
-          <li>Every accepted viewer can read output and send input to the shared shell.</li>
+          <li>
+            People you invite can read output. They cannot type unless you allow it. You always can.
+          </li>
           <li>Unsharing closes the host relay bridge and revokes unused viewer tickets.</li>
           <li>Direct P2P connections disclose each peer&apos;s IP address to the other peer.</li>
         </ul>
+      </LegalSection>
+
+      <LegalSection title="Attention alerts">
+        <p>
+          If you allow notifications, Wrapper can ping your phone when a shared session needs you.
+          The alert names the session. It does not include terminal output, commands, paths, or
+          credentials.
+        </p>
       </LegalSection>
 
       <LegalSection title="How we use information">

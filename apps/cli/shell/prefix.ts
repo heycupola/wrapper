@@ -7,6 +7,7 @@
  *
  *   <prefix> s   share   — open the relay tunnel (host only)
  *   <prefix> u   unshare — close the relay tunnel (host only)
+ *   <prefix> w   typing  — allow or deny typing from people you invited (host only)
  *   <prefix> d   detach  — disconnect this viewer; session keeps running
  *                          (attach client only; host treats it as a no-op
  *                          with a hint to use `exit` instead).
@@ -34,7 +35,7 @@
  *      through trivially in the idle state.
  */
 
-export type PrefixCommand = "share" | "unshare" | "status" | "detach";
+export type PrefixCommand = "share" | "unshare" | "typing" | "status" | "detach";
 
 export interface PrefixFilterOptions {
   /** Prefix byte. Defaults to 0x1C (Ctrl+\). */
@@ -58,6 +59,7 @@ const DEFAULT_TIMEOUT_MS = 1500;
 
 const CMD_SHARE = 0x73; // 's'
 const CMD_UNSHARE = 0x75; // 'u'
+const CMD_TYPING = 0x77; // 'w'
 const CMD_STATUS_Q = 0x3f; // '?'
 const CMD_DETACH = 0x64; // 'd'
 const ESC_BYTE = 0x1b;
@@ -121,6 +123,9 @@ export class PrefixFilter {
           break;
         case CMD_UNSHARE:
           this.onCommand("unshare");
+          break;
+        case CMD_TYPING:
+          this.onCommand("typing");
           break;
         case CMD_STATUS_Q:
           this.onCommand("status");

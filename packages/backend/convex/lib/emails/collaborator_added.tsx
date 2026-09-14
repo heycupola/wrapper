@@ -64,14 +64,16 @@ export const CollaboratorAddedEmail = ({
             <strong style={bold}>{projectName}</strong> with you.
           </Text>
           <Text style={paragraph}>
-            Use the session id and share code they sent. Treat the code as a secret. Every accepted
-            viewer can read output and send input.
+            Use the session id and share code they sent. Treat the code as a secret. Watching is the
+            default; they cannot type unless the host allows it.
           </Text>
           <Text style={subheading}>What you can do</Text>
           <Section style={block}>
             <Text style={listItem}>Attach from another device</Text>
             <Text style={listItem}>Read live terminal output</Text>
-            <Text style={listItemLast}>Send input while the host keeps the session shared</Text>
+            <Text style={listItemLast}>
+              Watch live output. Typing stays off unless the host allows it
+            </Text>
           </Section>
           <Section style={infoBlock}>
             <Text style={infoText}>

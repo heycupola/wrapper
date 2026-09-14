@@ -32,10 +32,13 @@ wrapper auth logout
 
 ```bash
 wrapper share
+wrapper share --writable
 wrapper share -- claude
 wrapper run -- claude
 wrapper run --share -- claude
+wrapper run --share --writable -- claude
 wrapper status
+wrapper notify
 wrapper attach
 wrapper attach --id <sessionId>
 wrapper attach --port <port>
@@ -121,6 +124,10 @@ Remote (Pro):
 ```bash
 wrapper share
 wrapper attach --relay --id <sessionId>
+wrapper notify
 ```
+
+`wrapper notify` rings the wrapped session so your phone can ping you. Run it
+inside that terminal. Alerts name the session and do not include the screen.
 
 Remote share requires Pro. See [Pricing](/reference/pricing).

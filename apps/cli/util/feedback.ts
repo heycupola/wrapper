@@ -51,6 +51,8 @@ export interface SessionHudState {
   transport: SessionTransportStatus;
   armed?: boolean;
   p2pPeerCount?: number;
+  /** Host: people you invited. Viewer: whether this device may type. */
+  guestAccess?: "view" | "rw";
 }
 
 /**
@@ -65,16 +67,18 @@ export function formatSessionHud(state: SessionHudState): string {
     state.transport === "p2p" && state.role === "host" && (state.p2pPeerCount ?? 0) > 0
       ? `p2p x${state.p2pPeerCount}`
       : state.transport;
-  const identity = `${state.role} • ${state.sessionTag} • ${transport}`;
+  const access = state.guestAccess ? ` • ${state.guestAccess}` : "";
+  const identity = `${state.role} • ${state.sessionTag} • ${transport}${access}`;
   if (!state.armed) return `wrapper • ${identity}`;
-  const commands = state.role === "host" ? "s share • u unshare • ? status" : "d detach • ? status";
+  const commands =
+    state.role === "host" ? "s share • u unshare • w typing • ? status" : "d detach • ? status";
   return `● ${identity} | ${commands}`;
 }
 
 /** One-time discoverability hint printed before the terminal becomes busy. */
 export function formatControlsHint(role: SessionHudRole, prefixLabel = "Ctrl+\\"): string {
   return role === "host"
-    ? `controls: ${prefixLabel} then s share | u unshare | ? status`
+    ? `controls: ${prefixLabel} then s share | u unshare | w typing | ? status`
     : `controls: ${prefixLabel} then d detach | ? status`;
 }
 
