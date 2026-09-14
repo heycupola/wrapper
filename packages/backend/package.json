@@ -22,22 +22,22 @@
     "@react-email/components": "^1.0.2",
     "@react-email/render": "^2.0.0",
     "@useautumn/convex": "0.0.23",
-    "better-auth": "1.6.26",
+    "better-auth": "1.6.31",
     "convex": "1.45.0",
     "convex-helpers": "0.1.124",
     "jose": "^6.2.12",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "resend": "^6.26.0"
+    "resend": "^6.27.0"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
     "@types/bun": "latest",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "convex-test": "^0.0.56",
+    "convex-test": "^0.0.57",
     "typescript": "^5",
-    "vite": "^8.2.2",
+    "vite": "^8.3.0",
     "vitest": "^4.1.11"
   }
 }
