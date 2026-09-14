@@ -59,6 +59,7 @@ export class RelayHub {
         existing.close(CLOSE_HOST_REPLACED, "host replaced");
       }
       this.hostBySession.set(stored.sessionId, stored.peer);
+      this.replayViewerCapsToHost(stored.sessionId, stored.peer);
       this.log.debug("host bound", { sessionId: stored.sessionId });
       return;
     }
@@ -70,13 +71,7 @@ export class RelayHub {
     const peerId = crypto.randomUUID();
     this.peerIdByViewer.set(stored.peer, peerId);
     this.viewerByPeerId.set(peerId, stored.peer);
-    const caps = encodeMessage({
-      type: "viewer.caps",
-      sessionId: stored.sessionId,
-      peerId,
-      canInput: Boolean(stored.canInput),
-      isOwner: Boolean(stored.isOwner),
-    });
+    const caps = this.encodeViewerCaps(stored.sessionId, peerId, stored);
     this.hostBySession.get(stored.sessionId)?.send(caps);
     stored.peer.send(caps);
     // Replay the cached `session.opened` so this viewer learns the sessionId and
@@ -88,6 +83,27 @@ export class RelayHub {
       viewerCount: viewers.size,
       canInput: Boolean(stored.canInput),
     });
+  }
+
+  private encodeViewerCaps(sessionId: string, peerId: string, binding: PeerBinding): string {
+    return encodeMessage({
+      type: "viewer.caps",
+      sessionId,
+      peerId,
+      canInput: Boolean(binding.canInput),
+      isOwner: Boolean(binding.isOwner),
+    });
+  }
+
+  private replayViewerCapsToHost(sessionId: string, host: RelayPeer): void {
+    const viewers = this.viewersBySession.get(sessionId);
+    if (!viewers) return;
+    for (const viewer of viewers) {
+      const peerId = this.peerIdByViewer.get(viewer);
+      const binding = this.bindingByPeer.get(viewer);
+      if (!peerId || !binding) continue;
+      host.send(this.encodeViewerCaps(sessionId, peerId, binding));
+    }
   }
 
   unbind(peer: RelayPeer): void {

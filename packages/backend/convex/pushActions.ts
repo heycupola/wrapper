@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { importPKCS8, SignJWT } from "jose";
 import { internal } from "./_generated/api";
 import { internalAction } from "./_generated/server";
+import { postApnsHttp2 } from "./lib/apnsHttp2";
 
 const SESSION_TAG_LENGTH = 6;
 
@@ -61,28 +62,33 @@ async function sendApns(input: {
 
   const host =
     input.environment === "production" ? "api.push.apple.com" : "api.sandbox.push.apple.com";
-  const response = await fetch(`https://${host}/3/device/${input.token}`, {
-    method: "POST",
-    headers: {
-      authorization: `bearer ${authorization}`,
-      "apns-topic": bundleId,
-      "apns-push-type": "alert",
-      "apns-priority": "10",
-      "apns-collapse-id": input.sessionId.slice(0, 64),
-    },
-    body: JSON.stringify({
-      aps: {
-        alert: {
-          title: "Wrapper",
-          body: input.body,
-        },
-        sound: "default",
-        "thread-id": input.sessionId,
+  try {
+    const status = await postApnsHttp2({
+      host,
+      path: `/3/device/${input.token}`,
+      headers: {
+        authorization: `bearer ${authorization}`,
+        "apns-topic": bundleId,
+        "apns-push-type": "alert",
+        "apns-priority": "10",
+        "apns-collapse-id": input.sessionId.slice(0, 64),
       },
-      sessionId: input.sessionId,
-    }),
-  });
-  return response.ok;
+      body: JSON.stringify({
+        aps: {
+          alert: {
+            title: "Wrapper",
+            body: input.body,
+          },
+          sound: "default",
+          "thread-id": input.sessionId,
+        },
+        sessionId: input.sessionId,
+      }),
+    });
+    return status >= 200 && status < 300;
+  } catch {
+    return false;
+  }
 }
 
 async function signApnsJwt(input: { keyId: string; teamId: string; pem: string }): Promise<string> {

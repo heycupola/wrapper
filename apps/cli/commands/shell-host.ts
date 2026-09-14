@@ -8,6 +8,7 @@ import { PtySession } from "../pty/session";
 import { startRelayHostBridge, type RelayHostBridge } from "../relay/host-bridge";
 import { registerSession, setSessionShared, unregisterSession } from "../registry/sessions";
 import { startLocalServer, type LocalServerHandle } from "../server/local";
+import { createDoorbellParser, scanDoorbell } from "../shell/doorbell";
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
 import {
   resolveAuthedConvexClient,
@@ -274,13 +275,14 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   let guestInputAllowed = Boolean(opts.writableOnStart);
   let lastOwnerInputAt = 0;
   let lastNotifyAt = 0;
+  const doorbell = createDoorbellParser();
   const sessionTag = sessionId.slice(0, 6);
   const ATTENTION_DEBOUNCE_MS = 30_000;
   const OWNER_INPUT_GRACE_MS = 5_000;
 
   session.on("data", (chunk) => {
     if (!env.notifyEnabled) return;
-    if (!chunk.includes("\x07")) return;
+    if (!scanDoorbell(chunk, doorbell)) return;
     const now = Date.now();
     if (now - lastOwnerInputAt < OWNER_INPUT_GRACE_MS) return;
     if (now - lastNotifyAt < ATTENTION_DEBOUNCE_MS) return;

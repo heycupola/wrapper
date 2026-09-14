@@ -100,6 +100,34 @@ describe("RelayHub routing", () => {
     expect(host.sent.at(-1)).toContain('"rows":40');
   });
 
+  test("replays viewer caps when the host binds after a viewer", () => {
+    const hub = new RelayHub(noopLog);
+    const earlyViewer = new FakePeer();
+    hub.bind({
+      peer: earlyViewer,
+      role: "viewer",
+      sessionId: "s1",
+      canInput: true,
+      isOwner: true,
+    });
+
+    const host = new FakePeer();
+    hub.bind({ peer: host, role: "host", sessionId: "s1" });
+
+    const caps = host.sent.filter((frame) => frame.includes('"type":"viewer.caps"'));
+    expect(caps).toHaveLength(1);
+    const parsed = JSON.parse(caps[0] as string) as {
+      peerId: string;
+      canInput: boolean;
+      isOwner: boolean;
+    };
+    expect(parsed.canInput).toBe(true);
+    expect(parsed.isOwner).toBe(true);
+
+    hub.routeInbound(earlyViewer, JSON.stringify({ type: "input", sessionId: "s1", data: "ok\n" }));
+    expect(host.sent.some((frame) => frame.includes('"type":"input"'))).toBe(true);
+  });
+
   test("replays session.opened to a viewer that joins after the host announced it", () => {
     const hub = new RelayHub(noopLog);
     const host = new FakePeer();
