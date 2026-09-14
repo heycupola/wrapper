@@ -1,3 +1,5 @@
+"use node";
+
 import http2 from "node:http2";
 
 const REQUEST_TIMEOUT_MS = 10_000;
