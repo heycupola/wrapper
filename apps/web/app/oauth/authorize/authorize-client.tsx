@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
 import { useSearchParams } from "next/navigation";
@@ -77,6 +77,7 @@ export function DeviceAuthorizeClient({
   const [deviceInfo, setDeviceInfo] = useState<GetDeviceCodeInfoResponse>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(true);
   const [confirmDeny, setConfirmDeny] = useState(false);
+  const lookupInFlight = useRef(false);
 
   const client = useMemo(() => {
     if (!convexUrl) return null;
@@ -89,6 +90,7 @@ export function DeviceAuthorizeClient({
 
   const showCodeForm = !deviceInfo;
   const showCheckCode = !codeFromUrl || (hasAutoChecked && !busy);
+  const urlLookupPending = Boolean(codeFromUrl) && !deviceInfo && (!hasAutoChecked || busy);
   const displayCode = deviceInfo?.userCode ?? userCode;
   const clientLabel = deviceClientLabel(deviceInfo?.clientId);
 
@@ -104,6 +106,7 @@ export function DeviceAuthorizeClient({
 
   const lookupCode = useCallback(
     async (explicitCode?: string): Promise<void> => {
+      if (lookupInFlight.current) return;
       if (!client) {
         setError("Wrapper services are temporarily unavailable.");
         return;
@@ -114,6 +117,7 @@ export function DeviceAuthorizeClient({
         return;
       }
 
+      lookupInFlight.current = true;
       setBusy(true);
       setError(null);
       setStatus(null);
@@ -124,6 +128,7 @@ export function DeviceAuthorizeClient({
       } catch (err) {
         setError(normalizeError(err));
       } finally {
+        lookupInFlight.current = false;
         setBusy(false);
       }
     },
@@ -216,6 +221,7 @@ export function DeviceAuthorizeClient({
           className="authCodeForm"
           onSubmit={(event) => {
             event.preventDefault();
+            if (lookupInFlight.current || busy) return;
             void lookupCode();
           }}
         >
@@ -238,6 +244,7 @@ export function DeviceAuthorizeClient({
             spellCheck={false}
             inputMode="text"
             maxLength={32}
+            readOnly={urlLookupPending}
             aria-invalid={error && !deviceInfo ? true : undefined}
             aria-describedby={`device-user-code-hint${error ? " device-auth-error" : ""}`}
           />
