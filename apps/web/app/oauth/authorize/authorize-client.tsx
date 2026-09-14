@@ -182,7 +182,13 @@ export function DeviceAuthorizeClient({
         trackWebEvent("web_device_denied");
       }
       const info = await client.mutation(getDeviceCodeInfoRef, { user_code: normalized });
-      if (info) setDeviceInfo(info);
+      if (info) {
+        setDeviceInfo(info);
+      } else {
+        setDeviceInfo((prev) =>
+          prev ? { ...prev, status: action === "approve" ? "approved" : "denied" } : prev,
+        );
+      }
     } catch (err) {
       setError(normalizeError(err));
     } finally {
