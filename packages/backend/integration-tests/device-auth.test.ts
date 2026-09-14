@@ -222,6 +222,39 @@ describe("device authorization entry points", () => {
     ).toBeNull();
   });
 
+  test("does not treat iOS viewer approval as a connected CLI", async () => {
+    const issued = await t.mutation(api.deviceAuth.requestDeviceCode, {
+      clientId: "wrapper-mobile-ios",
+    });
+    const now = Date.now();
+    const componentUser = (await t.mutation(components.betterAuth.adapter.create, {
+      input: {
+        model: "user",
+        data: {
+          name: "Mobile User",
+          email: "mobile@example.com",
+          emailVerified: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+      },
+    })) as { _id: string };
+
+    const signedIn = t.withIdentity({
+      subject: componentUser._id,
+      email: "mobile@example.com",
+      name: "Mobile User",
+    });
+    const approval = await signedIn.mutation(api.deviceAuth.approveDeviceCode, {
+      user_code: issued.user_code,
+    });
+    expect(approval).toEqual({ success: true, needsOnboarding: true });
+    expect(await signedIn.query(api.onboarding.getState, {})).toMatchObject({
+      connectedCli: false,
+      needsOnboarding: true,
+    });
+  });
+
   test("enforces the per-client request window while leaving other clients available", async () => {
     for (let attempt = 0; attempt < 10; attempt += 1) {
       // Sequential requests exercise the committed fixed-window counter.
