@@ -7,17 +7,22 @@ import { internalAction } from "./_generated/server";
 
 const SESSION_TAG_LENGTH = 6;
 
+type DeviceToken = {
+  token: string;
+  environment: "sandbox" | "production";
+};
+
 export const dispatchAttention = internalAction({
   args: {
     userId: v.string(),
     sessionId: v.string(),
     kind: v.union(v.literal("bell"), v.literal("manual")),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ sent: number }> => {
     void args.kind;
-    const tokens = await ctx.runMutation(internal.push.listTokensForUser, {
+    const tokens = (await ctx.runMutation(internal.push.listTokensForUser, {
       userId: args.userId,
-    });
+    })) as DeviceToken[];
     if (tokens.length === 0) return { sent: 0 };
     const tag = args.sessionId.slice(0, SESSION_TAG_LENGTH);
     const body = `Session ${tag} needs you.`;
