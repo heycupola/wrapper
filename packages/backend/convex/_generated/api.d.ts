@@ -41,6 +41,8 @@ import type * as lib_sessionConfig from "../lib/sessionConfig.js";
 import type * as lib_svix from "../lib/svix.js";
 import type * as lib_types from "../lib/types.js";
 import type * as onboarding from "../onboarding.js";
+import type * as push from "../push.js";
+import type * as pushActions from "../pushActions.js";
 import type * as rateLimitCleanup from "../rateLimitCleanup.js";
 import type * as relay from "../relay.js";
 import type * as releaseNotes from "../releaseNotes.js";
@@ -85,6 +87,8 @@ declare const fullApi: ApiFromModules<{
   "lib/svix": typeof lib_svix;
   "lib/types": typeof lib_types;
   onboarding: typeof onboarding;
+  push: typeof push;
+  pushActions: typeof pushActions;
   rateLimitCleanup: typeof rateLimitCleanup;
   relay: typeof relay;
   releaseNotes: typeof releaseNotes;

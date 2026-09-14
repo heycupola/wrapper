@@ -1,7 +1,7 @@
 import { FAQ_ITEMS, plainAnswer } from "../lib/faq-content";
 import { INSTALL_SCENE_ID } from "../lib/landing-scene";
 import { QUESTIONS_SECTION_ID } from "../lib/release-notes";
-import { ArtDefs, LoopbackArt, RevokeArt, ShareArt, ShellArt } from "./card-art";
+import { ArtDefs, RevokeArt, ShareArt, ShellArt, WatchArt } from "./card-art";
 import { ConnectionFlow } from "./connection-flow";
 import { FaqAccordion } from "./faq/faq-accordion";
 import { HorizontalScroll } from "./horizontal-scroll";
@@ -57,18 +57,22 @@ export function HorizontalLanding() {
 
             <div className="landingHeroCopy revealStack">
               <h1 id="intro-title" className="landingHeroTitle revealItem">
-                Your terminal,
+                Your terminal.
                 <br />
-                still running.
+                On your phone.
                 <br />
-                Wherever <span className="noWrap">you are.</span>
+                Only when you <span className="noWrap">share.</span>
               </h1>
               <p className="landingLead revealItem">
-                Keep your real shell on your machine. Reach it from another device only when you
-                explicitly share it.
+                The terminal stays on your computer. Open it from your phone when you share. Other
+                people can watch; they cannot type unless you allow it.
               </p>
               <div className="landingHeroInstall revealItem">
                 <InstallCta />
+                <p className="landingMicrocopy">
+                  Then <code>wrapper share</code>. Works with Claude, Codex, vim, or whatever is
+                  already running.
+                </p>
               </div>
               <div className="landingActions revealItem">
                 <IosViewerCta variant="badge" className="landingHeroViewer" />
@@ -150,12 +154,12 @@ export function HorizontalLanding() {
 
             <div className="landingTrustGrid">
               <article className="landingFeatureCard">
-                <LoopbackArt />
+                <WatchArt />
                 <div>
-                  <h3>Local by default</h3>
+                  <h3>Watch, don&apos;t type</h3>
                   <p>
-                    Loopback only, with a per-session token. Unshared sessions send nothing to
-                    Convex, including metadata.
+                    People you invite see the screen. They don&apos;t get the keyboard until you say
+                    so.
                   </p>
                 </div>
               </article>

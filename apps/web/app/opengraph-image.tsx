@@ -11,7 +11,7 @@ import type { CSSProperties, ReactNode } from "react";
  * copy mirrors the interactive hero (`components/hero-demo`).
  */
 
-export const alt = "Wrapper. Your terminal, still running. Wherever you are.";
+export const alt = "Wrapper. Your terminal, on your phone. Only when you share.";
 export const size = {
   width: 1200,
   height: 630,
@@ -364,21 +364,22 @@ export default async function OpenGraphImage() {
           <div style={headline}>
             <div style={headlineRow}>
               <span>Your</span>
-              <span>terminal,</span>
+              <span>terminal.</span>
             </div>
             <div style={headlineRow}>
-              <span>still</span>
-              <span>running.</span>
+              <span>On</span>
+              <span>your</span>
+              <span>phone.</span>
             </div>
             <div style={headlineRow}>
-              <span>Wherever</span>
+              <span>Only</span>
+              <span>when</span>
               <span>you</span>
-              <span>are.</span>
+              <span>share.</span>
             </div>
           </div>
           <div style={lead}>
-            Keep your real shell on your machine. Reach it from another device only when you share
-            it.
+            Keep the real terminal on your computer. Open it from your phone only when you share.
           </div>
         </div>
 
@@ -407,7 +408,7 @@ export default async function OpenGraphImage() {
         </div>
 
         <div style={scrollback}>
-          <Wrapper muted>Ctrl+\ then s share | u unshare | ? status</Wrapper>
+          <Wrapper muted>Ctrl+\ then s share | u unshare | w typing | ? status</Wrapper>
           <Prompt>git status</Prompt>
           <Output>On branch main</Output>
           <Output muted>Your branch is up to date with 'origin/main'.</Output>

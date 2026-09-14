@@ -8,6 +8,7 @@ export interface RunOptions {
   command: string[];
   port?: number;
   share?: boolean;
+  writable?: boolean;
 }
 
 export async function runRun(opts: RunOptions): Promise<void> {
@@ -26,6 +27,7 @@ export async function runRun(opts: RunOptions): Promise<void> {
 
   await runShellHost({
     shareOnStart: Boolean(opts.share),
+    writableOnStart: Boolean(opts.writable),
     argv: command,
     port: opts.port,
   });

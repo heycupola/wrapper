@@ -25,7 +25,7 @@ describe("RelayHub routing", () => {
     const host = new FakePeer();
     const viewer = new FakePeer();
     hub.bind({ peer: host, role: "host", sessionId: "s1" });
-    hub.bind({ peer: viewer, role: "viewer", sessionId: "s1" });
+    hub.bind({ peer: viewer, role: "viewer", sessionId: "s1", canInput: true });
 
     hub.routeInbound(
       viewer,
@@ -36,8 +36,12 @@ describe("RelayHub routing", () => {
       }),
     );
 
-    expect(host.sent).toHaveLength(1);
-    expect(host.sent[0]).toContain('"type":"input"');
+    const forwarded = host.sent.filter((frame) => frame.includes('"type":"input"'));
+    expect(forwarded).toHaveLength(1);
+    const parsed = JSON.parse(forwarded[0] as string) as { from?: string; data: string };
+    expect(parsed.data).toBe("ls\n");
+    expect(parsed.from).toEqual(expect.any(String));
+    expect(parsed.from?.length).toBeGreaterThan(0);
   });
 
   test("forwards host output to all viewers", () => {
@@ -58,9 +62,11 @@ describe("RelayHub routing", () => {
       }),
     );
 
-    expect(viewerA.sent).toHaveLength(1);
-    expect(viewerB.sent).toHaveLength(1);
-    expect(viewerA.sent[0]).toContain('"type":"output"');
+    const outputA = viewerA.sent.filter((frame) => frame.includes('"type":"output"'));
+    const outputB = viewerB.sent.filter((frame) => frame.includes('"type":"output"'));
+    expect(outputA).toHaveLength(1);
+    expect(outputB).toHaveLength(1);
+    expect(outputA[0]).toContain("hello\\n");
   });
 
   test("viewer resize uses smallest consensus", () => {
@@ -112,10 +118,10 @@ describe("RelayHub routing", () => {
     // A viewer joins afterwards: it must still receive session.opened so its
     // client learns the sessionId and can forward input.
     const lateViewer = new FakePeer();
-    hub.bind({ peer: lateViewer, role: "viewer", sessionId: "s1" });
+    hub.bind({ peer: lateViewer, role: "viewer", sessionId: "s1", canInput: true });
 
-    expect(lateViewer.sent).toHaveLength(1);
-    expect(lateViewer.sent[0]).toContain('"type":"session.opened"');
+    expect(lateViewer.sent.some((frame) => frame.includes('"type":"session.opened"'))).toBe(true);
+    expect(lateViewer.sent.some((frame) => frame.includes('"type":"viewer.caps"'))).toBe(true);
 
     // And that viewer's input now reaches the host.
     hub.routeInbound(lateViewer, JSON.stringify({ type: "input", sessionId: "s1", data: "x" }));
@@ -128,8 +134,8 @@ describe("RelayHub routing", () => {
     const viewerA = new FakePeer();
     const viewerB = new FakePeer();
     hub.bind({ peer: host, role: "host", sessionId: "s1" });
-    hub.bind({ peer: viewerA, role: "viewer", sessionId: "s1" });
-    hub.bind({ peer: viewerB, role: "viewer", sessionId: "s1" });
+    hub.bind({ peer: viewerA, role: "viewer", sessionId: "s1", canInput: true });
+    hub.bind({ peer: viewerB, role: "viewer", sessionId: "s1", canInput: true });
 
     // Viewer A offers; relay forwards to host and overwrites the spoofed `from`.
     hub.routeInbound(
@@ -143,8 +149,7 @@ describe("RelayHub routing", () => {
         data: "OFFER",
       }),
     );
-    expect(host.sent).toHaveLength(1);
-    const forwarded = JSON.parse(host.sent[0] as string);
+    const forwarded = JSON.parse(host.sent.at(-1) as string);
     expect(forwarded.type).toBe("signal");
     expect(forwarded.to).toBe("host");
     expect(forwarded.from).not.toBe("spoofed");
@@ -198,5 +203,68 @@ describe("RelayHub routing", () => {
 
     expect(viewer.sent.at(-1)).toContain('"type":"session.closed"');
     expect(viewer.closedWith?.reason).toBe("host disconnected");
+  });
+
+  test("drops view-only viewer input and ignores spoofed caps", () => {
+    const hub = new RelayHub(noopLog);
+    const host = new FakePeer();
+    const viewer = new FakePeer();
+    hub.bind({ peer: host, role: "host", sessionId: "s1" });
+    hub.bind({ peer: viewer, role: "viewer", sessionId: "s1", canInput: false });
+
+    hub.routeInbound(
+      viewer,
+      JSON.stringify({
+        type: "input",
+        sessionId: "s1",
+        data: "rm -rf /\n",
+        from: "spoofed",
+      }),
+    );
+    expect(host.sent.some((frame) => frame.includes('"type":"input"'))).toBe(false);
+
+    hub.routeInbound(
+      viewer,
+      JSON.stringify({
+        type: "viewer.caps",
+        sessionId: "s1",
+        peerId: "self",
+        canInput: true,
+      }),
+    );
+    hub.routeInbound(
+      viewer,
+      JSON.stringify({
+        type: "input",
+        sessionId: "s1",
+        data: "still blocked\n",
+      }),
+    );
+    expect(host.sent.some((frame) => frame.includes('"type":"input"'))).toBe(false);
+  });
+
+  test("host can grant typing to a view-only viewer", () => {
+    const hub = new RelayHub(noopLog);
+    const host = new FakePeer();
+    const viewer = new FakePeer();
+    hub.bind({ peer: host, role: "host", sessionId: "s1" });
+    hub.bind({ peer: viewer, role: "viewer", sessionId: "s1", canInput: false });
+
+    const caps = JSON.parse(
+      host.sent.find((frame) => frame.includes('"type":"viewer.caps"')) as string,
+    ) as { peerId: string };
+    hub.routeInbound(
+      host,
+      JSON.stringify({
+        type: "viewer.caps",
+        sessionId: "s1",
+        peerId: caps.peerId,
+        canInput: true,
+      }),
+    );
+    expect(viewer.sent.some((frame) => frame.includes('"canInput":true'))).toBe(true);
+
+    hub.routeInbound(viewer, JSON.stringify({ type: "input", sessionId: "s1", data: "ok\n" }));
+    expect(host.sent.some((frame) => frame.includes('"type":"input"'))).toBe(true);
   });
 });

@@ -44,6 +44,8 @@ export interface ShellHostOptions {
   port?: number;
   /** After the host is up, share immediately (`wrapper share`). */
   shareOnStart?: boolean;
+  /** When sharing, allow people who join with the code to type. Default: watch only. */
+  writableOnStart?: boolean;
 }
 
 const SIGINT_EXIT = 130;
@@ -112,9 +114,19 @@ const createProCheckoutRef = makeFunctionReference<
 >("billing:createProCheckout");
 const setShareCodeRef = makeFunctionReference<
   "mutation",
-  { sessionId: string; code?: string },
+  { sessionId: string; code?: string; guestInput?: boolean },
   { ok: boolean; shared: boolean }
 >("session:setShareCode");
+const setGuestInputRef = makeFunctionReference<
+  "mutation",
+  { sessionId: string; guestInput: boolean },
+  { ok: boolean; guestInput: boolean }
+>("session:setGuestInput");
+const reportAttentionRef = makeFunctionReference<
+  "mutation",
+  { sessionId: string; kind: "bell" | "manual" },
+  { ok: boolean; sent?: boolean }
+>("push:reportAttention");
 
 /** 256-bit hex secret gating connections to the local WebSocket server. */
 function createLocalToken(): string {
@@ -259,7 +271,34 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   // Guards against a second `share` press racing the in-flight relay setup
   // (we no longer optimistically flip `shared` to serve as that guard).
   let relayStarting = false;
+  let guestInputAllowed = Boolean(opts.writableOnStart);
+  let lastOwnerInputAt = 0;
+  let lastNotifyAt = 0;
   const sessionTag = sessionId.slice(0, 6);
+  const ATTENTION_DEBOUNCE_MS = 30_000;
+  const OWNER_INPUT_GRACE_MS = 5_000;
+
+  session.on("data", (chunk) => {
+    if (!env.notifyEnabled) return;
+    if (!chunk.includes("\x07")) return;
+    const now = Date.now();
+    if (now - lastOwnerInputAt < OWNER_INPUT_GRACE_MS) return;
+    if (now - lastNotifyAt < ATTENTION_DEBOUNCE_MS) return;
+    lastNotifyAt = now;
+    notifyOS("wrapper", `Session ${sessionTag} needs you.`);
+    if (backend.status !== "ready") return;
+    void backend.client
+      .mutation(reportAttentionRef, { sessionId, kind: "bell" })
+      .catch((error: unknown) => {
+        const err = error instanceof Error ? error : new Error(String(error));
+        log.debug("attention ping failed", { error: err.message });
+      });
+  });
+
+  function guestAccess(): "view" | "rw" | undefined {
+    if (!shared && !relayStarting) return undefined;
+    return guestInputAllowed ? "rw" : "view";
+  }
 
   function printShareInvite(attempt = 0): void {
     shareInviteTimer = null;
@@ -267,6 +306,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     if (session.isIdle) {
       inlineMessage(`share code: ${shareCode}`);
       inlineMessage(`others join with: wrapper attach --relay --id ${sessionId}`);
+      inlineMessage(
+        guestInputAllowed
+          ? "people you invite can type. Ctrl+\\ then w to make this watch-only"
+          : "people you invite can watch, not type. Ctrl+\\ then w to allow typing",
+      );
       return;
     }
     // Never put the capability in logs. If a TUI owns the terminal, wait until
@@ -363,6 +407,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         sessionTag,
         transport: currentTransport(),
         p2pPeerCount,
+        guestAccess: guestAccess(),
       }),
     );
   }
@@ -427,7 +472,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         // Persist the shared flag and the access-code hash before issuing the relay
         // ticket so viewer authorization is synchronized rather than racing the
         // periodic fire-and-forget heartbeat. Only the code hash is stored.
-        await backend.client.mutation(setShareCodeRef, { sessionId, code });
+        await backend.client.mutation(setShareCodeRef, {
+          sessionId,
+          code,
+          guestInput: guestInputAllowed,
+        });
         if (shareAbandoned(op)) return;
         await backend.client.mutation(setRelayStateRef, { sessionId, relayState: "connecting" });
         if (shareAbandoned(op)) return;
@@ -592,10 +641,36 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         })();
         announce("", "session unshared");
         break;
+      case "typing":
+        if (relayStarting) {
+          announce(`wrapper • sharing • ${sessionTag}`, "still sharing…");
+          return;
+        }
+        if (!shared) {
+          announce("", "share first, then allow typing");
+          return;
+        }
+        guestInputAllowed = !guestInputAllowed;
+        relayBridge?.setGuestInput(guestInputAllowed);
+        if (backend.status === "ready") {
+          void backend.client
+            .mutation(setGuestInputRef, { sessionId, guestInput: guestInputAllowed })
+            .catch((error: unknown) => {
+              const err = error instanceof Error ? error : new Error(String(error));
+              log.warn("failed to update guest typing", { error: err.message });
+            });
+        }
+        announce(
+          "",
+          guestInputAllowed
+            ? "people you invite can type"
+            : "people you invite can watch, not type",
+        );
+        break;
       case "status":
         announce(
           shared ? `wrapper • shared • ${sessionTag}` : `wrapper • idle • ${sessionTag}`,
-          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : relayStarting ? "sharing" : "no"} transport=${currentTransport()}`,
+          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : relayStarting ? "sharing" : "no"} transport=${currentTransport()} typing=${guestInputAllowed ? "allowed" : "watch-only"}`,
         );
         break;
       case "detach":
@@ -607,7 +682,10 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   const prefixFilter = new PrefixFilter({
     prefix: prefix.byte,
     onCommand: handlePrefixCommand,
-    onForward: (data) => session.write(data),
+    onForward: (data) => {
+      lastOwnerInputAt = Date.now();
+      session.write(data);
+    },
     onArmedChange: (armed) => {
       if (!env.hudEnabled) return;
       if (armed) {
@@ -618,6 +696,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
             transport: currentTransport(),
             p2pPeerCount,
             armed: true,
+            guestAccess: guestAccess(),
           }),
         );
         bell();
@@ -636,7 +715,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     initialSize,
     connectRetries: 20,
     connectRetryDelayMs: 50,
-    interceptStdin: (chunk) => prefixFilter.process(chunk),
+    interceptStdin: (chunk) => {
+      const passthrough = prefixFilter.process(chunk);
+      if (passthrough.length > 0) lastOwnerInputAt = Date.now();
+      return passthrough;
+    },
     onTerminalTitle: paintRestingTitle,
   });
 

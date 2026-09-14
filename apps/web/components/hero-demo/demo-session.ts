@@ -114,7 +114,7 @@ export interface DemoState {
 }
 
 export function controlsHint(prefixLabel = PREFIX_LABEL): string {
-  return `controls: ${prefixLabel} then s share | u unshare | ? status`;
+  return `controls: ${prefixLabel} then s share | u unshare | w typing | ? status`;
 }
 
 const OPENING_COMMAND = "git status";

@@ -11,6 +11,9 @@ export interface PeerBinding {
   peer: RelayPeer;
   sessionId: string;
   role: RelayRole;
+  /** Viewers only. Owner devices always type; guests default to watch-only. */
+  canInput?: boolean;
+  isOwner?: boolean;
 }
 
 export interface RelayHubLogger {
@@ -43,32 +46,47 @@ export class RelayHub {
   constructor(private readonly log: RelayHubLogger) {}
 
   bind(binding: PeerBinding): void {
-    this.bindingByPeer.set(binding.peer, binding);
+    const stored: PeerBinding = {
+      ...binding,
+      canInput: binding.role === "host" ? true : Boolean(binding.canInput),
+      isOwner: Boolean(binding.isOwner),
+    };
+    this.bindingByPeer.set(binding.peer, stored);
 
-    if (binding.role === "host") {
-      const existing = this.hostBySession.get(binding.sessionId);
-      if (existing && existing !== binding.peer) {
+    if (stored.role === "host") {
+      const existing = this.hostBySession.get(stored.sessionId);
+      if (existing && existing !== stored.peer) {
         existing.close(CLOSE_HOST_REPLACED, "host replaced");
       }
-      this.hostBySession.set(binding.sessionId, binding.peer);
-      this.log.debug("host bound", { sessionId: binding.sessionId });
+      this.hostBySession.set(stored.sessionId, stored.peer);
+      this.log.debug("host bound", { sessionId: stored.sessionId });
       return;
     }
 
-    const viewers = this.viewersBySession.get(binding.sessionId) ?? new Set<RelayPeer>();
-    viewers.add(binding.peer);
-    this.viewersBySession.set(binding.sessionId, viewers);
-    this.viewerState.set(binding.peer, { size: null });
+    const viewers = this.viewersBySession.get(stored.sessionId) ?? new Set<RelayPeer>();
+    viewers.add(stored.peer);
+    this.viewersBySession.set(stored.sessionId, viewers);
+    this.viewerState.set(stored.peer, { size: null });
     const peerId = crypto.randomUUID();
-    this.peerIdByViewer.set(binding.peer, peerId);
-    this.viewerByPeerId.set(peerId, binding.peer);
+    this.peerIdByViewer.set(stored.peer, peerId);
+    this.viewerByPeerId.set(peerId, stored.peer);
+    const caps = encodeMessage({
+      type: "viewer.caps",
+      sessionId: stored.sessionId,
+      peerId,
+      canInput: Boolean(stored.canInput),
+      isOwner: Boolean(stored.isOwner),
+    });
+    this.hostBySession.get(stored.sessionId)?.send(caps);
+    stored.peer.send(caps);
     // Replay the cached `session.opened` so this viewer learns the sessionId and
     // can start forwarding input immediately (the host won't re-emit it).
-    const opened = this.lastSessionOpened.get(binding.sessionId);
-    if (opened) binding.peer.send(opened);
+    const opened = this.lastSessionOpened.get(stored.sessionId);
+    if (opened) stored.peer.send(opened);
     this.log.debug("viewer bound", {
-      sessionId: binding.sessionId,
+      sessionId: stored.sessionId,
       viewerCount: viewers.size,
+      canInput: Boolean(stored.canInput),
     });
   }
 
@@ -164,6 +182,22 @@ export class RelayHub {
         viewer.send(encodeMessage(msg));
         break;
       }
+      case "viewer.caps": {
+        const viewer = this.viewerByPeerId.get(msg.peerId);
+        if (!viewer || !this.viewersBySession.get(binding.sessionId)?.has(viewer)) return;
+        const viewerBinding = this.bindingByPeer.get(viewer);
+        if (viewerBinding) viewerBinding.canInput = msg.canInput;
+        viewer.send(
+          encodeMessage({
+            type: "viewer.caps",
+            sessionId: binding.sessionId,
+            peerId: msg.peerId,
+            canInput: msg.canInput,
+            isOwner: viewerBinding?.isOwner,
+          }),
+        );
+        break;
+      }
       default:
         this.log.warn("unexpected host message", { type: msg.type, sessionId: binding.sessionId });
     }
@@ -198,9 +232,17 @@ export class RelayHub {
     switch (msg.type) {
       case "attach":
       case "detach":
-      case "input":
         host.send(encodeMessage(msg));
         break;
+      case "input": {
+        if (!binding.canInput) return;
+        const peerId = this.peerIdByViewer.get(peer);
+        if (!peerId) return;
+        host.send(encodeMessage({ ...msg, from: peerId }));
+        break;
+      }
+      case "viewer.caps":
+        return;
       case "resize":
         this.viewerState.set(peer, { size: msg.size });
         this.recomputeConsensusResize(binding.sessionId);

@@ -8,6 +8,7 @@ import { runShellHost } from "./shell-host";
 export interface ShareOptions {
   command?: string[];
   port?: number;
+  writable?: boolean;
 }
 
 export async function runShare(opts: ShareOptions = {}): Promise<void> {
@@ -21,6 +22,7 @@ export async function runShare(opts: ShareOptions = {}): Promise<void> {
   const command = opts.command?.filter((part) => part.length > 0);
   await runShellHost({
     shareOnStart: true,
+    writableOnStart: Boolean(opts.writable),
     argv: command && command.length > 0 ? command : undefined,
     port: opts.port,
   });

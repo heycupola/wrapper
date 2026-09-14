@@ -7,6 +7,7 @@ import { runAuthLogin, runAuthLogout, runAuthWhoami } from "./commands/auth";
 import { runInit } from "./commands/init";
 import { runInstall } from "./commands/install";
 import { runLogs } from "./commands/logs";
+import { runNotify } from "./commands/notify";
 import { runRun } from "./commands/run";
 import { runShare } from "./commands/share";
 import { runShellHost } from "./commands/shell-host";
@@ -78,7 +79,7 @@ if (!isQuietEntry && isFirstRun()) {
 const program = new Command();
 program
   .name("wrapper")
-  .description("Wrapper - share a live terminal from your phone, on demand")
+  .description("Wrapper — bring your terminal to your phone, on demand")
   .version(VERSION);
 
 program
@@ -131,10 +132,12 @@ program
   .description("Wrap a shell or command and share it (does not patch your shell config)")
   .argument("[command...]", "command to wrap (defaults to $SHELL)")
   .option("-p, --port <number>", "force a specific port (default: OS-assigned)")
+  .option("--writable", "allow people you invite to type (default: watch only)")
   .action(async (command: string[], raw) => {
     await runShare({
       command,
       port: raw.port ? Number(raw.port) : undefined,
+      writable: Boolean(raw.writable),
     });
   });
 
@@ -144,11 +147,13 @@ program
   .argument("<command...>", "command to wrap, e.g. claude")
   .option("-p, --port <number>", "force a specific port (default: OS-assigned)")
   .option("--share", "share immediately after the host starts")
+  .option("--writable", "allow people you invite to type when sharing")
   .action(async (command: string[], raw) => {
     await runRun({
       command,
       port: raw.port ? Number(raw.port) : undefined,
       share: Boolean(raw.share),
+      writable: Boolean(raw.writable),
     });
   });
 
@@ -158,11 +163,13 @@ program
   .option("-s, --shell <path>", "shell binary to spawn (defaults to $SHELL)")
   .option("-p, --port <number>", "force a specific port (default: OS-assigned)")
   .option("--share", "share immediately after the host starts")
+  .option("--writable", "allow people you invite to type when sharing")
   .action(async (raw) => {
     await runShellHost({
       shell: raw.shell,
       port: raw.port ? Number(raw.port) : undefined,
       shareOnStart: Boolean(raw.share),
+      writableOnStart: Boolean(raw.writable),
     });
   });
 
@@ -185,6 +192,13 @@ program
       relay: Boolean(raw.relay),
       code: raw.code,
     });
+  });
+
+program
+  .command("notify")
+  .description("Ping your phone: the session needs you (run inside a wrapped terminal)")
+  .action(async () => {
+    await runNotify();
   });
 
 program

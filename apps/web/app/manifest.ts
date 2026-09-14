@@ -4,7 +4,8 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Wrapper",
     short_name: "Wrapper",
-    description: "Reach an explicitly shared terminal from another device.",
+    description:
+      "Keep the real terminal on your computer. Open it from your phone only when you share.",
     start_url: "/",
     display: "standalone",
     background_color: "#f6f6f2",

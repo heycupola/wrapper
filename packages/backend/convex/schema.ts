@@ -29,6 +29,8 @@ export default defineSchema({
     // SHA-256 of the normalized share code. Set when the owner shares; a viewer
     // that is not the owner must present the matching code to get a viewer ticket.
     shareCodeHash: v.optional(v.string()),
+    // Guests may type only when the owner turns this on. Owners always type.
+    guestInput: v.optional(v.boolean()),
     relayState: v.union(
       v.literal("offline"),
       v.literal("connecting"),
@@ -40,6 +42,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
     lastHeartbeatAt: v.number(),
+    lastAttentionAt: v.optional(v.number()),
     closedAt: v.optional(v.number()),
     closeReason: v.optional(v.string()),
   })
@@ -126,4 +129,14 @@ export default defineSchema({
     .index("by_confirmTokenHash", ["confirmTokenHash"])
     .index("by_unsubscribeToken", ["unsubscribeToken"])
     .index("by_status_confirmExpiresAt", ["status", "confirmExpiresAt"]),
+  devicePushToken: defineTable({
+    userId: v.string(),
+    token: v.string(),
+    platform: v.literal("ios"),
+    environment: v.union(v.literal("sandbox"), v.literal("production")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_token", ["token"]),
 });

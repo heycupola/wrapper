@@ -112,7 +112,7 @@ with static diagrams.
 Use “Wrapper” for the product and `wrapper` for the CLI or commands. Prefer
 short, literal sentences:
 
-- “Your terminal, still running. Wherever you are.”
+- “Your terminal. On your phone. Only when you share.”
 - “Nothing leaves until you say so.”
 - “Local is free. Remote is Pro.”
 - “Does not patch your shell config.”

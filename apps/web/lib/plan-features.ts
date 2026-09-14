@@ -46,4 +46,10 @@ export const PRO_PLAN_FEATURES: readonly PlanFeature[] = [
     definition:
       "A VPS, a cloud devbox, or any always-on Linux host. Your laptop does not have to run Wrapper.",
   },
+  {
+    label: "People you invite can watch without typing",
+    term: "watch without typing",
+    definition:
+      "They see the screen. They cannot type unless you allow it with Control-backslash then w.",
+  },
 ];
