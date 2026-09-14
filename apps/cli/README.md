@@ -254,14 +254,14 @@ own OSC title, Wrapper repaints the session HUD immediately afterward. Set
 
 Inside host shell:
 
-| Keys              | Action                    |
-| ----------------- | ------------------------- |
-| `Ctrl+\` `s`      | share + print share code  |
-| `Ctrl+\` `u`      | unshare + revoke access   |
+| Keys              | Action                     |
+| ----------------- | -------------------------- |
+| `Ctrl+\` `s`      | share + print share code   |
+| `Ctrl+\` `u`      | unshare + revoke access    |
 | `Ctrl+\` `w`      | allow or deny guest typing |
-| `Ctrl+\` `?`      | status overlay            |
-| `Ctrl+\` `Ctrl+\` | send literal control byte |
-| `Ctrl+\` `Esc`    | cancel prefix mode        |
+| `Ctrl+\` `?`      | status overlay             |
+| `Ctrl+\` `Ctrl+\` | send literal control byte  |
+| `Ctrl+\` `Esc`    | cancel prefix mode         |
 
 Inside attach viewer:
 
