@@ -188,6 +188,8 @@ describe("relay session access", () => {
       sessionId,
       role: "viewer",
       userId: "viewer-user",
+      canInput: false,
+      isOwner: false,
     });
     await expectConvexError(
       () => t.mutation(api.relay.consumeTicket, { ticket: first.ticket }),
@@ -203,6 +205,36 @@ describe("relay session access", () => {
       () => t.mutation(api.relay.consumeTicket, { ticket: second.ticket }),
       ErrorCode.INSUFFICIENT_PERMISSION,
     );
+  });
+
+  test("guest tickets are watch-only until the owner allows typing", async () => {
+    await owner.mutation(api.session.setShareCode, { sessionId, code: "ABCD-EFGH" });
+    const guest = await viewer.action(api.relay.issueViewerTicket, {
+      sessionId,
+      code: "ABCD-EFGH",
+    });
+    expect(guest.canInput).toBe(false);
+    expect(guest.isOwner).toBe(false);
+
+    const ownerTicket = await owner.action(api.relay.issueViewerTicket, { sessionId });
+    expect(ownerTicket.canInput).toBe(true);
+    expect(ownerTicket.isOwner).toBe(true);
+
+    await owner.mutation(api.session.setGuestInput, { sessionId, guestInput: true });
+    const writable = await viewer.action(api.relay.issueViewerTicket, {
+      sessionId,
+      code: "ABCD-EFGH",
+    });
+    expect(writable.canInput).toBe(true);
+
+    const consumed = await t.mutation(api.relay.consumeTicket, { ticket: writable.ticket });
+    expect(consumed).toMatchObject({
+      sessionId,
+      role: "viewer",
+      userId: "viewer-user",
+      canInput: true,
+      isOwner: false,
+    });
   });
 
   test("rejects expired tickets", async () => {

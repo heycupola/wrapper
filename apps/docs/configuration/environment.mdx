@@ -15,7 +15,8 @@ source should set `NODE_ENV=development` and explicit endpoints.
 | `WRAPPER_CONVEX_URL`      | Convex `.cloud` URL                            | production Convex deployment         |
 | `WRAPPER_CONVEX_SITE_URL` | Auth HTTP (`.site`) override                   | derived from `.cloud`                |
 | `WRAPPER_P2P`             | WebRTC fast path                               | on (`0`, `false`, or `off` disables) |
-| `WRAPPER_HUD`             | Terminal-title HUD                             | on (`off` disables)                  |
+| `WRAPPER_HUD`             | Terminal-title HUD                             | on (`0`, `false`, or `off` disables) |
+| `WRAPPER_NOTIFY`          | Ping when the terminal bell rings              | on (`0`, `false`, or `off` disables) |
 | `WRAPPER_PREFIX`          | Keybinding prefix (`ctrl+\`, `ctrl+g`, `0x1c`) | `Ctrl+\`                             |
 | `WRAPPER_DISABLE`         | Skip shell wrap for one process                | unset                                |
 | `WRAPPER_WRAPPED`         | Set by `shell-host` (do not set)               | unset                                |
@@ -64,7 +65,7 @@ WRAPPER_PREFIX=ctrl+g
 
 Accepted forms: `ctrl+g`, `ctrl+\`, `^G`, `0x1c`. Interrupt keys (`Ctrl+C`,
 `Ctrl+D`, `Ctrl+Z`, Enter, Tab, Esc) are rejected so the shell stays usable.
-Command letters (`s`, `u`, `d`, `?`) stay fixed.
+Command letters (`s`, `u`, `w`, `d`, `?`) stay fixed.
 
 ## Development defaults
 

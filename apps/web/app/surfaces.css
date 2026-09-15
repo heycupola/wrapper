@@ -253,8 +253,24 @@
   padding-inline: 16px;
 }
 
-.dashboardSignIn .socialSignIn {
+.dashboardSignIn .socialSignIn,
+.authCard .socialSignIn {
   width: 100%;
+}
+
+.lastUsedLoginBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin-left: auto;
+  padding: 5px 8px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .dashboardPanel {
@@ -1274,6 +1290,15 @@
   flex-wrap: wrap;
 }
 
+.authCard .authActions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.authCard .authActions .btn {
+  width: 100%;
+}
+
 .authInfo,
 .authSuccess,
 .authError {
@@ -1304,9 +1329,10 @@
 
 .deviceRequestHeader {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 8px 12px;
 }
 
 .deviceRequestHeader strong {
@@ -1316,16 +1342,18 @@
 
 .deviceStatus {
   display: inline-flex;
-  min-height: 24px;
+  flex: none;
+  min-height: 28px;
   align-items: center;
-  padding: 0 9px;
+  padding: 4px 10px;
   border-radius: var(--radius-pill);
   background: var(--color-accent-soft);
   color: var(--color-accent-text);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.6875rem;
+  font-weight: 590;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .deviceStatus[data-status="approved"] {

@@ -31,7 +31,7 @@ const getOnboardingStateRef = makeFunctionReference<
 
 export default async function OnboardingPage() {
   const [authenticated, token] = await Promise.all([isAuthenticated(), getToken()]);
-  if (!authenticated || !token) redirect("/oauth/authorize");
+  if (!authenticated || !token) redirect("/dashboard");
 
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
   if (!convexUrl) {

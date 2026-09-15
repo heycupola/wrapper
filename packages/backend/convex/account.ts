@@ -194,12 +194,17 @@ export const deleteOwnedData = internalMutation({
       .query("emailState")
       .withIndex("by_user", (query) => query.eq("userId", args.userId))
       .collect();
+    const pushTokens = await ctx.db
+      .query("devicePushToken")
+      .withIndex("by_user", (query) => query.eq("userId", args.userId))
+      .collect();
 
     await Promise.all([
       ...relayTickets.values().map((ticket) => ctx.db.delete(ticket._id)),
       ...onboardingRows.map((row) => ctx.db.delete(row._id)),
       ...userRateLimits.map((row) => ctx.db.delete(row._id)),
       ...emailStateRows.map((row) => ctx.db.delete(row._id)),
+      ...pushTokens.map((row) => ctx.db.delete(row._id)),
       ...sessions.map((session) => ctx.db.delete(session._id)),
     ]);
 

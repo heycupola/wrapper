@@ -43,12 +43,18 @@ session id alone is not enough.
 
 ## What guests can do
 
+Watching is the default.
+
 - Read all terminal output.
-- Send input into the same shell.
+- Cannot type unless the host allows it (`Ctrl+\` then `w`, or `wrapper share --writable`).
 - Resize; the host uses the smallest connected viewer size.
 
-There is no watch-only role and no per-command approval. Treat share codes as
-capabilities.
+The person who owns the session can always type, including from their phone.
+Treat share codes as capabilities.
+
+When the terminal rings (BEL, or `wrapper notify` from inside the wrapped
+shell), Wrapper can ping the owner's phone. The alert names the session. It
+does not include what is on screen. Opt out with `WRAPPER_NOTIFY=0`.
 
 ## Transport behavior
 

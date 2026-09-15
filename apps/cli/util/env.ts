@@ -38,6 +38,8 @@ const P2P = (process.env.WRAPPER_P2P ?? "").toLowerCase();
 // P2P is on by default (with automatic relay fallback). Opt out with
 // WRAPPER_P2P=0 (or false/off) to force everything over the relay WebSocket.
 const P2P_ENABLED = P2P !== "0" && P2P !== "false" && P2P !== "off";
+const NOTIFY = (process.env.WRAPPER_NOTIFY ?? "").toLowerCase();
+const NOTIFY_ENABLED = NOTIFY !== "0" && NOTIFY !== "false" && NOTIFY !== "off";
 
 export const env = {
   /** Development mode toggle. */
@@ -69,4 +71,9 @@ export const env = {
    * established. Opt out with WRAPPER_P2P=0 (or false/off).
    */
   p2pEnabled: P2P_ENABLED,
+  /**
+   * Doorbell when the wrapped process rings the terminal bell. On by default.
+   * Opt out with WRAPPER_NOTIFY=0 (or false/off).
+   */
+  notifyEnabled: NOTIFY_ENABLED,
 } as const;

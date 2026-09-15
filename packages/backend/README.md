@@ -12,8 +12,10 @@ who may attach to which session.
 - `hostSession`
   - `sessionId`, `ownerUserId`, `shell`, `cwd`
   - `port`, `hostPid`, `shared`
+  - `guestInput` (optional; guests may type only when true)
   - `relayState`, `relayLastChangedAt`
   - `status` (`active` or `closed`)
+  - `lastAttentionAt` (doorbell debounce)
   - `createdAt`, `updatedAt`, `lastHeartbeatAt`, `closedAt`, `closeReason`
 - `relayTicket`
   - `tokenHash` (only the hash of the ticket is stored, never the token itself)
@@ -29,6 +31,8 @@ who may attach to which session.
 - `rateLimit`
   - fixed-window counters keyed by action, used to throttle unauthenticated
     endpoints such as device-code issuance
+- `devicePushToken`
+  - owner iOS device tokens for attention alerts (`token` is never logged)
 
 ## Handlers
 
@@ -42,6 +46,8 @@ who may attach to which session.
   is shared
 - `setShareCode`: owner-only; start sharing and store the SHA-256 of the access
   code, or stop sharing and clear it (revoking outstanding access)
+- `setGuestInput`: owner-only; allow or deny typing from people who joined with
+  the share code
 - `markStaleIfTimedOut` (internal): scheduler task that auto-closes stale active
   sessions
 - `setRelayState`: owner-only relay presence sync (`offline`, `connecting`,
@@ -64,12 +70,19 @@ who may attach to which session.
 - `issueHostTicket`: owner-only short-lived ticket for the host relay socket,
   gated by the Autumn sharing entitlement
 - `issueViewerTicket` (action): short-lived ticket for a viewer socket. The owner is
-  always allowed on their own devices. A non-owner must present the correct
-  share code, and non-owner attempts are rate limited per user, per hashed target
+  always allowed on their own devices (`canInput: true`). A non-owner must present
+  the correct share code and receives `canInput` only when the owner has allowed
+  guest typing. Non-owner attempts are rate limited per user, per hashed target
   bucket, and globally to stop code guessing without exposing session existence
 - `consumeTicket`: single-use consumption during the relay handshake, called by
   the relay itself without a user identity
 - `cleanupTicket` (internal): scheduled cleanup of used and expired ticket rows
+
+`convex/push.ts`:
+
+- `registerDevice` / `unregisterDevice`: owner iOS APNs tokens
+- `reportAttention`: host doorbell (session id + `bell`/`manual` only; no terminal
+  bytes). Debounced and scheduled to `pushActions.dispatchAttention`
 
 `convex/onboarding.ts`:
 
@@ -131,10 +144,9 @@ Access to a session is deliberately narrow:
 Unknown, unshared, missing-code, and wrong-code sessions return the same access
 denial so callers cannot use the API to discover another user's active session.
 
-This is a capability model (possession of the code grants access), which suits
-pair-prompting on a shared session. Note that every viewer who joins shares
-control of the same shell (anyone connected can type). A per-join host approval
-step could be layered on later if watch-only viewers are needed.
+This is a capability model (possession of the code grants access). People who
+join with the code watch by default and cannot type unless the owner allows
+it. The owner always types, including from another device.
 
 ## Relay ticket security
 
