@@ -1036,7 +1036,7 @@ html.lenis body {
 }
 
 /* The hero carries the install itself: one command line whose Copy button
-   is the page's primary action, a footnote that also swaps to Homebrew, then
+   is the page's primary action, a footnote that also swaps to brew, then
    the viewer badge and a quiet docs link. 32 / 12 / 24 so the command reads
    as the action and the rest as its footnotes. */
 .landingHeroInstall {

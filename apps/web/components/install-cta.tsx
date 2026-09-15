@@ -12,7 +12,7 @@ const COMMANDS: Record<Method, string> = {
 
 const OPTIONS = [
   { value: "curl", label: "curl" },
-  { value: "brew", label: "Homebrew" },
+  { value: "brew", label: "brew" },
 ] as const;
 
 const RESET_MS = 2200;
@@ -100,7 +100,7 @@ export function InstallCta() {
             .filter(Boolean)
             .join(" ")}
           onClick={() => void copy()}
-          aria-label={`Copy the ${method === "curl" ? "curl" : "Homebrew"} install command`}
+          aria-label={`Copy the ${method} install command`}
         >
           <span className="installCtaPrompt" aria-hidden="true">
             $

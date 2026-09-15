@@ -20,7 +20,7 @@ describe("plan features", () => {
         feature.label.includes(feature.term),
         `${feature.label} should include ${feature.term}`,
       );
-      assert.ok(feature.definition && feature.definition.length > 0);
+      assert.ok(feature.definition);
     }
   });
 
