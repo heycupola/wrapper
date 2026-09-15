@@ -25,7 +25,7 @@ login flow.
   becomes a normal vertical story with no pinning or smooth-scroll runtime.
   Visual tokens, motion rules, and voice guidance live in [`BRAND.md`](BRAND.md).
   The hero's install block is shaped like a terminal window: a header split
-  into two equal tabs (`curl`, Homebrew) and a body with the command; pressing the
+  into two equal tabs (`curl`, `brew`) and a body with the command; pressing the
   line copies it. It adds
   an iOS viewer CTA labeled **Get iOS viewer**. While the viewer is in
   TestFlight (or falling back to docs), the CTA keeps a Beta tag; the App Store
