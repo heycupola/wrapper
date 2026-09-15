@@ -55,6 +55,18 @@
       "direction": "bidirectional",
       "expectedType": "signal",
       "wire": "{\"protocolVersion\":1,\"type\":\"signal\",\"sessionId\":\"ABCDEFGHJKLM\",\"to\":\"host\",\"from\":\"viewer-1\",\"kind\":\"offer\",\"data\":\"{\\\"type\\\":\\\"offer\\\",\\\"sdp\\\":\\\"v=0\\\"}\"}"
+    },
+    {
+      "name": "viewer-caps",
+      "direction": "host-to-client",
+      "expectedType": "viewer.caps",
+      "wire": "{\"protocolVersion\":1,\"type\":\"viewer.caps\",\"sessionId\":\"ABCDEFGHJKLM\",\"peerId\":\"viewer-1\",\"canInput\":false,\"isOwner\":false}"
+    },
+    {
+      "name": "terminal-input-with-from",
+      "direction": "client-to-host",
+      "expectedType": "input",
+      "wire": "{\"protocolVersion\":1,\"type\":\"input\",\"sessionId\":\"ABCDEFGHJKLM\",\"data\":\"echo hello\\n\",\"from\":\"viewer-1\"}"
     }
   ],
   "invalid": [

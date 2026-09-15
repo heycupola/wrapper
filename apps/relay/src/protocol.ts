@@ -17,7 +17,7 @@ export type WrapperMessage = Versioned &
   (
     | { type: "attach"; sessionId: SessionId }
     | { type: "detach"; sessionId: SessionId }
-    | { type: "input"; sessionId: SessionId; data: string }
+    | { type: "input"; sessionId: SessionId; data: string; from?: string }
     | { type: "resize"; sessionId: SessionId; size: { cols: number; rows: number } }
     | { type: "session.opened"; sessionId: SessionId; size: { cols: number; rows: number } }
     | { type: "session.closed"; sessionId: SessionId; exitCode: number | null }
@@ -35,6 +35,13 @@ export type WrapperMessage = Versioned &
         from: string;
         kind: "offer" | "answer" | "ice" | "bye";
         data: string;
+      }
+    | {
+        type: "viewer.caps";
+        sessionId: SessionId;
+        peerId: string;
+        canInput: boolean;
+        isOwner?: boolean;
       }
   );
 
@@ -111,6 +118,14 @@ function isWrapperMessage(input: unknown): input is WrapperMessage {
     case "detach":
       return true;
     case "input":
+      return (
+        typeof input.data === "string" &&
+        input.data.length <= TERMINAL_DATA_MAX &&
+        (input.from === undefined ||
+          (typeof input.from === "string" &&
+            input.from.length >= 1 &&
+            input.from.length <= SIGNAL_ID_MAX))
+      );
     case "output":
       return typeof input.data === "string" && input.data.length <= TERMINAL_DATA_MAX;
     case "resize":
@@ -131,6 +146,14 @@ function isWrapperMessage(input: unknown): input is WrapperMessage {
         SIGNAL_KINDS.has(input.kind) &&
         typeof input.data === "string" &&
         input.data.length <= SIGNAL_DATA_MAX
+      );
+    case "viewer.caps":
+      return (
+        typeof input.peerId === "string" &&
+        input.peerId.length >= 1 &&
+        input.peerId.length <= SIGNAL_ID_MAX &&
+        typeof input.canInput === "boolean" &&
+        (input.isOwner === undefined || typeof input.isOwner === "boolean")
       );
     default:
       return false;

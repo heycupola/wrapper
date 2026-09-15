@@ -23,15 +23,13 @@ Command Line Tools on the Mac are older than Homebrew expects.
 
 The curl installer does not go through Homebrew, so it is unaffected.
 
-## Shell hook not wrapping
+## Every-terminal wrap not running
 
 Symptoms: `wrapper status` is empty after install.
 
-1. Run `wrapper install` once (avoid duplicate rc blocks).
-2. Open a **new** terminal window or tab.
-3. Check that `WRAPPER_DISABLE` is unset.
-4. For one-off unwrapped shells use `WRAPPER_DISABLE=1 zsh`, then return to a
-   normal shell for hosting.
+1. Run `wrapper share` (or `wrapper install` once if you want every terminal wrapped).
+2. Confirm `wrapper status` shows a live session.
+3. Check that `WRAPPER_DISABLE` is unset if you expected the optional install snippet.
 
 ## Sign-in fails
 
@@ -46,18 +44,19 @@ approve or deny the request.
 
 ## Local attach denied
 
-1. Confirm `wrapper auth whoami` matches the host owner.
-2. Confirm `wrapper status` shows a live session.
-3. Prefer `wrapper attach` / `--id` over guessing ports.
-4. Check `wrapper logs --follow` for authorization errors.
+1. Confirm `wrapper status` shows a live session.
+2. Prefer `wrapper attach` / `--id` over guessing ports.
+3. Check `wrapper logs --follow`.
 
-Released binaries authorize local attach through production Convex. Being on the
-same machine is not enough if you are not the authenticated owner.
+Local attach uses the loopback token. Convex is not required. Remote share
+still needs `wrapper auth login` and Pro.
 
 ## Relay share says Pro is required
 
-Upgrade to Pro to attach from another device. Attach from the same computer
-remains available without Pro. See [Pricing](/reference/pricing).
+Upgrade to Pro ($99/year or $15/month) from
+[dashboard billing](https://www.wrapper.sh/dashboard/billing). Yearly is the
+featured price. Attach from the same computer remains available without Pro. See
+[Pricing](/reference/pricing).
 
 ## P2P does not come up
 

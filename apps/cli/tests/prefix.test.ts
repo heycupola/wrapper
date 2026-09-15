@@ -40,6 +40,12 @@ describe("PrefixFilter", () => {
     expect(events).toEqual(["share"]);
   });
 
+  test("PFX + w emits 'typing'", () => {
+    const { filter, events } = newFilter();
+    expect(filter.process(`${PFX}w`)).toBe("");
+    expect(events).toEqual(["typing"]);
+  });
+
   test("PFX + u emits 'unshare'", () => {
     const { filter, events } = newFilter();
     expect(filter.process(`${PFX}u`)).toBe("");

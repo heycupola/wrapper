@@ -2,10 +2,11 @@
 
 Wrapper CLI is the runtime core of the product.
 
-It wraps every interactive shell session and exposes that live session over a
-local WebSocket endpoint so other clients can attach. It can also publish a
-shared session through the relay for remote viewers, with a default direct
-WebRTC **P2P fast path** for lower latency (see
+It wraps a shell or command (`wrapper share` / `wrapper run`) and exposes that
+live session over a local WebSocket endpoint so other clients can attach.
+`wrapper install` is optional: it patches your shell config so every new
+terminal is wrapped. Shared sessions can reach remote viewers over the relay,
+with a default direct WebRTC **P2P fast path** for lower latency (see
 [`transport/README.md`](./transport/README.md)).
 
 This README is a technical walkthrough so you can understand the system while
@@ -52,7 +53,7 @@ sequenceDiagram
   participant ws as LocalWsServer
   participant viewer as wrapper_attach
 
-  user->>host: start shell via rc hook
+  user->>host: start shell via wrapper install
   host->>pty: spawn inner shell
   host->>ws: bind 127.0.0.1:port
   host->>host: register sessions.json
@@ -79,17 +80,16 @@ sequenceDiagram
 5. Starts in-process attach bridge (`client/attach-client.ts`) so the current
    terminal stays interactive.
 6. Installs signal handlers and deterministic shutdown.
-7. If authenticated, syncs session lifecycle to Convex:
-   - host start -> `session:open`
-   - periodic tick -> `session:heartbeat`
-   - shutdown -> `session:close`
-8. On `share`, it issues a relay host ticket and starts a relay bridge.
-9. It keeps a non-disruptive session HUD in the terminal title and reveals the
+7. Unshared hosts send nothing to Convex. On share:
+   - `session:open` then heartbeat
+   - relay host ticket and bridge
+   - unshare/shutdown -> `session:close`
+8. It keeps a non-disruptive session HUD in the terminal title and reveals the
    context-specific controls when `Ctrl+\` is armed.
 
 Important safety guards:
 
-- `WRAPPER_WRAPPED=1` prevents recursive hook execution in inner shell.
+- `WRAPPER_WRAPPED=1` prevents recursive wrap in the inner shell.
 - `WRAPPER_NESTING_GUARD=1` kills accidental nested `shell-host` loops.
 
 ## How `attach` works
@@ -97,7 +97,8 @@ Important safety guards:
 `commands/attach.ts` does:
 
 1. Resolve target session by `--id`, `--port`, or picker from registry.
-2. Local path: run `session:authorizeAttach`, then connect to `ws://127.0.0.1:<port>`.
+2. Local path: connect to `ws://127.0.0.1:<port>` with the registry token.
+   Convex is not required for unshared local attach.
 3. Relay path (`--relay` or no local match for `--id`): issue
    `relay:issueViewerTicket`. The owner proceeds directly; a non-owner is
    prompted for the share code without echoing it or placing it in shell history.
@@ -170,8 +171,9 @@ Sharing is capability-based, so only people you explicitly invite can join:
 
 Behaviors to know once viewers join:
 
-- **Shared control:** every connected viewer can type into the same shell. This
-  is intended for pair-prompting. There is no watch-only viewer mode yet.
+- **Watch by default:** people who join with the share code see the screen and
+  cannot type unless you press `Ctrl+\` `w` or started with `--writable`. You
+  always type, including from your phone.
 - **Multiple viewers:** many viewers can attach to one session at once; host
   output is broadcast to all of them (and fanned out over each P2P channel).
 - **Consensus resize:** the terminal is sized to the smallest connected viewer,
@@ -195,31 +197,14 @@ runs for hours does not start failing its heartbeats.
 
 ## Commands
 
-### Install and hook management
-
-```bash
-wrapper install
-wrapper install --all
-wrapper install --shell=zsh,bash
-wrapper uninstall
-wrapper init <shell>
-```
-
-`install` writes a managed rc block:
-
-```sh
-if [ -z "$WRAPPER_WRAPPED" ] && [ -z "$WRAPPER_DISABLE" ]; then
-  exec wrapper shell-host
-fi
-```
-
 ### Daily usage
 
 ```bash
 wrapper auth login
-wrapper auth whoami
-wrapper auth logout
+wrapper share
+wrapper run -- claude
 wrapper status
+wrapper notify
 wrapper attach
 wrapper attach --id <sessionId>
 wrapper attach --port <port>
@@ -227,6 +212,17 @@ wrapper attach --relay --id <sessionId>
 # Non-interactive automation only:
 wrapper attach --relay --id <sessionId> --code "$WRAPPER_SHARE_CODE"
 wrapper logs --follow
+```
+
+### Optional: wrap every new terminal
+
+```bash
+wrapper install --dry-run
+wrapper install
+wrapper install --all
+wrapper install --shell=zsh,bash
+wrapper uninstall
+wrapper init <shell>
 ```
 
 ### Internal
@@ -258,13 +254,14 @@ own OSC title, Wrapper repaints the session HUD immediately afterward. Set
 
 Inside host shell:
 
-| Keys              | Action                    |
-| ----------------- | ------------------------- |
-| `Ctrl+\` `s`      | share + print share code  |
-| `Ctrl+\` `u`      | unshare + revoke access   |
-| `Ctrl+\` `?`      | status overlay            |
-| `Ctrl+\` `Ctrl+\` | send literal control byte |
-| `Ctrl+\` `Esc`    | cancel prefix mode        |
+| Keys              | Action                     |
+| ----------------- | -------------------------- |
+| `Ctrl+\` `s`      | share + print share code   |
+| `Ctrl+\` `u`      | unshare + revoke access    |
+| `Ctrl+\` `w`      | allow or deny guest typing |
+| `Ctrl+\` `?`      | status overlay             |
+| `Ctrl+\` `Ctrl+\` | send literal control byte  |
+| `Ctrl+\` `Esc`    | cancel prefix mode         |
 
 Inside attach viewer:
 
@@ -297,7 +294,7 @@ share-code prompt.
 - `wrapper logs --follow`
 - verify session registry exists and includes live entry
 - verify local port is reachable on `127.0.0.1`
-- re-check rc hook installation is single and not duplicated
+- re-check wrapper install is single and not duplicated
 
 ## Environment variables
 
@@ -316,7 +313,7 @@ share-code prompt.
 | `WRAPPER_PREFIX`        | in-session prefix (`ctrl+\`, `ctrl+g`)       | `Ctrl+\`                                 |
 | `WRAPPER_P2P`           | WebRTC P2P fast path; `0/false/off` opts out | on (relay is the fallback)               |
 | `WRAPPER_CONVEX_URL`    | Convex deployment URL for backend            | prod deployment; dev must set it         |
-| `WRAPPER_DISABLE`       | disable hook in one terminal                 | unset                                    |
+| `WRAPPER_DISABLE`       | skip wrap in one terminal                    | unset                                    |
 | `WRAPPER_WRAPPED`       | set by `shell-host` in inner shell           | unset                                    |
 
 `NODE_ENV=development` redirects state into `wrapper-dev`, uses localhost defaults, and

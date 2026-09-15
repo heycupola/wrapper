@@ -19,8 +19,8 @@ guide. The public App Store listing is not available yet.
 The app requires iOS or iPadOS 18 or later and a shared host session.
 
 <Warning>
-  Every connected viewer can read terminal output and send input. Use a dedicated host for
-  demonstrations and never share a session containing production credentials.
+  People you invite see the screen. They cannot type unless the host allows it. Use a dedicated host
+  for demonstrations and never share a session containing production credentials.
 </Warning>
 
 ## Requirements
@@ -29,19 +29,18 @@ The app requires iOS or iPadOS 18 or later and a shared host session.
 - a Wrapper account
 - the Wrapper CLI installed on a Mac or Linux host
 - an active wrapped shell
-- Pro, to attach from another device
+- Pro ($99/year or $15/month), to attach from another device
 
-See [Installation](/guides/installation) and
-[Authentication](/guides/auth) before continuing.
+See [Installation](/guides/installation),
+[Authentication](/guides/auth), and [Pricing](/reference/pricing) before continuing.
 
 ## Prepare the desktop host
 
-Sign in and start a wrapped shell:
+Sign in and share a session (does not patch your shell config):
 
 ```bash
 wrapper auth login
-wrapper install
-# Open a new shell after installation.
+wrapper share
 wrapper status
 ```
 
@@ -50,9 +49,9 @@ session ID and share code. Unshare at any time with `Ctrl+\` and then `u`.
 
 ## Sign in on mobile
 
-1. Open Wrapper and choose **Sign in**.
-2. Complete the browser-based device approval.
-3. Return to Wrapper after approval.
+1. Open Wrapper and choose **Continue securely**.
+2. Confirm the code on the wait screen, then open the approval page.
+3. Sign in if needed, approve the device, and return to Wrapper.
 4. Pull to refresh if the session list was already open.
 
 Authentication credentials are stored in Keychain on physical devices. The app
@@ -117,6 +116,9 @@ but the relay processes terminal frames after TLS termination. See
 Terminal content is covered when the app is inactive or captured. Returning
 after a longer background interruption requires Face ID, Touch ID, or the device
 passcode. Canceling authentication keeps the terminal locked.
+
+Locking or backgrounding the app must not crash the process. The relay or P2P
+link may drop; returning reconnects or asks you to open the session again.
 
 If device-owner authentication is unavailable, Wrapper keeps content covered
 and offers safe sign-out rather than revealing the terminal.

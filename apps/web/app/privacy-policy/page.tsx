@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalPage
       title="Privacy Policy"
-      lastUpdated="2026-09-08"
+      lastUpdated="2026-09-11"
       introduction="Wrapper is a remote terminal sharing service operated by Cupola Labs, LLC. Your terminal stays on your machine until you explicitly share it. This policy explains the metadata Wrapper stores, how terminal traffic moves between peers, which providers help us operate the service, and the controls available to you."
     >
       <LegalSection title="Information we collect">
@@ -32,10 +32,11 @@ export default function PrivacyPolicyPage() {
 
         <h3>Session metadata</h3>
         <p>
-          Convex stores the session identifier, account owner, shell name, working directory,
-          process and port metadata, sharing and relay state, timestamps, and close reason. Share
-          codes and relay tickets are stored only as cryptographic hashes. Session metadata may be
-          sensitive, even though it is not terminal output.
+          Convex stores session metadata only after you share a session: identifier, account owner,
+          shell name, working directory, process and port metadata, sharing and relay state,
+          timestamps, and close reason. Unshared hosts send nothing to Convex. Share codes and relay
+          tickets are stored only as cryptographic hashes. Session metadata may be sensitive, even
+          though it is not terminal output.
         </p>
 
         <h3>Terminal content</h3>
@@ -73,10 +74,20 @@ export default function PrivacyPolicyPage() {
           <li>You must explicitly share a session before a remote viewer can join.</li>
           <li>Your own authenticated devices may join your sessions without a share code.</li>
           <li>Another user needs the session id and the share code supplied by you.</li>
-          <li>Every accepted viewer can read output and send input to the shared shell.</li>
+          <li>
+            People you invite can read output. They cannot type unless you allow it. You always can.
+          </li>
           <li>Unsharing closes the host relay bridge and revokes unused viewer tickets.</li>
           <li>Direct P2P connections disclose each peer&apos;s IP address to the other peer.</li>
         </ul>
+      </LegalSection>
+
+      <LegalSection title="Attention alerts">
+        <p>
+          If you allow notifications, Wrapper can ping your phone when a shared session needs you.
+          The alert names the session. It does not include terminal output, commands, paths, or
+          credentials.
+        </p>
       </LegalSection>
 
       <LegalSection title="How we use information">

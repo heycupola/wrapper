@@ -29,7 +29,7 @@ export default function DashboardDataPage() {
           <ul className="dashboardFeatureList">
             <li>Profile and authentication metadata</li>
             <li>Onboarding progress and optional survey context</li>
-            <li>Host-session metadata required to operate active sessions</li>
+            <li>Host-session metadata for sessions you have explicitly shared</li>
             <li>Billing records managed by Autumn and Stripe</li>
           </ul>
         </section>

@@ -26,19 +26,6 @@ import { installShutdownHandlers } from "../util/signals";
 
 const log = createLogger("attach");
 
-type AuthorizeAttachArgs = {
-  sessionId: string;
-};
-
-type AuthorizeAttachResponse = {
-  ok: boolean;
-  sessionId: string;
-  port?: number;
-  shared: boolean;
-  isOwner: boolean;
-  updatedAt: number;
-};
-
 type IssueViewerTicketArgs = {
   sessionId: string;
   code?: string;
@@ -47,13 +34,10 @@ type IssueViewerTicketArgs = {
 type IssueViewerTicketResponse = {
   ticket: string;
   expiresAt: number;
+  canInput?: boolean;
+  isOwner?: boolean;
 };
 
-const authorizeAttachRef = makeFunctionReference<
-  "query",
-  AuthorizeAttachArgs,
-  AuthorizeAttachResponse
->("session:authorizeAttach");
 const issueViewerRelayTicketRef = makeFunctionReference<
   "action",
   IssueViewerTicketArgs,
@@ -89,13 +73,14 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
 
   const target = await resolveTarget(opts);
   if (!target) process.exit(2);
-  const url = await resolveAttachUrl({
+  const urlResult = await resolveAttachUrl({
     host,
     target,
     preferRelay: Boolean(opts.relay),
     code: opts.code,
   });
-  if (!url) process.exit(1);
+  if (!urlResult) process.exit(1);
+  const { url, canInput: ticketCanInput } = urlResult;
   // Relay URLs carry a single-use join ticket, and local URLs carry the loopback
   // token, in the query string. Redact both so no credential lands in the log
   // file or the terminal scrollback.
@@ -118,6 +103,7 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     return transportStatus;
   };
 
+  let viewerCanInput = ticketCanInput;
   const paintViewerTitle = (armed = false): void => {
     if (!env.hudEnabled) return;
     setTitle(
@@ -126,6 +112,7 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
         sessionTag,
         transport: hudTransport(),
         armed,
+        guestAccess: usingRelay ? (viewerCanInput ? "rw" : "view") : undefined,
       }),
     );
   };
@@ -162,6 +149,7 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
         break;
       case "share":
       case "unshare":
+      case "typing":
         // Viewer cannot publish a session it doesn't own. Bell-only
         // hint so the user knows the keystroke landed somewhere.
         inlineMessage("only the session host can share/unshare");
@@ -196,6 +184,11 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
     connectRetryDelayMs: 100,
     interceptStdin: (chunk) => prefixFilter.process(chunk),
     p2p: env.p2pEnabled && usingRelay ? { sessionId: target.id } : undefined,
+    canInput: ticketCanInput,
+    onCanInputChange: (next) => {
+      viewerCanInput = next;
+      paintViewerTitle();
+    },
     onTransportChange: (status) => {
       transportStatus = status;
       paintViewerTitle();
@@ -261,7 +254,7 @@ async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null>
   const sessions = listSessions();
   if (sessions.length === 0) {
     process.stderr.write(
-      "[wrapper] no live sessions. Open a new terminal or run `wrapper shell-host`.\n",
+      "[wrapper] no live sessions. Run `wrapper share` or `wrapper run -- <cmd>`.\n",
     );
     return null;
   }
@@ -311,36 +304,16 @@ function shortenHome(path: string): string {
 async function ensureAttachAllowed(target: TargetSession): Promise<boolean> {
   if (!target.local || target.port === undefined) return false;
 
-  const backend = await resolveAuthedConvexClient();
-  // No backend configured: nothing to authorize against (pure local dev).
-  if (backend.status === "unconfigured") return true;
-  if (backend.status === "missing_auth") {
-    process.stderr.write("[wrapper] backend auth required. Run `wrapper auth login` first.\n");
-    return false;
-  }
-  if (backend.status === "auth_error") {
-    process.stderr.write(`[wrapper] backend auth failed: ${backend.error.message}\n`);
-    return false;
-  }
-
-  // A backend is configured but we couldn't resolve a session id (e.g. attach
-  // by an unknown port). We cannot verify ownership/sharing, so refuse rather
-  // than silently granting access.
-  if (target.id === "<unknown>") {
+  // Local attach is gated by the loopback token in sessions.json. Convex is
+  // not contacted until a session is shared, so unshared hosts have no row.
+  if (target.id === "<unknown>" && !target.localToken) {
     process.stderr.write(
-      "[wrapper] cannot authorize attach by port alone. Re-run with `--id <sessionId>`.\n",
+      "[wrapper] cannot attach by port alone without a local token. Re-run with `--id <sessionId>`.\n",
     );
     return false;
   }
 
-  try {
-    await backend.client.query(authorizeAttachRef, { sessionId: target.id });
-    return true;
-  } catch (error) {
-    const message = normalizeAttachAuthorizationError(error);
-    process.stderr.write(`[wrapper] attach authorization failed: ${message}\n`);
-    return false;
-  }
+  return true;
 }
 
 async function resolveAttachUrl(input: {
@@ -348,12 +321,13 @@ async function resolveAttachUrl(input: {
   target: TargetSession;
   preferRelay: boolean;
   code?: string;
-}): Promise<string | null> {
+}): Promise<{ url: string; canInput: boolean } | null> {
   if (!input.preferRelay && input.target.local && input.target.port !== undefined) {
     const allowed = await ensureAttachAllowed(input.target);
     if (!allowed) return null;
     const base = `ws://${input.host}:${input.target.port}`;
-    return input.target.localToken ? `${base}?token=${input.target.localToken}` : base;
+    const url = input.target.localToken ? `${base}?token=${input.target.localToken}` : base;
+    return { url, canInput: true };
   }
 
   if (input.target.id === "<unknown>") {
@@ -363,7 +337,10 @@ async function resolveAttachUrl(input: {
   return await resolveRelayAttachUrl(input.target.id, input.code);
 }
 
-async function resolveRelayAttachUrl(sessionId: string, code?: string): Promise<string | null> {
+async function resolveRelayAttachUrl(
+  sessionId: string,
+  code?: string,
+): Promise<{ url: string; canInput: boolean } | null> {
   const backend = await resolveAuthedConvexClient();
   if (backend.status === "unconfigured") {
     process.stderr.write("[wrapper] relay attach requires WRAPPER_CONVEX_URL configuration.\n");
@@ -384,7 +361,10 @@ async function resolveRelayAttachUrl(sessionId: string, code?: string): Promise<
       sessionId,
       code: shareCode,
     });
-    return buildRelayWsUrl(env.relayUrl, issued.ticket);
+    return {
+      url: buildRelayWsUrl(env.relayUrl, issued.ticket),
+      canInput: issued.canInput !== false,
+    };
   } catch (initialError) {
     let failure: unknown = initialError;
     const errorCode = extractErrorCode(
@@ -407,7 +387,10 @@ async function resolveRelayAttachUrl(sessionId: string, code?: string): Promise<
           sessionId,
           code: shareCode,
         });
-        return buildRelayWsUrl(env.relayUrl, issued.ticket);
+        return {
+          url: buildRelayWsUrl(env.relayUrl, issued.ticket),
+          canInput: issued.canInput !== false,
+        };
       } catch (retryError) {
         failure = retryError;
       }

@@ -20,6 +20,12 @@ export interface AttachClientOptions {
   interceptStdin?: (chunk: string) => string | null;
   /** Viewer P2P: negotiate a direct data channel for this relay session. */
   p2p?: { sessionId: SessionId };
+  /**
+   * Whether this viewer may type. Local attach defaults to true. Relay attach
+   * starts from the ticket and is updated by `viewer.caps`.
+   */
+  canInput?: boolean;
+  onCanInputChange?: (canInput: boolean) => void;
   /** Reports the currently active data path for HUD/status feedback. */
   onTransportChange?: (status: AttachTransportStatus) => void;
   /** Called after remote output writes an OSC window-title sequence. */
@@ -72,6 +78,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
   let dataTransport: Transport | null = null;
   let negotiation: Negotiation | null = null;
   let transportStatus: AttachTransportStatus = "connecting";
+  let canInput = opts.canInput ?? true;
 
   const reportTransport = (status: AttachTransportStatus): void => {
     if (transportStatus === status) return;
@@ -113,6 +120,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
     // Optional prefix-interceptor hook (used by shell-host).
     const passthrough = opts.interceptStdin ? opts.interceptStdin(cleaned) : cleaned;
     if (passthrough === null || passthrough.length === 0) return;
+    if (!canInput) return;
     safeSend({ type: "input", sessionId, data: passthrough });
   };
 
@@ -265,6 +273,13 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
       case "error":
         log.warn("host error", { code: msg.code, message: msg.message });
         break;
+      case "viewer.caps":
+        canInput = msg.canInput;
+        opts.onCanInputChange?.(canInput);
+        if (!canInput) {
+          log.info("this viewer is watch-only");
+        }
+        break;
       default:
         break;
     }
@@ -342,7 +357,7 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
       return finalize();
     },
     forwardInput: (data: string): void => {
-      if (!sessionId) return;
+      if (!sessionId || !canInput) return;
       safeSend({ type: "input", sessionId, data });
     },
   };

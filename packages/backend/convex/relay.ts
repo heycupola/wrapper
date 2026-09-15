@@ -28,7 +28,7 @@ const recordViewerTicketAttemptRef = makeFunctionReference<
 const issueViewerTicketInternalRef = makeFunctionReference<
   "mutation",
   { sessionId: string; userId: string; code?: string },
-  { ticket: string; expiresAt: number }
+  { ticket: string; expiresAt: number; canInput: boolean; isOwner: boolean }
 >("relay:issueViewerTicketInternal");
 
 export const issueHostTicket = protectedAction({
@@ -192,12 +192,16 @@ export const issueViewerTicketInternal = internalMutation({
       }
     }
 
-    return await issueTicket(ctx, {
-      sessionId: args.sessionId,
-      userId: args.userId,
-      role: "viewer",
-      ttlMs: RELAY_TICKET.viewerTtlMs,
-    });
+    return {
+      ...(await issueTicket(ctx, {
+        sessionId: args.sessionId,
+        userId: args.userId,
+        role: "viewer",
+        ttlMs: RELAY_TICKET.viewerTtlMs,
+      })),
+      canInput: isOwner || session.guestInput === true,
+      isOwner,
+    };
   },
 });
 
@@ -253,11 +257,15 @@ export const consumeTicket = publicMutation({
     }
 
     await ctx.db.patch(row._id, { usedAt: now });
+    const isOwner = session.ownerUserId === row.userId;
+    const canInput = row.role === "host" || isOwner || session.guestInput === true;
     return {
       sessionId: row.sessionId,
       role: row.role,
       userId: row.userId,
       expiresAt: row.expiresAt,
+      canInput,
+      isOwner,
     };
   },
 });

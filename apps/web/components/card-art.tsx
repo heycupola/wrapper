@@ -52,6 +52,33 @@ export function LoopbackArt() {
   );
 }
 
+export function WatchArt() {
+  return (
+    <svg className="cardArt" viewBox="0 0 200 100" data-live aria-hidden="true">
+      <g filter="url(#artDrop)">
+        <rect className="artFace" x="22" y="18" width="88" height="64" rx="10" />
+        <rect className="artFace" x="128" y="14" width="44" height="72" rx="10" />
+      </g>
+      <path className="artHair" d="M22 34h88" />
+      <rect className="artFace artPhoneNotch" x="144" y="18" width="12" height="2.6" rx="1.3" />
+      <text className="artMono" x="32" y="52">
+        bun test
+      </text>
+      <text className="artMono artOutput" x="32" y="68">
+        4 pass
+      </text>
+      <text className="artMono artOutput" x="140" y="48">
+        4 pass
+      </text>
+      <path className="artHair" d="M140 72h20" />
+      <g className="artBlocked">
+        <path d="M136 82h28" />
+        <path d="m164 76 8 8M172 76l-8 8" />
+      </g>
+    </svg>
+  );
+}
+
 export function ShareArt() {
   return (
     <svg className="cardArt" viewBox="0 0 200 100" data-live aria-hidden="true">

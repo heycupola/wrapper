@@ -5,16 +5,16 @@ description: "How CLI, Convex, relay, web, and protocol fit together."
 
 ## System components
 
-| Component           | Role                                                                    |
-| ------------------- | ----------------------------------------------------------------------- |
-| `apps/cli`          | Host shell, local attach, auth, relay bridge, WebRTC transport          |
-| `packages/backend`  | Convex auth, session lifecycle, tickets, onboarding, billing            |
-| `apps/relay`        | Authenticated WebSocket router and WebRTC signaling passthrough         |
-| `apps/web`          | Landing, device-login approval, onboarding, Pro checkout, install proxy |
-| `packages/protocol` | Shared JSON message schema and codec (`protocolVersion: 1`)             |
-| `packages/terminal` | Bun-native PTY layer via `wrapper-pty-helper`                           |
-| `packages/logger`   | Logging and opt-in telemetry                                            |
-| `apps/mobile`       | Native iPhone/iPad viewer; TestFlight public beta                       |
+| Component           | Role                                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------------- |
+| `apps/cli`          | Host shell, local attach, auth, relay bridge, WebRTC transport                           |
+| `packages/backend`  | Convex auth, session lifecycle, tickets, onboarding, billing                             |
+| `apps/relay`        | Authenticated WebSocket router and WebRTC signaling passthrough                          |
+| `apps/web`          | Landing, device-login approval, onboarding, Pro checkout (yearly default), install proxy |
+| `packages/protocol` | Shared JSON message schema and codec (`protocolVersion: 1`)                              |
+| `packages/terminal` | Bun-native PTY layer via `wrapper-pty-helper`                                            |
+| `packages/logger`   | Logging and opt-in telemetry                                                             |
+| `apps/mobile`       | Native iPhone/iPad viewer; TestFlight public beta                                        |
 
 ## High-level flow
 
@@ -34,13 +34,13 @@ flowchart LR
 
 ## Session lifecycle
 
-1. Rc hook starts `wrapper shell-host`.
+1. `wrapper share` or `wrapper run` starts `wrapper shell-host` (`wrapper install` is optional).
 2. Host creates a PTY, binds loopback WebSocket + token, and registers locally.
-3. If authenticated, host opens a Convex session and sends heartbeats.
-4. Local viewers attach with registry token authorization.
-5. Share issues a hashed share code plus host relay ticket.
+3. Unshared hosts send nothing to Convex.
+4. Local viewers attach with the registry token. No Convex row is required.
+5. Share opens a Convex session, issues a hashed share code plus host relay ticket, and starts heartbeats.
 6. Viewers request viewer tickets, connect to the relay, and optionally open P2P.
-7. Unshare or host exit revokes tickets and closes remote viewers.
+7. Unshare or host exit revokes tickets, closes the Convex row, and closes remote viewers.
 
 The backend expires stale sessions that miss heartbeats.
 
@@ -60,6 +60,10 @@ Wire messages are JSON validated with Zod in `@repo/protocol`. Common types:
 - `attach` / `detach`
 - `error`
 - `signal` (WebRTC SDP and ICE)
+- `viewer.caps` (whether that viewer may type)
+
+The relay stamps `from` on `input` and drops guest typing unless `canInput` is
+true. The host enforces the same rule on P2P input.
 
 Frames have explicit size caps (wire and terminal payload limits) before parse
 and fan-out.
@@ -70,7 +74,7 @@ and fan-out.
 - The owner joins a shared session without a share code.
 - A non-owner needs the session id, share code, and a valid ticket.
 - Access failures use a uniform denial shape.
-- Every accepted viewer can read output and send input.
+- People you invite see output. They cannot type unless the host allows it.
 
-See [Security and privacy](/configuration/security) and
-[Transports](/reference/transports).
+See [Security and privacy](/configuration/security),
+[Transports](/reference/transports), and [Pricing](/reference/pricing).

@@ -253,8 +253,24 @@
   padding-inline: 16px;
 }
 
-.dashboardSignIn .socialSignIn {
+.dashboardSignIn .socialSignIn,
+.authCard .socialSignIn {
   width: 100%;
+}
+
+.lastUsedLoginBadge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin-left: auto;
+  padding: 5px 8px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .dashboardPanel {
@@ -721,9 +737,8 @@
   gap: 16px;
 }
 
-/* Plans are one short row each, the way Cursor's dashboard lists them: name
-   and price on the first line, a one-sentence summary, and a "What's
-   included" trigger whose tooltip carries the full list. */
+/* Billing cards match landing: name and price, a one-sentence summary, then
+   the feature list. Unknown terms use the same hover/pin tooltip as landing. */
 .dashboardBillingGrid .dashboardPlanCard {
   gap: 10px;
   padding: 18px 20px;
@@ -735,6 +750,43 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.dashboardPlanOffer {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  flex: none;
+}
+
+.dashboardPlanOffer[data-interval] > div {
+  display: grid;
+  justify-items: end;
+  grid-template-rows: auto 1.35em;
+  gap: 2px;
+}
+
+.dashboardPlanRate {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboardPlanRate strong {
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  font-weight: 590;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.dashboardPlanRate span {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .dashboardPlanName {
@@ -772,6 +824,39 @@
   letter-spacing: -0.015em;
 }
 
+.dashboardPlanFeatures {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboardPlanFeatures li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 8px;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  letter-spacing: -0.015em;
+}
+
+.dashboardPlanFeatures li > * {
+  min-width: 0;
+}
+
+.dashboardPlanFeatures li::before {
+  color: var(--color-text-muted);
+  content: "✓";
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.dashboardProPanel .dashboardPlanFeatures li::before {
+  color: var(--color-accent-text);
+}
+
 .dashboardPlanFoot {
   display: flex;
   flex-wrap: wrap;
@@ -781,63 +866,62 @@
   margin-top: 2px;
 }
 
-.dashboardPlanInfo {
-  position: relative;
+.dashboardPlanFoot .iosViewerCtaWrap {
   display: inline-flex;
 }
 
-.dashboardPlanInfoButton {
-  display: inline-flex;
-  min-height: 28px;
-  align-items: center;
-  gap: 6px;
-  padding: 0 8px 0 6px;
-  margin-left: -6px;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--color-text-muted);
-  font: inherit;
+.dashboardPlanFoot .iosViewerCtaText,
+.dashboardPlanFeatures .iosViewerCtaText {
+  min-height: 24px;
   font-size: var(--text-sm);
-  font-weight: 510;
-  letter-spacing: -0.01em;
-  transition:
-    color var(--motion-fast) var(--ease-out-quint),
-    background-color var(--motion-fast) var(--ease-out-quint);
 }
 
-.dashboardPlanInfoButton svg {
-  width: 14px;
-  height: 14px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.5;
-  stroke-linecap: round;
+.planFeatureText {
+  min-width: 0;
 }
 
-.dashboardPlanInfoButton:hover,
-.dashboardPlanInfo[data-pinned] .dashboardPlanInfoButton {
-  background: color-mix(in srgb, var(--color-text) 6%, transparent);
-  color: var(--color-text);
+.termTip {
+  display: inline;
 }
 
-.dashboardPlanInfoButton:focus-visible {
+.termTipButton {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.termTipButton:hover,
+.termTip[data-pinned] .termTipButton {
+  text-decoration-color: currentColor;
+}
+
+.termTipButton:focus-visible {
   outline: 2px solid var(--color-accent-pop);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
-.dashboardPlanTooltip {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  z-index: var(--z-tooltip);
-  width: max-content;
-  max-width: min(300px, 80vw);
-  padding: 10px 12px 10px 12px;
+.termTipBubble {
+  position: fixed;
+  z-index: calc(var(--z-header) + 1);
+  margin: 0;
+  padding: 10px 12px;
   border-radius: 10px;
   background: var(--color-text);
   color: var(--color-bg);
   font-size: var(--text-sm);
+  font-weight: 400;
   line-height: var(--leading-body);
   letter-spacing: -0.01em;
   box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.35);
@@ -851,46 +935,21 @@
   pointer-events: none;
 }
 
-.dashboardPlanTooltip ul {
-  display: grid;
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.dashboardPlanTooltip li {
-  display: grid;
-  grid-template-columns: 12px minmax(0, 1fr);
-  gap: 8px;
-}
-
-.dashboardPlanTooltip li::before {
-  color: color-mix(in srgb, var(--color-bg) 70%, transparent);
-  content: "✓";
-  font-weight: 700;
-}
-
-.dashboardPlanInfo:hover .dashboardPlanTooltip,
-.dashboardPlanInfo:focus-within .dashboardPlanTooltip,
-.dashboardPlanInfo[data-pinned] .dashboardPlanTooltip {
+.termTipBubble[data-visible] {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
   transition-delay: 0s;
-}
-
-.dashboardPlanInfo[data-pinned] .dashboardPlanTooltip {
   pointer-events: auto;
 }
 
-.dashboardPlanFoot .iosViewerCtaWrap {
-  display: inline-flex;
-}
-
-.dashboardPlanFoot .iosViewerCtaText {
-  min-height: 24px;
-  font-size: var(--text-sm);
+@media (prefers-reduced-motion: reduce) {
+  .termTipBubble {
+    transform: none;
+    transition:
+      opacity var(--motion-fast) linear,
+      visibility 0s linear var(--motion-fast);
+  }
 }
 
 .dashboardProPanel {
@@ -1222,6 +1281,15 @@
   flex-wrap: wrap;
 }
 
+.authCard .authActions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.authCard .authActions .btn {
+  width: 100%;
+}
+
 .authInfo,
 .authSuccess,
 .authError {
@@ -1252,9 +1320,10 @@
 
 .deviceRequestHeader {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 8px 12px;
 }
 
 .deviceRequestHeader strong {
@@ -1264,16 +1333,18 @@
 
 .deviceStatus {
   display: inline-flex;
-  min-height: 24px;
+  flex: none;
+  min-height: 28px;
   align-items: center;
-  padding: 0 9px;
+  padding: 4px 10px;
   border-radius: var(--radius-pill);
   background: var(--color-accent-soft);
   color: var(--color-accent-text);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.6875rem;
+  font-weight: 590;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .deviceStatus[data-status="approved"] {

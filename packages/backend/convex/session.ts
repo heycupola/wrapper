@@ -186,7 +186,9 @@ export const listActive = protectedQuery({
       .withIndex("by_owner_status", (q) => q.eq("ownerUserId", ctx.userId).eq("status", "active"))
       .collect();
 
-    return sessions.toSorted((a, b) => b.updatedAt - a.updatedAt);
+    return sessions
+      .filter((session) => session.shared === true)
+      .toSorted((a, b) => b.updatedAt - a.updatedAt);
   },
 });
 
@@ -226,11 +228,15 @@ export const authorizeAttach = protectedQuery({
  * the normalized code. A non-owner viewer must later present the matching code
  * to obtain a viewer ticket. Passing no code (or an empty string) stops sharing
  * and clears the stored hash, so any outstanding access is revoked immediately.
+ *
+ * `guestInput` is stored only while shared. Default is false: people who join
+ * with the code can watch, not type. The owner always types from any device.
  */
 export const setShareCode = protectedMutation({
   args: {
     sessionId: v.string(),
     code: v.optional(v.string()),
+    guestInput: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const session = await ctx.db
@@ -259,6 +265,7 @@ export const setShareCode = protectedMutation({
       await ctx.db.patch(session._id, {
         shared: true,
         shareCodeHash: await hashShareCode(code),
+        guestInput: args.guestInput === true,
         updatedAt: now,
       });
       return { ok: true, shared: true };
@@ -267,9 +274,55 @@ export const setShareCode = protectedMutation({
     await ctx.db.patch(session._id, {
       shared: false,
       shareCodeHash: undefined,
+      guestInput: undefined,
       updatedAt: now,
     });
     return { ok: true, shared: false };
+  },
+});
+
+/**
+ * Owner-only: allow or deny typing from people who joined with the share code.
+ * Does not affect the owner, including the owner's phone.
+ */
+export const setGuestInput = protectedMutation({
+  args: {
+    sessionId: v.string(),
+    guestInput: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const session = await ctx.db
+      .query("hostSession")
+      .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
+      .first();
+
+    if (!session) {
+      throw createError({
+        code: ErrorCode.RESOURCE_NOT_FOUND,
+        message: "Session not found",
+        severity: ErrorSeverity.Medium,
+      });
+    }
+    if (session.ownerUserId !== ctx.userId) {
+      throw createError({
+        code: ErrorCode.INSUFFICIENT_PERMISSION,
+        message: "You cannot change sharing for another user's session",
+        severity: ErrorSeverity.High,
+      });
+    }
+    if (!session.shared) {
+      throw createError({
+        code: ErrorCode.INVALID_OPERATION,
+        message: "Share the session before allowing others to type",
+        severity: ErrorSeverity.Low,
+      });
+    }
+
+    await ctx.db.patch(session._id, {
+      guestInput: args.guestInput,
+      updatedAt: Date.now(),
+    });
+    return { ok: true, guestInput: args.guestInput };
   },
 });
 

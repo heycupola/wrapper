@@ -20,14 +20,14 @@ ICE payloads (relayed host↔viewer) used to establish that direct path.
 
 ## Exports
 
-| Symbol                                                                                                                                                              | Where        | Notes                                 |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------- |
-| `WrapperMessage`, `WrapperMessageSchema`                                                                                                                            | `./messages` | The discriminated union               |
-| `InputMessage`, `OutputMessage`, `ResizeMessage`, `AttachMessage`, `DetachMessage`, `SessionOpenedMessage`, `SessionClosedMessage`, `ErrorMessage`, `SignalMessage` | `./messages` | Individual schemas + types            |
-| `SessionId`, `SessionStatus`, `TerminalSize`                                                                                                                        | `./session`  | Shared scalar types                   |
-| `parseMessage(raw)`, `encodeMessage(msg)`                                                                                                                           | `./codec`    | The only places JSON gets touched     |
-| `createSessionId()`                                                                                                                                                 | `./id`       | Crockford-like 12 char id, no I/L/O/U |
-| `PROTOCOL_VERSION`, payload limit constants                                                                                                                         | `./messages` | Mobile compatibility and DoS limits   |
+| Symbol                                                                                                                                                                                   | Where        | Notes                                 |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------- |
+| `WrapperMessage`, `WrapperMessageSchema`                                                                                                                                                 | `./messages` | The discriminated union               |
+| `InputMessage`, `OutputMessage`, `ResizeMessage`, `AttachMessage`, `DetachMessage`, `SessionOpenedMessage`, `SessionClosedMessage`, `ErrorMessage`, `SignalMessage`, `ViewerCapsMessage` | `./messages` | Individual schemas + types            |
+| `SessionId`, `SessionStatus`, `TerminalSize`                                                                                                                                             | `./session`  | Shared scalar types                   |
+| `parseMessage(raw)`, `encodeMessage(msg)`                                                                                                                                                | `./codec`    | The only places JSON gets touched     |
+| `createSessionId()`                                                                                                                                                                      | `./id`       | Crockford-like 12 char id, no I/L/O/U |
+| `PROTOCOL_VERSION`, payload limit constants                                                                                                                                              | `./messages` | Mobile compatibility and DoS limits   |
 
 ## Design notes
 
@@ -41,5 +41,5 @@ ICE payloads (relayed host↔viewer) used to establish that direct path.
   about a malformed payload without dropping the connection.
 - **Direction is documented in `messages.ts`.** Some messages are
   client→server (input/resize/attach/detach), others server→client (output,
-  session.opened, session.closed, error). Misdirected messages are silently
-  ignored by the receiver.
+  session.opened, session.closed, error, viewer.caps). Relays stamp `from` on
+  `input`. Misdirected messages are silently ignored by the receiver.

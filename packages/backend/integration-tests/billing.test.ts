@@ -95,6 +95,7 @@ describe("billing checkout entry point", () => {
     await expect(
       t.action(api.billing.createProCheckout, {
         successUrl: "https://www.wrapper.sh/onboarding?upgraded=1",
+        interval: "month",
       }),
     ).resolves.toEqual({
       checkoutUrl: "https://checkout.stripe.com/c/pay/cs_test_123",
@@ -118,7 +119,7 @@ describe("billing checkout entry point", () => {
     await t.action(api.billing.createProCheckout, {});
 
     expect(attach.mock.calls[0]?.[1]).toEqual({
-      productId: "pro",
+      productId: "pro_yearly",
       forceCheckout: true,
     });
   });

@@ -27,7 +27,7 @@ export interface PatchResult {
 }
 
 /**
- * Insert the wrapper hook into the user's rc file, making a one-time backup
+ * Insert the wrapper block into the user's shell config, making a one-time backup
  * the first time we touch it. The patch is idempotent: if the markers are
  * already present, we either no-op (`already-present`) or refresh the body
  * if it has drifted (`updated`).
@@ -68,7 +68,7 @@ export function unpatchRc(rcFile: string): boolean {
   return true;
 }
 
-function renderBlock(shell: SupportedShell): string {
+export function renderBlock(shell: SupportedShell): string {
   const initLine = renderInitLine(shell);
   return [MARKER_BEGIN, MARKER_PREAMBLE, initLine, MARKER_END].join("\n");
 }

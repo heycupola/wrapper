@@ -8,6 +8,7 @@ import { PtySession } from "../pty/session";
 import { startRelayHostBridge, type RelayHostBridge } from "../relay/host-bridge";
 import { registerSession, setSessionShared, unregisterSession } from "../registry/sessions";
 import { startLocalServer, type LocalServerHandle } from "../server/local";
+import { createDoorbellParser, scanDoorbell } from "../shell/doorbell";
 import { PrefixFilter, type PrefixCommand } from "../shell/prefix";
 import {
   resolveAuthedConvexClient,
@@ -39,7 +40,13 @@ function shellName(path: string): string {
 
 export interface ShellHostOptions {
   shell?: string;
+  /** Spawn this argv instead of an interactive shell. */
+  argv?: string[];
   port?: number;
+  /** After the host is up, share immediately (`wrapper share`). */
+  shareOnStart?: boolean;
+  /** When sharing, allow people who join with the code to type. Default: watch only. */
+  writableOnStart?: boolean;
 }
 
 const SIGINT_EXIT = 130;
@@ -103,14 +110,24 @@ const issueHostRelayTicketRef = makeFunctionReference<
 >("relay:issueHostTicket");
 const createProCheckoutRef = makeFunctionReference<
   "action",
-  { successUrl?: string },
+  { successUrl?: string; interval?: "month" | "year" },
   { checkoutUrl: string }
 >("billing:createProCheckout");
 const setShareCodeRef = makeFunctionReference<
   "mutation",
-  { sessionId: string; code?: string },
+  { sessionId: string; code?: string; guestInput?: boolean },
   { ok: boolean; shared: boolean }
 >("session:setShareCode");
+const setGuestInputRef = makeFunctionReference<
+  "mutation",
+  { sessionId: string; guestInput: boolean },
+  { ok: boolean; guestInput: boolean }
+>("session:setGuestInput");
+const reportAttentionRef = makeFunctionReference<
+  "mutation",
+  { sessionId: string; kind: "bell" | "manual" },
+  { ok: boolean; sent?: boolean }
+>("push:reportAttention");
 
 /** 256-bit hex secret gating connections to the local WebSocket server. */
 function createLocalToken(): string {
@@ -149,7 +166,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     });
     process.stderr.write(
       "wrapper: nested shell-host detected; aborting to avoid a fork bomb. " +
-        "Make sure your rc hook sets WRAPPER_WRAPPED=1 before exec.\n",
+        "Make sure wrapper install sets WRAPPER_WRAPPED=1 before exec.\n",
     );
     process.exit(2);
   }
@@ -160,6 +177,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
 
   const session = new PtySession({
     shell: opts.shell,
+    argv: opts.argv,
     size: initialSize,
     env: {
       WRAPPER_WRAPPED: "1",
@@ -198,7 +216,10 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     process.exit(1);
   }
 
-  const resolvedShell = opts.shell ?? process.env.SHELL ?? "/bin/bash";
+  const resolvedShell =
+    opts.argv && opts.argv.length > 0
+      ? opts.argv.join(" ")
+      : (opts.shell ?? process.env.SHELL ?? "/bin/bash");
 
   log.info("shell-host started", {
     sessionId,
@@ -220,29 +241,14 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   });
 
   const backend = await resolveAuthedConvexClient();
-  if (backend.status === "ready") {
-    try {
-      await backend.client.mutation(sessionOpenRef, {
-        sessionId,
-        shell: resolvedShell,
-        cwd: process.cwd(),
-        port: server.port,
-        hostPid: process.pid,
-        shared: false,
-      });
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      log.warn("failed to open backend session record", { error: err.message });
-    }
-  } else if (backend.status === "missing_auth") {
+  if (backend.status === "missing_auth") {
     log.debug("convex url configured but no auth token found; backend sync disabled");
   } else if (backend.status === "auth_error") {
     log.warn("backend auth failed; backend sync disabled", { error: backend.error.message });
   }
 
-  // Keep the short-lived Convex JWT fresh for the whole life of the host. Without
-  // this, a session that outlives the initial token starts failing every backend
-  // call (heartbeats, share, close) with an expired-token error.
+  // Keep the short-lived Convex JWT fresh so a later share still works. Tokens
+  // are not session metadata; cwd/shell/pid stay off Convex until share.
   let authRefresh: AuthAutoRefresh | null = null;
   if (backend.status === "ready") {
     authRefresh = startAuthAutoRefresh({
@@ -255,6 +261,9 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   }
 
   let shared = false;
+  /** Bumped on share, unshare, and shutdown so in-flight async work can bail. */
+  let shareOp = 0;
+  let shuttingDown = false;
   let shareCode: string | null = null;
   let relayBridge: RelayHostBridge | null = null;
   let relayConnected = false;
@@ -263,7 +272,35 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   // Guards against a second `share` press racing the in-flight relay setup
   // (we no longer optimistically flip `shared` to serve as that guard).
   let relayStarting = false;
+  let guestInputAllowed = Boolean(opts.writableOnStart);
+  let lastOwnerInputAt = 0;
+  let lastNotifyAt = 0;
+  const doorbell = createDoorbellParser();
   const sessionTag = sessionId.slice(0, 6);
+  const ATTENTION_DEBOUNCE_MS = 30_000;
+  const OWNER_INPUT_GRACE_MS = 5_000;
+
+  session.on("data", (chunk) => {
+    if (!env.notifyEnabled) return;
+    if (!scanDoorbell(chunk, doorbell)) return;
+    const now = Date.now();
+    if (now - lastOwnerInputAt < OWNER_INPUT_GRACE_MS) return;
+    if (now - lastNotifyAt < ATTENTION_DEBOUNCE_MS) return;
+    lastNotifyAt = now;
+    notifyOS("wrapper", `Session ${sessionTag} needs you.`);
+    if (backend.status !== "ready") return;
+    void backend.client
+      .mutation(reportAttentionRef, { sessionId, kind: "bell" })
+      .catch((error: unknown) => {
+        const err = error instanceof Error ? error : new Error(String(error));
+        log.debug("attention ping failed", { error: err.message });
+      });
+  });
+
+  function guestAccess(): "view" | "rw" | undefined {
+    if (!shared && !relayStarting) return undefined;
+    return guestInputAllowed ? "rw" : "view";
+  }
 
   function printShareInvite(attempt = 0): void {
     shareInviteTimer = null;
@@ -271,6 +308,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     if (session.isIdle) {
       inlineMessage(`share code: ${shareCode}`);
       inlineMessage(`others join with: wrapper attach --relay --id ${sessionId}`);
+      inlineMessage(
+        guestInputAllowed
+          ? "people you invite can type. Ctrl+\\ then w to make this watch-only"
+          : "people you invite can watch, not type. Ctrl+\\ then w to allow typing",
+      );
       return;
     }
     // Never put the capability in logs. If a TUI owns the terminal, wait until
@@ -282,25 +324,73 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shareInviteTimer = setTimeout(() => printShareInvite(attempt + 1), 500);
     shareInviteTimer.unref?.();
   }
-  const heartbeat = setInterval(() => {
-    if (backend.status !== "ready") return;
-    void backend.client
-      .mutation(sessionHeartbeatRef, {
+  let cloudOpened = false;
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
+
+  function startHeartbeat(): void {
+    if (heartbeat) return;
+    heartbeat = setInterval(() => {
+      if (backend.status !== "ready" || !cloudOpened) return;
+      void backend.client
+        .mutation(sessionHeartbeatRef, {
+          sessionId,
+          shared,
+          port: server.port,
+        })
+        .catch((error: unknown) => {
+          const err = error instanceof Error ? error : new Error(String(error));
+          if (/InvalidAuthHeader|expired|Unauthenticated/i.test(err.message)) {
+            void authRefresh?.refreshNow();
+          }
+          log.warn("session heartbeat failed", { error: err.message });
+        });
+    }, HEARTBEAT_INTERVAL_MS);
+    heartbeat.unref();
+  }
+
+  function stopHeartbeat(): void {
+    if (!heartbeat) return;
+    clearInterval(heartbeat);
+    heartbeat = null;
+  }
+
+  async function ensureCloudSession(): Promise<boolean> {
+    if (backend.status !== "ready") return false;
+    if (cloudOpened) return true;
+    try {
+      await backend.client.mutation(sessionOpenRef, {
         sessionId,
-        shared,
+        shell: resolvedShell,
+        cwd: process.cwd(),
         port: server.port,
-      })
-      .catch((error: unknown) => {
-        const err = error instanceof Error ? error : new Error(String(error));
-        // An expired JWT surfaces here first; kick a refresh so the next tick
-        // (and any share/close call) succeeds instead of looping on the error.
-        if (/InvalidAuthHeader|expired|Unauthenticated/i.test(err.message)) {
-          void authRefresh?.refreshNow();
-        }
-        log.warn("session heartbeat failed", { error: err.message });
+        hostPid: process.pid,
+        shared: false,
       });
-  }, HEARTBEAT_INTERVAL_MS);
-  heartbeat.unref();
+      cloudOpened = true;
+      startHeartbeat();
+      return true;
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      log.warn("failed to open backend session record", { error: err.message });
+      return false;
+    }
+  }
+
+  async function closeCloudSession(reason: string): Promise<void> {
+    if (!cloudOpened || backend.status !== "ready") {
+      cloudOpened = false;
+      stopHeartbeat();
+      return;
+    }
+    cloudOpened = false;
+    stopHeartbeat();
+    try {
+      await backend.client.mutation(sessionCloseRef, { sessionId, reason });
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      log.warn("failed to close backend session record", { error: err.message });
+    }
+  }
 
   function currentTransport(): SessionTransportStatus {
     if (relayStarting && !shared) return "sharing";
@@ -319,6 +409,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         sessionTag,
         transport: currentTransport(),
         p2pPeerCount,
+        guestAccess: guestAccess(),
       }),
     );
   }
@@ -341,14 +432,21 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     trackEvent("session_shared");
   }
 
+  function shareAbandoned(op: number): boolean {
+    return shuttingDown || op !== shareOp;
+  }
+
   const startRelayBridge = async (): Promise<void> => {
     // `relayStarting` is flipped by the share command before this runs, so a
     // second prefix+s cannot race the in-flight setup. Always clear it here.
+    const op = shareOp;
     try {
       if (relayBridge) return;
+      if (shareAbandoned(op)) return;
 
       if (backend.status !== "ready") {
         // Local-only share (no relay); allowed without a Pro plan.
+        if (shareAbandoned(op)) return;
         commitShared();
         announce(
           `wrapper • shared • ${sessionTag}`,
@@ -358,14 +456,34 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
       }
 
       paintRestingTitle();
+      const opened = await ensureCloudSession();
+      if (shareAbandoned(op)) {
+        if (shuttingDown) await closeCloudSession("shutdown");
+        return;
+      }
+      if (!opened) {
+        announce(
+          `wrapper • shared • ${sessionTag}`,
+          "session shared locally (relay unavailable: could not open backend session)",
+        );
+        commitShared();
+        return;
+      }
       const code = generateShareCode();
       try {
         // Persist the shared flag and the access-code hash before issuing the relay
         // ticket so viewer authorization is synchronized rather than racing the
         // periodic fire-and-forget heartbeat. Only the code hash is stored.
-        await backend.client.mutation(setShareCodeRef, { sessionId, code });
+        await backend.client.mutation(setShareCodeRef, {
+          sessionId,
+          code,
+          guestInput: guestInputAllowed,
+        });
+        if (shareAbandoned(op)) return;
         await backend.client.mutation(setRelayStateRef, { sessionId, relayState: "connecting" });
+        if (shareAbandoned(op)) return;
         const issued = await backend.client.action(issueHostRelayTicketRef, { sessionId });
+        if (shareAbandoned(op)) return;
         relayBridge = startRelayHostBridge({
           relayUrl: env.relayUrl,
           ticket: issued.ticket,
@@ -396,6 +514,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
               .catch(() => {});
           },
         });
+        if (shareAbandoned(op)) return;
         shareCode = code;
         commitShared();
         announce(`wrapper • shared • ${sessionTag}`, "session shared via relay");
@@ -418,6 +537,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
             detail: payload.message,
           });
           await backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
+          await closeCloudSession("pro_required");
           if (env.hudEnabled) setTitle("");
 
           const checkoutUrl = await fetchProCheckoutUrl(backend.client);
@@ -489,6 +609,8 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         // actually takes effect, so a denied relay share (e.g. no Pro plan)
         // never leaves the session marked as shared. Flip `relayStarting`
         // synchronously so a second prefix+s cannot race the in-flight setup.
+        // Bump `shareOp` so an in-flight unshare cannot close the new share.
+        shareOp += 1;
         relayStarting = true;
         paintRestingTitle();
         announce(`wrapper • sharing • ${sessionTag}`, "sharing…");
@@ -509,18 +631,48 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
         shareInviteTimer = null;
         setSessionShared(sessionId, false);
         trackEvent("session_unshared");
-        if (backend.status === "ready") {
-          // Clears both `shared` and the stored code hash, revoking any
-          // outstanding viewer access immediately.
-          void backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
-        }
-        void stopRelayBridge();
+        const unshareOp = ++shareOp;
+        void (async () => {
+          await stopRelayBridge();
+          if (unshareOp !== shareOp) return;
+          if (backend.status === "ready") {
+            await backend.client.mutation(setShareCodeRef, { sessionId }).catch(() => {});
+          }
+          if (unshareOp !== shareOp) return;
+          await closeCloudSession("unshared");
+        })();
         announce("", "session unshared");
+        break;
+      case "typing":
+        if (relayStarting) {
+          announce(`wrapper • sharing • ${sessionTag}`, "still sharing…");
+          return;
+        }
+        if (!shared) {
+          announce("", "share first, then allow typing");
+          return;
+        }
+        guestInputAllowed = !guestInputAllowed;
+        relayBridge?.setGuestInput(guestInputAllowed);
+        if (backend.status === "ready") {
+          void backend.client
+            .mutation(setGuestInputRef, { sessionId, guestInput: guestInputAllowed })
+            .catch((error: unknown) => {
+              const err = error instanceof Error ? error : new Error(String(error));
+              log.warn("failed to update guest typing", { error: err.message });
+            });
+        }
+        announce(
+          "",
+          guestInputAllowed
+            ? "people you invite can type"
+            : "people you invite can watch, not type",
+        );
         break;
       case "status":
         announce(
           shared ? `wrapper • shared • ${sessionTag}` : `wrapper • idle • ${sessionTag}`,
-          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : relayStarting ? "sharing" : "no"} transport=${currentTransport()}`,
+          `id=${sessionTag} port=${server.port} shared=${shared ? "yes" : relayStarting ? "sharing" : "no"} transport=${currentTransport()} typing=${guestInputAllowed ? "allowed" : "watch-only"}`,
         );
         break;
       case "detach":
@@ -532,7 +684,10 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   const prefixFilter = new PrefixFilter({
     prefix: prefix.byte,
     onCommand: handlePrefixCommand,
-    onForward: (data) => session.write(data),
+    onForward: (data) => {
+      lastOwnerInputAt = Date.now();
+      session.write(data);
+    },
     onArmedChange: (armed) => {
       if (!env.hudEnabled) return;
       if (armed) {
@@ -543,6 +698,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
             transport: currentTransport(),
             p2pPeerCount,
             armed: true,
+            guestAccess: guestAccess(),
           }),
         );
         bell();
@@ -561,7 +717,11 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     initialSize,
     connectRetries: 20,
     connectRetryDelayMs: 50,
-    interceptStdin: (chunk) => prefixFilter.process(chunk),
+    interceptStdin: (chunk) => {
+      const passthrough = prefixFilter.process(chunk);
+      if (passthrough.length > 0) lastOwnerInputAt = Date.now();
+      return passthrough;
+    },
     onTerminalTitle: paintRestingTitle,
   });
 
@@ -585,27 +745,21 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   controlsHintTimer = setTimeout(showControlsHint, 500);
   controlsHintTimer.unref?.();
 
-  let shuttingDown = false;
+  if (opts.shareOnStart) {
+    handlePrefixCommand("share");
+  }
+
   const shutdown = async (reason: ShutdownReason): Promise<number> => {
     if (shuttingDown) return 0;
     shuttingDown = true;
+    shareOp += 1;
     log.debug("shell-host shutting down", { sessionId, reason });
-    clearInterval(heartbeat);
+    stopHeartbeat();
     if (shareInviteTimer) clearTimeout(shareInviteTimer);
     if (controlsHintTimer) clearTimeout(controlsHintTimer);
     authRefresh?.stop();
     await stopRelayBridge();
-    if (backend.status === "ready") {
-      try {
-        await backend.client.mutation(sessionCloseRef, {
-          sessionId,
-          reason,
-        });
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-        log.warn("failed to close backend session record", { error: err.message });
-      }
-    }
+    await closeCloudSession(reason);
     if (env.hudEnabled) {
       clearTitle();
     }
@@ -650,7 +804,7 @@ function currentSize(): { cols: number; rows: number } {
 
 async function fetchProCheckoutUrl(client: ConvexHttpClient): Promise<string | null> {
   try {
-    const result = await client.action(createProCheckoutRef, {});
+    const result = await client.action(createProCheckoutRef, { interval: "year" });
     return result.checkoutUrl.length > 0 ? result.checkoutUrl : null;
   } catch (error) {
     log.warn("failed to create pro checkout link", {

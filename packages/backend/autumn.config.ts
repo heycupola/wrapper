@@ -12,8 +12,10 @@ import { feature, item, plan } from "atmn";
  * match WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID (default "can_share_relay") that
  * the backend checks in `convex/relay.ts`.
  *
- * This file is consumed only by the `atmn` CLI; it is excluded from the
- * package tsconfig/lint/format.
+ * List price: `pro_yearly` is $99/year and `pro` is $15/month. Both grant the
+ * same feature. After editing, sync Autumn:
+ *   bunx atmn push
+ *   bunx atmn push --prod
  */
 
 // Features
@@ -36,11 +38,24 @@ export const pro = plan({
   id: "pro",
   name: "Pro",
   price: {
-    amount: 20,
+    amount: 15,
     interval: "month",
   },
   items: [
-    // Grants the boolean relay-sharing entitlement.
+    item({
+      featureId: canShareRelay.id,
+    }),
+  ],
+});
+
+export const proYearly = plan({
+  id: "pro_yearly",
+  name: "Pro (yearly)",
+  price: {
+    amount: 99,
+    interval: "year",
+  },
+  items: [
     item({
       featureId: canShareRelay.id,
     }),

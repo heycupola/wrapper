@@ -89,7 +89,7 @@ async function promptForShells(detected: DetectedShell[]): Promise<SupportedShel
     hint: s.rcFile,
   }));
   const choice = await p.multiselect<SupportedShell>({
-    message: "Which shells should Wrapper stop hooking?",
+    message: "Which shells should Wrapper stop patching?",
     options,
     initialValues: detected.map((s) => s.name),
     required: false,
