@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 const HIDE_MS = 180;
 const VIEWPORT_PAD = 12;
 
-export function TermTip({ children, definition }: { children: ReactNode; definition: string }) {
+export function TermTip({ children, definition }: { children: ReactNode; definition: ReactNode }) {
   const tooltipId = useId();
   const wrapRef = useRef<HTMLSpanElement>(null);
   const bubbleRef = useRef<HTMLParagraphElement>(null);

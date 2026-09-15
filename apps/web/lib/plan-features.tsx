@@ -1,8 +1,11 @@
+import type { ReactNode } from "react";
+import { Keys } from "../components/keys";
+
 export type PlanFeature = {
   label: string;
   /** Substring of `label` that gets a hover definition. */
   term?: string;
-  definition?: string;
+  definition?: ReactNode;
 };
 
 export const FREE_PLAN_FEATURES: readonly PlanFeature[] = [
@@ -21,8 +24,12 @@ export const FREE_PLAN_FEATURES: readonly PlanFeature[] = [
   {
     label: "Nothing leaves until you share",
     term: "share",
-    definition:
-      "wrapper share, or Control-backslash then s. Until then Wrapper sends no bytes and no session metadata.",
+    definition: (
+      <>
+        <code>wrapper share</code>, or <Keys caps={"⌃ \\"} label="Control-backslash" /> then{" "}
+        <Keys caps="s" />. Until then Wrapper sends no bytes and no session metadata.
+      </>
+    ),
   },
 ];
 
@@ -37,8 +44,12 @@ export const PRO_PLAN_FEATURES: readonly PlanFeature[] = [
   {
     label: "Share a session, revoke anytime",
     term: "revoke",
-    definition:
-      "Control-backslash then u. Remote viewers disconnect. The local shell keeps running.",
+    definition: (
+      <>
+        <Keys caps={"⌃ \\"} label="Control-backslash" /> then <Keys caps="u" />. Remote viewers
+        disconnect. The local shell keeps running.
+      </>
+    ),
   },
   {
     label: "Host on a remote Linux box",
@@ -49,7 +60,11 @@ export const PRO_PLAN_FEATURES: readonly PlanFeature[] = [
   {
     label: "People you invite can watch without typing",
     term: "watch without typing",
-    definition:
-      "They see the screen. They cannot type unless you allow it with Control-backslash then w.",
+    definition: (
+      <>
+        They see the screen. They cannot type unless you allow it with{" "}
+        <Keys caps={"⌃ \\"} label="Control-backslash" /> then <Keys caps="w" />.
+      </>
+    ),
   },
 ];

@@ -935,6 +935,15 @@
   pointer-events: none;
 }
 
+.termTipBubble code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+.termTipBubble .demoKeys {
+  margin-inline: 0.12em;
+}
+
 .termTipBubble[data-visible] {
   opacity: 1;
   visibility: visible;
