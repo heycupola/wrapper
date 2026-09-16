@@ -1,4 +1,10 @@
-import { PROTOCOL_VERSION, WrapperMessageSchema, type WrapperMessage } from "./messages";
+import {
+  PROTOCOL_VERSION,
+  TERMINAL_REPLAY_CHUNK_LENGTH,
+  WrapperMessageSchema,
+  type WrapperMessage,
+} from "./messages";
+import type { SessionId } from "./session";
 
 export type RawWireData = string | Buffer | ArrayBuffer | Uint8Array;
 /** Hard cap before JSON parsing to bound CPU and memory per wire frame. */
@@ -34,6 +40,33 @@ function wireByteLength(raw: RawWireData): number {
  */
 export function encodeMessage(msg: WrapperMessage): string {
   return JSON.stringify({ ...msg, protocolVersion: PROTOCOL_VERSION });
+}
+
+/** Split terminal bytes so each output frame stays inside protocol limits. */
+export function chunkTerminalData(
+  data: string,
+  maxLength = TERMINAL_REPLAY_CHUNK_LENGTH,
+): string[] {
+  if (data.length === 0) return [];
+  const size = Math.max(1, maxLength);
+  const chunks: string[] = [];
+  for (let offset = 0; offset < data.length; offset += size) {
+    chunks.push(data.slice(offset, offset + size));
+  }
+  return chunks;
+}
+
+/** Targeted replay frames for one viewer. Omits `to` when broadcasting locally. */
+export function replayOutputMessages(opts: {
+  sessionId: SessionId;
+  data: string;
+  to?: string;
+}): WrapperMessage[] {
+  return chunkTerminalData(opts.data).map((data) =>
+    opts.to
+      ? { type: "output", sessionId: opts.sessionId, data, to: opts.to }
+      : { type: "output", sessionId: opts.sessionId, data },
+  );
 }
 
 function toText(raw: RawWireData): string {

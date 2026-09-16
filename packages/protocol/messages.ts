@@ -3,6 +3,11 @@ import { SessionIdSchema, TerminalSizeSchema } from "./session";
 
 /** Maximum terminal payload carried by one input/output protocol frame. */
 export const MAX_TERMINAL_DATA_LENGTH = 64 * 1024;
+/**
+ * Replay/history chunks stay well below `MAX_TERMINAL_DATA_LENGTH` so JSON
+ * escaping of CSI sequences cannot push a frame over `MAX_WIRE_FRAME_BYTES`.
+ */
+export const TERMINAL_REPLAY_CHUNK_LENGTH = 16 * 1024;
 /** Maximum human-readable protocol error detail. */
 export const MAX_ERROR_MESSAGE_LENGTH = 1024;
 /** Current backwards-compatible JSON wire version. */
@@ -82,6 +87,12 @@ export const OutputMessageSchema = z.object({
   type: z.literal("output"),
   sessionId: SessionIdSchema,
   data: z.string().max(MAX_TERMINAL_DATA_LENGTH),
+  /**
+   * When set, the relay delivers this frame to one viewer instead of
+   * broadcasting it. Used to catch late joiners up without replaying into
+   * viewers that already have the stream.
+   */
+  to: z.string().min(1).max(128).optional(),
 });
 export type OutputMessage = z.infer<typeof OutputMessageSchema>;
 
