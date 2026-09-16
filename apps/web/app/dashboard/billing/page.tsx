@@ -35,7 +35,7 @@ export default async function DashboardBillingPage({
       <DashboardBilling token={token} plan={plan} canManageBilling={canManageBilling} />
 
       {canManageBilling ? (
-        <aside className="dashboardNotice dashboardBillingNotice">
+        <aside className="dashboardNotice">
           <strong>Billing provider is the source of truth</strong>
           <p>
             The secure billing portal shows invoices, payment details, current subscription state,
