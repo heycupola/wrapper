@@ -157,28 +157,30 @@ export function PlanCard({
       data-open={open ? "" : undefined}
     >
       <header className="dashboardPlanHead">
-        <div className="dashboardPlanName">
-          <span className="dashboardPanelLabel">{label}</span>
-          <h2 id={titleId}>{name}</h2>
-        </div>
-        <div className="dashboardPlanOffer" data-interval={priceControls ? "" : undefined}>
-          <div
-            id={priceId}
-            role={priceId ? "tabpanel" : undefined}
-            aria-labelledby={priceLabelledBy}
-          >
-            <p className="dashboardPlanPrice">
-              <strong>{price}</strong>
-              <span>{period}</span>
-            </p>
-            {priceRate ? (
-              <p className="dashboardPlanRate">
-                <strong>{priceRate.amount}</strong>
-                <span>{priceRate.period}</span>
-              </p>
-            ) : null}
+        <div className="dashboardPlanTop">
+          <div className="dashboardPlanName">
+            <span className="dashboardPanelLabel">{label}</span>
+            <h2 id={titleId}>{name}</h2>
           </div>
           {priceControls}
+        </div>
+        <div
+          className="dashboardPlanPriceStack"
+          data-interval={priceControls ? "" : undefined}
+          id={priceId}
+          role={priceId ? "tabpanel" : undefined}
+          aria-labelledby={priceLabelledBy}
+        >
+          <p className="dashboardPlanPrice">
+            <strong>{price}</strong>
+            <span>{period}</span>
+          </p>
+          {priceRate ? (
+            <p className="dashboardPlanRate">
+              <strong>{priceRate.amount}</strong>
+              <span>{priceRate.period}</span>
+            </p>
+          ) : null}
         </div>
         <p className="dashboardPriceLead">{summary}</p>
       </header>
