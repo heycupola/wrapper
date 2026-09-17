@@ -38,12 +38,9 @@ export function installShutdownHandlers(opts: ShutdownOptions): ShutdownHandle {
   }
 
   const detach = (): void => {
-    const remove = process.removeListener as unknown as (
-      signal: NodeJS.Signals,
-      listener: NodeJS.SignalsListener,
-    ) => void;
     for (const [sig, handler] of handlers) {
-      remove(sig, handler);
+      // Must keep `this` bound to `process`; Bun throws ERR_INVALID_THIS otherwise.
+      process.removeListener(sig, handler);
     }
     handlers.clear();
   };
