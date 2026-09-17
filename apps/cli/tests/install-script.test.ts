@@ -166,6 +166,7 @@ describe("release installer", () => {
     const result = runInstaller({ arch: "aarch64", mockBin, root, version: "0.1.0" });
 
     expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Installed Wrapper v0.1.0 into");
     expect(readFileSync(join(result.install, "bin", "wrapper"), "utf8")).toContain(
       "wrapper fixture",
     );
