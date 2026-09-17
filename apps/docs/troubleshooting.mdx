@@ -12,6 +12,16 @@ Symptoms: `wrapper: command not found`, wrong binary.
    is on your `PATH`.
 3. Re-run the installer or `brew reinstall heycupola/tap/wrapper`.
 
+## `brew upgrade` succeeded but `wrapper --version` is old
+
+Homebrew and the curl installer can both be present. The curl copy at
+`$HOME/.wrapper/bin/wrapper` is prepended to `PATH`, so it shadows Homebrew.
+
+1. Run `which -a wrapper`. The first path is the binary `--version` reports.
+2. To stay on curl, re-run `curl -fsSL https://wrapper.sh/install | bash`.
+3. To stay on Homebrew, remove `$HOME/.wrapper` and the `PATH` line the
+   installer added to your shell profile, then open a new terminal.
+
 ## Homebrew says Xcode is outdated
 
 Wrapper's Homebrew formula installs a prebuilt binary. It does not compile

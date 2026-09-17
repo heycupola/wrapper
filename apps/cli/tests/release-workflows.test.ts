@@ -136,5 +136,7 @@ describe("CLI release workflows", () => {
     expect(homebrewWorkflow).toContain('bin.install "wrapper"');
     expect(homebrewWorkflow).toContain('helpers = Dir["wrapper-pty-helper-*"]');
     expect(homebrewWorkflow).toContain("repos/heycupola/homebrew-tap");
+    expect(homebrewWorkflow).toContain("def caveats");
+    expect(homebrewWorkflow).toContain("$HOME/.wrapper/bin may shadow this");
   });
 });
