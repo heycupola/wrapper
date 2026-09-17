@@ -28,7 +28,7 @@ The installer downloads a release tarball from GitHub Releases, verifies
 `WRAPPER_INSTALL_DIR`). Optional pins:
 
 ```bash
-WRAPPER_VERSION=v0.2.1 curl -fsSL https://wrapper.sh/install | bash
+WRAPPER_VERSION=v0.2.2 curl -fsSL https://wrapper.sh/install | bash
 ```
 
 Confirm:
@@ -36,6 +36,28 @@ Confirm:
 ```bash
 wrapper --version
 ```
+
+## Update the CLI
+
+Update with the same method you used to install.
+
+Homebrew:
+
+```bash
+brew update
+brew upgrade heycupola/tap/wrapper
+```
+
+Curl installer:
+
+```bash
+curl -fsSL https://wrapper.sh/install | bash
+```
+
+Do not mix the two. The curl installer prepends `$HOME/.wrapper/bin` to `PATH`,
+so that copy wins over Homebrew. After `brew upgrade`, `wrapper --version` can
+still show the older curl binary. Check with `which -a wrapper`. See
+[Troubleshooting](/troubleshooting).
 
 ## Get iOS viewer beta
 
