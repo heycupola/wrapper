@@ -194,7 +194,21 @@ wrapper_tmp=""
 mv -f "$helper_tmp" "${BIN_DIR}/${helper}"
 helper_tmp=""
 
-echo "Installed Wrapper into ${INSTALL_DIR}"
+echo "Installed Wrapper ${VERSION} into ${INSTALL_DIR}"
+other_wrappers=""
+for brew_wrapper in \
+  /opt/homebrew/bin/wrapper \
+  /usr/local/bin/wrapper \
+  /home/linuxbrew/.linuxbrew/bin/wrapper; do
+  if [ -x "$brew_wrapper" ] && [ "$brew_wrapper" != "${BIN_DIR}/wrapper" ]; then
+    other_wrappers="${other_wrappers}${other_wrappers:+ }${brew_wrapper}"
+  fi
+done
+if [ -n "$other_wrappers" ]; then
+  echo "Note: Homebrew Wrapper is also installed (${other_wrappers})."
+  echo "${BIN_DIR} is earlier on PATH, so \`wrapper --version\` uses this curl install."
+  echo "Re-run this installer to update it. \`brew upgrade\` updates Homebrew's copy only."
+fi
 if [[ ":$PATH:" != *":${BIN_DIR}:"* ]]; then
   shell_name="${SHELL##*/}"
   case "$shell_name" in
