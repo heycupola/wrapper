@@ -3,6 +3,7 @@ import { trackEvent } from "@repo/logger";
 import { detectAvailableShells, type DetectedShell, type SupportedShell } from "../shell/detect";
 import { unpatchRc } from "../shell/rc-edit";
 import { env } from "../util/env";
+import { introTitle } from "../util/ui";
 
 /**
  * `wrapper uninstall` — remove our managed block from any rc file that
@@ -17,7 +18,7 @@ export interface UninstallOptions {
 }
 
 export async function runUninstall(opts: UninstallOptions): Promise<void> {
-  p.intro(`wrapper uninstall (${env.label})`);
+  p.intro(introTitle("uninstall", env.label));
 
   const detected = detectAvailableShells();
   if (detected.length === 0) {

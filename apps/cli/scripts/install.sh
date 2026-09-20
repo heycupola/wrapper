@@ -194,7 +194,29 @@ wrapper_tmp=""
 mv -f "$helper_tmp" "${BIN_DIR}/${helper}"
 helper_tmp=""
 
-echo "Installed Wrapper ${VERSION} into ${INSTALL_DIR}"
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  c_reset=$'\033[0m'
+  c_dim=$'\033[2m'
+  c_cyan=$'\033[36m'
+  c_cyan_bright=$'\033[96m'
+  c_blue=$'\033[34m'
+  c_blue_bright=$'\033[94m'
+  c_magenta=$'\033[35m'
+  c_green=$'\033[32m'
+else
+  c_reset="" c_dim="" c_cyan="" c_cyan_bright="" c_blue="" c_blue_bright="" c_magenta="" c_green=""
+fi
+
+echo
+printf '%s\n' "  ${c_cyan_bright}__      __ _ __   __ _  _ __   _ __    ___  _ __ ${c_reset}"
+printf '%s\n' "  ${c_cyan}\\ \\ /\\ / /| '__| / _\` || '_ \\ | '_ \\  / _ \\| '__|${c_reset}"
+printf '%s\n' "  ${c_blue_bright} \\ V  V / | |   | (_| || |_) || |_) ||  __/| |   ${c_reset}"
+printf '%s\n' "  ${c_blue}  \\_/\\_/  |_|    \\__,_|| .__/ | .__/  \\___||_|   ${c_reset}"
+printf '%s\n' "  ${c_magenta}                       |_|    |_|                ${c_reset}"
+echo
+printf '%s\n' "  ${c_dim}Bring your terminal to your phone, on demand.${c_reset}  ${c_dim}${VERSION}${c_reset}"
+echo
+echo "${c_green}✓${c_reset} Installed Wrapper ${VERSION} into ${INSTALL_DIR}"
 other_wrappers=""
 for brew_wrapper in \
   /opt/homebrew/bin/wrapper \
@@ -235,5 +257,10 @@ if [[ ":$PATH:" != *":${BIN_DIR}:"* ]]; then
   echo "Restart your shell or run: source ${profile}"
 fi
 
-echo "Run 'wrapper auth login' then 'wrapper share' to get started."
-echo "Sharing does not patch your shell config. Optional: wrapper install --dry-run"
+echo
+echo "  Get started"
+echo "    ${c_dim}\$${c_reset} ${c_cyan}wrapper auth login${c_reset}   Sign in with your Wrapper account"
+echo "    ${c_dim}\$${c_reset} ${c_cyan}wrapper share${c_reset}        Wrap this shell and share it"
+echo "    ${c_dim}\$${c_reset} ${c_cyan}wrapper --help${c_reset}       See all commands"
+echo
+echo "  ${c_dim}Sharing does not patch your shell config. Optional: wrapper install --dry-run${c_reset}"

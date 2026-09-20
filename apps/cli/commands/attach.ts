@@ -1,6 +1,7 @@
 import * as p from "@clack/prompts";
 import { createLogger, trackError, trackEvent } from "@repo/logger";
 import { makeFunctionReference } from "convex/server";
+import pc from "picocolors";
 import { startAttachClient, type AttachTransportStatus } from "../client/attach-client";
 import {
   findSession,
@@ -23,6 +24,7 @@ import {
   type SessionTransportStatus,
 } from "../util/feedback";
 import { installShutdownHandlers } from "../util/signals";
+import { command, fail, tag, warn } from "../util/ui";
 
 const log = createLogger("attach");
 
@@ -88,14 +90,16 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
   const safeUrl = url.replace(/ticket=[^&]+/, "ticket=***").replace(/token=[^&]+/, "token=***");
   log.info("attaching", { url: safeUrl, sessionId: target.id });
   trackEvent("attach_started");
-  process.stderr.write(`[wrapper] attaching to ${safeUrl}\n`);
+  const sessionTag = target.id.slice(0, 6);
+  const usingRelay = url.includes("/ws?ticket=");
   process.stderr.write(
-    `[wrapper] ${formatControlsHint("viewer", prefix.label)} (session keeps running)\n`,
+    `${tag()} attaching to ${pc.cyan(sessionTag)} via ${usingRelay ? "relay" : "local"} ${pc.dim(safeUrl)}\n`,
+  );
+  process.stderr.write(
+    `${tag()} ${pc.dim(`${formatControlsHint("viewer", prefix.label)} · session keeps running`)}\n`,
   );
 
   let userAborted = false;
-  const sessionTag = target.id.slice(0, 6);
-  const usingRelay = url.includes("/ws?ticket=");
   let transportStatus: AttachTransportStatus = "connecting";
 
   const hudTransport = (): SessionTransportStatus => {
@@ -220,7 +224,7 @@ export async function runAttach(opts: AttachOptions): Promise<void> {
   if (result.reason === "error" && result.error) {
     log.error("attach failed", { error: result.error.message });
     trackError("attach", result.error);
-    process.stderr.write(`[wrapper] attach failed: ${result.error.message}\n`);
+    process.stderr.write(`${fail(`attach failed: ${result.error.message}`)}\n`);
     process.exit(1);
   }
   if (result.reason === "session_closed") {
@@ -254,7 +258,7 @@ async function resolveTarget(opts: AttachOptions): Promise<TargetSession | null>
   const sessions = listSessions();
   if (sessions.length === 0) {
     process.stderr.write(
-      "[wrapper] no live sessions. Run `wrapper share` or `wrapper run -- <cmd>`.\n",
+      `${warn("no live sessions.")} Start one with ${command("wrapper share")} or ${command("wrapper run -- <cmd>")}\n`,
     );
     return null;
   }
@@ -308,7 +312,7 @@ async function ensureAttachAllowed(target: TargetSession): Promise<boolean> {
   // not contacted until a session is shared, so unshared hosts have no row.
   if (target.id === "<unknown>" && !target.localToken) {
     process.stderr.write(
-      "[wrapper] cannot attach by port alone without a local token. Re-run with `--id <sessionId>`.\n",
+      `${fail("cannot attach by port alone without a local token.")} Re-run with ${command("--id <sessionId>")}\n`,
     );
     return false;
   }
@@ -331,7 +335,7 @@ async function resolveAttachUrl(input: {
   }
 
   if (input.target.id === "<unknown>") {
-    process.stderr.write("[wrapper] relay attach requires `--id <sessionId>`.\n");
+    process.stderr.write(`${fail("relay attach requires")} ${command("--id <sessionId>")}\n`);
     return null;
   }
   return await resolveRelayAttachUrl(input.target.id, input.code);
@@ -343,15 +347,17 @@ async function resolveRelayAttachUrl(
 ): Promise<{ url: string; canInput: boolean } | null> {
   const backend = await resolveAuthedConvexClient();
   if (backend.status === "unconfigured") {
-    process.stderr.write("[wrapper] relay attach requires WRAPPER_CONVEX_URL configuration.\n");
+    process.stderr.write(`${fail("relay attach requires WRAPPER_CONVEX_URL configuration.")}\n`);
     return null;
   }
   if (backend.status === "missing_auth") {
-    process.stderr.write("[wrapper] relay attach requires login. Run `wrapper auth login`.\n");
+    process.stderr.write(
+      `${fail("relay attach requires login.")} Run ${command("wrapper auth login")}\n`,
+    );
     return null;
   }
   if (backend.status === "auth_error") {
-    process.stderr.write(`[wrapper] relay attach failed: ${backend.error.message}\n`);
+    process.stderr.write(`${fail(`relay attach failed: ${backend.error.message}`)}\n`);
     return null;
   }
 
@@ -378,7 +384,7 @@ async function resolveRelayAttachUrl(
         },
       });
       if (p.isCancel(prompted)) {
-        process.stderr.write("[wrapper] relay attach cancelled.\n");
+        process.stderr.write(`${warn("relay attach cancelled.")}\n`);
         return null;
       }
       shareCode = String(prompted).trim();
@@ -397,7 +403,7 @@ async function resolveRelayAttachUrl(
     }
 
     const message = normalizeAttachAuthorizationError(failure);
-    process.stderr.write(`[wrapper] relay attach failed: ${message}\n`);
+    process.stderr.write(`${fail(`relay attach failed: ${message}`)}\n`);
     return null;
   }
 }
