@@ -312,7 +312,7 @@ async function ensureAttachAllowed(target: TargetSession): Promise<boolean> {
   // not contacted until a session is shared, so unshared hosts have no row.
   if (target.id === "<unknown>" && !target.localToken) {
     process.stderr.write(
-      `${fail("cannot attach by port alone without a local token.")} Re-run with ${command("--id <sessionId>")}\n`,
+      `${fail("cannot attach by port alone without a local token.")} Re-run with ${pc.cyan("--id <sessionId>")}\n`,
     );
     return false;
   }
@@ -335,7 +335,7 @@ async function resolveAttachUrl(input: {
   }
 
   if (input.target.id === "<unknown>") {
-    process.stderr.write(`${fail("relay attach requires")} ${command("--id <sessionId>")}\n`);
+    process.stderr.write(`${fail("relay attach requires")} ${pc.cyan("--id <sessionId>")}\n`);
     return null;
   }
   return await resolveRelayAttachUrl(input.target.id, input.code);
