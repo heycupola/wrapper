@@ -45,6 +45,12 @@
       "wire": "{\"protocolVersion\":1,\"type\":\"output\",\"sessionId\":\"ABCDEFGHJKLM\",\"data\":\"ready ✓\\r\\n\"}"
     },
     {
+      "name": "terminal-output-targeted",
+      "direction": "host-to-client",
+      "expectedType": "output",
+      "wire": "{\"protocolVersion\":1,\"type\":\"output\",\"sessionId\":\"ABCDEFGHJKLM\",\"data\":\"caught up\\r\\n\",\"to\":\"viewer-1\"}"
+    },
+    {
       "name": "protocol-error-without-session",
       "direction": "host-to-client",
       "expectedType": "error",
