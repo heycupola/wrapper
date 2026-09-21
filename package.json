@@ -41,9 +41,9 @@
   "devDependencies": {
     "atmn": "1.1.25",
     "lefthook": "^1.13.0",
-    "oxfmt": "^0.67.0",
-    "oxlint": "^1.82.0",
-    "turbo": "2.10.12",
+    "oxfmt": "^0.68.0",
+    "oxlint": "^1.83.0",
+    "turbo": "2.10.13",
     "typescript": "5.9.3"
   },
   "overrides": {
