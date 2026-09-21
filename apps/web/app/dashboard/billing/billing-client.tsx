@@ -162,10 +162,10 @@ export function DashboardBilling({
           summary={PRO_SUMMARY}
           features={PRO_PLAN_FEATURES}
           highlighted
-          priceId={plan === "free" ? panelId : undefined}
-          priceLabelledBy={plan === "free" ? tabId : undefined}
-          priceRate={plan === "free" ? (price.rate ?? undefined) : undefined}
-          priceControls={plan === "free" ? intervalSwitch : null}
+          priceId={panelId}
+          priceLabelledBy={tabId}
+          priceRate={price.rate ?? undefined}
+          priceControls={intervalSwitch}
           action={proAction}
         >
           <IosViewerCta variant="text" />

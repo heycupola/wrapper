@@ -736,16 +736,13 @@
   gap: 16px;
 }
 
+/* Same two-column footprint as the Data and Sessions tabs, so the workspace
+   reads the same width from tab to tab. */
 .dashboardBillingGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  max-width: 40rem;
+  gap: 16px;
   align-items: stretch;
-}
-
-.dashboardBillingNotice {
-  max-width: 40rem;
 }
 
 /* Compact plan tiles: price and action on the card, features in a hover toast. */
