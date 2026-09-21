@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 
 const SERVER_FORMAT = new Intl.DateTimeFormat("en", {
-  dateStyle: "medium",
-  timeStyle: "short",
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
   timeZone: "UTC",
   timeZoneName: "short",
 });
