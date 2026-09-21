@@ -30,8 +30,8 @@
  * crashes the host process is worse than no feedback.
  */
 
-import pc from "picocolors";
 import { env } from "./env";
+import { tag } from "./ui";
 
 const ESC = "\x1b";
 const BEL = "\x07";
@@ -114,7 +114,7 @@ export function clearTitle(): void {
  */
 export function inlineMessage(text: string): void {
   if (!process.stdout.isTTY) return;
-  process.stdout.write(`\r\n${pc.cyan("[wrapper]")} ${text}\r\n`);
+  process.stdout.write(`\r\n${tag()} ${text}\r\n`);
 }
 
 /**

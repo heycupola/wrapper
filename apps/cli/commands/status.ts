@@ -1,66 +1,77 @@
 import { trackEvent } from "@repo/logger";
+import pc from "picocolors";
 import { listSessions } from "../registry/sessions";
 import { env } from "../util/env";
 import { paths } from "../util/paths";
+import { command, heading, kv } from "../util/ui";
 
 /**
- * `wrapper status` — print all live sessions in a tiny human table.
+ * `wrapper status` — print all live sessions in a small human table.
  *
- * Stays minimal on purpose: no `--json` flag yet, no colour, no spinner.
- * Anyone scripting around this should read the registry file directly.
+ * Stays minimal on purpose: no `--json` flag yet. Anyone scripting around
+ * this should read the registry file directly. Colour is decorative only;
+ * the plain text is still column aligned when piped.
  */
+
+function out(line = ""): void {
+  process.stdout.write(`${line}\n`);
+}
 
 export async function runStatus(): Promise<void> {
   const sessions = listSessions();
   trackEvent("status_executed", { sessionCount: sessions.length });
 
+  out(heading("status", env.label));
+  out();
+
   if (sessions.length === 0) {
-    process.stdout.write(
-      `No live wrapper sessions (${env.label} environment).\n` +
-        `Start one with: wrapper share\n` +
-        `Registry: ${paths.sessionsRegistry()}\n`,
-    );
+    out(`  ${pc.dim("No live sessions.")}`);
+    out();
+    out(`  ${kv("Start one", command("wrapper share"))}`);
+    out(`  ${kv("Registry", pc.dim(shortenHome(paths.sessionsRegistry())))}`);
+    out();
     return;
   }
 
-  const rows = sessions.map((s) => ({
-    id: s.id,
-    pid: String(s.pid),
-    port: String(s.port),
-    shared: s.shared ? "yes" : "no",
-    cloud: s.shared ? "yes" : "no",
-    shell: shortShell(s.shell),
-    cwd: shortenHome(s.cwd),
-    started: relativeTime(s.createdAt),
-  }));
-
-  const headers = ["ID", "PID", "PORT", "SHARED", "CLOUD", "SHELL", "CWD", "STARTED"] as const;
-  type Column = (typeof headers)[number];
-
-  const cells = rows.map((r) => [
-    r.id,
-    r.pid,
-    r.port,
-    r.shared,
-    r.cloud,
-    r.shell,
-    r.cwd,
-    r.started,
+  const headers = ["", "ID", "PID", "PORT", "SHELL", "CWD", "STARTED"] as const;
+  const cells = sessions.map((s) => [
+    s.shared ? "●" : "○",
+    s.id,
+    String(s.pid),
+    String(s.port),
+    shortShell(s.shell),
+    shortenHome(s.cwd),
+    relativeTime(s.createdAt),
   ]);
   const widths = headers.map((h, i) =>
     Math.max(h.length, ...cells.map((row) => row[i]?.length ?? 0)),
   );
 
-  const renderRow = (row: readonly string[]): string =>
-    row.map((cell, i) => cell.padEnd(widths[i] ?? 0)).join("  ");
+  const renderRow = (row: readonly string[], paint: (cell: string, i: number) => string): string =>
+    `  ${row.map((cell, i) => paint(cell.padEnd(widths[i] ?? 0), i)).join("  ")}`;
 
-  process.stdout.write(`${renderRow(headers as readonly Column[])}\n`);
-  process.stdout.write(`${widths.map((w) => "─".repeat(w)).join("  ")}\n`);
-  for (const row of cells) {
-    process.stdout.write(`${renderRow(row)}\n`);
+  out(renderRow(headers, (cell) => pc.dim(cell)));
+  for (const [index, row] of cells.entries()) {
+    const shared = sessions[index]?.shared ?? false;
+    out(
+      renderRow(row, (cell, i) => {
+        if (i === 0) return shared ? pc.green(cell) : pc.dim(cell);
+        if (i === 1) return pc.cyan(cell);
+        if (i === 6) return pc.dim(cell);
+        return cell;
+      }),
+    );
   }
-  process.stdout.write(`\nListen: 127.0.0.1 (loopback). Cloud: only while SHARED=yes.\n`);
-  process.stdout.write(`Environment: ${env.label}\n`);
+
+  const sharedCount = sessions.filter((s) => s.shared).length;
+  out();
+  out(
+    `  ${pc.green("●")} ${pc.dim("shared")}  ${pc.dim("○ local")}  ${pc.dim("·")}  ${pc.dim(
+      `${sessions.length} session${sessions.length === 1 ? "" : "s"}, ${sharedCount} shared`,
+    )}`,
+  );
+  out(`  ${pc.dim("Local sessions listen on 127.0.0.1. Cloud sync happens only while shared.")}`);
+  out();
 }
 
 function shortShell(path: string): string {

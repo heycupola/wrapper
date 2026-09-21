@@ -1,5 +1,6 @@
 import { basename } from "node:path";
 import { createLogger, trackError, trackEvent } from "@repo/logger";
+import pc from "picocolors";
 import { createSessionId } from "@repo/protocol";
 import type { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
@@ -20,6 +21,7 @@ import { createEnterToOpen } from "../util/enter-to-open";
 import { env } from "../util/env";
 import { openUrl } from "../util/open-url";
 import { resolvePrefix } from "../util/prefix-config";
+import { formatShareCode } from "../util/ui";
 import {
   bell,
   clearTitle,
@@ -317,12 +319,14 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     shareInviteTimer = null;
     if (!shareCode) return;
     if (session.isIdle) {
-      inlineMessage(`share code: ${shareCode}`);
-      inlineMessage(`others join with: wrapper attach --relay --id ${sessionId}`);
+      inlineMessage(`share code  ${pc.bold(pc.green(formatShareCode(shareCode)))}`);
+      inlineMessage(`join        ${pc.cyan(`wrapper attach --relay --id ${sessionId}`)}`);
       inlineMessage(
-        guestInputAllowed
-          ? "people you invite can type. Ctrl+\\ then w to make this watch-only"
-          : "people you invite can watch, not type. Ctrl+\\ then w to allow typing",
+        pc.dim(
+          guestInputAllowed
+            ? `guests can type · ${prefix.label} then w for watch-only`
+            : `guests watch only · ${prefix.label} then w to allow typing`,
+        ),
       );
       return;
     }

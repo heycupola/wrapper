@@ -2,6 +2,7 @@ import { existsSync, statSync, openSync, readSync, closeSync, watch } from "node
 import { getLogsDir } from "@repo/logger";
 import { join } from "node:path";
 import { env } from "../util/env";
+import { info } from "../util/ui";
 
 function activeLogFile(): string {
   if (process.env.WRAPPER_LOG_FILE && process.env.WRAPPER_LOG_FILE.length > 0) {
@@ -32,7 +33,7 @@ const READ_CHUNK = 64 * 1024;
 export async function runLogs(opts: LogsOptions): Promise<void> {
   const file = activeLogFile();
   if (!existsSync(file)) {
-    process.stderr.write(`[wrapper] no log file yet at ${file}\n`);
+    process.stderr.write(`${info(`no log file yet at ${file}`)}\n`);
     process.exit(0);
   }
 
