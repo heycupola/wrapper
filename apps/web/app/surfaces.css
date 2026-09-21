@@ -730,53 +730,90 @@
   text-decoration: none;
 }
 
-.dashboardBillingGrid,
 .dashboardDataGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
-/* Billing cards match landing: name and price, a one-sentence summary, then
-   the feature list. Unknown terms use the same hover/pin tooltip as landing. */
+.dashboardBillingGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 40rem;
+  align-items: stretch;
+}
+
+.dashboardBillingNotice {
+  max-width: 40rem;
+}
+
+/* Compact plan tiles: price and action on the card, features in a hover toast. */
 .dashboardBillingGrid .dashboardPlanCard {
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   padding: 18px 20px;
   border-radius: var(--radius-sm);
+  transition: border-color var(--motion-fast) ease;
+}
+
+.dashboardBillingGrid .dashboardPlanCard:hover,
+.dashboardBillingGrid .dashboardPlanCard[data-open] {
+  border-color: color-mix(in srgb, var(--color-text) 22%, var(--color-border));
+}
+
+.dashboardBillingGrid .dashboardProPanel:hover,
+.dashboardBillingGrid .dashboardProPanel[data-open] {
+  border-color: color-mix(in srgb, var(--color-accent-pop) 52%, var(--color-border));
 }
 
 .dashboardPlanHead {
+  display: grid;
+  gap: 10px;
+}
+
+/* Name on the left, the period switch on the right, so both cards keep the
+   same header height whether or not they carry a switch. */
+.dashboardPlanTop {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  min-height: 40px;
 }
 
-.dashboardPlanOffer {
+.dashboardPlanPriceStack {
   display: grid;
-  justify-items: end;
-  gap: 8px;
-  flex: none;
-}
-
-.dashboardPlanOffer[data-interval] > div {
-  display: grid;
-  justify-items: end;
-  grid-template-rows: auto 1.35em;
+  justify-items: start;
   gap: 2px;
+}
+
+/* Reserve the rate line so the card does not jump between yearly and monthly. */
+.dashboardPlanPriceStack[data-interval] {
+  grid-template-rows: auto 1.2em;
+}
+
+.dashboardPlanInterval {
+  flex: none;
+  background: color-mix(in srgb, var(--color-text) 6%, var(--color-surface-strong));
+}
+
+.dashboardProPanel .dashboardPlanInterval {
+  background: color-mix(in srgb, var(--color-accent-pop) 10%, var(--color-surface-strong));
 }
 
 .dashboardPlanRate {
   display: flex;
   align-items: baseline;
-  gap: 5px;
+  gap: 6px;
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
 
 .dashboardPlanRate strong {
   color: var(--color-text);
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 590;
   letter-spacing: -0.03em;
   line-height: 1.1;
@@ -784,7 +821,7 @@
 
 .dashboardPlanRate span {
   color: var(--color-text-muted);
-  font-size: var(--text-sm);
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: -0.02em;
 }
@@ -799,46 +836,92 @@
 }
 
 .dashboardPlanName h2 {
-  font-size: var(--text-lg);
-  line-height: var(--leading-tight);
-  letter-spacing: -0.03em;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
 }
 
 .dashboardPlanCard .dashboardPlanPrice {
   flex: none;
   flex-direction: row;
   align-items: baseline;
-  gap: 5px;
-  padding-top: 2px;
+  gap: 6px;
+  padding-top: 0;
   font-size: 1.5rem;
 }
 
 .dashboardPlanCard .dashboardPlanPrice span {
-  font-size: var(--text-sm);
+  font-size: 0.75rem;
 }
 
 .dashboardPriceLead {
+  max-width: 28ch;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  letter-spacing: -0.015em;
+}
+
+.dashboardPlanFoot {
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.dashboardPlanNote {
+  margin: 0;
   color: var(--color-text-muted);
   font-size: var(--text-sm);
   line-height: var(--leading-body);
-  letter-spacing: -0.015em;
+}
+
+.dashboardBillingGrid + .authError {
+  margin-top: 16px;
+}
+
+.dashboardPlanToast {
+  position: fixed;
+  z-index: calc(var(--z-header) + 1);
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-strong);
+  box-shadow: 0 16px 40px -24px color-mix(in srgb, var(--color-text) 55%, transparent);
+  animation: riseIn var(--motion-fast) var(--ease-out-quint);
+}
+
+.dashboardPlanToastPro {
+  border-color: color-mix(in srgb, var(--color-accent-pop) 36%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent-pop) 8%, var(--color-surface-strong));
+}
+
+.dashboardPlanToastLabel {
+  margin-bottom: 10px;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: 590;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .dashboardPlanFeatures {
   display: grid;
   gap: 8px;
-  margin: 4px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .dashboardPlanFeatures li {
   display: grid;
-  grid-template-columns: 14px minmax(0, 1fr);
+  grid-template-columns: 16px minmax(0, 1fr);
   gap: 8px;
+  align-items: start;
   color: var(--color-text);
-  font-size: var(--text-sm);
-  line-height: var(--leading-body);
+  font-size: 0.8125rem;
+  line-height: 1.4;
   letter-spacing: -0.015em;
 }
 
@@ -847,33 +930,45 @@
 }
 
 .dashboardPlanFeatures li::before {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 15%, transparent);
+  border-radius: 50%;
   color: var(--color-text-muted);
   content: "✓";
-  font-size: 0.6875rem;
+  font-size: 0.5625rem;
   font-weight: 700;
+  place-items: center;
 }
 
-.dashboardProPanel .dashboardPlanFeatures li::before {
+.dashboardPlanToastPro .dashboardPlanFeatures li::before {
+  border-color: color-mix(in srgb, var(--color-accent-pop) 40%, transparent);
+  background: var(--color-accent-soft);
   color: var(--color-accent-text);
 }
 
-.dashboardPlanFoot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 16px;
-  margin-top: 2px;
+.dashboardPlanFeatures .iosViewerCtaWrap {
+  display: contents;
 }
 
-.dashboardPlanFoot .iosViewerCtaWrap {
-  display: inline-flex;
-}
-
-.dashboardPlanFoot .iosViewerCtaText,
 .dashboardPlanFeatures .iosViewerCtaText {
-  min-height: 24px;
-  font-size: var(--text-sm);
+  min-height: 0;
+  justify-content: flex-start;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.dashboardPlanFeatures li:has(.iosViewerCtaText) {
+  align-items: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboardPlanToast {
+    animation: none;
+  }
 }
 
 .planFeatureText {

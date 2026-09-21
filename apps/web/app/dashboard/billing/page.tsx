@@ -28,7 +28,7 @@ export default async function DashboardBillingPage({
     <>
       <DashboardPageHeader
         title="Billing"
-        description="Yearly is $99. Monthly is $15. Upgrade when a session needs to leave this machine."
+        description="Pro is $99 a year, or $15 a month. Upgrade when a session needs to leave this machine."
         analyticsPage="billing"
       />
 

@@ -288,8 +288,10 @@ the CLI at local with `apps/cli/.env.local` (copy from `.env.example`).
 
 1. In the host shell, press `Ctrl+\` then `s` to share.
 2. As a **free** user you should see _"Relay sharing requires Pro"_ + a checkout
-   URL (URL only if Stripe is connected in the Autumn sandbox; otherwise the
-   generic message, still correctly denied).
+   URL and _"Press Enter to open the browser"_ (URL only if Stripe is connected
+   in the Autumn sandbox; otherwise the generic message, still correctly denied).
+   Press Enter to open Stripe checkout, the same way `wrapper auth login` opens
+   the device-approval URL.
 3. Grant Pro (Stripe test card `4242 4242 4242 4242`, or attach `pro` in the
    Autumn dashboard), retry → sharing succeeds and a viewer can attach:
 
