@@ -16,7 +16,9 @@ import {
   type AuthAutoRefresh,
 } from "../util/convex-client";
 import { convexErrorPayload, isProPlanRequiredError } from "../util/convex-error";
+import { createEnterToOpen } from "../util/enter-to-open";
 import { env } from "../util/env";
+import { openUrl } from "../util/open-url";
 import { resolvePrefix } from "../util/prefix-config";
 import {
   bell,
@@ -279,6 +281,15 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   const sessionTag = sessionId.slice(0, 6);
   const ATTENTION_DEBOUNCE_MS = 30_000;
   const OWNER_INPUT_GRACE_MS = 5_000;
+  const checkoutOpen = createEnterToOpen({
+    open: openUrl,
+    onOpened: (ok) => {
+      if (ok) return;
+      const message = "Could not open the browser. Open the URL above.";
+      if (session.isIdle) inlineMessage(message);
+      else log.warn(message);
+    },
+  });
 
   session.on("data", (chunk) => {
     if (!env.notifyEnabled) return;
@@ -545,6 +556,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
             ? [
                 "Relay sharing requires Pro.",
                 `Upgrade → ${checkoutUrl}`,
+                "Press Enter to open the browser",
                 `Once upgraded, press ${prefix.label} then s to share (no restart needed).`,
               ]
             : [
@@ -553,6 +565,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
               ];
           if (session.isIdle) {
             for (const line of lines) inlineMessage(line);
+            if (checkoutUrl) checkoutOpen.arm(checkoutUrl);
           } else {
             for (const line of lines) log.info(line);
           }
@@ -605,6 +618,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
           announce(`wrapper • sharing • ${sessionTag}`, "already sharing…");
           return;
         }
+        checkoutOpen.disarm();
         // `shared` is committed inside startRelayBridge only once the share
         // actually takes effect, so a denied relay share (e.g. no Pro plan)
         // never leaves the session marked as shared. Flip `relayStarting`
@@ -718,7 +732,8 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     connectRetries: 20,
     connectRetryDelayMs: 50,
     interceptStdin: (chunk) => {
-      const passthrough = prefixFilter.process(chunk);
+      const afterPrefix = prefixFilter.process(chunk);
+      const passthrough = checkoutOpen.process(afterPrefix);
       if (passthrough.length > 0) lastOwnerInputAt = Date.now();
       return passthrough;
     },
@@ -753,6 +768,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     if (shuttingDown) return 0;
     shuttingDown = true;
     shareOp += 1;
+    checkoutOpen.disarm();
     log.debug("shell-host shutting down", { sessionId, reason });
     stopHeartbeat();
     if (shareInviteTimer) clearTimeout(shareInviteTimer);
