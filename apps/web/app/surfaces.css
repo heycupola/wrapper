@@ -737,46 +737,51 @@
   gap: 16px;
 }
 
-/* Billing cards match landing: name and price, a one-sentence summary, then
-   the feature list. Unknown terms use the same hover/pin tooltip as landing. */
+/* Billing cards match landing: stacked name, price, period switch, summary,
+   then a divided feature list with the plan action pinned to the foot. */
 .dashboardBillingGrid .dashboardPlanCard {
-  gap: 10px;
-  padding: 18px 20px;
-  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 24px;
+  border-radius: var(--radius-md);
 }
 
 .dashboardPlanHead {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
   gap: 12px;
 }
 
 .dashboardPlanOffer {
   display: grid;
-  justify-items: end;
-  gap: 8px;
-  flex: none;
+  justify-items: start;
+  gap: 12px;
 }
 
 .dashboardPlanOffer[data-interval] > div {
   display: grid;
-  justify-items: end;
+  justify-items: start;
   grid-template-rows: auto 1.35em;
   gap: 2px;
+}
+
+.dashboardPlanInterval {
+  width: max-content;
+  max-width: 100%;
+  background: color-mix(in srgb, var(--color-text) 6%, var(--color-surface-strong));
 }
 
 .dashboardPlanRate {
   display: flex;
   align-items: baseline;
-  gap: 5px;
+  gap: 6px;
   margin: 0;
   font-variant-numeric: tabular-nums;
 }
 
 .dashboardPlanRate strong {
   color: var(--color-text);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 590;
   letter-spacing: -0.03em;
   line-height: 1.1;
@@ -791,7 +796,7 @@
 
 .dashboardPlanName {
   display: grid;
-  gap: 2px;
+  gap: 4px;
 }
 
 .dashboardPlanName .dashboardPanelLabel {
@@ -799,18 +804,19 @@
 }
 
 .dashboardPlanName h2 {
-  font-size: var(--text-lg);
-  line-height: var(--leading-tight);
-  letter-spacing: -0.03em;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
 }
 
 .dashboardPlanCard .dashboardPlanPrice {
   flex: none;
   flex-direction: row;
   align-items: baseline;
-  gap: 5px;
-  padding-top: 2px;
-  font-size: 1.5rem;
+  gap: 8px;
+  padding-top: 0;
+  font-size: 2rem;
 }
 
 .dashboardPlanCard .dashboardPlanPrice span {
@@ -818,6 +824,7 @@
 }
 
 .dashboardPriceLead {
+  max-width: 28ch;
   color: var(--color-text-muted);
   font-size: var(--text-sm);
   line-height: var(--leading-body);
@@ -826,16 +833,18 @@
 
 .dashboardPlanFeatures {
   display: grid;
-  gap: 8px;
-  margin: 4px 0 0;
-  padding: 0;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 18px 0 0;
+  border-top: 1px solid var(--color-border);
   list-style: none;
 }
 
 .dashboardPlanFeatures li {
   display: grid;
-  grid-template-columns: 14px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
   color: var(--color-text);
   font-size: var(--text-sm);
   line-height: var(--leading-body);
@@ -847,33 +856,55 @@
 }
 
 .dashboardPlanFeatures li::before {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 15%, transparent);
+  border-radius: 50%;
   color: var(--color-text-muted);
   content: "✓";
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 700;
+  place-items: center;
 }
 
 .dashboardProPanel .dashboardPlanFeatures li::before {
+  border-color: color-mix(in srgb, var(--color-accent-pop) 40%, transparent);
+  background: var(--color-accent-soft);
   color: var(--color-accent-text);
 }
 
 .dashboardPlanFoot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 16px;
-  margin-top: 2px;
+  margin-top: auto;
+  padding-top: 24px;
 }
 
-.dashboardPlanFoot .iosViewerCtaWrap {
-  display: inline-flex;
-}
-
-.dashboardPlanFoot .iosViewerCtaText,
-.dashboardPlanFeatures .iosViewerCtaText {
-  min-height: 24px;
+.dashboardPlanNote {
+  margin: 0;
+  color: var(--color-text-muted);
   font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.dashboardBillingGrid + .authError {
+  margin-top: 16px;
+}
+
+.dashboardPlanFeatures .iosViewerCtaWrap {
+  display: contents;
+}
+
+.dashboardPlanFeatures .iosViewerCtaText {
+  min-height: 0;
+  justify-content: flex-start;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.dashboardPlanFeatures li:has(.iosViewerCtaText) {
+  align-items: center;
 }
 
 .planFeatureText {
@@ -900,6 +931,10 @@
   text-underline-offset: 3px;
   white-space: nowrap;
   cursor: help;
+}
+
+.dashboardPlanFeatures .termTipButton {
+  text-decoration-color: color-mix(in srgb, currentColor 28%, transparent);
 }
 
 .termTipButton:hover,
@@ -1798,7 +1833,7 @@
   }
 
   .dashboardBillingGrid .dashboardPlanCard {
-    padding: 16px 18px;
+    padding: 20px;
   }
 }
 

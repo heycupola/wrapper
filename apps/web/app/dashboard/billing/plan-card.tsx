@@ -19,6 +19,8 @@ type PlanCardProps = {
   priceRate?: { amount: string; period: string };
   /** The control that changes the price, such as a billing period switch. */
   priceControls?: ReactNode;
+  /** Primary action for this plan, pinned to the bottom of the card. */
+  action?: ReactNode;
   children?: ReactNode;
 };
 
@@ -34,6 +36,7 @@ export function PlanCard({
   priceLabelledBy,
   priceRate,
   priceControls,
+  action,
   children,
 }: PlanCardProps) {
   const titleId = useId();
@@ -43,7 +46,7 @@ export function PlanCard({
       className={`dashboardPanel dashboardPlanCard${highlighted ? " dashboardProPanel" : ""}`}
       aria-labelledby={titleId}
     >
-      <div className="dashboardPlanHead">
+      <header className="dashboardPlanHead">
         <div className="dashboardPlanName">
           <span className="dashboardPanelLabel">{label}</span>
           <h2 id={titleId}>{name}</h2>
@@ -67,8 +70,8 @@ export function PlanCard({
           </div>
           {priceControls}
         </div>
-      </div>
-      <p className="dashboardPriceLead">{summary}</p>
+        <p className="dashboardPriceLead">{summary}</p>
+      </header>
       <ul className="dashboardPlanFeatures">
         {features.map((feature) => (
           <li key={feature.label}>
@@ -77,6 +80,7 @@ export function PlanCard({
         ))}
         {children ? <li>{children}</li> : null}
       </ul>
+      {action ? <div className="dashboardPlanFoot">{action}</div> : null}
     </article>
   );
 }
