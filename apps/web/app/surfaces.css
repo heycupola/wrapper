@@ -740,16 +740,20 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  max-width: 36rem;
-  align-items: start;
+  max-width: 40rem;
+  align-items: stretch;
+}
+
+.dashboardBillingNotice {
+  max-width: 40rem;
 }
 
 /* Compact plan tiles: price and action on the card, features in a hover toast. */
 .dashboardBillingGrid .dashboardPlanCard {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px 18px;
+  gap: 14px;
+  padding: 18px 20px;
   border-radius: var(--radius-sm);
   transition: border-color var(--motion-fast) ease;
 }
@@ -766,26 +770,37 @@
 
 .dashboardPlanHead {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
-.dashboardPlanOffer {
-  display: grid;
-  justify-items: start;
-  gap: 8px;
+/* Name on the left, the period switch on the right, so both cards keep the
+   same header height whether or not they carry a switch. */
+.dashboardPlanTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
 }
 
-.dashboardPlanOffer[data-interval] > div {
+.dashboardPlanPriceStack {
   display: grid;
   justify-items: start;
-  grid-template-rows: auto 1.2em;
   gap: 2px;
 }
 
+/* Reserve the rate line so the card does not jump between yearly and monthly. */
+.dashboardPlanPriceStack[data-interval] {
+  grid-template-rows: auto 1.2em;
+}
+
 .dashboardPlanInterval {
-  width: max-content;
-  max-width: 100%;
+  flex: none;
   background: color-mix(in srgb, var(--color-text) 6%, var(--color-surface-strong));
+}
+
+.dashboardProPanel .dashboardPlanInterval {
+  background: color-mix(in srgb, var(--color-accent-pop) 10%, var(--color-surface-strong));
 }
 
 .dashboardPlanRate {
@@ -849,6 +864,9 @@
 }
 
 .dashboardPlanFoot {
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
   padding-top: 4px;
 }
 

@@ -104,33 +104,43 @@ export function DashboardBilling({
     />
   );
 
-  const proAction =
-    plan === "free" ? (
-      <Button
-        variant="primary"
-        size="sm"
-        block
-        disabled={pending !== null}
-        loading={pending === "checkout"}
-        onClick={() => void startCheckout()}
-      >
-        {checkoutLabel}
-      </Button>
-    ) : canManageBilling ? (
-      <Button
-        size="sm"
-        block
-        disabled={pending !== null}
-        loading={pending === "portal"}
-        onClick={() => void openPortal()}
-      >
-        {pending === "portal" ? "Opening portal…" : "Manage billing"}
-      </Button>
-    ) : (
-      <p className="dashboardPlanNote">
-        You're on Pro. A paid checkout is what creates a Stripe portal for invoices.
-      </p>
-    );
+  const freeAction = (
+    <Button size="sm" block href="https://docs.wrapper.sh/guides/installation" external>
+      Install Wrapper
+    </Button>
+  );
+
+  const proAction = (
+    <>
+      {plan === "free" ? (
+        <Button
+          variant="primary"
+          size="sm"
+          block
+          disabled={pending !== null}
+          loading={pending === "checkout"}
+          onClick={() => void startCheckout()}
+        >
+          {checkoutLabel}
+        </Button>
+      ) : null}
+      {canManageBilling ? (
+        <Button
+          size="sm"
+          block
+          disabled={pending !== null}
+          loading={pending === "portal"}
+          onClick={() => void openPortal()}
+        >
+          {pending === "portal" ? "Opening portal…" : "Manage billing"}
+        </Button>
+      ) : plan === "pro" ? (
+        <p className="dashboardPlanNote">
+          You're on Pro. A paid checkout is what creates a Stripe portal for invoices.
+        </p>
+      ) : null}
+    </>
+  );
 
   return (
     <>
@@ -142,6 +152,7 @@ export function DashboardBilling({
           period="forever"
           summary="Your shell, on this machine."
           features={FREE_PLAN_FEATURES}
+          action={freeAction}
         />
         <PlanCard
           name="Pro"
@@ -151,10 +162,10 @@ export function DashboardBilling({
           summary={PRO_SUMMARY}
           features={PRO_PLAN_FEATURES}
           highlighted
-          priceId={panelId}
-          priceLabelledBy={tabId}
-          priceRate={price.rate ?? undefined}
-          priceControls={intervalSwitch}
+          priceId={plan === "free" ? panelId : undefined}
+          priceLabelledBy={plan === "free" ? tabId : undefined}
+          priceRate={plan === "free" ? (price.rate ?? undefined) : undefined}
+          priceControls={plan === "free" ? intervalSwitch : null}
           action={proAction}
         >
           <IosViewerCta variant="text" />

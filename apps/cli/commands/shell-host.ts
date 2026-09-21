@@ -551,12 +551,15 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
           await closeCloudSession("pro_required");
           if (env.hudEnabled) setTitle("");
 
+          const inputAtBeforeCheckout = lastOwnerInputAt;
           const checkoutUrl = await fetchProCheckoutUrl(backend.client);
+          const typedDuringWait = lastOwnerInputAt !== inputAtBeforeCheckout;
+          const armCheckout = Boolean(checkoutUrl) && session.isIdle && !typedDuringWait;
           const lines = checkoutUrl
             ? [
                 "Relay sharing requires Pro.",
                 `Upgrade → ${checkoutUrl}`,
-                "Press Enter to open the browser",
+                ...(armCheckout ? ["Press Enter to open the browser"] : []),
                 `Once upgraded, press ${prefix.label} then s to share (no restart needed).`,
               ]
             : [
@@ -565,7 +568,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
               ];
           if (session.isIdle) {
             for (const line of lines) inlineMessage(line);
-            if (checkoutUrl) checkoutOpen.arm(checkoutUrl);
+            if (armCheckout && checkoutUrl) checkoutOpen.arm(checkoutUrl);
           } else {
             for (const line of lines) log.info(line);
           }
