@@ -3,7 +3,7 @@ pre-commit:
   commands:
     oxfmt:
       glob: "*.{js,jsx,ts,tsx,json,jsonc}"
-      run: bunx oxfmt {staged_files}
+      run: bunx oxfmt --ignore-path .oxfmtignore {staged_files}
       stage_fixed: true
     oxlint:
       glob: "*.{js,jsx,ts,tsx}"
