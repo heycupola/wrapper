@@ -117,7 +117,7 @@ export function PlanCard({
 
     function onFocusOut(event: FocusEvent) {
       const next = event.relatedTarget;
-      if (next instanceof Node && card.contains(next)) return;
+      if (next instanceof Node && card?.contains(next)) return;
       if (next instanceof Node && toastRef.current?.contains(next)) return;
       scheduleHide();
     }
