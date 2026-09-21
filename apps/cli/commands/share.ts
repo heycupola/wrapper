@@ -1,3 +1,4 @@
+import { command, tag } from "../util/ui";
 import { runShellHost } from "./shell-host";
 
 /**
@@ -14,16 +15,19 @@ export interface ShareOptions {
 export async function runShare(opts: ShareOptions = {}): Promise<void> {
   if (process.env.WRAPPER_WRAPPED === "1") {
     process.stderr.write(
-      "wrapper: this shell is already wrapped. Press Ctrl+\\ then s to share it.\n",
+      `${tag()} this shell is already wrapped. Press Ctrl+\\ then s to share it.\n`,
     );
     process.exit(0);
   }
 
-  const command = opts.command?.filter((part) => part.length > 0);
+  const argv = opts.command?.filter((part) => part.length > 0);
+  if (argv && argv.length > 0) {
+    process.stderr.write(`${tag()} wrapping ${command(argv.join(" "))}\n`);
+  }
   await runShellHost({
     shareOnStart: true,
     writableOnStart: Boolean(opts.writable),
-    argv: command && command.length > 0 ? command : undefined,
+    argv: argv && argv.length > 0 ? argv : undefined,
     port: opts.port,
   });
 }

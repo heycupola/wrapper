@@ -5,6 +5,7 @@ import { detectAvailableShells, type DetectedShell, type SupportedShell } from "
 import { patchRc, renderBlock, type PatchResult } from "../shell/rc-edit";
 import { env } from "../util/env";
 import { paths } from "../util/paths";
+import { introTitle } from "../util/ui";
 
 /**
  * `wrapper install` — optional: wrap every new shell by patching shell config.
@@ -21,7 +22,7 @@ export interface InstallOptions {
 }
 
 export async function runInstall(opts: InstallOptions): Promise<void> {
-  p.intro(`wrapper install (${env.label})`);
+  p.intro(introTitle("install", env.label));
 
   const detected = detectAvailableShells();
   if (detected.length === 0) {

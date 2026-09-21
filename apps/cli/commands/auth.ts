@@ -9,6 +9,8 @@ import { DeviceAuthPollingCancelledError, pollForDeviceToken } from "../util/dev
 import { openUrl } from "../util/open-url";
 import { paths } from "../util/paths";
 import { installShutdownHandlers } from "../util/signals";
+import { introTitle, tag } from "../util/ui";
+import { env } from "../util/env";
 
 const log = createLogger("auth");
 
@@ -55,7 +57,7 @@ export interface AuthLoginOptions {
 }
 
 export async function runAuthLogin(opts: AuthLoginOptions): Promise<void> {
-  p.intro("wrapper auth login");
+  p.intro(introTitle("auth login", env.label));
   const convexUrl = resolveConvexUrl();
   if (!convexUrl) {
     p.cancel("Missing Convex URL. Set WRAPPER_CONVEX_URL (or CONVEX_URL) and try again.");
@@ -112,7 +114,7 @@ export async function runAuthLogin(opts: AuthLoginOptions): Promise<void> {
 }
 
 export async function runAuthWhoami(): Promise<void> {
-  p.intro("wrapper auth whoami");
+  p.intro(introTitle("auth whoami", env.label));
   const auth = loadStoredAuthToken();
   if (!auth) {
     p.cancel("Not logged in. Run `wrapper auth login` first.");
@@ -141,7 +143,7 @@ export async function runAuthWhoami(): Promise<void> {
 }
 
 export async function runAuthLogout(): Promise<void> {
-  p.intro("wrapper auth logout");
+  p.intro(introTitle("auth logout", env.label));
   const file = paths.authFile();
   if (!existsSync(file)) {
     p.outro("Already logged out.");
@@ -198,7 +200,7 @@ async function waitForDeviceToken(
     },
   });
 
-  process.stderr.write("[wrapper] waiting for device approval...\n");
+  process.stderr.write(`${tag()} waiting for device approval…\n`);
   try {
     try {
       return await pollForDeviceToken({
@@ -216,7 +218,7 @@ async function waitForDeviceToken(
       });
     } catch (error) {
       if (error instanceof DeviceAuthPollingCancelledError) {
-        process.stderr.write("[wrapper] cancelled.\n");
+        process.stderr.write(`${tag()} cancelled.\n`);
         process.exit(130);
       }
       throw error;

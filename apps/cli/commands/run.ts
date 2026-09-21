@@ -1,3 +1,4 @@
+import { command, tag } from "../util/ui";
 import { runShellHost } from "./shell-host";
 
 /**
@@ -14,21 +15,24 @@ export interface RunOptions {
 export async function runRun(opts: RunOptions): Promise<void> {
   if (process.env.WRAPPER_WRAPPED === "1") {
     process.stderr.write(
-      "wrapper: this shell is already wrapped. Press Ctrl+\\ then s to share it.\n",
+      `${tag()} this shell is already wrapped. Press Ctrl+\\ then s to share it.\n`,
     );
     process.exit(0);
   }
 
-  const command = opts.command.filter((part) => part.length > 0);
-  if (command.length === 0) {
-    process.stderr.write("wrapper: run requires a command. Example: wrapper run -- claude\n");
+  const argv = opts.command.filter((part) => part.length > 0);
+  if (argv.length === 0) {
+    process.stderr.write(
+      `${tag()} run needs a command. Example: ${command("wrapper run -- claude")}\n`,
+    );
     process.exit(2);
   }
 
+  process.stderr.write(`${tag()} wrapping ${command(argv.join(" "))}\n`);
   await runShellHost({
     shareOnStart: Boolean(opts.share),
     writableOnStart: Boolean(opts.writable),
-    argv: command,
+    argv,
     port: opts.port,
   });
 }

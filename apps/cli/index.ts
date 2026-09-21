@@ -16,6 +16,8 @@ import { telemetryDisable, telemetryEnable, telemetryStatus } from "./commands/t
 import { runUninstall } from "./commands/uninstall";
 import type { SupportedShell } from "./shell/detect";
 import { configureBundledPtyHelper } from "./util/bundled-helper";
+import { env } from "./util/env";
+import { renderBanner, renderWelcome } from "./util/ui";
 import pkg from "./package.json";
 
 configureBundledPtyHelper();
@@ -52,27 +54,7 @@ const isQuietEntry =
   subcommand === "logs" ||
   process.env.WRAPPER_WRAPPED === "1";
 if (!isQuietEntry && isFirstRun()) {
-  console.error();
-  console.error(`  ${pc.bold("wrapper")} ${pc.dim(`v${VERSION}`)}`);
-  console.error(`  ${pc.dim("Bring your terminal to your phone, on demand.")}`);
-  console.error();
-  console.error(`  ${pc.green("✓")} ${pc.dim("Ready to use")}`);
-  console.error();
-  console.error(`  ${pc.dim("Get started:")}`);
-  console.error(
-    `    ${pc.dim("$")} ${pc.cyan("wrapper share")}      ${pc.dim("Wrap this shell and share it (does not patch your shell config)")}`,
-  );
-  console.error(
-    `    ${pc.dim("$")} ${pc.cyan("wrapper status")}     ${pc.dim("List active sessions")}`,
-  );
-  console.error(
-    `    ${pc.dim("$")} ${pc.cyan("wrapper --help")}     ${pc.dim("See all commands")}`,
-  );
-  console.error();
-  console.error(
-    `  ${pc.dim("Anonymous telemetry is disabled by default. Run")} ${pc.white("wrapper telemetry enable")} ${pc.dim("to opt in.")}`,
-  );
-  console.error();
+  process.stderr.write(`${renderWelcome({ version: VERSION, envLabel: env.label })}\n`);
   saveTelemetryPreference(false);
 }
 
@@ -80,7 +62,16 @@ const program = new Command();
 program
   .name("wrapper")
   .description("Wrapper — bring your terminal to your phone, on demand")
-  .version(VERSION);
+  .version(VERSION)
+  .addHelpText("before", () => renderBanner({ version: VERSION, envLabel: env.label }))
+  .configureHelp({
+    styleTitle: (title) => pc.bold(title),
+    styleSubcommandText: (text) => pc.cyan(text),
+    styleOptionText: (text) => pc.green(text),
+    styleArgumentText: (text) => pc.yellow(text),
+    styleDescriptionText: (text) => pc.dim(text),
+    styleCommandText: (text) => pc.cyan(text),
+  });
 
 program
   .command("install")
