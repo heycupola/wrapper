@@ -34,7 +34,7 @@
     "format": "turbo run format",
     "format:check": "turbo run format:check",
     "check-types": "turbo run check-types",
-    "audit": "bun audit --ignore GHSA-jmr9-qjv8-65gv --ignore GHSA-7pqw-9j4j-h8q3 --ignore GHSA-vwc7-r8mq-g2x9",
+    "audit": "bun audit --ignore GHSA-jmr9-qjv8-65gv --ignore GHSA-7pqw-9j4j-h8q3",
     "apple:client-secret": "bun run tools/generate-apple-client-secret.ts",
     "prepare": "lefthook install"
   },
@@ -47,7 +47,7 @@
     "typescript": "5.9.3"
   },
   "overrides": {
-    "adm-zip": "0.6.0",
+    "adm-zip": "0.6.1",
     "axios": "1.18.1",
     "baseline-browser-mapping": "2.11.21",
     "body-parser": "1.20.6",
