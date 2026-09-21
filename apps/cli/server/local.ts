@@ -1,6 +1,12 @@
 import type { Server, ServerWebSocket } from "bun";
 import { createLogger } from "@repo/logger";
-import { encodeMessage, parseMessage, type SessionId, type WrapperMessage } from "@repo/protocol";
+import {
+  encodeMessage,
+  parseMessage,
+  replayOutputMessages,
+  type SessionId,
+  type WrapperMessage,
+} from "@repo/protocol";
 import type { PtySession } from "../pty/session";
 
 const log = createLogger("server");
@@ -69,12 +75,11 @@ export function startLocalServer(opts: LocalServerOptions): LocalServerHandle {
         });
         // Replay tail for late joiners, then request redraw.
         const replay = opts.pty.replayBuffer;
-        if (replay.length > 0) {
-          send(ws, {
-            type: "output",
-            sessionId: opts.sessionId,
-            data: replay,
-          });
+        for (const frame of replayOutputMessages({
+          sessionId: opts.sessionId,
+          data: replay,
+        })) {
+          send(ws, frame);
         }
         opts.pty.requestRedraw();
       },

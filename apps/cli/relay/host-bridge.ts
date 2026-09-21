@@ -1,5 +1,11 @@
 import { createLogger } from "@repo/logger";
-import { encodeMessage, parseMessage, type SessionId, type WrapperMessage } from "@repo/protocol";
+import {
+  encodeMessage,
+  parseMessage,
+  replayOutputMessages,
+  type SessionId,
+  type WrapperMessage,
+} from "@repo/protocol";
 import type { PtySession } from "../pty/session";
 import { WebSocketTransport, type Transport } from "../transport/transport";
 import { negotiateWebRtc, type Negotiation } from "../transport/webrtc";
@@ -38,6 +44,7 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
   const p2pPeers = new Map<string, { negotiation: Negotiation }>();
   const p2pChannels = new Map<string, Transport>();
   const viewerCaps = new Map<string, { canInput: boolean; isOwner: boolean }>();
+  const replayedPeers = new Set<string>();
   let relayConnected = false;
 
   const reportTransport = (): void => {
@@ -122,6 +129,52 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
 
   function rememberCaps(peerId: string, canInput: boolean, isOwner: boolean): void {
     viewerCaps.set(peerId, { canInput, isOwner });
+    sendReplayTo(peerId);
+  }
+
+  function sendReplayTo(peerId: string): void {
+    if (replayedPeers.has(peerId)) return;
+    const replay = opts.pty.replayBuffer;
+    if (replay.length === 0) {
+      replayedPeers.add(peerId);
+      return;
+    }
+    replayedPeers.add(peerId);
+    for (const frame of replayOutputMessages({
+      sessionId: opts.sessionId,
+      data: replay,
+      to: peerId,
+    })) {
+      sendToPeer(peerId, frame);
+    }
+    // History was rendered for whatever size the PTY had at the time. Ask the
+    // foreground program to repaint so the new viewer ends on a coherent frame.
+    opts.pty.requestRedraw();
+  }
+
+  function sendToPeer(peerId: string, msg: WrapperMessage): void {
+    const frame = encodeMessage(msg);
+    const dt = p2pChannels.get(peerId);
+    if (dt?.isOpen) {
+      try {
+        dt.send(frame);
+      } catch (err) {
+        log.warn("p2p replay send failed", {
+          error: (err as Error).message,
+          peerId,
+        });
+      }
+      return;
+    }
+    if (!transport.isOpen) return;
+    try {
+      transport.send(frame);
+    } catch (err) {
+      log.warn("relay replay send failed", {
+        error: (err as Error).message,
+        peerId,
+      });
+    }
   }
 
   function peerCanInput(peerId: string | undefined): boolean {
@@ -220,6 +273,7 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
           p2pChannels.set(peerId, t);
           reportTransport();
           log.info("p2p data channel up (host)", { sessionId: opts.sessionId, peerId });
+          sendReplayTo(peerId);
         } else {
           p2pPeers.delete(peerId);
           reportTransport();
@@ -238,6 +292,7 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
     p2pPeers.clear();
     p2pChannels.clear();
     viewerCaps.clear();
+    replayedPeers.clear();
     relayConnected = false;
     reportTransport();
     transport.close();
