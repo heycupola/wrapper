@@ -95,7 +95,51 @@ export function DashboardBilling({
         : "Upgrade — $15/month";
 
   const intervalSwitch = (
-    <ProIntervalSwitch id={switchId} size="sm" value={interval} onChange={setInterval} />
+    <ProIntervalSwitch
+      id={switchId}
+      className="dashboardPlanInterval"
+      size="sm"
+      value={interval}
+      onChange={setInterval}
+    />
+  );
+
+  const freeAction = (
+    <Button size="sm" block href="https://docs.wrapper.sh/guides/installation" external>
+      Install Wrapper
+    </Button>
+  );
+
+  const proAction = (
+    <>
+      {plan === "free" ? (
+        <Button
+          variant="primary"
+          size="sm"
+          block
+          disabled={pending !== null}
+          loading={pending === "checkout"}
+          onClick={() => void startCheckout()}
+        >
+          {checkoutLabel}
+        </Button>
+      ) : null}
+      {canManageBilling ? (
+        <Button
+          size="sm"
+          block
+          disabled={pending !== null}
+          loading={pending === "portal"}
+          onClick={() => void openPortal()}
+        >
+          {pending === "portal" ? "Opening portal…" : "Manage billing"}
+        </Button>
+      ) : plan === "pro" ? (
+        <p className="dashboardPlanNote">
+          You're on Pro. A paid checkout is what creates a Stripe portal for invoices.
+        </p>
+      ) : null}
+    </>
   );
 
   return (
@@ -108,6 +152,7 @@ export function DashboardBilling({
           period="forever"
           summary="Your shell, on this machine."
           features={FREE_PLAN_FEATURES}
+          action={freeAction}
         />
         <PlanCard
           name="Pro"
@@ -121,56 +166,23 @@ export function DashboardBilling({
           priceLabelledBy={plan === "free" ? tabId : undefined}
           priceRate={plan === "free" ? (price.rate ?? undefined) : undefined}
           priceControls={plan === "free" ? intervalSwitch : null}
+          action={proAction}
         >
           <IosViewerCta variant="text" />
         </PlanCard>
       </div>
-
-      <section className="dashboardActionPanel" aria-labelledby="billing-actions-title">
-        <div>
-          <h2 id="billing-actions-title">Billing actions</h2>
-          <p>
-            {plan === "pro"
-              ? canManageBilling
-                ? "Use Stripe to manage invoices, payment details, and cancellation."
-                : "You're on Pro. A paid checkout is what creates a Stripe portal for invoices."
-              : "Pick yearly or monthly on the Pro card, then upgrade when a session needs to leave this machine."}
-          </p>
-        </div>
-        <div className="authActions">
-          {plan === "free" ? (
-            <Button
-              variant="primary"
-              disabled={pending !== null}
-              loading={pending === "checkout"}
-              onClick={() => void startCheckout()}
-            >
-              {checkoutLabel}
-            </Button>
-          ) : null}
-          {canManageBilling ? (
-            <Button
-              disabled={pending !== null}
-              loading={pending === "portal"}
-              onClick={() => void openPortal()}
-            >
-              {pending === "portal" ? "Opening portal…" : "Manage billing"}
-            </Button>
-          ) : null}
-        </div>
-        <output className="visuallyHidden">
-          {pending === "checkout"
-            ? "Starting Pro checkout, you will be taken to Stripe."
-            : pending === "portal"
-              ? "Opening the billing portal."
-              : ""}
-        </output>
-        {error ? (
-          <p className="authError" role="alert">
-            {error}
-          </p>
-        ) : null}
-      </section>
+      <output className="visuallyHidden">
+        {pending === "checkout"
+          ? "Starting Pro checkout, you will be taken to Stripe."
+          : pending === "portal"
+            ? "Opening the billing portal."
+            : ""}
+      </output>
+      {error ? (
+        <p className="authError" role="alert">
+          {error}
+        </p>
+      ) : null}
     </>
   );
 }

@@ -41,9 +41,10 @@ Puppeteer toolchain and applies
 symlink targets outside the extraction root. CI regression-tests that patch
 before allowing those advisory-specific audit exceptions.
 
-`GHSA-vwc7-r8mq-g2x9` is the same Mint toolchain path through `adm-zip@0.6.0`,
-which has no patched release. Remove these exceptions when Mint no longer
-resolves the affected packages.
+Mint still pulls `adm-zip` through its development toolchain. Wrapper overrides
+it to `0.6.1`, which is the patched release for GHSA-7q85-xj36-vmfc /
+GHSA-vwc7-r8mq-g2x9. Remove the override when Mint no longer resolves the
+package.
 
 ## Security boundaries
 
