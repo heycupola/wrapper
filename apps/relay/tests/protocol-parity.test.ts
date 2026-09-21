@@ -24,6 +24,7 @@ const samples: RepoMessage[] = [
   { type: "session.opened", sessionId: "s1", size: { cols: 80, rows: 24 } },
   { type: "session.closed", sessionId: "s1", exitCode: 0 },
   { type: "output", sessionId: "s1", data: "hi" },
+  { type: "output", sessionId: "s1", data: "hi", to: "p1" },
   { type: "error", sessionId: "s1", code: "internal", message: "boom" },
   { type: "signal", sessionId: "s1", to: "host", from: "p1", kind: "offer", data: "{}" },
   { type: "viewer.caps", sessionId: "s1", peerId: "p1", canInput: false, isOwner: false },

@@ -181,6 +181,12 @@ export class RelayHub {
         this.broadcastToViewers(binding.sessionId, msg);
         break;
       case "output":
+        if (msg.to) {
+          this.sendOutputToViewer(binding.sessionId, msg.to, msg);
+          break;
+        }
+        this.broadcastToViewers(binding.sessionId, msg);
+        break;
       case "error":
         this.broadcastToViewers(binding.sessionId, msg);
         break;
@@ -303,6 +309,12 @@ export class RelayHub {
         size: { cols, rows },
       }),
     );
+  }
+
+  private sendOutputToViewer(sessionId: string, peerId: string, msg: WrapperMessage): void {
+    const viewer = this.viewerByPeerId.get(peerId);
+    if (!viewer || !this.viewersBySession.get(sessionId)?.has(viewer)) return;
+    viewer.send(encodeMessage(msg));
   }
 
   private broadcastToViewers(sessionId: string, msg: WrapperMessage): void {

@@ -19,6 +19,7 @@ import type * as crons from "../crons.js";
 import type * as deviceAuth from "../deviceAuth.js";
 import type * as http from "../http.js";
 import type * as lib_accountDeletion from "../lib/accountDeletion.js";
+import type * as lib_apnsHttp2 from "../lib/apnsHttp2.js";
 import type * as lib_appleNotification from "../lib/appleNotification.js";
 import type * as lib_appleRevocation from "../lib/appleRevocation.js";
 import type * as lib_emails_access_restricted from "../lib/emails/access_restricted.js";
@@ -65,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   deviceAuth: typeof deviceAuth;
   http: typeof http;
   "lib/accountDeletion": typeof lib_accountDeletion;
+  "lib/apnsHttp2": typeof lib_apnsHttp2;
   "lib/appleNotification": typeof lib_appleNotification;
   "lib/appleRevocation": typeof lib_appleRevocation;
   "lib/emails/access_restricted": typeof lib_emails_access_restricted;

@@ -69,6 +69,33 @@ describe("RelayHub routing", () => {
     expect(outputA[0]).toContain("hello\\n");
   });
 
+  test("targeted host output reaches only the named viewer", () => {
+    const hub = new RelayHub(noopLog);
+    const host = new FakePeer();
+    const viewerA = new FakePeer();
+    const viewerB = new FakePeer();
+    hub.bind({ peer: host, role: "host", sessionId: "s1" });
+    hub.bind({ peer: viewerA, role: "viewer", sessionId: "s1" });
+    hub.bind({ peer: viewerB, role: "viewer", sessionId: "s1" });
+
+    const capsA = JSON.parse(
+      host.sent.find((frame) => frame.includes('"type":"viewer.caps"')) as string,
+    ) as { peerId: string };
+
+    hub.routeInbound(
+      host,
+      JSON.stringify({
+        type: "output",
+        sessionId: "s1",
+        data: "replay-only",
+        to: capsA.peerId,
+      }),
+    );
+
+    expect(viewerA.sent.filter((frame) => frame.includes("replay-only"))).toHaveLength(1);
+    expect(viewerB.sent.filter((frame) => frame.includes("replay-only"))).toHaveLength(0);
+  });
+
   test("viewer resize uses smallest consensus", () => {
     const hub = new RelayHub(noopLog);
     const host = new FakePeer();

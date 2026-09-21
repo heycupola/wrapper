@@ -21,7 +21,7 @@ export type WrapperMessage = Versioned &
     | { type: "resize"; sessionId: SessionId; size: { cols: number; rows: number } }
     | { type: "session.opened"; sessionId: SessionId; size: { cols: number; rows: number } }
     | { type: "session.closed"; sessionId: SessionId; exitCode: number | null }
-    | { type: "output"; sessionId: SessionId; data: string }
+    | { type: "output"; sessionId: SessionId; data: string; to?: string }
     | {
         type: "error";
         sessionId?: SessionId;
@@ -127,7 +127,14 @@ function isWrapperMessage(input: unknown): input is WrapperMessage {
             input.from.length <= SIGNAL_ID_MAX))
       );
     case "output":
-      return typeof input.data === "string" && input.data.length <= TERMINAL_DATA_MAX;
+      return (
+        typeof input.data === "string" &&
+        input.data.length <= TERMINAL_DATA_MAX &&
+        (input.to === undefined ||
+          (typeof input.to === "string" &&
+            input.to.length >= 1 &&
+            input.to.length <= SIGNAL_ID_MAX))
+      );
     case "resize":
       return isSize(input.size);
     case "session.opened":
