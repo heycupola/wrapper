@@ -73,6 +73,18 @@
       "direction": "client-to-host",
       "expectedType": "input",
       "wire": "{\"protocolVersion\":1,\"type\":\"input\",\"sessionId\":\"ABCDEFGHJKLM\",\"data\":\"echo hello\\n\",\"from\":\"viewer-1\"}"
+    },
+    {
+      "name": "terminal-resize-with-from",
+      "direction": "client-to-host",
+      "expectedType": "resize",
+      "wire": "{\"protocolVersion\":1,\"type\":\"resize\",\"sessionId\":\"ABCDEFGHJKLM\",\"size\":{\"cols\":120,\"rows\":40},\"from\":\"viewer-1\"}"
+    },
+    {
+      "name": "detach-with-from",
+      "direction": "client-to-host",
+      "expectedType": "detach",
+      "wire": "{\"protocolVersion\":1,\"type\":\"detach\",\"sessionId\":\"ABCDEFGHJKLM\",\"from\":\"viewer-1\"}"
     }
   ],
   "invalid": [

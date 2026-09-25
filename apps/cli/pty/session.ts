@@ -33,6 +33,12 @@ export class PtySession extends EventEmitter<PtySessionEvents> {
   private exitCode: number | null = null;
   private replayLog = "";
   private readonly decoder = new TextDecoder("utf-8");
+  /**
+   * Terminal size of every party currently displaying this PTY, keyed by a
+   * caller-chosen id (host terminal, local attach clients, relay viewers).
+   * The PTY is always sized to the smallest cols and rows across all of them.
+   */
+  private readonly participantSizes = new Map<string, TerminalSize>();
 
   constructor(opts: PtySessionOptions = {}) {
     super();
@@ -50,9 +56,15 @@ export class PtySession extends EventEmitter<PtySessionEvents> {
     }
   }
 
+  /**
+   * Applies a PTY size directly. Prefer `setParticipantSize`, which keeps the
+   * PTY no larger than any terminal that renders it; a direct resize to one
+   * viewer's size makes every other display draw a grid it cannot hold.
+   */
   resize(size: TerminalSize): void {
     if (this.state !== "running") return;
     if (!this.terminal) return;
+    if (size.cols <= 0 || size.rows <= 0) return;
     if (size.cols === this.currentSize.cols && size.rows === this.currentSize.rows) {
       return;
     }
@@ -62,6 +74,57 @@ export class PtySession extends EventEmitter<PtySessionEvents> {
     } catch (err) {
       this.emit("error", asError(err, "pty:resize"));
     }
+  }
+
+  /**
+   * Records the terminal size of one participant and resizes the PTY to the
+   * smallest cols/rows across all participants. Full-screen programs redraw
+   * for that grid (SIGWINCH), so every display can hold the frame.
+   */
+  setParticipantSize(id: string, size: TerminalSize): void {
+    if (size.cols <= 0 || size.rows <= 0) return;
+    const previous = this.participantSizes.get(id);
+    if (previous && previous.cols === size.cols && previous.rows === size.rows) return;
+    this.participantSizes.set(id, { cols: size.cols, rows: size.rows });
+    this.applyConsensusSize();
+  }
+
+  /** Forgets one participant (it stopped displaying the PTY) and re-fits. */
+  removeParticipant(id: string): void {
+    if (!this.participantSizes.delete(id)) return;
+    this.applyConsensusSize();
+  }
+
+  /** Forgets every participant whose id starts with `prefix` and re-fits once. */
+  removeParticipantsWithPrefix(prefix: string): void {
+    let removed = false;
+    // Deleting the current entry while iterating a Map is well-defined.
+    for (const id of this.participantSizes.keys()) {
+      if (!id.startsWith(prefix)) continue;
+      this.participantSizes.delete(id);
+      removed = true;
+    }
+    if (removed) this.applyConsensusSize();
+  }
+
+  /** Smallest size across all participants, or null when none registered. */
+  get consensusSize(): TerminalSize | null {
+    let cols: number | null = null;
+    let rows: number | null = null;
+    for (const size of this.participantSizes.values()) {
+      cols = cols === null ? size.cols : Math.min(cols, size.cols);
+      rows = rows === null ? size.rows : Math.min(rows, size.rows);
+    }
+    if (cols === null || rows === null) return null;
+    return { cols, rows };
+  }
+
+  private applyConsensusSize(): void {
+    const size = this.consensusSize;
+    // With no participants left there is nothing to fit; keep the last size so
+    // the shell does not jump around between attaches.
+    if (!size) return;
+    this.resize(size);
   }
 
   kill(signal: NodeJS.Signals = "SIGTERM"): void {

@@ -96,7 +96,7 @@ describe("RelayHub routing", () => {
     expect(viewerB.sent.filter((frame) => frame.includes("replay-only"))).toHaveLength(0);
   });
 
-  test("viewer resize uses smallest consensus", () => {
+  test("forwards each viewer resize to the host stamped with that viewer's peer id", () => {
     const hub = new RelayHub(noopLog);
     const host = new FakePeer();
     const viewerA = new FakePeer();
@@ -105,12 +105,18 @@ describe("RelayHub routing", () => {
     hub.bind({ peer: viewerA, role: "viewer", sessionId: "s1" });
     hub.bind({ peer: viewerB, role: "viewer", sessionId: "s1" });
 
+    const capsFrames = host.sent
+      .filter((frame) => frame.includes('"type":"viewer.caps"'))
+      .map((frame) => JSON.parse(frame) as { peerId: string });
+    const [peerA, peerB] = capsFrames.map((caps) => caps.peerId);
+
     hub.routeInbound(
       viewerA,
       JSON.stringify({
         type: "resize",
         sessionId: "s1",
         size: { cols: 140, rows: 50 },
+        from: "spoofed",
       }),
     );
     hub.routeInbound(
@@ -122,9 +128,50 @@ describe("RelayHub routing", () => {
       }),
     );
 
-    expect(host.sent.at(-1)).toContain('"type":"resize"');
-    expect(host.sent.at(-1)).toContain('"cols":100');
-    expect(host.sent.at(-1)).toContain('"rows":40');
+    // Size consensus is the host's job (only it knows its own terminal size), so
+    // the relay must not collapse viewer sizes; it forwards each one, attributed.
+    const resizes = host.sent
+      .filter((frame) => frame.includes('"type":"resize"'))
+      .map((frame) => JSON.parse(frame) as { from: string; size: { cols: number; rows: number } });
+    expect(resizes).toHaveLength(2);
+    expect(resizes[0]).toMatchObject({ from: peerA, size: { cols: 140, rows: 50 } });
+    expect(resizes[1]).toMatchObject({ from: peerB, size: { cols: 100, rows: 40 } });
+    expect(resizes[0]?.from).not.toBe("spoofed");
+  });
+
+  test("tells the host which viewer left when its socket closes", () => {
+    const hub = new RelayHub(noopLog);
+    const host = new FakePeer();
+    const viewer = new FakePeer();
+    hub.bind({ peer: host, role: "host", sessionId: "s1" });
+    hub.bind({ peer: viewer, role: "viewer", sessionId: "s1" });
+
+    const caps = JSON.parse(
+      host.sent.find((frame) => frame.includes('"type":"viewer.caps"')) as string,
+    ) as { peerId: string };
+
+    hub.unbind(viewer);
+
+    const detach = JSON.parse(host.sent.at(-1) as string) as { type: string; from?: string };
+    expect(detach.type).toBe("detach");
+    expect(detach.from).toBe(caps.peerId);
+  });
+
+  test("stamps a viewer's own detach with its peer id", () => {
+    const hub = new RelayHub(noopLog);
+    const host = new FakePeer();
+    const viewer = new FakePeer();
+    hub.bind({ peer: host, role: "host", sessionId: "s1" });
+    hub.bind({ peer: viewer, role: "viewer", sessionId: "s1" });
+
+    const caps = JSON.parse(
+      host.sent.find((frame) => frame.includes('"type":"viewer.caps"')) as string,
+    ) as { peerId: string };
+
+    hub.routeInbound(viewer, JSON.stringify({ type: "detach", sessionId: "s1" }));
+
+    const detach = JSON.parse(host.sent.at(-1) as string) as { type: string; from?: string };
+    expect(detach).toMatchObject({ type: "detach", from: caps.peerId });
   });
 
   test("replays viewer caps when the host binds after a viewer", () => {
