@@ -14,6 +14,14 @@ const log = createLogger("relay-host-bridge");
 
 type SignalFrame = Extract<WrapperMessage, { type: "signal" }>;
 
+/** Participant-id prefix for remote viewers in `PtySession` size consensus. */
+const VIEWER_PARTICIPANT_PREFIX = "relay:";
+/**
+ * Fallback participant when a relay predating per-viewer `from` stamping sends
+ * an aggregate resize. It is dropped when the bridge stops.
+ */
+const AGGREGATE_VIEWER_PARTICIPANT = `${VIEWER_PARTICIPANT_PREFIX}*`;
+
 export interface RelayHostBridgeOptions {
   relayUrl: string;
   ticket: string;
@@ -182,6 +190,10 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
     return viewerCaps.get(peerId)?.canInput === true;
   }
 
+  function viewerParticipantId(peerId: string | undefined): string {
+    return peerId ? `${VIEWER_PARTICIPANT_PREFIX}${peerId}` : AGGREGATE_VIEWER_PARTICIPANT;
+  }
+
   function handleInbound(msg: WrapperMessage, peerId?: string): void {
     switch (msg.type) {
       case "input": {
@@ -190,11 +202,22 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
         opts.pty.write(msg.data);
         break;
       }
-      case "resize":
-        opts.pty.resize(msg.size);
+      case "resize": {
+        // Never apply a viewer's size directly: the PTY must stay no larger than
+        // the host's own terminal (and every other display). Register this
+        // viewer's size and let the session fit the smallest participant.
+        const from = peerId ?? msg.from;
+        opts.pty.setParticipantSize(viewerParticipantId(from), msg.size);
         break;
+      }
+      case "detach": {
+        // Sent by a leaving viewer, and synthesised by the relay when a viewer
+        // socket closes. Lift that viewer's size constraint.
+        const from = peerId ?? msg.from;
+        if (from) opts.pty.removeParticipant(viewerParticipantId(from));
+        break;
+      }
       case "attach":
-      case "detach":
       case "error":
       case "output":
       case "session.opened":
@@ -236,7 +259,7 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
           onMessage: (data) => {
             const m = parseMessage(data as string | ArrayBuffer);
             if (!m || m.sessionId !== opts.sessionId) return;
-            if (m.type === "input" || m.type === "resize") {
+            if (m.type === "input" || m.type === "resize" || m.type === "detach") {
               handleInbound(m, peerId);
             }
           },
@@ -293,6 +316,9 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
     p2pChannels.clear();
     viewerCaps.clear();
     replayedPeers.clear();
+    // Unshare/shutdown: no remote viewer displays the PTY any more, so the
+    // terminal grows back to the host's own size.
+    opts.pty.removeParticipantsWithPrefix(VIEWER_PARTICIPANT_PREFIX);
     relayConnected = false;
     reportTransport();
     transport.close();

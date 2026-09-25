@@ -16,9 +16,9 @@ type Versioned = { protocolVersion?: 1 };
 export type WrapperMessage = Versioned &
   (
     | { type: "attach"; sessionId: SessionId }
-    | { type: "detach"; sessionId: SessionId }
+    | { type: "detach"; sessionId: SessionId; from?: string }
     | { type: "input"; sessionId: SessionId; data: string; from?: string }
-    | { type: "resize"; sessionId: SessionId; size: { cols: number; rows: number } }
+    | { type: "resize"; sessionId: SessionId; size: { cols: number; rows: number }; from?: string }
     | { type: "session.opened"; sessionId: SessionId; size: { cols: number; rows: number } }
     | { type: "session.closed"; sessionId: SessionId; exitCode: number | null }
     | { type: "output"; sessionId: SessionId; data: string; to?: string }
@@ -95,6 +95,13 @@ function isSize(input: unknown): input is { cols: number; rows: number } {
   );
 }
 
+function isOptionalPeerId(input: unknown): boolean {
+  return (
+    input === undefined ||
+    (typeof input === "string" && input.length >= 1 && input.length <= SIGNAL_ID_MAX)
+  );
+}
+
 function isWrapperMessage(input: unknown): input is WrapperMessage {
   if (!isObject(input) || typeof input.type !== "string") return false;
   if (input.protocolVersion !== undefined && input.protocolVersion !== PROTOCOL_VERSION)
@@ -115,16 +122,14 @@ function isWrapperMessage(input: unknown): input is WrapperMessage {
 
   switch (type) {
     case "attach":
-    case "detach":
       return true;
+    case "detach":
+      return isOptionalPeerId(input.from);
     case "input":
       return (
         typeof input.data === "string" &&
         input.data.length <= TERMINAL_DATA_MAX &&
-        (input.from === undefined ||
-          (typeof input.from === "string" &&
-            input.from.length >= 1 &&
-            input.from.length <= SIGNAL_ID_MAX))
+        isOptionalPeerId(input.from)
       );
     case "output":
       return (
@@ -136,7 +141,7 @@ function isWrapperMessage(input: unknown): input is WrapperMessage {
             input.to.length <= SIGNAL_ID_MAX))
       );
     case "resize":
-      return isSize(input.size);
+      return isSize(input.size) && isOptionalPeerId(input.from);
     case "session.opened":
       return isSize(input.size);
     case "session.closed":

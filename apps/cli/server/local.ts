@@ -15,7 +15,8 @@ const log = createLogger("server");
 
 interface ClientData {
   sessionId: SessionId;
-  size: { cols: number; rows: number } | null;
+  /** Participant id used for PTY size consensus (see `PtySession.setParticipantSize`). */
+  participantId: string;
 }
 
 type WsClient = ServerWebSocket<ClientData>;
@@ -42,9 +43,12 @@ export interface LocalServerHandle {
 const CLOSE_NORMAL = 1000;
 const CLOSE_SESSION_GONE = 4001;
 
+const LOCAL_PARTICIPANT_PREFIX = "local:";
+
 export function startLocalServer(opts: LocalServerOptions): LocalServerHandle {
   const clients = new Set<WsClient>();
   let stopped = false;
+  let nextClientId = 0;
 
   const server: Server<ClientData> = Bun.serve<ClientData>({
     port: opts.port,
@@ -60,7 +64,13 @@ export function startLocalServer(opts: LocalServerOptions): LocalServerHandle {
           return new Response("Unauthorized", { status: 401 });
         }
       }
-      const ok = srv.upgrade(req, { data: { sessionId: opts.sessionId, size: null } });
+      nextClientId += 1;
+      const ok = srv.upgrade(req, {
+        data: {
+          sessionId: opts.sessionId,
+          participantId: `${LOCAL_PARTICIPANT_PREFIX}${nextClientId}`,
+        },
+      });
       if (ok) return undefined;
       return new Response("Expected WebSocket upgrade", { status: 426 });
     },
@@ -108,7 +118,7 @@ export function startLocalServer(opts: LocalServerOptions): LocalServerHandle {
       close(ws) {
         clients.delete(ws);
         log.debug("ws client disconnected", { clientCount: clients.size });
-        applyConsensusSize();
+        opts.pty.removeParticipant(ws.data.participantId);
       },
     },
   });
@@ -139,8 +149,9 @@ export function startLocalServer(opts: LocalServerOptions): LocalServerHandle {
         opts.pty.write(msg.data);
         break;
       case "resize":
-        ws.data.size = msg.size;
-        applyConsensusSize();
+        // The PTY fits the smallest participant (host terminal, local clients,
+        // relay viewers), so no local client ever receives a frame it cannot hold.
+        opts.pty.setParticipantSize(ws.data.participantId, msg.size);
         break;
       case "attach":
       case "detach":
@@ -149,20 +160,6 @@ export function startLocalServer(opts: LocalServerOptions): LocalServerHandle {
       default:
         break;
     }
-  }
-
-  // Use smallest requested cols/rows so every attached client can render.
-  function applyConsensusSize(): void {
-    let cols: number | null = null;
-    let rows: number | null = null;
-    for (const ws of clients) {
-      const s = ws.data.size;
-      if (!s) continue;
-      cols = cols === null ? s.cols : Math.min(cols, s.cols);
-      rows = rows === null ? s.rows : Math.min(rows, s.rows);
-    }
-    if (cols === null || rows === null) return;
-    opts.pty.resize({ cols, rows });
   }
 
   function send(ws: WsClient, msg: WrapperMessage): void {
@@ -197,6 +194,7 @@ export function startLocalServer(opts: LocalServerOptions): LocalServerHandle {
       }
     }
     clients.clear();
+    opts.pty.removeParticipantsWithPrefix(LOCAL_PARTICIPANT_PREFIX);
     // Work around Bun stop hang on recent socket disconnects.
     await Promise.race([server.stop(true), wait(250)]);
   }

@@ -47,7 +47,9 @@ Watching is the default.
 
 - Read all terminal output.
 - Cannot type unless the host allows it (`Ctrl+\` then `w`, or `wrapper share --writable`).
-- Resize; the host uses the smallest connected viewer size.
+- Resize; the terminal fits the smallest display among the host's own terminal
+  and every connected viewer. A viewer can shrink the shared terminal but never
+  grow it past the host's window, and it grows back when that viewer leaves.
 
 The person who owns the session can always type, including from their phone.
 Treat share codes as capabilities.
