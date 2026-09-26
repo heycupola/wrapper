@@ -1,0 +1,42 @@
+{
+  "name": "video",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run audio && remotion studio src/index.ts",
+    "audio": "bun scripts/generate-audio.ts",
+    "voice": "bun scripts/generate-voice.ts",
+    "captions": "bun scripts/generate-captions.ts",
+    "render": "bun run audio && bun run captions && remotion render src/index.ts LaunchLight2D out/wrapper-launch.mp4 && remotion render src/index.ts LaunchVerticalLight2D out/wrapper-launch-vertical.mp4",
+    "render:4k": "bun run audio && remotion render src/index.ts LaunchLight2D out/wrapper-launch-4k.mp4 --scale=2",
+    "render:all": "bun run audio && bun run captions && for id in Launch LaunchVertical LaunchLight LaunchVerticalLight Launch2D LaunchVertical2D LaunchLight2D LaunchVerticalLight2D; do remotion render src/index.ts $id out/all/$id.mp4 || exit 1; done",
+    "still": "remotion still src/index.ts LaunchLight2D out/still.png",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-three/fiber": "^9.8.1",
+    "@remotion/cli": "4.0.530",
+    "@remotion/google-fonts": "4.0.530",
+    "@remotion/motion-blur": "4.0.530",
+    "@remotion/three": "4.0.530",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "remotion": "4.0.530",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "*",
+    "@types/bun": "catalog:",
+    "@types/react": "catalog:",
+    "@types/three": "^0.186.0",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
+    "typescript": "catalog:"
+  }
+}
