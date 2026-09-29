@@ -202,6 +202,16 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     process.exit(1);
   }
 
+  // This terminal (or tmux pane) is where the PTY is actually painted, so it is
+  // a permanent participant in the size consensus: viewers can shrink the PTY
+  // but never grow it past what this display can hold. Registered here, before
+  // the local attach socket, so an early viewer resize cannot slip past it.
+  session.setParticipantSize(HOST_TERMINAL_PARTICIPANT, initialSize);
+  const onHostTerminalResize = (): void => {
+    session.setParticipantSize(HOST_TERMINAL_PARTICIPANT, currentSize());
+  };
+  process.stdout.on("resize", onHostTerminalResize);
+
   let server: LocalServerHandle;
   try {
     server = startLocalServer({
@@ -786,6 +796,7 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
     if (env.hudEnabled) {
       clearTitle();
     }
+    process.stdout.off("resize", onHostTerminalResize);
     await attach.detach();
     await server.stop();
     session.kill();
@@ -817,6 +828,9 @@ export async function runShellHost(opts: ShellHostOptions = {}): Promise<void> {
   trackEvent("shell_host_ended", { exitCode: exitCode ?? null });
   process.exit(exitCode ?? 0);
 }
+
+/** Participant id of the host's own terminal in `PtySession` size consensus. */
+const HOST_TERMINAL_PARTICIPANT = "host-terminal";
 
 function currentSize(): { cols: number; rows: number } {
   return {
