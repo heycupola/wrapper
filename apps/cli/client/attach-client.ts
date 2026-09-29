@@ -239,7 +239,11 @@ export function startAttachClient(opts: AttachClientOptions): AttachClientHandle
         sessionId = msg.sessionId;
         log.debug("session attached", { sessionId, size: msg.size });
         if (opts.initialSize && sessionId) {
-          safeSend({ type: "resize", sessionId, size: opts.initialSize });
+          // `initialSize` can predate slow startup work, and resizes before
+          // this point were dropped (no sessionId yet); report the live size.
+          const live =
+            stdout.columns && stdout.rows ? { cols: stdout.columns, rows: stdout.rows } : null;
+          safeSend({ type: "resize", sessionId, size: live ?? opts.initialSize });
         }
         break;
       case "output":
