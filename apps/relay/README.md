@@ -37,7 +37,8 @@ bun test apps/relay/tests
 
 ### Fly.io
 
-`apps/relay/fly.toml` is included for a single-service deploy.
+`apps/relay/fly.toml` is the production config (one warm Machine, 256 MB).
+`apps/relay/fly.dev.toml` is the dev config (same size, stops when idle).
 
 Required secrets/env on Fly:
 
@@ -75,9 +76,9 @@ The smoke script checks:
 
 ## Operational checklist
 
-- Deploy relay only from `apps/relay/fly.toml`.
+- Deploy production from `apps/relay/fly.toml` and dev from `apps/relay/fly.dev.toml`.
 - Keep `RELAY_CONVEX_URL` secret configured in Fly.
-- Validate the config with `fly config validate --config apps/relay/fly.toml`.
+- Validate with `fly config validate --config apps/relay/fly.toml` and `fly config validate --config apps/relay/fly.dev.toml`.
 - Verify app health after deploy:
   - `fly status --app <app-name>`
   - `fly checks list --app <app-name>`
@@ -87,11 +88,14 @@ The smoke script checks:
 ## Fly dashboard: Pending Sync
 
 `Pending Sync` usually means machine state is converging toward the latest release.
-`min_machines_running = 1` keeps one machine always warm (so WebSocket upgrades
-never hit a cold start, which would drop live shares); `auto_stop_machines = \"stop\"`
-still stops any extra machines. The service-level `/healthz` check controls routing but
+Production `min_machines_running = 1` keeps one machine always warm (so WebSocket
+upgrades never hit a cold start, which would drop live shares). Dev uses
+`fly.dev.toml` with `min_machines_running = 0`, so that Machine stops when idle
+and starts again on the next request. `auto_stop_machines = \"stop\"` still stops
+any extra machines. The service-level `/healthz` check controls routing but
 does not restart an unhealthy machine. `primary_region = \"otp\"` (Bucharest) is the
-closest Fly region to Turkey. Adjust as the user base spreads.
+closest Fly region to Turkey. Adjust as the user base spreads. The running
+Machines are still in `fra` until they are explicitly moved.
 
 The deploy intentionally uses `--ha=false`. Do not add a second Machine without explicit
 budget approval because Fly HA can incur additional cost.
