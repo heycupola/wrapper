@@ -14,6 +14,14 @@ const log = createLogger("relay-host-bridge");
 
 type SignalFrame = Extract<WrapperMessage, { type: "signal" }>;
 
+/** Participant-id prefix for remote viewers in `PtySession` size consensus. */
+const VIEWER_PARTICIPANT_PREFIX = "relay:";
+/**
+ * Fallback participant when a relay predating per-viewer `from` stamping sends
+ * an aggregate resize. It is dropped when the bridge stops.
+ */
+const AGGREGATE_VIEWER_PARTICIPANT = `${VIEWER_PARTICIPANT_PREFIX}*`;
+
 export interface RelayHostBridgeOptions {
   relayUrl: string;
   ticket: string;
@@ -45,6 +53,8 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
   const p2pChannels = new Map<string, Transport>();
   const viewerCaps = new Map<string, { canInput: boolean; isOwner: boolean }>();
   const replayedPeers = new Set<string>();
+  /** Viewers (peer ids, or undefined for the aggregate key) holding a size in the PTY consensus. */
+  const sizedViewers = new Set<string | undefined>();
   let relayConnected = false;
 
   const reportTransport = (): void => {
@@ -85,6 +95,7 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
     },
     onClose: (info) => {
       relayConnected = false;
+      pruneUnreachableViewers();
       reportTransport();
       opts.onClose?.();
       if (!closed) {
@@ -97,6 +108,7 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
     },
     onError: (info) => {
       relayConnected = false;
+      pruneUnreachableViewers();
       reportTransport();
       opts.onError?.(new Error("relay websocket error"));
       log.warn("relay host websocket error", {
@@ -182,6 +194,28 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
     return viewerCaps.get(peerId)?.canInput === true;
   }
 
+  function viewerParticipantId(peerId: string | undefined): string {
+    return peerId ? `${VIEWER_PARTICIPANT_PREFIX}${peerId}` : AGGREGATE_VIEWER_PARTICIPANT;
+  }
+
+  function removeViewerSize(peerId: string | undefined): void {
+    if (!sizedViewers.delete(peerId)) return;
+    opts.pty.removeParticipant(viewerParticipantId(peerId));
+  }
+
+  /**
+   * The relay socket never reconnects, and only the relay can report a viewer
+   * leaving (`detach`). Once it is gone, a viewer still counts only while its
+   * P2P channel is open; drop every other size so it cannot pin the PTY.
+   */
+  function pruneUnreachableViewers(): void {
+    if (relayConnected) return;
+    for (const peerId of sizedViewers) {
+      if (peerId !== undefined && p2pChannels.get(peerId)?.isOpen) continue;
+      removeViewerSize(peerId);
+    }
+  }
+
   function handleInbound(msg: WrapperMessage, peerId?: string): void {
     switch (msg.type) {
       case "input": {
@@ -190,11 +224,23 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
         opts.pty.write(msg.data);
         break;
       }
-      case "resize":
-        opts.pty.resize(msg.size);
+      case "resize": {
+        // Never apply a viewer's size directly: the PTY must stay no larger than
+        // the host's own terminal (and every other display). Register this
+        // viewer's size and let the session fit the smallest participant.
+        const from = peerId ?? msg.from;
+        sizedViewers.add(from);
+        opts.pty.setParticipantSize(viewerParticipantId(from), msg.size);
         break;
+      }
+      case "detach": {
+        // Sent by a leaving viewer, and synthesised by the relay when a viewer
+        // socket closes. Lift that viewer's size constraint.
+        const from = peerId ?? msg.from;
+        if (from) removeViewerSize(from);
+        break;
+      }
       case "attach":
-      case "detach":
       case "error":
       case "output":
       case "session.opened":
@@ -236,18 +282,20 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
           onMessage: (data) => {
             const m = parseMessage(data as string | ArrayBuffer);
             if (!m || m.sessionId !== opts.sessionId) return;
-            if (m.type === "input" || m.type === "resize") {
+            if (m.type === "input" || m.type === "resize" || m.type === "detach") {
               handleInbound(m, peerId);
             }
           },
           onClose: () => {
             p2pChannels.delete(peerId);
             p2pPeers.delete(peerId);
+            pruneUnreachableViewers();
             reportTransport();
           },
           onError: () => {
             p2pChannels.delete(peerId);
             p2pPeers.delete(peerId);
+            pruneUnreachableViewers();
             reportTransport();
           },
         },
@@ -293,6 +341,10 @@ export function startRelayHostBridge(opts: RelayHostBridgeOptions): RelayHostBri
     p2pChannels.clear();
     viewerCaps.clear();
     replayedPeers.clear();
+    // Unshare/shutdown: no remote viewer displays the PTY any more, so the
+    // terminal grows back to the host's own size.
+    opts.pty.removeParticipantsWithPrefix(VIEWER_PARTICIPANT_PREFIX);
+    sizedViewers.clear();
     relayConnected = false;
     reportTransport();
     transport.close();

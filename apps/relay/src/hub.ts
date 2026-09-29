@@ -25,15 +25,10 @@ const CLOSE_POLICY = 4003;
 const CLOSE_HOST_REPLACED = 4009;
 const CLOSE_HOST_DISCONNECTED = 4010;
 
-interface ViewerState {
-  size: { cols: number; rows: number } | null;
-}
-
 export class RelayHub {
   private readonly hostBySession = new Map<string, RelayPeer>();
   private readonly viewersBySession = new Map<string, Set<RelayPeer>>();
   private readonly bindingByPeer = new Map<RelayPeer, PeerBinding>();
-  private readonly viewerState = new Map<RelayPeer, ViewerState>();
   // Last `session.opened` frame per session. The host emits it only once (on
   // connect), so viewers that join later must have it replayed — otherwise their
   // attach client never learns the sessionId and never forwards input.
@@ -67,7 +62,6 @@ export class RelayHub {
     const viewers = this.viewersBySession.get(stored.sessionId) ?? new Set<RelayPeer>();
     viewers.add(stored.peer);
     this.viewersBySession.set(stored.sessionId, viewers);
-    this.viewerState.set(stored.peer, { size: null });
     const peerId = crypto.randomUUID();
     this.peerIdByViewer.set(stored.peer, peerId);
     this.viewerByPeerId.set(peerId, stored.peer);
@@ -124,7 +118,6 @@ export class RelayHub {
           viewer.send(closed);
           viewer.close(CLOSE_HOST_DISCONNECTED, "host disconnected");
           this.bindingByPeer.delete(viewer);
-          this.viewerState.delete(viewer);
           this.forgetViewerPeerId(viewer);
         }
       }
@@ -139,9 +132,15 @@ export class RelayHub {
       viewers.delete(peer);
       if (viewers.size === 0) this.viewersBySession.delete(binding.sessionId);
     }
-    this.viewerState.delete(peer);
+    const peerId = this.peerIdByViewer.get(peer);
     this.forgetViewerPeerId(peer);
-    this.recomputeConsensusResize(binding.sessionId);
+    // The host sizes its PTY to the smallest connected participant. Tell it this
+    // viewer is gone so the constraint is lifted even when the socket just died.
+    if (peerId) {
+      this.hostBySession
+        .get(binding.sessionId)
+        ?.send(encodeMessage({ type: "detach", sessionId: binding.sessionId, from: peerId }));
+    }
     this.log.debug("viewer unbound", {
       sessionId: binding.sessionId,
       viewerCount: viewers?.size ?? 0,
@@ -231,7 +230,6 @@ export class RelayHub {
     for (const viewer of viewers) {
       viewer.close(code, reason);
       this.bindingByPeer.delete(viewer);
-      this.viewerState.delete(viewer);
       this.forgetViewerPeerId(viewer);
     }
     this.viewersBySession.delete(sessionId);
@@ -253,9 +251,18 @@ export class RelayHub {
 
     switch (msg.type) {
       case "attach":
-      case "detach":
         host.send(encodeMessage(msg));
         break;
+      case "detach":
+      case "resize": {
+        // Stamp the authoritative peerId so the host can track one terminal
+        // size per viewer (and drop it on detach). Size consensus lives on the
+        // host, which is the only party that also knows its own terminal size.
+        const peerId = this.peerIdByViewer.get(peer);
+        if (!peerId) return;
+        host.send(encodeMessage({ ...msg, from: peerId }));
+        break;
+      }
       case "input": {
         if (!binding.canInput) return;
         const peerId = this.peerIdByViewer.get(peer);
@@ -265,10 +272,6 @@ export class RelayHub {
       }
       case "viewer.caps":
         return;
-      case "resize":
-        this.viewerState.set(peer, { size: msg.size });
-        this.recomputeConsensusResize(binding.sessionId);
-        break;
       case "signal": {
         // WebRTC offer/ICE from viewer -> host. Stamp the authoritative peerId
         // (ignore any client-supplied `from`) so the host can address replies
@@ -284,31 +287,6 @@ export class RelayHub {
           sessionId: binding.sessionId,
         });
     }
-  }
-
-  private recomputeConsensusResize(sessionId: string): void {
-    const host = this.hostBySession.get(sessionId);
-    if (!host) return;
-    const viewers = this.viewersBySession.get(sessionId);
-    if (!viewers || viewers.size === 0) return;
-
-    let cols: number | null = null;
-    let rows: number | null = null;
-    for (const viewer of viewers) {
-      const state = this.viewerState.get(viewer);
-      if (!state?.size) continue;
-      cols = cols === null ? state.size.cols : Math.min(cols, state.size.cols);
-      rows = rows === null ? state.size.rows : Math.min(rows, state.size.rows);
-    }
-    if (cols === null || rows === null) return;
-
-    host.send(
-      encodeMessage({
-        type: "resize",
-        sessionId,
-        size: { cols, rows },
-      }),
-    );
   }
 
   private sendOutputToViewer(sessionId: string, peerId: string, msg: WrapperMessage): void {
