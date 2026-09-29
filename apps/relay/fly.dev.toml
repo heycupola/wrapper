@@ -1,0 +1,30 @@
+# Dev Fly config. Same service as fly.toml, except the Machine may stop when
+# idle. A cold start can drop a dev WebSocket; production must not use this file.
+# Keep the two files in sync apart from min_machines_running.
+app = "wrapper-relay-dev"
+primary_region = "otp"
+
+[build]
+dockerfile = "Dockerfile"
+
+[env]
+PORT = "8080"
+
+[http_service]
+internal_port = 8080
+force_https = true
+auto_stop_machines = "stop"
+auto_start_machines = true
+min_machines_running = 0
+processes = ["app"]
+
+[[http_service.checks]]
+grace_period = "10s"
+interval = "15s"
+method = "GET"
+path = "/healthz"
+timeout = "3s"
+
+[[vm]]
+size = "shared-cpu-1x"
+memory = "256mb"

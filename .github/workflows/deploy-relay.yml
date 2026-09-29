@@ -4,7 +4,8 @@ name: Deploy relay (Fly)
 #   push to `dev`  -> Environment "dev"        -> vars.FLY_APP_NAME = wrapper-relay-dev
 #   push to `main` -> Environment "production"  -> vars.FLY_APP_NAME = wrapper-relay-prod
 # Each Fly app carries its own CONVEX_URL secret (set with `flyctl secrets set`)
-# pointing at the matching Convex deployment, so fly.toml can be shared.
+# pointing at the matching Convex deployment. `main` deploys fly.toml (one warm
+# Machine). `dev` deploys fly.dev.toml (scale to zero when idle).
 
 on:
   push:
@@ -59,7 +60,15 @@ jobs:
         # --ha=false: launch a single machine. The Fly org can't launch the
         # HA second machine yet (needs billing/verification); drop this flag
         # once HA is authorized.
-        run: flyctl deploy . --remote-only --config fly.toml --app "${{ vars.FLY_APP_NAME }}" --ha=false
+        # main stays warm (fly.toml). Any other branch, including dev, may stop
+        # when idle (fly.dev.toml).
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            config="fly.toml"
+          else
+            config="fly.dev.toml"
+          fi
+          flyctl deploy . --remote-only --config "$config" --app "${{ vars.FLY_APP_NAME }}" --ha=false
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
