@@ -80,16 +80,18 @@ const brandName: CSSProperties = {
 const headline: CSSProperties = {
   display: "flex",
   flexDirection: "column",
-  fontSize: 68,
+  fontSize: 60,
   fontWeight: 600,
-  lineHeight: 0.98,
-  letterSpacing: "-0.05em",
+  lineHeight: 1.04,
+  letterSpacing: "-0.04em",
   color: INK,
 };
 
 // Satori stretches the inter-word gap on tightly tracked lines; laying the
 // words out as flex items keeps the space the same width as the other lines.
-const headlineRow: CSSProperties = { display: "flex", gap: 10 };
+// Words must not shrink, or the longest line collapses into itself.
+const headlineRow: CSSProperties = { display: "flex", gap: 15 };
+const headlineWord: CSSProperties = { display: "flex", flexShrink: 0 };
 
 const lead: CSSProperties = {
   display: "flex",
@@ -363,19 +365,19 @@ export default async function OpenGraphImage() {
         <div style={column}>
           <div style={headline}>
             <div style={headlineRow}>
-              <span>Your</span>
-              <span>terminal.</span>
+              <span style={headlineWord}>Your</span>
+              <span style={headlineWord}>terminal.</span>
             </div>
             <div style={headlineRow}>
-              <span>On</span>
-              <span>your</span>
-              <span>phone.</span>
+              <span style={headlineWord}>On</span>
+              <span style={headlineWord}>your</span>
+              <span style={headlineWord}>phone.</span>
             </div>
             <div style={headlineRow}>
-              <span>Only</span>
-              <span>when</span>
-              <span>you</span>
-              <span>share.</span>
+              <span style={headlineWord}>Only</span>
+              <span style={headlineWord}>when</span>
+              <span style={headlineWord}>you</span>
+              <span style={headlineWord}>share.</span>
             </div>
           </div>
           <div style={lead}>
