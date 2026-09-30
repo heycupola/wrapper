@@ -25,9 +25,9 @@ regardless of volume.
 ## Health and alerts
 
 `fly.toml` configures a Fly service-level GET check against `/healthz` every 15 seconds. The
-check controls routing but does not restart a failed Machine. The production relay currently
-runs one always-warm Machine; there is no second Machine to receive traffic when that check
-fails.
+check controls routing but does not restart a failed Machine. The production relay runs one
+always-warm 256 MB Machine; there is no second Machine to receive traffic when that check
+fails. The dev relay uses `fly.dev.toml` and may be stopped until the next request.
 
 Inspect platform state:
 
@@ -55,9 +55,9 @@ in alert bodies.
 ## Deploy checklist
 
 1. Confirm Fly app config:
-   - `apps/relay/fly.toml` is current
+   - `apps/relay/fly.toml` (production) or `apps/relay/fly.dev.toml` (dev) is current
    - `CONVEX_URL` (or `RELAY_CONVEX_URL`) secret is set on the target app
-   - `fly config validate --config apps/relay/fly.toml` succeeds
+   - `fly config validate` succeeds for the config you are about to deploy
 2. Deploy: push to `dev`/`main` (`deploy-relay.yml`) or run `workflow_dispatch`.
    Dev -> `wrapper-relay-dev`, prod -> `wrapper-relay-prod` (see ENVIRONMENTS.md)
 3. Verify post-deploy smoke:
