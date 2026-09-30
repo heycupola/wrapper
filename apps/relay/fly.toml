@@ -1,10 +1,12 @@
-# Shared config for both Fly apps. The deploy workflow always passes `--app`
-# (wrapper-relay-dev on the `dev` branch, wrapper-relay-prod on `main`), which
-# overrides the value below. Each app holds its own CONVEX_URL secret.
+# Production Fly config. The deploy workflow passes `--app wrapper-relay-prod`
+# on `main`, which overrides `app` below. Dev deploys use `fly.dev.toml`.
+# Each app holds its own CONVEX_URL secret.
 app = "wrapper-relay-prod"
 # Bucharest — the closest Fly region to Turkey (~450km from Istanbul vs ~1870km
 # to Frankfurt/fra), which roughly halves relay round-trip latency for TR users.
 # Revisit (or go multi-region) as the user base spreads.
+# Existing Machines were created in fra and stay there until explicitly moved;
+# primary_region only places new Machines.
 primary_region = "otp"
 
 [build]
@@ -31,7 +33,8 @@ method = "GET"
 path = "/healthz"
 timeout = "3s"
 
+# shared-cpu-1x @ 256mb is the smallest Fly size. The process sits around 60MB
+# RSS; 1gb was idle headroom. Do not add a second Machine without budget approval.
 [[vm]]
-memory = "1gb"
-cpus = 1
-memory_mb = 1024
+size = "shared-cpu-1x"
+memory = "256mb"
