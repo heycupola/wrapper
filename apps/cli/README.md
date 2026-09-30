@@ -176,8 +176,11 @@ Behaviors to know once viewers join:
   always type, including from your phone.
 - **Multiple viewers:** many viewers can attach to one session at once; host
   output is broadcast to all of them (and fanned out over each P2P channel).
-- **Consensus resize:** the terminal is sized to the smallest connected viewer,
-  so a small window shrinks everyone's view.
+- **Consensus resize:** the terminal is sized to the smallest cols and rows
+  across every display, the host's own terminal (or tmux pane) included. A
+  small viewer shrinks everyone's view; a wide one (a phone in landscape) can
+  never grow the PTY past the host window, and the size is restored when that
+  viewer leaves.
 - **One host per session:** a second host connecting to the same session id
   replaces the first.
 

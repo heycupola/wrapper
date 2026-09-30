@@ -29,6 +29,8 @@ const samples: RepoMessage[] = [
   { type: "signal", sessionId: "s1", to: "host", from: "p1", kind: "offer", data: "{}" },
   { type: "viewer.caps", sessionId: "s1", peerId: "p1", canInput: false, isOwner: false },
   { type: "input", sessionId: "s1", data: "ls\n", from: "p1" },
+  { type: "resize", sessionId: "s1", size: { cols: 80, rows: 24 }, from: "p1" },
+  { type: "detach", sessionId: "s1", from: "p1" },
 ];
 
 describe("relay protocol parity with @repo/protocol", () => {

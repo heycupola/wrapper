@@ -41,6 +41,12 @@ export const DetachMessageSchema = z.object({
   protocolVersion: ProtocolVersionSchema,
   type: z.literal("detach"),
   sessionId: SessionIdSchema,
+  /**
+   * Relay-stamped viewer peer id. The relay also synthesises a `detach` with
+   * `from` when a viewer socket closes so the host can drop that viewer's
+   * terminal-size constraint. Clients must not set this.
+   */
+  from: z.string().min(1).max(128).optional(),
 });
 export type DetachMessage = z.infer<typeof DetachMessageSchema>;
 
@@ -59,6 +65,12 @@ export const ResizeMessageSchema = z.object({
   type: z.literal("resize"),
   sessionId: SessionIdSchema,
   size: TerminalSizeSchema,
+  /**
+   * Relay-stamped viewer peer id. Lets the host keep one size per viewer and
+   * size the PTY to the smallest of every participant (its own terminal
+   * included). Clients must not set this; the relay overwrites it.
+   */
+  from: z.string().min(1).max(128).optional(),
 });
 export type ResizeMessage = z.infer<typeof ResizeMessageSchema>;
 

@@ -15,7 +15,7 @@
     },
     "apps/cli": {
       "name": "@repo/cli",
-      "version": "0.2.3",
+      "version": "0.2.4",
       "bin": {
         "wrapper": "./index.ts",
       },
@@ -187,7 +187,7 @@
     "form-data": "4.0.6",
     "hono": "4.13.7",
     "ip": "2.1.0",
-    "ip-address": "10.4.0",
+    "ip-address": "10.7.2",
     "js-yaml": "4.3.2",
     "lodash": "4.18.1",
     "postcss": "8.5.26",
@@ -1597,7 +1597,7 @@
 
     "ip": ["ip@workspace:packages/ip"],
 
-    "ip-address": ["ip-address@10.4.0", "", {}, "sha512-oSK96Grm3aP6OrS263xVxbNDGVL7rzBtYdpGqlDG8iQdoenDoTs/nkki+DflYbAEE8Xl6o5YxhxlrKvI3nqKXQ=="],
+    "ip-address": ["ip-address@10.7.2", "", {}, "sha512-7H/2gFSIitxc0hG3nOI1glS8QLo/EHBFFLk8vEUjXY/xu0AdL8jZ9U1IzO2PUm0d2D/ofQcAifb0g6OBkt8U7w=="],
 
     "ip-regex": ["ip-regex@4.3.0", "", {}, "sha512-B9ZWJxHHOHUhUjCPrMpLD4xEq35bUTClHM1S6CBU5ixQnkZmwipwgc96vAd7AAGM9TGHvJR+Uss+/Ak6UphK+Q=="],
 
