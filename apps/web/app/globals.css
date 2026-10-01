@@ -1198,10 +1198,10 @@ kbd,
 /* Illustrations. The drawing takes whatever height the card can spare, so a tall
    window gets a bigger diagram instead of more empty card. */
 .cardArt {
-  /* Each card tells its one thing once, on this clock, the first time its
-     scene is active (data-live holds frame zero until then, `both` keeps the
-     ending). Base styles are the ending, so motion off shows the same card. */
-  --art-story: 2.6s;
+  /* Each story card loops its one thing on this clock while its scene is
+     active (data-live holds it paused otherwise). Base styles are the moment
+     that carries the meaning, so motion off shows the same card. */
+  --art-story: 5.6s;
   width: 100%;
   /* Small floor, generous stretch: the drawing gives up height first so a short
      window still fits five cards between header and footer. */
@@ -1333,27 +1333,98 @@ kbd,
   font-weight: 590;
 }
 
-.artKeyPress {
-  animation: artKeyPress var(--art-story) var(--ease-out-soft) both;
+.artShare .artKeyPress {
+  animation: artShareKey var(--art-story) var(--ease-out-soft) infinite both;
 }
 
-.artKeySecond .artKeyPress {
+.artShare .artKeySecond .artKeyPress {
   animation-delay: 260ms;
 }
 
-@keyframes artKeyPress {
+@keyframes artShareKey {
   0%,
-  8% {
+  6% {
     transform: translateY(0);
   }
 
-  18% {
+  11% {
     transform: translateY(2.6px);
   }
 
-  40%,
+  20%,
   100% {
     transform: translateY(0);
+  }
+}
+
+/* A pressed key's legend catches the accent for a moment, like a backlit cap. */
+.artShare .artKeyLabel {
+  animation: artShareKeyLit var(--art-story) var(--ease-out-soft) infinite both;
+}
+
+.artShare .artKeySecond .artKeyLabel {
+  animation-delay: 260ms;
+}
+
+@keyframes artShareKeyLit {
+  0%,
+  6% {
+    fill: var(--color-text);
+    fill-opacity: 0.68;
+  }
+
+  11% {
+    fill: var(--color-accent-pop);
+    fill-opacity: 1;
+  }
+
+  26%,
+  100% {
+    fill: var(--color-text);
+    fill-opacity: 0.68;
+  }
+}
+
+.artRevoke .artKeyPress {
+  animation: artRevokeKey var(--art-story) var(--ease-out-soft) infinite both;
+}
+
+@keyframes artRevokeKey {
+  0%,
+  28% {
+    transform: translateY(0);
+  }
+
+  33% {
+    transform: translateY(2.6px);
+  }
+
+  42%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.artRevoke .artKeyLabel {
+  animation: artRevokeKeyLit var(--art-story) var(--ease-out-soft) infinite both;
+}
+
+@keyframes artRevokeKeyLit {
+  0%,
+  28% {
+    fill: var(--color-text);
+    fill-opacity: 0.68;
+  }
+
+  33% {
+    fill: var(--color-accent-pop);
+    fill-opacity: 1;
+  }
+
+  48%,
+  100% {
+    fill: var(--color-text);
+    fill-opacity: 0.68;
   }
 }
 
@@ -1421,6 +1492,240 @@ kbd,
   stroke-width: inherit;
 }
 
+/* Watch: the host types, the output lands on both screens, then the viewer
+   tries to type and is refused. The terminal clears and it runs again. */
+.artWatchTypeMask {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: artWatchType var(--art-story) steps(8, end) infinite both;
+}
+
+@keyframes artWatchType {
+  0%,
+  6% {
+    transform: scaleX(0);
+  }
+
+  26%,
+  92% {
+    transform: scaleX(1);
+  }
+
+  95%,
+  100% {
+    transform: scaleX(0);
+  }
+}
+
+.artWatchCaret {
+  fill: var(--color-accent-pop);
+  opacity: 0;
+  animation: artWatchCaret var(--art-story) steps(8, end) infinite both;
+}
+
+@keyframes artWatchCaret {
+  0%,
+  6% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  26% {
+    opacity: 1;
+    transform: translateX(53px);
+  }
+
+  30%,
+  92% {
+    opacity: 0;
+    transform: translateX(53px);
+  }
+
+  95%,
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.artWatchOut {
+  fill-opacity: 0.38;
+  animation: artWatchOut var(--art-story) var(--ease-out-soft) infinite both;
+}
+
+@keyframes artWatchOut {
+  0%,
+  30% {
+    fill-opacity: 0;
+    transform: translateY(2px);
+  }
+
+  36%,
+  90% {
+    fill-opacity: 0.38;
+    transform: translateY(0);
+  }
+
+  94%,
+  100% {
+    fill-opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+/* The mirror arrives a beat later and in the accent, then settles. */
+/* Phone-sized type, so the six characters sit inside its 44-unit screen. */
+.artWatchMirror {
+  font-size: 8px;
+  fill-opacity: 0.38;
+  animation: artWatchMirror var(--art-story) var(--ease-out-soft) infinite both;
+}
+
+@keyframes artWatchMirror {
+  0%,
+  33% {
+    fill: var(--color-accent-pop);
+    fill-opacity: 0;
+  }
+
+  38% {
+    fill: var(--color-accent-pop);
+    fill-opacity: 0.9;
+  }
+
+  50%,
+  90% {
+    fill: var(--color-text);
+    fill-opacity: 0.38;
+  }
+
+  94%,
+  100% {
+    fill: var(--color-text);
+    fill-opacity: 0;
+  }
+}
+
+/* Three dots run the gap from host to phone just as the output prints. */
+.artWatchBeam {
+  fill: var(--color-accent-pop);
+  opacity: 0;
+  animation: artWatchBeam var(--art-story) var(--ease-out-soft) infinite both;
+}
+
+.artWatchBeamMid {
+  animation-delay: 90ms;
+}
+
+.artWatchBeamEnd {
+  animation-delay: 180ms;
+}
+
+@keyframes artWatchBeam {
+  0%,
+  29% {
+    opacity: 0;
+  }
+
+  31% {
+    opacity: 0.9;
+  }
+
+  36%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.artWatchGlow {
+  fill: var(--color-accent-pop);
+  opacity: 0;
+  filter: blur(3px);
+  animation: artWatchGlow var(--art-story) var(--ease-out-soft) infinite both;
+}
+
+@keyframes artWatchGlow {
+  0%,
+  34% {
+    opacity: 0;
+  }
+
+  38% {
+    opacity: 0.16;
+  }
+
+  58%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.artWatchPhoneCaret {
+  fill: var(--color-accent-pop);
+  opacity: 0;
+  animation: artWatchPhoneCaret var(--art-story) steps(1) infinite both;
+}
+
+@keyframes artWatchPhoneCaret {
+  0%,
+  54% {
+    opacity: 0;
+  }
+
+  56% {
+    opacity: 1;
+  }
+
+  61% {
+    opacity: 0.15;
+  }
+
+  65% {
+    opacity: 1;
+  }
+
+  76%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.artWatch .artBlocked {
+  animation: artWatchDeny var(--art-story) var(--ease-out-soft) infinite both;
+}
+
+@keyframes artWatchDeny {
+  0%,
+  64% {
+    stroke-opacity: 0.24;
+    transform: translateX(0);
+  }
+
+  67% {
+    stroke-opacity: 0.7;
+    transform: translateX(-1.8px);
+  }
+
+  70% {
+    transform: translateX(1.8px);
+  }
+
+  73% {
+    transform: translateX(-1px);
+  }
+
+  76% {
+    stroke-opacity: 0.6;
+    transform: translateX(0);
+  }
+
+  88%,
+  100% {
+    stroke-opacity: 0.24;
+    transform: translateX(0);
+  }
+}
+
 /* Share: two keys go down and the code lands under them. */
 .artChipFace {
   fill: color-mix(in srgb, var(--color-accent-pop) 14%, var(--color-bg));
@@ -1443,51 +1748,111 @@ kbd,
   letter-spacing: 0.06em;
 }
 
-/* The second key lands at 28%; the code follows it. */
+/* The second key is down by 16%; the code follows it, holds long enough to
+   read, and clears before the keys go again. */
 .artCodeChip {
   transform-box: view-box;
   transform-origin: 100px 75px;
-  animation: artChipLand var(--art-story) var(--ease-spring) both;
+  animation: artChipLand var(--art-story) var(--ease-spring) infinite both;
 }
 
 @keyframes artChipLand {
   0%,
-  30% {
+  18% {
     opacity: 0;
     transform: translateY(6px) scale(0.92);
   }
 
-  46%,
-  100% {
+  30%,
+  88% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+
+  96%,
+  100% {
+    opacity: 0;
+    transform: translateY(0) scale(0.96);
+  }
 }
 
-/* Revoke: `u` goes down, the lock snaps shut, the open link sparks and pulls
-   back. It stays revoked. */
+.artChipTextMask {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: artChipType var(--art-story) steps(9, end) infinite both;
+}
+
+@keyframes artChipType {
+  0%,
+  22% {
+    transform: scaleX(0);
+  }
+
+  36%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.artChipSheen {
+  fill: url(#artChipSheenFill);
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: translateX(-40px) skewX(-18deg);
+  animation: artChipSheen var(--art-story) var(--ease-out-soft) infinite both;
+}
+
+@keyframes artChipSheen {
+  0%,
+  38% {
+    transform: translateX(-40px) skewX(-18deg);
+  }
+
+  56%,
+  100% {
+    transform: translateX(124px) skewX(-18deg);
+  }
+}
+
+/* Revoke: traffic runs over the open link, `u` goes down, the lock snaps
+   shut, the link sparks and pulls back. It holds revoked, then the share
+   reopens and it runs again. */
 .artShackle {
   stroke: color-mix(in srgb, var(--color-text) 38%, transparent);
   stroke-width: 4.5;
   stroke-linecap: butt;
-  transform-box: view-box;
-  transform-origin: 111px 30px;
-  animation: artShackleShut var(--art-story) var(--ease-spring) both;
+  animation: artShackleShut var(--art-story) var(--ease-out-soft) infinite both;
 }
 
+/* Straight up and down, never sideways: it drops in fast, settles with one
+   small bounce, and later pops back up with a slight overshoot. */
 @keyframes artShackleShut {
   0%,
-  18% {
-    transform: translateY(-5px) rotate(-14deg);
+  34% {
+    transform: translateY(-9px);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.4);
   }
 
-  30% {
-    transform: translateY(0) rotate(3deg);
+  39% {
+    transform: translateY(0.8px);
   }
 
-  40%,
+  43% {
+    transform: translateY(-0.6px);
+  }
+
+  47%,
+  84% {
+    transform: translateY(0);
+  }
+
+  90% {
+    transform: translateY(-9.8px);
+  }
+
+  94%,
   100% {
-    transform: translateY(0) rotate(0deg);
+    transform: translateY(-9px);
   }
 }
 
@@ -1518,7 +1883,42 @@ kbd,
   opacity: 0.16;
   transform: scaleX(0.62);
   transform-box: view-box;
-  animation: artLinkPull var(--art-story) var(--ease-out-quint) both;
+  animation: artLinkPull var(--art-story) var(--ease-out-quint) infinite both;
+}
+
+/* Packets on the open link. The dash runs on its own clock; the gate shuts
+   it off the moment the lock closes. */
+.artLinkFlow {
+  stroke: var(--color-accent-pop);
+  stroke-width: 2.6;
+  stroke-dasharray: 6 18;
+  opacity: 0;
+  animation:
+    artLinkFlow 0.9s linear infinite,
+    artLinkFlowGate var(--art-story) var(--ease-out-quint) infinite both;
+}
+
+@keyframes artLinkFlow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@keyframes artLinkFlowGate {
+  0%,
+  38% {
+    opacity: 0.95;
+  }
+
+  43%,
+  90% {
+    opacity: 0;
+  }
+
+  98%,
+  100% {
+    opacity: 0.95;
+  }
 }
 
 .artLinkLeft {
@@ -1535,17 +1935,24 @@ kbd,
   stroke: none;
 }
 
+/* Dimmer than solid while live so the packets riding it stay legible. */
 @keyframes artLinkPull {
   0%,
-  26% {
-    opacity: 1;
+  40% {
+    opacity: 0.4;
     transform: scaleX(1);
   }
 
-  52%,
-  100% {
+  58%,
+  86% {
     opacity: 0.16;
     transform: scaleX(0.62);
+  }
+
+  98%,
+  100% {
+    opacity: 0.4;
+    transform: scaleX(1);
   }
 }
 
@@ -1554,25 +1961,119 @@ kbd,
   opacity: 0;
   transform-box: view-box;
   transform-origin: 103px 64px;
-  animation: artSpark var(--art-story) var(--ease-out-quint) both;
+  animation: artSpark var(--art-story) var(--ease-out-quint) infinite both;
 }
 
 @keyframes artSpark {
   0%,
-  26% {
+  40% {
     opacity: 0;
     transform: scale(0.2);
   }
 
-  31% {
+  44% {
     opacity: 0.55;
     transform: scale(1);
   }
 
-  46%,
+  56%,
   100% {
     opacity: 0;
     transform: scale(1.8);
+  }
+}
+
+/* The viewer's mirrored screen. It flickers out as the lock lands and comes
+   back when the share reopens; at rest the share is closed, so it is dark. */
+.artRevokeMirror {
+  stroke: var(--color-text);
+  stroke-opacity: 0.3;
+  stroke-width: 1.6;
+  opacity: 0;
+  animation: artRevokeMirror var(--art-story) linear infinite both;
+}
+
+.artRevokeMirror path {
+  stroke: inherit;
+  stroke-opacity: inherit;
+  stroke-width: inherit;
+}
+
+@keyframes artRevokeMirror {
+  0%,
+  40% {
+    opacity: 1;
+  }
+
+  41% {
+    opacity: 0.25;
+  }
+
+  42% {
+    opacity: 0.8;
+  }
+
+  44.5%,
+  88% {
+    opacity: 0;
+  }
+
+  96%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* One ring off the lock as it shuts. */
+.artLockRipple {
+  stroke: var(--color-accent-pop);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: artLockRipple var(--art-story) var(--ease-out-quint) infinite both;
+}
+
+@keyframes artLockRipple {
+  0%,
+  39% {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  40% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+
+  56%,
+  100% {
+    opacity: 0;
+    transform: scale(1.75);
+  }
+}
+
+.artRevoke .artKeyhole {
+  animation: artKeyholeLit var(--art-story) var(--ease-out-soft) infinite both;
+}
+
+@keyframes artKeyholeLit {
+  0%,
+  40% {
+    fill: var(--color-text);
+    fill-opacity: 0.28;
+  }
+
+  43% {
+    fill: var(--color-accent-pop);
+    fill-opacity: 0.9;
+  }
+
+  64%,
+  100% {
+    fill: var(--color-text);
+    fill-opacity: 0.28;
   }
 }
 
@@ -1632,7 +2133,54 @@ kbd,
   stroke-width: 3;
   /* Matches METER_LENGTH in ticket-art.tsx. */
   stroke-dasharray: 40;
-  transition: stroke-dashoffset 1s linear;
+  transition:
+    stroke-dashoffset 1s linear,
+    stroke var(--motion-mid) ease;
+}
+
+/* The last ten seconds run warm. */
+.artTicket[data-phase="urgent"] .artMeter {
+  stroke: #e39b2d;
+}
+
+.artTicket[data-phase="urgent"] .artTicketClock {
+  fill: #e39b2d;
+  fill-opacity: 0.9;
+}
+
+/* A read line passes over the barcode every few seconds while it is live. */
+.artScan {
+  stroke: var(--color-accent-pop);
+  stroke-width: 1.4;
+  opacity: 0;
+  filter: drop-shadow(0 0 2px var(--color-accent-pop));
+  animation: artScan 3.6s var(--ease-out-soft) infinite both;
+}
+
+.artTicket[data-phase="expired"] .artScan {
+  animation: none;
+}
+
+@keyframes artScan {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+
+  4% {
+    opacity: 0.85;
+  }
+
+  26% {
+    opacity: 0.85;
+    transform: translateX(22px);
+  }
+
+  32%,
+  100% {
+    opacity: 0;
+    transform: translateX(22px);
+  }
 }
 
 .artStamp {
@@ -1671,15 +2219,14 @@ kbd,
   }
 }
 
-/* Shell: the same command typed once at each of three prompts, 2.4s a prompt,
-   then left on the last one with its output. The caret keeps blinking; a
-   resting shell is still a running one. */
+/* Shell: the same command typed at each of three prompts in turn, 2.4s a
+   prompt, round and round. The caret keeps blinking throughout. */
 .artShellPrompt {
   fill: color-mix(in srgb, var(--color-accent-pop) 70%, var(--color-text));
   font-size: 11px;
   font-weight: 590;
   opacity: 0;
-  animation: artShellTurn 7.2s var(--ease-out-soft) both;
+  animation: artShellTurn 7.2s var(--ease-out-soft) infinite both;
 }
 
 .artShellZsh {
@@ -1691,7 +2238,6 @@ kbd,
 }
 
 .artShellFish {
-  animation-name: artShellLast;
   animation-delay: 4.8s;
 }
 
@@ -1711,17 +2257,6 @@ kbd,
   }
 }
 
-@keyframes artShellLast {
-  0% {
-    opacity: 0;
-  }
-
-  4%,
-  100% {
-    opacity: 1;
-  }
-}
-
 .artCommand {
   fill-opacity: 0.62;
   font-size: 11px;
@@ -1730,7 +2265,7 @@ kbd,
 .artTypeMask {
   transform-box: fill-box;
   transform-origin: left center;
-  animation: artTypeLine 2.4s steps(14, end) 3 both;
+  animation: artTypeLine 2.4s steps(14, end) infinite both;
 }
 
 @keyframes artTypeLine {
@@ -1749,7 +2284,7 @@ kbd,
   transform: translateX(88px);
   transform-box: view-box;
   animation:
-    artCaretMove 2.4s steps(14, end) 3 both,
+    artCaretMove 2.4s steps(14, end) infinite both,
     artCaretBlink 1.06s steps(1) infinite;
 }
 
@@ -1779,7 +2314,7 @@ kbd,
 /* Clears with each new prompt and comes back once the line is typed. */
 .artOutput {
   fill-opacity: 0.38;
-  animation: artOutputLine 2.4s var(--ease-out-soft) 3 both;
+  animation: artOutputLine 2.4s var(--ease-out-soft) infinite both;
 }
 
 @keyframes artOutputLine {

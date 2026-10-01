@@ -54,26 +54,38 @@ export function LoopbackArt() {
 
 export function WatchArt() {
   return (
-    <svg className="cardArt" viewBox="0 0 200 100" data-live aria-hidden="true">
+    <svg className="cardArt artWatch" viewBox="0 0 200 100" data-live aria-hidden="true">
       <g filter="url(#artDrop)">
         <rect className="artFace" x="22" y="18" width="88" height="64" rx="10" />
         <rect className="artFace" x="128" y="14" width="44" height="72" rx="10" />
       </g>
       <path className="artHair" d="M22 34h88" />
       <rect className="artFace artPhoneNotch" x="144" y="18" width="12" height="2.6" rx="1.3" />
-      <text className="artMono" x="32" y="52">
+      {/* Same grow-from-the-left clip as the shell card; the rect needs its full
+          width for the scale to have something to grow. */}
+      <clipPath id="artWatchTypeClip">
+        <rect className="artWatchTypeMask" x="32" y="41" width="54" height="15" />
+      </clipPath>
+      <text className="artMono" x="32" y="52" clipPath="url(#artWatchTypeClip)">
         bun test
       </text>
-      <text className="artMono artOutput" x="32" y="68">
+      <rect className="artWatchCaret" x="32" y="43.5" width="2" height="10" />
+      <text className="artMono artWatchOut" x="32" y="68">
         4 pass
       </text>
-      <text className="artMono artOutput" x="140" y="48">
+      {/* The frame crossing the gap, then landing as a glow on the phone. */}
+      <circle className="artWatchBeam" cx="114.5" cy="50" r="1.3" />
+      <circle className="artWatchBeam artWatchBeamMid" cx="119" cy="50" r="1.3" />
+      <circle className="artWatchBeam artWatchBeamEnd" cx="123.5" cy="50" r="1.3" />
+      <rect className="artWatchGlow" x="132" y="38" width="36" height="16" rx="5" />
+      <text className="artMono artWatchMirror" x="150" y="48" textAnchor="middle">
         4 pass
       </text>
-      <path className="artHair" d="M140 72h20" />
+      {/* The viewer's input line: a caret tries it and the cross refuses. */}
+      <path className="artHair" d="M138 72h18" />
+      <rect className="artWatchPhoneCaret" x="138" y="63" width="1.6" height="7" />
       <g className="artBlocked">
-        <path d="M136 82h28" />
-        <path d="m164 76 8 8M172 76l-8 8" />
+        <path d="m160 66 6 6M166 66l-6 6" />
       </g>
     </svg>
   );
@@ -81,7 +93,7 @@ export function WatchArt() {
 
 export function ShareArt() {
   return (
-    <svg className="cardArt" viewBox="0 0 200 100" data-live aria-hidden="true">
+    <svg className="cardArt artShare" viewBox="0 0 200 100" data-live aria-hidden="true">
       <g className="artKey artKeyFirst">
         <rect className="artKeyEdge" x="50" y="21" width="56" height="31" rx="9" />
         <g className="artKeyPress">
@@ -103,9 +115,31 @@ export function ShareArt() {
       <g className="artCodeChip">
         <rect className="artChipGlow" x="44" y="62" width="112" height="26" rx="13" />
         <rect className="artChipFace" x="44" y="62" width="112" height="26" rx="13" />
-        <text className="artChipText" x="100" y="79" textAnchor="middle">
+        {/* The code prints a character at a time (same grow-from-the-left
+            clip as the shell card), then a sheen crosses the chip once. */}
+        <clipPath id="artChipTextClip">
+          <rect className="artChipTextMask" x="64" y="66" width="72" height="18" />
+        </clipPath>
+        <text
+          className="artChipText"
+          x="100"
+          y="79"
+          textAnchor="middle"
+          clipPath="url(#artChipTextClip)"
+        >
           4J8K-WQ2M
         </text>
+        <linearGradient id="artChipSheenFill" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stopColor="#fff" stopOpacity="0" />
+          <stop offset="0.5" stopColor="#fff" stopOpacity="0.6" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </linearGradient>
+        <clipPath id="artChipClip">
+          <rect x="44" y="62" width="112" height="26" rx="13" />
+        </clipPath>
+        <g clipPath="url(#artChipClip)">
+          <rect className="artChipSheen" x="44" y="58" width="30" height="34" />
+        </g>
       </g>
     </svg>
   );
@@ -113,7 +147,7 @@ export function ShareArt() {
 
 export function RevokeArt() {
   return (
-    <svg className="cardArt" viewBox="0 0 200 100" data-live aria-hidden="true">
+    <svg className="cardArt artRevoke" viewBox="0 0 200 100" data-live aria-hidden="true">
       {/* Host on the left, viewer on the right. */}
       <g filter="url(#artDrop)">
         <rect className="artFace" x="10" y="48" width="38" height="26" rx="5" />
@@ -122,9 +156,17 @@ export function RevokeArt() {
       </g>
       <rect className="artFace artPhoneNotch" x="167" y="45.5" width="10" height="2.6" rx="1.3" />
       <path className="artHair" d="M167 78.5h10" />
+      {/* What the viewer can see: it goes dark the moment the share closes. */}
+      <g className="artRevokeMirror">
+        <path d="M165 56h14" />
+        <path d="M165 61h9" />
+        <path d="M165 66h12" />
+      </g>
+      <circle className="artLockRipple" cx="103" cy="44" r="20" />
       <path className="artLinkTrack" d="M52 64h102" />
       <path className="artLinkLive artLinkLeft" d="M52 64h51" />
       <path className="artLinkLive artLinkRight" d="M103 64h51" />
+      <path className="artLinkFlow" d="M52 64h102" />
       <circle className="artSpark" cx="103" cy="64" r="4" />
       {/* The legs run deep enough to stay seated through the whole swing, and the
           clip cuts them under the body's top hairline so they never show through
@@ -136,8 +178,10 @@ export function RevokeArt() {
       </clipPath>
       <g clipPath="url(#artShackleClip)">
         {/* The legs sit inside the body's flat top (x 91–115), so their cut ends
-            never overhang the rounded shoulders. */}
-        <path className="artShackle" d="M95 42v-18a8 8 0 0 1 16 0v18" />
+            never overhang the rounded shoulders. Like a real padlock the right
+            leg is long enough to stay seated when the shackle lifts, while the
+            short left one clears the body. */}
+        <path className="artShackle" d="M95 36v-12a8 8 0 0 1 16 0v32" />
       </g>
       <g filter="url(#artDrop)">
         <rect className="artLockBody" x="83" y="30" width="40" height="28" rx="8" />
