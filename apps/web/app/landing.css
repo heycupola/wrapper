@@ -237,17 +237,27 @@ html.lenis body {
   box-shadow: 0 0 0 calc(var(--conn-on) * 3px) var(--color-accent-soft);
 }
 
-.connectionSteps :where(li:nth-child(1) > span) {
-  animation: connPhaseChecking var(--conn-story) linear both;
+/* The step's copy dims while another step is on, on the same tracks as its
+   bullet (custom properties don't inherit here, so each animates its own). */
+.connectionSteps :where(li) {
+  --conn-on: 0;
+  opacity: calc(0.42 + var(--conn-on) * 0.58);
 }
 
+.connectionSteps :where(li:nth-child(1)),
+.connectionSteps :where(li:nth-child(1) > span) {
+  animation: connPhaseChecking var(--conn-story) linear infinite both;
+}
+
+.connectionSteps :where(li:nth-child(2)),
 .connectionSteps :where(li:nth-child(2) > span) {
   --conn-on: 1;
-  animation: connPhaseDirect var(--conn-story) linear both;
+  animation: connPhaseDirect var(--conn-story) linear infinite both;
 }
 
+.connectionSteps :where(li:nth-child(3)),
 .connectionSteps :where(li:nth-child(3) > span) {
-  animation: connPhaseRelay var(--conn-story) linear both;
+  animation: connPhaseRelay var(--conn-story) linear infinite both;
 }
 
 .connectionSteps li > div {
@@ -282,19 +292,21 @@ html.lenis body {
 }
 
 /* ── Connection story ──────────────────────────────────────────────────────
-   One clock, four phases, played once when the scene is active (the section's
-   `data-live` pause holds it at frame zero until then, and `both` keeps the
-   last frame after). Every track below is a percentage of --conn-story:
+   One clock, looping while the scene is active (the section's `data-live`
+   pause holds it otherwise). Every track below is a percentage of
+   --conn-story, and 100% matches 0% so the seam never shows:
 
-     0–12%   checking   ticket verified, nothing moves yet
-    12–50%   direct     path comes up, a packet crosses it
-    50–83%   relay      direct drops, the fallback carries a packet instead
-    83–100%  direct     path returns and settles solid
+     0–10%   checking   ticket verified, both ends answer with a ping
+    10–47%   direct     path comes up, traffic runs both ways
+    47–82%   relay      direct drops, the fallback carries the traffic
+    82–96%   direct     path returns, both ends ping again
+    96–100%  checking   the next session starts
 
    Base styles are the resting state so motion off shows the same picture. The
    clock sits on the section because the copy's step bullets run on it too. */
 .landingConnection {
-  --conn-story: 9.6s;
+  --conn-story: 12s;
+  --conn-glide: cubic-bezier(0.45, 0, 0.25, 1);
 }
 
 @property --conn-on {
@@ -327,6 +339,7 @@ html.lenis body {
 /* Grey while the ticket is checked, blue once a path is live. */
 .connectionStatusDot {
   --conn-on: 1;
+  position: relative;
   grid-area: 1 / 1;
   width: 7px;
   height: 7px;
@@ -337,91 +350,152 @@ html.lenis body {
     color-mix(in srgb, var(--color-text) 30%, transparent)
   );
   box-shadow: 0 0 0 calc(var(--conn-on) * 4px) var(--color-accent-soft);
-  animation: connDotLive var(--conn-story) linear both;
+  animation: connDotLive var(--conn-story) linear infinite both;
 }
 
-/* The three labels share one cell; the widest sets the pill's width. */
-.connectionStatusLabel {
+/* A soft ring keeps breathing off the dot: the session is live either way. */
+.connectionStatusDot::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-accent-pop);
+  content: "";
+  opacity: 0;
+  animation: connDotBreathe 2.4s var(--ease-out-soft) infinite;
+}
+
+@keyframes connDotBreathe {
+  0% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.8);
+  }
+}
+
+/* The three labels share one cell; the widest sets the pill's width. They
+   trade places with a short rise and a blur, all driven by --conn-on. */
+.connectionStatusLabel,
+.connectionDirectText {
   --conn-on: 0;
   grid-area: 1 / 2;
   font-weight: inherit;
   white-space: nowrap;
   opacity: var(--conn-on);
+  filter: blur(calc((1 - var(--conn-on)) * 3px));
+  transform: translateY(calc((1 - var(--conn-on)) * 5px));
 }
 
 .connectionStatusLabel.isChecking {
-  animation: connPhaseChecking var(--conn-story) linear both;
+  animation: connPhaseChecking var(--conn-story) linear infinite both;
 }
 
 .connectionStatusLabel.isDirect {
   --conn-on: 1;
-  animation: connPhaseDirect var(--conn-story) linear both;
+  animation: connPhaseDirect var(--conn-story) linear infinite both;
 }
 
 .connectionStatusLabel.isRelay {
-  animation: connPhaseRelay var(--conn-story) linear both;
+  animation: connPhaseRelay var(--conn-story) linear infinite both;
 }
 
 @keyframes connPhaseChecking {
   0%,
-  11% {
+  9% {
     --conn-on: 1;
   }
 
-  13%,
-  100% {
+  11.5%,
+  94.5% {
     --conn-on: 0;
+  }
+
+  97%,
+  100% {
+    --conn-on: 1;
   }
 }
 
 @keyframes connPhaseDirect {
   0%,
-  11% {
+  9% {
     --conn-on: 0;
   }
 
-  13%,
-  49% {
+  11.5%,
+  46% {
     --conn-on: 1;
   }
 
-  51%,
-  82% {
+  48.5%,
+  81% {
     --conn-on: 0;
   }
 
-  84%,
+  83.5%,
+  94.5% {
+    --conn-on: 1;
+  }
+
+  97%,
   100% {
-    --conn-on: 1;
+    --conn-on: 0;
   }
 }
 
 @keyframes connPhaseRelay {
   0%,
-  49% {
+  46% {
     --conn-on: 0;
   }
 
-  51%,
-  82% {
+  48.5%,
+  81% {
     --conn-on: 1;
   }
 
-  84%,
+  83.5%,
   100% {
     --conn-on: 0;
   }
 }
 
-@keyframes connDotLive {
+/* Everything except the relay phase, for the direct path's own label. */
+@keyframes connPhaseNotRelay {
   0%,
-  11% {
+  46% {
+    --conn-on: 1;
+  }
+
+  48.5%,
+  81% {
     --conn-on: 0;
   }
 
-  13%,
+  83.5%,
   100% {
     --conn-on: 1;
+  }
+}
+
+@keyframes connDotLive {
+  0%,
+  9% {
+    --conn-on: 0;
+  }
+
+  11.5%,
+  94.5% {
+    --conn-on: 1;
+  }
+
+  97%,
+  100% {
+    --conn-on: 0;
   }
 }
 
@@ -435,6 +509,7 @@ html.lenis body {
 }
 
 .connectionRouteBase,
+.connectionRouteGlow,
 .connectionRouteLive,
 .connectionRouteRelayLive,
 .connectionRouteFallback {
@@ -447,20 +522,31 @@ html.lenis body {
   stroke-width: 2;
 }
 
-/* Dashes march while the path carries traffic; once the story settles the
-   dashes close up into a solid line, which is also how it rests. */
+/* The direct path is a solid line with a soft halo while it is up. When it
+   drops it flickers twice and goes, the way a lost path actually looks. */
 .connectionRouteLive {
   stroke: var(--color-accent-pop);
   stroke-width: 2.5;
-  animation: connDirectRoute var(--conn-story) linear both;
+  animation: connDirectRoute var(--conn-story) linear infinite both;
 }
 
+.connectionRouteGlow {
+  stroke: var(--color-accent-pop);
+  stroke-opacity: 0.2;
+  stroke-width: 9;
+  filter: blur(4px);
+  animation: connDirectRoute var(--conn-story) linear infinite both;
+}
+
+/* The fallback reads as a tunnel: dashes that keep marching while it works. */
 .connectionRouteRelayLive {
   stroke: var(--color-accent-pop);
   stroke-dasharray: 7 8;
   stroke-width: 2.5;
   opacity: 0;
-  animation: connRelayRoute var(--conn-story) linear both;
+  animation:
+    connRelayRoute var(--conn-story) linear infinite both,
+    connMarch 0.9s linear infinite;
 }
 
 .connectionRouteFallback {
@@ -468,121 +554,177 @@ html.lenis body {
   stroke-width: 2;
 }
 
-.connectionPacket {
-  fill: var(--color-accent-pop);
-  opacity: 0;
-  filter: drop-shadow(0 0 5px var(--color-accent-pop));
-}
-
-.connectionPacketDirect {
-  offset-path: path("M126 148 C 276 148, 520 148, 674 148");
-  animation: connDirectPacket var(--conn-story) linear both;
-}
-
-.connectionPacketRelay {
-  offset-path: path("M126 155 C 286 185, 274 288, 400 288 C 526 288, 514 185, 674 155");
-  animation: connRelayPacket var(--conn-story) linear both;
-}
-
 @keyframes connDirectRoute {
   0%,
-  12% {
+  10% {
     opacity: 0;
-    stroke-dasharray: 7 8;
-    stroke-dashoffset: 0;
   }
 
-  17% {
+  13%,
+  45% {
     opacity: 1;
   }
 
-  50% {
-    opacity: 1;
-    stroke-dasharray: 7 8;
-    stroke-dashoffset: -60;
+  45.8% {
+    opacity: 0.2;
   }
 
-  55%,
-  83% {
+  46.6% {
+    opacity: 0.85;
+  }
+
+  47.4% {
+    opacity: 0.1;
+  }
+
+  48.5%,
+  82% {
     opacity: 0;
-    stroke-dasharray: 7 8;
   }
 
-  88% {
+  85%,
+  95% {
     opacity: 1;
-    stroke-dasharray: 7 8;
-    stroke-dashoffset: -105;
   }
 
+  98%,
   100% {
-    opacity: 1;
-    stroke-dasharray: 15 0;
-    stroke-dashoffset: -120;
+    opacity: 0;
   }
 }
 
 @keyframes connRelayRoute {
   0%,
-  50% {
+  47% {
     opacity: 0;
-    stroke-dashoffset: 0;
   }
 
-  55%,
-  83% {
+  50%,
+  80% {
     opacity: 1;
   }
 
-  88%,
+  83%,
   100% {
     opacity: 0;
-    stroke-dashoffset: -60;
   }
 }
 
-@keyframes connDirectPacket {
-  0%,
-  19% {
-    opacity: 0;
+@keyframes connMarch {
+  to {
+    stroke-dashoffset: -15;
+  }
+}
+
+/* Each route carries a small duplex stream: packets glide out from the
+   viewer and back from the host, staggered by --i on their own short loop.
+   The group is the gate that opens the stream only while its route is up. */
+.connectionStream {
+  opacity: 0;
+}
+
+.connectionStreamDirect {
+  animation: connDirectGate var(--conn-story) linear infinite both;
+}
+
+.connectionStreamRelay {
+  animation: connRelayGate var(--conn-story) linear infinite both;
+}
+
+.connectionPacket {
+  fill: var(--color-accent-pop);
+  filter: drop-shadow(0 0 5px var(--color-accent-pop));
+  offset-rotate: 0deg;
+}
+
+/* Scoped past the stream rules below, whose `animation` shorthand would
+   otherwise reset the direction. */
+.connectionStream .connectionPacket.isBack {
+  fill: color-mix(in srgb, var(--color-accent-pop) 55%, var(--color-surface-strong));
+  animation-direction: reverse;
+}
+
+.connectionStreamDirect .connectionPacket {
+  offset-path: path("M126 148 C 276 148, 520 148, 674 148");
+  animation:
+    connPacketRun 2.4s var(--conn-glide) infinite both,
+    connPacketFade 2.4s linear infinite both;
+  animation-delay: calc(var(--i) * -0.6s);
+}
+
+.connectionStreamRelay .connectionPacket {
+  offset-path: path("M126 155 C 286 185, 274 288, 400 288 C 526 288, 514 185, 674 155");
+  animation:
+    connPacketRun 3.3s var(--conn-glide) infinite both,
+    connPacketFade 3.3s linear infinite both;
+  animation-delay: calc(var(--i) * -1.1s);
+}
+
+/* Travel and fade are separate tracks so the easing spans the whole run
+   rather than restarting at each fade keyframe. */
+@keyframes connPacketRun {
+  from {
     offset-distance: 0%;
   }
 
-  20% {
-    opacity: 1;
-  }
-
-  35% {
-    opacity: 1;
-    offset-distance: 100%;
-  }
-
-  36%,
-  100% {
-    opacity: 0;
+  to {
     offset-distance: 100%;
   }
 }
 
-@keyframes connRelayPacket {
+@keyframes connPacketFade {
   0%,
-  56% {
-    opacity: 0;
-    offset-distance: 0%;
-  }
-
-  57% {
-    opacity: 1;
-  }
-
-  77% {
-    opacity: 1;
-    offset-distance: 100%;
-  }
-
-  78%,
   100% {
     opacity: 0;
-    offset-distance: 100%;
+  }
+
+  12%,
+  88% {
+    opacity: 1;
+  }
+}
+
+@keyframes connDirectGate {
+  0%,
+  11% {
+    opacity: 0;
+  }
+
+  14%,
+  45% {
+    opacity: 1;
+  }
+
+  47%,
+  84% {
+    opacity: 0;
+  }
+
+  87%,
+  94% {
+    opacity: 1;
+  }
+
+  96.5%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes connRelayGate {
+  0%,
+  49% {
+    opacity: 0;
+  }
+
+  52%,
+  79% {
+    opacity: 1;
+  }
+
+  82%,
+  100% {
+    opacity: 0;
   }
 }
 
@@ -623,18 +765,80 @@ html.lenis body {
 }
 
 .connectionDevice {
+  --device-shadow: 0 18px 34px -24px color-mix(in srgb, var(--color-text) 55%, transparent);
+  --ping-on: 0 0 0 0 color-mix(in srgb, var(--color-accent-pop) 42%, transparent);
+  --ping-off: 0 0 0 0 transparent;
+  --ping-out: 0 0 0 13px transparent;
   position: relative;
   display: block;
   margin-bottom: 10px;
   border: 1px solid color-mix(in srgb, var(--color-text) 19%, transparent);
   background: var(--color-surface-strong);
-  box-shadow: 0 18px 34px -24px color-mix(in srgb, var(--color-text) 55%, transparent);
+  box-shadow: var(--device-shadow), var(--ping-off);
 }
 
+/* A ring rolls off each end when the ticket is checked and again when the
+   direct path comes back: the viewer asks, the host answers a beat later. */
 .connectionPhone {
   width: 48px;
   height: 82px;
   border-radius: 13px;
+  animation: connPingViewer var(--conn-story) var(--ease-out-soft) infinite both;
+}
+
+.connectionLaptop {
+  animation: connPingHost var(--conn-story) var(--ease-out-soft) infinite both;
+}
+
+@keyframes connPingViewer {
+  0% {
+    box-shadow: var(--device-shadow), var(--ping-on);
+  }
+
+  7% {
+    box-shadow: var(--device-shadow), var(--ping-out);
+  }
+
+  81.9% {
+    box-shadow: var(--device-shadow), var(--ping-off);
+  }
+
+  82% {
+    box-shadow: var(--device-shadow), var(--ping-on);
+  }
+
+  89%,
+  100% {
+    box-shadow: var(--device-shadow), var(--ping-out);
+  }
+}
+
+@keyframes connPingHost {
+  0%,
+  3.4% {
+    box-shadow: var(--device-shadow), var(--ping-off);
+  }
+
+  3.5% {
+    box-shadow: var(--device-shadow), var(--ping-on);
+  }
+
+  10.5% {
+    box-shadow: var(--device-shadow), var(--ping-out);
+  }
+
+  84.9% {
+    box-shadow: var(--device-shadow), var(--ping-off);
+  }
+
+  85% {
+    box-shadow: var(--device-shadow), var(--ping-on);
+  }
+
+  92%,
+  100% {
+    box-shadow: var(--device-shadow), var(--ping-out);
+  }
 }
 
 .connectionPhone::before {
@@ -663,6 +867,21 @@ html.lenis body {
   width: 104px;
   height: 66px;
   border-radius: 10px 10px 4px 4px;
+}
+
+/* Relay: lights up while it is carrying the session. */
+.connectionRelay::after {
+  position: absolute;
+  inset: -1px;
+  border: 1px solid color-mix(in srgb, var(--color-accent-pop) 48%, transparent);
+  border-radius: inherit;
+  box-shadow:
+    0 0 0 4px var(--color-accent-soft),
+    0 22px 46px -30px var(--color-accent-pop);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  animation: connRelayRoute var(--conn-story) linear infinite both;
 }
 
 .connectionLaptop::after {
@@ -710,9 +929,27 @@ html.lenis body {
   top: 38%;
   left: 50%;
   z-index: 3;
+  display: grid;
+  justify-items: center;
   padding: 4px 8px;
   background: var(--color-bg);
   transform: translate(-50%, -50%);
+}
+
+/* The path's own label says when it is gone, in the same rise-and-blur swap
+   as the status pill. */
+.connectionDirectText {
+  grid-area: 1 / 1;
+}
+
+.connectionDirectText.isUp {
+  --conn-on: 1;
+  animation: connPhaseNotRelay var(--conn-story) linear infinite both;
+}
+
+.connectionDirectText.isDown {
+  color: color-mix(in srgb, var(--color-text) 46%, transparent);
+  animation: connPhaseRelay var(--conn-story) linear infinite both;
 }
 
 .landingTrustInner {

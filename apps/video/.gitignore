@@ -1,0 +1,6 @@
+out/
+public/audio/*
+!public/audio/voice/
+public/audio/voice/*
+!public/audio/voice/story.mp3
+.env*

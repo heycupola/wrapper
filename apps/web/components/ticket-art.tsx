@@ -14,6 +14,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /** Mirrors the viewer-ticket TTL enforced by the relay. */
 export const TICKET_TTL_S = 60;
 const EXPIRED_HOLD_MS = 2400;
+/** The meter warms for the last stretch so the expiry is felt before it lands. */
+const URGENT_S = 10;
 /** The meter stops short of the seconds that sit at its end. */
 const METER_LENGTH = 40;
 const METER_PATH = `M50 58h${METER_LENGTH}`;
@@ -71,12 +73,13 @@ export function TicketArt() {
 
   const serial = ticket?.serial ?? FIRST_SERIAL;
   const expired = ticket !== null && remaining === 0;
+  const phase = expired ? "expired" : remaining <= URGENT_S ? "urgent" : "live";
   const drained = METER_LENGTH * (1 - remaining / TICKET_TTL_S);
 
   return (
     <svg ref={ref} className="cardArt" viewBox="0 0 200 100" data-live aria-hidden="true">
       {/* Keyed by serial so a fresh ticket drops in rather than morphing. */}
-      <g key={serial} className="artTicket" data-phase={expired ? "expired" : "live"}>
+      <g key={serial} className="artTicket" data-phase={phase}>
         <g filter="url(#artDrop)">
           <path
             className="artFace"
@@ -98,6 +101,8 @@ export function TicketArt() {
         <g className="artBars">
           <path d="M132 40v22M136.5 40v22M141 40v22M145.5 40v22M150 40v22" />
         </g>
+        {/* Now and then the stub is read, the way the relay checks it. */}
+        <path className="artScan" d="M130 37v28" />
         {/* Stamped over the print once the sixty seconds are gone. */}
         <g className="artStamp">
           <rect x="50" y="39" width="62" height="24" rx="5" />
