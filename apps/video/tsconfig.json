@@ -1,0 +1,9 @@
+{
+  "extends": "@repo/typescript-config/bundler.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": ["src", "scripts", "remotion.config.ts"]
+}
