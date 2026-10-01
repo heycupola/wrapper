@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "bun run audio && remotion studio src/index.ts",
+    "dev": "bun run audio && remotion studio src/index.ts --port 3100",
     "audio": "bun scripts/generate-audio.ts",
     "voice": "bun scripts/generate-voice.ts",
     "captions": "bun scripts/generate-captions.ts",
