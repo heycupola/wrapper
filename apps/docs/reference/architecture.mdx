@@ -30,7 +30,12 @@ flowchart LR
   hostCli -.->|optional DTLS data channel| viewerCli
 ```
 
-{/* TODO(image): Add /images/wrapper-architecture.webp here. Turn the flow above into a polished diagram with trust boundaries: local PTY/token, Convex auth and share-code gate, Fly relay signaling/fallback, and the encrypted P2P data path. Priority P2: useful, non-blocking documentation enhancement because the Mermaid diagram and text already carry the required information. */}
+<Frame>
+  <img
+    src="/images/wrapper-architecture.webp"
+    alt="Architecture diagram with trust boundaries: your machine runs wrapper shell-host with the PTY and a loopback WebSocket plus registry token for local viewers; Convex handles auth, the share-code gate, session records, and relay tickets; the Fly relay carries signaling and fallback terminal data; remote CLI and iOS viewers connect to the host over an encrypted DTLS P2P data channel by default"
+  />
+</Frame>
 
 ## Session lifecycle
 
