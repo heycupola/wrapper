@@ -21,13 +21,13 @@
   },
   "dependencies": {
     "@react-three/fiber": "^9.8.1",
-    "@remotion/cli": "4.0.530",
-    "@remotion/google-fonts": "4.0.530",
-    "@remotion/motion-blur": "4.0.530",
-    "@remotion/three": "4.0.530",
+    "@remotion/cli": "4.0.532",
+    "@remotion/google-fonts": "4.0.532",
+    "@remotion/motion-blur": "4.0.532",
+    "@remotion/three": "4.0.532",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "remotion": "4.0.530",
+    "remotion": "4.0.532",
     "three": "^0.186.1"
   },
   "devDependencies": {
