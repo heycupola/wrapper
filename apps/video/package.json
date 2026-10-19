@@ -20,14 +20,14 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@react-three/fiber": "^9.8.1",
-    "@remotion/cli": "4.0.530",
-    "@remotion/google-fonts": "4.0.530",
-    "@remotion/motion-blur": "4.0.530",
-    "@remotion/three": "4.0.530",
+    "@react-three/fiber": "^9.8.2",
+    "@remotion/cli": "4.0.535",
+    "@remotion/google-fonts": "4.0.535",
+    "@remotion/motion-blur": "4.0.535",
+    "@remotion/three": "4.0.535",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "remotion": "4.0.530",
+    "remotion": "4.0.535",
     "three": "^0.186.1"
   },
   "devDependencies": {

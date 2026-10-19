@@ -18,26 +18,26 @@
   },
   "dependencies": {
     "@convex-dev/better-auth": "0.12.5",
-    "@convex-dev/resend": "^0.2.8",
+    "@convex-dev/resend": "^0.2.9",
     "@react-email/components": "^1.0.2",
     "@react-email/render": "^2.0.0",
     "@useautumn/convex": "0.0.23",
     "better-auth": "1.6.33",
-    "convex": "1.46.0",
-    "convex-helpers": "0.1.124",
+    "convex": "1.47.0",
+    "convex-helpers": "0.1.128",
     "jose": "^6.2.12",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "resend": "^6.28.1"
+    "resend": "^6.33.0"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
     "@types/bun": "latest",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "convex-test": "^0.0.59",
+    "convex-test": "^0.0.62",
     "typescript": "^5",
-    "vite": "^8.3.0",
-    "vitest": "^4.1.11"
+    "vite": "^8.3.4",
+    "vitest": "^4.1.12"
   }
 }
