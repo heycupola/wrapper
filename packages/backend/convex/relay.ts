@@ -41,12 +41,23 @@ export const issueHostTicket = protectedAction({
       const access = await ctx.autumn.check(ctx, { featureId });
       if (access.error) {
         // Billing provider misconfiguration (e.g. feature not defined) or
-        // outage. Fail open so a billing problem doesn't block the core relay
-        // feature; log loudly so it's noticed. Genuine "not entitled" (a
-        // definitive `allowed: false`) still denies below.
-        console.warn(
-          `[relay] entitlement check error for "${featureId}"; allowing share (fail-open)`,
-        );
+        // outage. Fail closed by default so a check error cannot grant share.
+        // Emergency override (default off): WRAPPER_RELAY_ENTITLEMENT_FAIL_OPEN=1
+        // restores availability at the cost of temporarily bypassing the Pro gate.
+        if (isRelayEntitlementFailOpenEnabled()) {
+          console.warn(
+            `[relay] entitlement check error for "${featureId}"; allowing share (fail-open emergency override)`,
+          );
+        } else {
+          console.warn(
+            `[relay] entitlement check error for "${featureId}"; denying share (fail-closed)`,
+          );
+          throw createError({
+            code: ErrorCode.EXTERNAL_SERVICE_ERROR,
+            message: "Relay sharing entitlement check unavailable",
+            severity: ErrorSeverity.High,
+          });
+        }
       } else if (access.data && access.data.allowed === false) {
         throw createError({
           code: ErrorCode.INSUFFICIENT_PERMISSION,
@@ -337,4 +348,10 @@ function getRelayShareFeatureId(): string | null {
   const disabled = ["", "off", "none", "false", "0", "disabled"];
   if (disabled.includes(trimmed.toLowerCase())) return null;
   return trimmed;
+}
+
+/** Emergency only. Default off — provider check errors deny host tickets. */
+function isRelayEntitlementFailOpenEnabled(): boolean {
+  const value = process.env.WRAPPER_RELAY_ENTITLEMENT_FAIL_OPEN?.trim().toLowerCase();
+  return value === "1" || value === "true" || value === "on" || value === "yes";
 }
