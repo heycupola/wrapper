@@ -1,8 +1,9 @@
 /// <reference types="vite/client" />
 
+import { Autumn } from "@useautumn/convex";
 import { ConvexError } from "convex/values";
 import { convexTest, type TestConvex } from "convex-test";
-import { beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api } from "../convex/_generated/api";
 import { ErrorCode } from "../convex/lib/errors";
 import { hashRelayTicket } from "../convex/lib/relayTicket";
@@ -10,6 +11,8 @@ import schema from "../convex/schema";
 
 const modules = import.meta.glob("../convex/**/*.ts");
 const sessionId = "SECURESESSION1";
+const originalFailOpen = process.env.WRAPPER_RELAY_ENTITLEMENT_FAIL_OPEN;
+const originalFeatureId = process.env.WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID;
 
 type ErrorPayload = {
   code?: string;
@@ -324,5 +327,92 @@ describe("relay session access", () => {
       () => viewer.action(api.relay.issueViewerTicket, { sessionId }),
       ErrorCode.RATE_LIMIT_EXCEEDED,
     );
+  });
+});
+
+describe("relay host ticket entitlement (SF-1 fail-closed)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    if (originalFailOpen === undefined) {
+      delete process.env.WRAPPER_RELAY_ENTITLEMENT_FAIL_OPEN;
+    } else {
+      process.env.WRAPPER_RELAY_ENTITLEMENT_FAIL_OPEN = originalFailOpen;
+    }
+    if (originalFeatureId === undefined) {
+      delete process.env.WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID;
+    } else {
+      process.env.WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID = originalFeatureId;
+    }
+  });
+
+  async function openOwnerSession() {
+    const t = convexTest(schema, modules);
+    const owner = t.withIdentity({
+      subject: "owner-user",
+      email: "owner@example.com",
+      name: "Owner",
+    });
+    await owner.mutation(api.session.open, {
+      sessionId,
+      shell: "/bin/zsh",
+      cwd: "/workspace/private",
+      port: 43210,
+      hostPid: 1234,
+      shared: false,
+    });
+    return { t, owner };
+  }
+
+  test("denies host ticket when Autumn entitlement check errors (fail-closed)", async () => {
+    delete process.env.WRAPPER_RELAY_ENTITLEMENT_FAIL_OPEN;
+    vi.spyOn(Autumn.prototype, "check").mockResolvedValue({
+      data: null,
+      error: { message: "provider unavailable" },
+    } as never);
+
+    const { owner } = await openOwnerSession();
+    const payload = await expectConvexError(
+      () => owner.action(api.relay.issueHostTicket, { sessionId }),
+      ErrorCode.EXTERNAL_SERVICE_ERROR,
+      "Relay sharing entitlement check unavailable",
+    );
+    expect(payload.code).toBe(ErrorCode.EXTERNAL_SERVICE_ERROR);
+  });
+
+  test("still denies when Autumn returns definitive allowed: false", async () => {
+    vi.spyOn(Autumn.prototype, "check").mockResolvedValue({
+      data: { allowed: false },
+      error: null,
+    } as never);
+
+    const { owner } = await openOwnerSession();
+    await expectConvexError(
+      () => owner.action(api.relay.issueHostTicket, { sessionId }),
+      ErrorCode.INSUFFICIENT_PERMISSION,
+      "Relay sharing requires Pro plan",
+    );
+  });
+
+  test("issues host ticket when Autumn allows the entitlement", async () => {
+    vi.spyOn(Autumn.prototype, "check").mockResolvedValue({
+      data: { allowed: true },
+      error: null,
+    } as never);
+
+    const { owner } = await openOwnerSession();
+    const issued = await owner.action(api.relay.issueHostTicket, { sessionId });
+    expect(issued.ticket).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  test("emergency fail-open flag allows share only when explicitly enabled", async () => {
+    process.env.WRAPPER_RELAY_ENTITLEMENT_FAIL_OPEN = "1";
+    vi.spyOn(Autumn.prototype, "check").mockResolvedValue({
+      data: null,
+      error: { message: "provider unavailable" },
+    } as never);
+
+    const { owner } = await openOwnerSession();
+    const issued = await owner.action(api.relay.issueHostTicket, { sessionId });
+    expect(issued.ticket).toMatch(/^[0-9a-f]{64}$/);
   });
 });

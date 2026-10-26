@@ -1,20 +1,74 @@
-# Wrapper
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./apps/web/public/wrapper-icon-light.svg">
+    <source media="(prefers-color-scheme: light)" srcset="./apps/web/public/wrapper-icon-dark.svg">
+    <img alt="Wrapper" src="./apps/web/public/wrapper-icon-dark.svg" width="48">
+  </picture>
+</p>
 
-> Share a live terminal from your phone, on demand. Does not patch your shell config.
+<p align="center">
+  <strong>Your terminal. On your phone. Only when you share.</strong><br>
+  Keep the real shell on your machine. Open it from an authenticated device when you choose.
+</p>
+
+<p align="center">
+  <a href="https://github.com/heycupola/wrapper/stargazers"><img src="https://img.shields.io/github/stars/heycupola/wrapper?style=flat" alt="GitHub Stars"></a>
+  <a href="https://github.com/heycupola/wrapper/blob/dev/LICENSE"><img src="https://img.shields.io/github/license/heycupola/wrapper" alt="License"></a>
+  <a href="https://docs.wrapper.sh"><img src="https://img.shields.io/badge/docs-docs.wrapper.sh-blue" alt="Docs"></a>
+  <a href="https://github.com/heycupola/wrapper/releases/tag/v0.2.4"><img src="https://img.shields.io/badge/release-v0.2.4-informational" alt="Latest release"></a>
+</p>
+
+<p align="center">
+  <a href="https://wrapper.sh"><img src="./apps/docs/images/wrapper-session-overview.webp" alt="A macOS terminal running wrapper share next to an iPhone viewing the same session" width="800"></a>
+</p>
 
 `wrapper share` wraps one shell (or `wrapper run -- claude` wraps one command)
 so an authenticated device can mirror it. Your prompt, plugins, and history
-behave as before.
+behave as before. A session never leaves your machine until you share it.
+Unshare tears the tunnel down.
 
-A session never leaves your machine until you share it. Unshared hosts listen
-on `127.0.0.1` and do not contact Convex. `Ctrl+\ s` (or `wrapper share`)
-opens a relay tunnel; `Ctrl+\ u` closes it.
+## Install
 
-## How it works in one minute
+Checksum-verified installer:
+
+```bash
+curl -fsSL https://wrapper.sh/install | bash
+```
+
+Homebrew:
+
+```bash
+brew install heycupola/tap/wrapper
+```
+
+Supported installer targets: `darwin-arm64`, `darwin-x86_64`, `linux-arm64`,
+and `linux-x86_64`. Windows: use [WSL](https://learn.microsoft.com/windows/wsl/).
+
+More install options: [docs.wrapper.sh/guides/installation](https://docs.wrapper.sh/guides/installation).
+Latest CLI: [v0.2.4](https://github.com/heycupola/wrapper/releases/tag/v0.2.4).
+
+## 60 seconds
+
+```bash
+curl -fsSL https://wrapper.sh/install | bash
+wrapper auth login
+wrapper share
+```
+
+`wrapper share` wraps your real shell and opens a relay tunnel. It prints a
+share code. Join from another local terminal with `wrapper attach`, or from
+another device with the printed join command and share code. Owners skip the
+code; guests enter it in a hidden prompt.
+
+In a running host: `Ctrl+\` then `s` shares, `Ctrl+\` then `u` unshares.
+Local attach stays on `127.0.0.1` and does not need Pro. Remote share requires
+Pro. Details: [docs.wrapper.sh](https://docs.wrapper.sh).
+
+## How it works
 
 1. You run `wrapper share`. It spawns your real shell inside a PTY and starts
-   a tiny local WebSocket server bound to `127.0.0.1`. Nothing is exposed yet
-   until share completes; metadata stays off Convex until then.
+   a tiny local WebSocket server bound to `127.0.0.1`. Nothing is exposed until
+   share completes; metadata stays off Convex until then.
 2. From the same machine, `wrapper attach` connects to that local server and
    mirrors the session. The transport stays on loopback and does not need the
    relay, Pro, or a Convex session row.
@@ -81,12 +135,11 @@ onboarding flow are implemented in this repository. Sharing attempts a direct
 WebRTC P2P data path by default, with the relay kept online for signaling and
 automatic fallback (`WRAPPER_P2P=0` forces relay-only mode). The terminal title
 shows the role, session, and active transport without reserving a screen row.
-The separate `apps/mobile` submodule now contains a Simulator-ready native
-iPhone/iPad viewer MVP: device authorization, owner and guest join flows,
-SwiftTerm rendering, relay transport, native WebRTC, and adaptive navigation.
-It uses Swift 6.0 language mode with complete strict concurrency on Xcode 26.
-CLI `v0.2.3` is the share-first CLI. Signed-device validation and App
-Store review remain pre-release work.
+CLI `v0.2.4` is the current share-first CLI release.
+
+The native iPhone/iPad viewer lives in the `apps/mobile` submodule (Simulator /
+TestFlight path). Do not treat App Store availability as the primary install
+path until a public TestFlight or App Store URL is published.
 
 The active focus is operational hardening:
 
