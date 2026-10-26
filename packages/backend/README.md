@@ -164,9 +164,15 @@ it. The owner always types, including from another device.
   page and dashboard billing expose a Yearly / Monthly switch on the Pro card;
   `createProCheckout` takes `interval: "year" | "month"`.
 - Plans are defined as code in `autumn.config.ts` and pushed with `bunx atmn`.
-- The entitlement check fails open on billing-provider errors so a billing
-  outage cannot break the core sharing flow. This is a deliberate availability
-  choice; it never grants access to another user's data.
+- The entitlement check **fails closed** on billing-provider errors: a check
+  error denies host ticket issuance (same as unavailable), so a provider outage
+  cannot bypass the Pro gate. Residual risk: sharing is unavailable during an
+  Autumn outage until billing recovers (or until an operator enables the
+  emergency override below).
+- Emergency only: `WRAPPER_RELAY_ENTITLEMENT_FAIL_OPEN=1` restores the old
+  fail-open behavior. Default is off. Do not leave this enabled in production
+  without an incident note — it temporarily bypasses the Pro share gate when
+  Autumn errors.
 - The gate can be disabled entirely with `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID`
   set to an empty value.
 
@@ -186,6 +192,8 @@ Relay tickets:
 - `WRAPPER_RELAY_VIEWER_TICKET_TTL_MS`: viewer ticket TTL (default `60000`)
 - `WRAPPER_AUTUMN_RELAY_SHARE_FEATURE_ID`: Autumn entitlement checked before
   issuing a host relay ticket (default `can_share_relay`)
+- `WRAPPER_RELAY_ENTITLEMENT_FAIL_OPEN`: emergency only; when `1`/`true`/`on`,
+  Autumn check errors allow host tickets (default off / fail-closed)
 
 ## Dev commands
 

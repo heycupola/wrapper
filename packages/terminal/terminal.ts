@@ -310,11 +310,13 @@ function cleanEnv(env: Record<string, string | undefined>): Record<string, strin
 }
 
 /**
- * Maps a POSIX signal name (`"SIGINT"`) to its numeric code. Only the
+ * Maps a POSIX signal name (`"SIGINT"`) to its numeric code. Bun may
+ * already surface a numeric `signalCode`; pass that through. Only the
  * signals we plausibly observe are listed; anything else returns
  * null and surfaces as `signalCode: null`.
  */
-function signalNumberFromName(name: NodeJS.Signals): number | null {
+function signalNumberFromName(name: number | NodeJS.Signals): number | null {
+  if (typeof name === "number") return name;
   switch (name) {
     case "SIGHUP":
       return 1;
