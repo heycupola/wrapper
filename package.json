@@ -8,22 +8,22 @@
       "packages/*"
     ],
     "catalog": {
-      "@clack/prompts": "^1.2.0",
+      "@clack/prompts": "^1.8.1",
       "@types/bun": "latest",
-      "@types/node": "^22.15.3",
-      "@types/react": "19.2.2",
-      "@types/react-dom": "19.2.2",
+      "@types/node": "^22.20.5",
+      "@types/react": "19.3.0",
+      "@types/react-dom": "19.3.0",
       "consola": "^3.4.2",
-      "next": "16.3.8",
-      "oxfmt": "^0.45.0",
-      "oxlint": "^1.60.0",
+      "next": "16.4.2",
+      "oxfmt": "^0.74.0",
+      "oxlint": "^1.89.0",
       "picocolors": "^1.1.1",
-      "posthog-js": "^1.352.0",
-      "posthog-node": "^5.24.17",
-      "react": "^19.2.0",
-      "react-dom": "^19.2.0",
+      "posthog-js": "^1.438.19",
+      "posthog-node": "^5.57.0",
+      "react": "^19.3.1",
+      "react-dom": "^19.3.1",
       "typescript": "5.9.2",
-      "zod": "^4.3.6"
+      "zod": "^4.6.7"
     }
   },
   "scripts": {
@@ -41,9 +41,9 @@
   "devDependencies": {
     "atmn": "1.1.25",
     "lefthook": "^1.13.0",
-    "oxfmt": "^0.68.0",
-    "oxlint": "^1.83.0",
-    "turbo": "2.10.13",
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.89.0",
+    "turbo": "2.11.10",
     "typescript": "5.9.3"
   },
   "overrides": {
