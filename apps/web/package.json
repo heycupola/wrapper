@@ -16,11 +16,11 @@
     "test": "bun test tests/auth-providers.test.ts tests/billing-url.test.ts tests/device-client.test.ts tests/hero-demo.test.ts tests/horizontal-scroll.test.ts tests/ios-app.test.ts tests/landing-scene.test.ts tests/posthog.test.ts tests/pro-pricing.test.ts"
   },
   "dependencies": {
-    "@convex-dev/better-auth": "0.12.5",
+    "@convex-dev/better-auth": "0.12.6",
     "@vercel/analytics": "^1.6.1",
     "better-auth": "1.6.33",
-    "convex": "1.46.0",
-    "lenis": "^1.3.26",
+    "convex": "1.48.0",
+    "lenis": "^1.3.27",
     "next": "catalog:",
     "posthog-js": "catalog:",
     "react": "catalog:",
