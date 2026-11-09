@@ -17,27 +17,27 @@
     "deploy:dry-run": "bunx convex deploy --dry-run"
   },
   "dependencies": {
-    "@convex-dev/better-auth": "0.12.5",
-    "@convex-dev/resend": "^0.2.8",
+    "@convex-dev/better-auth": "0.13.0",
+    "@convex-dev/resend": "^0.2.10",
     "@react-email/components": "^1.0.2",
-    "@react-email/render": "^2.0.0",
+    "@react-email/render": "^2.2.0",
     "@useautumn/convex": "0.0.23",
-    "better-auth": "1.6.33",
-    "convex": "1.46.0",
-    "convex-helpers": "0.1.124",
-    "jose": "^6.2.12",
+    "better-auth": "1.6.34",
+    "convex": "1.49.0",
+    "convex-helpers": "0.1.134",
+    "jose": "^6.2.15",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "resend": "^6.28.1"
+    "resend": "^6.37.0"
   },
   "devDependencies": {
     "@edge-runtime/vm": "^5.0.0",
     "@types/bun": "latest",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "convex-test": "^0.0.59",
+    "convex-test": "^0.0.67",
     "typescript": "^5",
-    "vite": "^8.3.5",
+    "vite": "^8.3.6",
     "vitest": "^4.1.12"
   }
 }
