@@ -20,21 +20,21 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@react-three/fiber": "^9.8.1",
-    "@remotion/cli": "4.0.530",
-    "@remotion/google-fonts": "4.0.530",
-    "@remotion/motion-blur": "4.0.530",
-    "@remotion/three": "4.0.530",
+    "@react-three/fiber": "^9.8.2",
+    "@remotion/cli": "4.0.541",
+    "@remotion/google-fonts": "4.0.541",
+    "@remotion/motion-blur": "4.0.541",
+    "@remotion/three": "4.0.541",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "remotion": "4.0.530",
-    "three": "^0.186.1"
+    "remotion": "4.0.541",
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
     "@types/bun": "catalog:",
     "@types/react": "catalog:",
-    "@types/three": "^0.186.0",
+    "@types/three": "^0.187.0",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "typescript": "catalog:"
